@@ -1,7 +1,7 @@
 import type { NextFunction, Request, Response } from "express";
-import { AppError } from "../../utils/AppError.js";
-import { requireUserId } from "../../utils/request.js";
-import { logSecurityEvent } from "../../utils/securityLogger.js";
+import { AppError } from "../../shared/utils/AppError.js";
+import { requireUserId } from "../../shared/utils/request.js";
+import { logSecurityEvent } from "../../shared/utils/securityLogger.js";
 import * as authService from "./auth.service.js";
 
 const logAuthFailure = (req: Request, event: string): void => {

@@ -1,4 +1,4 @@
-import { getWelcomeMessage } from './utils/request';
+import { getWelcomeMessage } from '../../backend/src/shared/utils/request';
 
 function main(): void {
   const user = 'Developer';

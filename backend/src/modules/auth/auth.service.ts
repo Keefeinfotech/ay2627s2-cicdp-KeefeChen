@@ -1,9 +1,9 @@
 import bcrypt from "bcryptjs";
 import { allowConcurrentSessions, getBcryptRounds, getJwtExpiresIn } from "../../config/environment.js";
 import { SESSION_TTL_MS } from "../../constants/security.js";
-import { conflict, sessionReplaced, unauthorized } from "../../utils/AppError.js";
-import { isSessionActive, parseDurationToMs } from "../../utils/session.js";
-import { signAccessToken } from "../../utils/tokens.js";
+import { conflict, sessionReplaced, unauthorized } from "../../shared/utils/AppError.js";
+import { isSessionActive, parseDurationToMs } from "../../shared/utils/session.js";
+import { signAccessToken } from "../../shared/utils/tokens.js";
 import type { IUser } from "./auth.model.js";
 import {
   clearActiveSession,

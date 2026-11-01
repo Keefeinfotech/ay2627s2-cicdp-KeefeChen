@@ -1,6 +1,6 @@
 import type { NextFunction, Request, Response } from "express";
-import { isCaptchaEnabled, verifyTurnstileToken } from "../utils/captcha.js";
-import { logSecurityEvent } from "../utils/securityLogger.js";
+import { isCaptchaEnabled, verifyTurnstileToken } from "../shared/utils/captcha.js";
+import { logSecurityEvent } from "../shared/utils/securityLogger.js";
 
 export const requireCaptcha = async (
   req: Request,

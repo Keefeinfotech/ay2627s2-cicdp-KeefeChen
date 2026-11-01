@@ -1,5 +1,5 @@
 import { getAiModel, getAiProvider } from "../../config/environment.js";
-import { AppError } from "../../utils/AppError.js";
+import { AppError } from "../../shared/utils/AppError.js";
 
 export interface ChatReply {
   reply: string;

@@ -11,11 +11,11 @@ import {
   Response,
 } from "express";
 
-import { User } from "../modules/auth/auth.model.ts";
-import { allowConcurrentSessions } from "../config/environment.ts";
-import { unauthorized } from "../utils/AppError.js";
-import { isSessionActive } from "../utils/session.js";
-import { verifyAccessToken } from "../utils/tokens.js";
+import { User } from "../modules/auth/auth.model.js";
+import { allowConcurrentSessions } from "../config/environment.js";
+import { unauthorized } from "../shared/utils/AppError.js";
+import { isSessionActive } from "../shared/utils/session.js";
+import { verifyAccessToken } from "../shared/utils/tokens.js";
 
 /**
  * Authenticate a user using a Bearer access token.

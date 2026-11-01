@@ -5,7 +5,7 @@
  */
 
 import { NextFunction, Request, Response } from "express";
-import { forbidden, unauthorized } from "../utils/AppError.js";
+import { forbidden, unauthorized } from "../shared/utils/AppError.js";
 
 /**
  * Application roles.

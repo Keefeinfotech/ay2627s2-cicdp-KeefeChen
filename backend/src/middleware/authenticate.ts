@@ -1,7 +1,7 @@
 import type { NextFunction, Request, Response } from "express";
-import { AppError, unauthorized } from "../utils/AppError.js";
-import { logSecurityEvent } from "../utils/securityLogger.js";
-import { verifyAccessToken } from "../utils/tokens.js";
+import { AppError, unauthorized } from "../shared/utils/AppError.js";
+import { logSecurityEvent } from "../shared/utils/securityLogger.js";
+import { verifyAccessToken } from "../shared/utils/tokens.js";
 import { authenticateSession } from "../modules/auth/auth.service.js";
 
 const logAuthFailure = (
