@@ -249,9 +249,7 @@ class _EmptyConversation extends StatelessWidget {
                   const SizedBox(height: AppSpacing.xl),
                   ConstrainedBox(
                     constraints: const BoxConstraints(maxWidth: 440),
-                    child: _SuggestionPanel(
-                      onSuggestion: onSuggestion,
-                    ),
+                    child: _SuggestionPanel(onSuggestion: onSuggestion),
                   ),
                 ],
               ),

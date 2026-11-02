@@ -382,9 +382,7 @@ abstract final class AppTheme {
       ),
       segmentedButtonTheme: SegmentedButtonThemeData(
         style: ButtonStyle(
-          minimumSize: const WidgetStatePropertyAll<Size>(
-            Size(0, 44),
-          ),
+          minimumSize: const WidgetStatePropertyAll<Size>(Size(0, 44)),
           padding: const WidgetStatePropertyAll<EdgeInsetsGeometry>(
             EdgeInsets.symmetric(horizontal: AppSpacing.md),
           ),
@@ -416,10 +414,7 @@ abstract final class AppTheme {
         labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
         iconTheme: WidgetStateProperty.resolveWith<IconThemeData>((states) {
           if (states.contains(WidgetState.selected)) {
-            return IconThemeData(
-              color: scheme.primary,
-              size: AppSizes.iconMd,
-            );
+            return IconThemeData(color: scheme.primary, size: AppSizes.iconMd);
           }
           return IconThemeData(
             color: scheme.onSurfaceVariant,

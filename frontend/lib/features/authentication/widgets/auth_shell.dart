@@ -177,11 +177,7 @@ class _AuthBrandPanel extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            const BrandLockup(
-              onDark: true,
-              markSize: 52,
-              showTagline: true,
-            ),
+            const BrandLockup(onDark: true, markSize: 52, showTagline: true),
             const SizedBox(height: AppSpacing.xxl),
             Text(
               'A clear place for your responsibilities.',

@@ -5,7 +5,7 @@
  * Author: Keefe Chen
  */
 
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 
 import { AppError } from "../../shared/utils/AppError.js";
 

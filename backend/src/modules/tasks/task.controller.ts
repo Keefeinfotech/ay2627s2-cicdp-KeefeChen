@@ -24,6 +24,7 @@ import type {
   CreateTaskBody,
   UpdateTaskBody,
 } from "./task.validation.js";
+import type { OffsetPaginationInput } from "./task.types.js";
 
 /**
  * Ensures the request has an authenticated user ID.
@@ -94,22 +95,9 @@ export const taskController = {
       // Parse query parameters and apply Zod defaults.
       const query = listTasksSchema.shape.query.parse(
         req.query
-      );
+      ) as OffsetPaginationInput;
 
-      // This endpoint currently supports offset pagination.
-      if (query.paginationType === "cursor") {
-        res.status(400).json({
-          code: "UNSUPPORTED_PAGINATION_TYPE",
-          message: "Cursor pagination is not currently supported.",
-        });
-
-        return;
-      }
-
-      const result = await taskService.listTasks(
-        userId,
-        query
-      );
+      const result = await taskService.listTasks(userId, query);
 
       res.status(200).json({
         message: "Tasks retrieved successfully.",

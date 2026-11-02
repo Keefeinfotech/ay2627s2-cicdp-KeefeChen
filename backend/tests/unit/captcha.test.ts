@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   isCaptchaEnabled,
   verifyTurnstileToken,
-} from "../../src/utils/captcha";
+} from "../../src/shared/utils/captcha";
 
 const originalSecret = process.env.TURNSTILE_SECRET_KEY;
 const originalCaptcha = process.env.CAPTCHA_ENABLED;

@@ -10,7 +10,8 @@ import { taskRepository } from "./task.repository.js";
 
 import type {
   CreateTaskInput,
-  ListTasksInput,
+  OffsetPaginationInput,
+  OffsetPaginatedTasks,
   TaskRecord,
   UpdateTaskInput,
 } from "./task.types.js";
@@ -62,8 +63,8 @@ export const taskService = {
    */
   async listTasks(
     userId: string,
-    input: ListTasksInput
-  ) {
+    input: OffsetPaginationInput
+  ): Promise<OffsetPaginatedTasks> {
     if (
       input.dueAfter &&
       input.dueBefore &&

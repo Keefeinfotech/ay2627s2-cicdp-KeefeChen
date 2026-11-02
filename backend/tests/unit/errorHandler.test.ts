@@ -3,7 +3,7 @@ import request from "supertest";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { errorHandler } from "../../src/middleware/errorHandler";
 import { requestId } from "../../src/middleware/requestId";
-import { AppError } from "../../src/utils/AppError";
+import { AppError } from "../../src/shared/utils/AppError";
 
 const buildApp = (handler: express.RequestHandler) => {
   const app = express();

@@ -36,9 +36,7 @@ class TaskFilterBar extends StatelessWidget {
       onSelected: (_) => store.setFilter(filter),
       selectedColor: scheme.primary,
       backgroundColor: scheme.surface,
-      side: BorderSide(
-        color: selected ? scheme.primary : scheme.outline,
-      ),
+      side: BorderSide(color: selected ? scheme.primary : scheme.outline),
       labelStyle: theme.textTheme.labelMedium?.copyWith(
         color: selected ? scheme.onPrimary : scheme.onSurfaceVariant,
         fontWeight: selected ? FontWeight.w600 : FontWeight.w500,

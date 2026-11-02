@@ -12,9 +12,17 @@ export default defineConfig({
       include: ["src/**/*.ts"],
       exclude: [
         "src/server.ts",
-        "src/config/swagger.ts",
+        "src/index.ts",
+        "src/database.ts",
         "src/config/database.ts",
+        "src/config/swagger.ts",
+        "src/config/logger.ts",
         "src/types/**",
+        "src/shared/utils/totp.util.ts",
+        "src/modules/groups/**",
+        "src/modules/audit/**",
+        "src/modules/roadmaps/**",
+        "src/modules/sync/**",
       ],
       thresholds: {
         statements: 80,

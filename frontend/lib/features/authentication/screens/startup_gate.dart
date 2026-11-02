@@ -44,9 +44,10 @@ class _StartupGateState extends State<StartupGate> {
   Future<void> _restore() async {
     Session? session;
     try {
-      session = await _auth
-          .restore()
-          .timeout(const Duration(seconds: 3), onTimeout: () => null);
+      session = await _auth.restore().timeout(
+        const Duration(seconds: 3),
+        onTimeout: () => null,
+      );
     } on SessionException {
       session = null;
     } catch (_) {
