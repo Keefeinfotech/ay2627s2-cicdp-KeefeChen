@@ -394,7 +394,7 @@ class _ActionGroup extends StatelessWidget {
     return Container(
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        color: scheme.surface,
+        color: Colors.transparent,
         borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(color: scheme.outlineVariant),
       ),

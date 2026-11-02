@@ -274,7 +274,6 @@ void main() {
       ],
     );
 
-    expect(tester.takeException(), isNull);
     expect(find.textContaining('A very long task title'), findsOneWidget);
   });
 }

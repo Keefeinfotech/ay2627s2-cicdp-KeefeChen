@@ -147,29 +147,29 @@ class TaskCard extends StatelessWidget {
                         ),
                       ],
                     ),
-                      if (onEdit != null || onDelete != null)
-                        Padding(
-                          padding: const EdgeInsets.only(top: AppSpacing.xs),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: <Widget>[
-                              if (onEdit != null)
-                                _actionButton(
-                                  context,
-                                  tooltip: 'Edit ${task.title}',
-                                  onPressed: onEdit!,
-                                  icon: Icons.edit_outlined,
-                                ),
-                              if (onDelete != null)
-                                _actionButton(
-                                  context,
-                                  tooltip: 'Delete ${task.title}',
-                                  onPressed: onDelete!,
-                                  icon: Icons.delete_outline_rounded,
-                                ),
-                            ],
-                          ),
+                    if (onEdit != null || onDelete != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: AppSpacing.xs),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: <Widget>[
+                            if (onEdit != null)
+                              _actionButton(
+                                context,
+                                tooltip: 'Edit ${task.title}',
+                                onPressed: onEdit!,
+                                icon: Icons.edit_outlined,
+                              ),
+                            if (onDelete != null)
+                              _actionButton(
+                                context,
+                                tooltip: 'Delete ${task.title}',
+                                onPressed: onDelete!,
+                                icon: Icons.delete_outline_rounded,
+                              ),
+                          ],
                         ),
+                      ),
                   ],
                 ),
               ),

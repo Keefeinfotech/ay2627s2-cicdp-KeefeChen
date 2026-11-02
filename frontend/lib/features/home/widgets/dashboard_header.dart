@@ -179,16 +179,23 @@ class _LevelProgress extends StatelessWidget {
             children: <Widget>[
               Text(
                 'Level ${progress.level}',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: theme.textTheme.labelMedium?.copyWith(
                   color: scheme.onSurface,
                   fontWeight: FontWeight.w600,
                 ),
               ),
               const Spacer(),
-              Text(
-                '${progress.xpIntoLevel} / ${progress.xpForNextLevel} XP',
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: scheme.onSurfaceVariant,
+              Flexible(
+                child: Text(
+                  '${progress.xpIntoLevel} / ${progress.xpForNextLevel} XP',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.end,
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: scheme.onSurfaceVariant,
+                  ),
                 ),
               ),
             ],
