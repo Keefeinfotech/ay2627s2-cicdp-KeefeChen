@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   signAccessToken,
   verifyAccessToken,
-} from "../../src/utils/tokens";
+} from "../../src/shared/utils/tokens";
 
 describe("access tokens", () => {
   it("round-trips a signed token with a session id", () => {

@@ -1,3 +1,9 @@
+/*
+ * File Name: auth.test.ts
+ * Description: Integration tests for user authentication endpoints.
+ * Author: Keefe Chen
+ */
+
 import bcrypt from "bcryptjs";
 import request from "supertest";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -12,25 +18,35 @@ vi.mock("../../src/modules/auth/auth.model.js", () => ({
 
 import app from "../../src/app";
 import { User } from "../../src/modules/auth/auth.model.js";
-import { verifyAccessToken } from "../../src/utils/tokens";
+import { verifyAccessToken } from "../../src/shared/utils/tokens";
 
+// Access mocked User model methods.
 const userModel = User as any;
 
+// Query result helper supporting .exec().
 const queryResult = (value: unknown) => ({
   select: vi.fn().mockReturnThis(),
   exec: vi.fn().mockResolvedValue(value),
 });
 
+// Shared test password and its hash.
 const password = "password123";
 const passwordHashPromise = bcrypt.hash(password, 10);
 
+// Reset mock call history before each test.
 beforeEach(() => {
   vi.clearAllMocks();
 });
 
+// ==========================================
+// SIGNUP TESTS
+// ==========================================
+
 describe("POST /api/auth/signup", () => {
   it("creates an account and returns a signed session token", async () => {
     userModel.findOne.mockReturnValue(queryResult(null));
+
+    // Mock the newly created user document.
     const created = {
       _id: "user-1",
       name: "Ada",
@@ -38,15 +54,20 @@ describe("POST /api/auth/signup", () => {
       role: "user",
       save: vi.fn().mockResolvedValue(undefined),
     };
+
     userModel.create.mockResolvedValue(created);
 
-    const res = await request(app).post("/api/auth/signup").send({
-      name: "  Ada  ",
-      email: "  ADA@Example.COM ",
-      password,
-    });
+    const res = await request(app)
+      .post("/api/auth/signup")
+      .send({
+        name: "  Ada  ",
+        email: "  ADA@Example.COM ",
+        password,
+      });
 
+    // Verify successful account creation.
     expect(res.status).toBe(201);
+
     expect(res.body.user).toEqual({
       id: "user-1",
       name: "Ada",
@@ -54,10 +75,18 @@ describe("POST /api/auth/signup", () => {
     });
     expect(res.body.user).not.toHaveProperty("role");
     expect(userModel.create).toHaveBeenCalledWith(
-      expect.objectContaining({ email: "ada@example.com", name: "Ada" })
+      expect.objectContaining({
+        email: "ada@example.com",
+        name: "Ada",
+      })
     );
+
+    // Verify the access token.
     const payload = verifyAccessToken(res.body.token);
+
     expect(payload?.sub).toBe("user-1");
+
+    // Verify that the token becomes the user's active session.
     expect(created.activeSessionId).toBe(payload?.jti);
     expect(created.save).toHaveBeenCalledTimes(1);
   });
@@ -72,6 +101,8 @@ describe("POST /api/auth/signup", () => {
 
     expect(res.status).toBe(409);
     expect(res.body.code).toBe("CONFLICT");
+
+    // Ensure that no new account was created.
     expect(userModel.create).not.toHaveBeenCalled();
   });
 
@@ -104,14 +135,20 @@ describe("POST /api/auth/signup", () => {
   });
 
   it("rejects invalid input without echoing values", async () => {
-    const res = await request(app).post("/api/auth/signup").send({
-      email: "not-an-email",
-      password: "secret-should-not-appear",
-    });
+    const res = await request(app)
+      .post("/api/auth/signup")
+      .send({
+        email: "not-an-email",
+        password: "secret-should-not-appear",
+      });
 
     expect(res.status).toBe(400);
     expect(res.body.code).toBe("VALIDATION_ERROR");
-    expect(JSON.stringify(res.body)).not.toContain("secret-should-not-appear");
+
+    // Ensure sensitive input is not returned in the response.
+    expect(JSON.stringify(res.body)).not.toContain(
+      "secret-should-not-appear"
+    );
   });
 
   it("rejects malformed JSON bodies", async () => {
@@ -125,45 +162,62 @@ describe("POST /api/auth/signup", () => {
   });
 });
 
+// ==========================================
+// LOGIN TESTS
+// ==========================================
+
 describe("POST /api/auth/login", () => {
   it("returns a token and records the login time", async () => {
     const save = vi.fn().mockResolvedValue(undefined);
+
     const user = {
       _id: "user-1",
       name: "Ada",
       email: "ada@example.com",
       role: "user",
       passwordHash: await passwordHashPromise,
-      lastLoginAt: null,
+      lastLoginAt: null as Date | null,
+      activeSessionId: null as string | null,
       save,
     };
+
     userModel.findOne.mockReturnValue(queryResult(user));
 
     const res = await request(app)
       .post("/api/auth/login")
-      .send({ email: "ADA@example.com", password });
+      .send({
+        email: "ADA@example.com",
+        password,
+      });
 
     expect(res.status).toBe(200);
     expect(res.body.user.email).toBe("ada@example.com");
-    expect(verifyAccessToken(res.body.token)?.email).toBe("ada@example.com");
+
+    // Verify the returned access token.
+    expect(verifyAccessToken(res.body.token)?.email).toBe(
+      "ada@example.com"
+    );
+
+    // Verify that the login timestamp was updated.
     expect(save).toHaveBeenCalledTimes(1);
     expect(user.lastLoginAt).toBeInstanceOf(Date);
   });
 
   it("rejects a wrong password", async () => {
-    userModel.findOne.mockReturnValue(
-      queryResult({
-        _id: "user-1",
-        email: "ada@example.com",
-        role: "user",
-        passwordHash: await passwordHashPromise,
-        save: vi.fn(),
-      })
-    );
+    userModel.findOne.mockReturnValue(queryResult({
+      _id: "user-1",
+      email: "ada@example.com",
+      role: "user",
+      passwordHash: await passwordHashPromise,
+      save: vi.fn(),
+    }));
 
     const res = await request(app)
       .post("/api/auth/login")
-      .send({ email: "ada@example.com", password: "wrong-password" });
+      .send({
+        email: "ada@example.com",
+        password: "wrong-password",
+      });
 
     expect(res.status).toBe(401);
     expect(res.body.code).toBe("UNAUTHORIZED");
@@ -174,7 +228,10 @@ describe("POST /api/auth/login", () => {
 
     const res = await request(app)
       .post("/api/auth/login")
-      .send({ email: "nobody@example.com", password });
+      .send({
+        email: "nobody@example.com",
+        password,
+      });
 
     expect(res.status).toBe(401);
     expect(res.body.error).toBe("Invalid email or password");

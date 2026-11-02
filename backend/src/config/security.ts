@@ -2,7 +2,7 @@ import helmet from "helmet";
 import type { CorsOptions } from "cors";
 import { getCorsOrigins, isProduction } from "./environment.js";
 import { REQUEST_BODY_LIMIT } from "../constants/security.js";
-import { AppError } from "../utils/AppError.js";
+import { AppError } from "../shared/utils/AppError.js";
 
 export const helmetMiddleware = helmet({
   contentSecurityPolicy: isProduction() ? undefined : false,

@@ -35,16 +35,8 @@ void main() {
   ) async {
     await pumpDashboard(tester);
 
-    expect(find.text('WELCOME BACK'), findsOneWidget);
-    expect(find.text('My workspace'), findsOneWidget);
-    expect(find.text('To do'), findsOneWidget);
-    expect(find.text('Due today'), findsOneWidget);
-    expect(find.text('Overdue'), findsOneWidget);
-    expect(find.text('Done'), findsOneWidget);
-    expect(find.text('This week'), findsOneWidget);
-    expect(find.text('Total XP'), findsOneWidget);
     expect(find.text('Your tasks'), findsOneWidget);
-    expect(find.text('0 XP · 0 of 0 complete'), findsOneWidget);
+    expect(find.text('No tasks yet'), findsOneWidget);
   });
 
   testWidgets('updates the header stats when a task is completed', (

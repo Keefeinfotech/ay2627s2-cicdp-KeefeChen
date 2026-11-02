@@ -10,7 +10,7 @@ vi.mock("../../src/modules/auth/auth.model.js", () => ({
 
 import app from "../../src/app";
 import { User } from "../../src/modules/auth/auth.model.js";
-import { signAccessToken } from "../../src/utils/tokens";
+import { signAccessToken } from "../../src/shared/utils/tokens";
 
 const userModel = User as any;
 

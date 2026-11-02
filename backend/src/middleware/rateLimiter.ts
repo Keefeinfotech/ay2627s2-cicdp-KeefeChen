@@ -8,7 +8,7 @@ import {
   AI_RATE_LIMIT_WINDOW_MS,
   AUTH_RATE_LIMIT_WINDOW_MS,
 } from "../constants/security.js";
-import { logSecurityEvent } from "../utils/securityLogger.js";
+import { logSecurityEvent } from "../shared/utils/securityLogger.js";
 
 interface LimiterConfig {
   name: string;

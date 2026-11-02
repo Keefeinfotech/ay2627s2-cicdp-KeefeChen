@@ -1,6 +1,6 @@
 import type { NextFunction, Request, Response } from "express";
-import { AppError } from "../utils/AppError.js";
-import { logServerError } from "../utils/securityLogger.js";
+import { AppError } from "../shared/utils/AppError.js";
+import { logServerError } from "../shared/utils/securityLogger.js";
 
 interface RequestError extends Error {
   type?: string;

@@ -1,0 +1,104 @@
+/*
+ * File Name: Jenkinsfile
+ * Description: Defines the CI pipeline for the Personal Secretary API.
+ * Author: Keefe Chen
+ * Date: 27 October 2026
+ */
+
+pipeline {
+    /*
+     * Runs the pipeline on any available Jenkins agent.
+     * The agent must have Node.js and npm installed.
+     */
+    agent any
+
+    /*
+     * Adds timestamps to the Jenkins console log
+     * to make troubleshooting easier.
+     */
+    options {
+        timestamps()
+    }
+
+    stages {
+
+        /*
+         * Stage 1: Retrieve the source code from SCM.
+         * Jenkins checks out the repository and branch
+         * configured in the Jenkins Pipeline job.
+         */
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        /*
+         * Stage 2: Install project dependencies.
+         * npm ci uses package-lock.json to install
+         * reproducible dependency versions.
+         */
+        stage('Install Dependencies') {
+            steps {
+                bat 'npm ci'
+            }
+        }
+
+        /*
+         * Stage 3: Check TypeScript for type errors.
+         * The pipeline stops if this command fails.
+         */
+        stage('Type Check') {
+            steps {
+                bat 'npm run typecheck'
+            }
+        }
+
+        /*
+         * Stage 4: Run automated tests using Vitest.
+         * A failed test causes the pipeline to fail.
+         */
+        stage('Automated Tests') {
+            steps {
+                bat 'npm test'
+            }
+        }
+
+        /*
+         * Stage 5: Compile TypeScript into JavaScript.
+         * This verifies that the backend can be built.
+         */
+        stage('Build') {
+            steps {
+                bat 'npm run build'
+            }
+        }
+    }
+
+    /*
+     * Post-build actions run after the pipeline finishes.
+     */
+    post {
+
+        /*
+         * Runs only when all pipeline stages succeed.
+         */
+        success {
+            echo 'All CI checks passed successfully.'
+        }
+
+        /*
+         * Runs if a pipeline stage fails.
+         */
+        failure {
+            echo 'CI pipeline failed. Review the console logs.'
+        }
+
+        /*
+         * Runs regardless of success or failure.
+         */
+        always {
+            echo 'CI pipeline execution has finished.'
+        }
+    }
+}
