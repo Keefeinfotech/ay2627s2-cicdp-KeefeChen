@@ -88,10 +88,7 @@ void main() {
       final due = DateTime(2026, 11, 1, 10, 0);
       final validReminder = DateTime(2026, 11, 1, 9, 0);
 
-      expect(
-        validateSchedule(dueDate: due, reminderAt: validReminder),
-        isNull,
-      );
+      expect(validateSchedule(dueDate: due, reminderAt: validReminder), isNull);
       expect(validateSchedule(dueDate: due, reminderAt: due), isNull);
       expect(validateSchedule(dueDate: due), isNull);
       expect(validateSchedule(), isNull);
@@ -105,8 +102,14 @@ void main() {
     });
 
     test('returns error string when notes are invalid', () {
-      final draft = TaskDraft(title: 'Valid Title', notes: 'a' * (maxNotesLength + 1));
-      expect(validateDraft(draft), 'Keep notes under $maxNotesLength characters');
+      final draft = TaskDraft(
+        title: 'Valid Title',
+        notes: 'a' * (maxNotesLength + 1),
+      );
+      expect(
+        validateDraft(draft),
+        'Keep notes under $maxNotesLength characters',
+      );
     });
 
     test('returns error string when course is invalid', () {
@@ -121,14 +124,8 @@ void main() {
     });
 
     test('returns error string when schedule is invalid', () {
-      final draft = TaskDraft(
-        title: 'Valid Title',
-        reminderAt: DateTime.now(),
-      );
-      expect(
-        validateDraft(draft),
-        'Add a due date before setting a reminder',
-      );
+      final draft = TaskDraft(title: 'Valid Title', reminderAt: DateTime.now());
+      expect(validateDraft(draft), 'Add a due date before setting a reminder');
     });
 
     test('returns null when draft is completely valid', () {

@@ -3,7 +3,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:frontend/models/task.dart';
 import 'package:frontend/services/task_repository.dart';
 import 'package:frontend/services/task_store.dart';
-import 'package:frontend/services/task_validation.dart';
 
 import '../helpers.dart';
 
@@ -61,10 +60,10 @@ void main() {
       final store = buildStore(repository);
       await store.load();
 
-      await expectLater(
-        store.addTask(const TaskDraft(title: '   ')),
-        throwsA(isA<TaskValidationException>()),
-      );
+      final saved = await store.addTask(const TaskDraft(title: '   '));
+
+      expect(saved, isFalse);
+      expect(store.error, 'Enter a task title');
       expect(repository.saveCount, 0);
       expect(store.tasks, isEmpty);
     });

@@ -101,13 +101,19 @@ merge are the remaining release steps.
 
 ```
 Flutter client
-├── screens        welcome, login, signup, dashboard, assistant, splash gate
-├── widgets        task card, task editor
-├── services       auth, API client, session storage, task repository/store,
-│                  validation, gamification
-├── models         task, priority, status, draft
-├── routing        named routes and typed route arguments
-└── theme          design tokens, light/dark Material 3 themes
+├── core           design tokens/theme, shared widgets, API client, endpoints,
+│                  formatters, named routes and typed route arguments
+├── features
+│   ├── authentication  welcome, login, signup, startup gate, auth/session,
+│   │                   captcha
+│   ├── home            dashboard, task model/store/repository, task editor,
+│   │                   validation, gamification
+│   ├── assistant       chat screen, composer, bubbles, assistant API service
+│   └── profile         profile and local-data actions sheet
+├── app.dart       MaterialApp shell, themes, onGenerateRoute
+├── main.dart      ProviderScope entry point
+└── legacy paths   screens/widgets/models/services/routing/theme/utils are
+                   thin re-export shims for backward compatibility
 
 Express API
 ├── routes         /api/auth, /api/ai, /api/health

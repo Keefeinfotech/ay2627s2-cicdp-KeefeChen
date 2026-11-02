@@ -23,7 +23,8 @@ Built with Flutter, Express.js, TypeScript, MongoDB, and GitHub Actions.
 - Guest mode with local tasks; optional sign-up and sign-in for the assistant.
 - Session restore plus an explicit splash gate at launch and named routes.
 - AI assistant screen backed by the API (mock provider by default).
-- Responsive layout, semantic labels, and support for 200% text scaling.
+- Unified Deep Navy design system with light/dark themes, shared components,
+  semantic labels, and support for 200% text scaling.
 
 ## Architecture
 
@@ -45,10 +46,28 @@ Flutter app ── local storage (shared_preferences)  -> tasks, offline-first
 
 ```
 backend/   Express + TypeScript API (auth, AI, health, Swagger in dev)
-frontend/  Flutter application (screens, widgets, services, local storage)
+frontend/  Flutter application (core design system, feature modules, local storage)
 docs/      Release gates, release checklist, privacy, dependencies
 .github/   CI workflow
 ```
+
+### Frontend structure
+
+```
+lib/core/        design tokens, shared widgets, API client, named-route table
+lib/features/
+  authentication/ welcome, login, signup, startup gate, auth/session/captcha
+  home/           dashboard, task model/store/repository, editor, gamification
+  assistant/      chat screen, composer, bubbles, assistant API service
+  profile/        profile and local-data actions sheet
+lib/app.dart      MaterialApp shell and theme wiring
+lib/main.dart     ProviderScope entry point
+```
+
+The older `lib/screens`, `lib/widgets`, `lib/models`, `lib/services`,
+`lib/routing`, `lib/theme`, and `lib/utils` paths are thin re-export shims kept
+so existing imports and tests continue to work. New code should import from
+`lib/core` or `lib/features` directly.
 
 ## Quick start
 
@@ -131,15 +150,15 @@ npm run build
 cd ../frontend
 dart format --output=none --set-exit-if-changed lib test tool
 flutter analyze
-flutter test --coverage  # 78 tests, including accessibility checks
+flutter test --coverage  # 102 tests, including accessibility checks
 dart run tool/check_coverage.dart 60
 flutter build web --release
 ```
 
 Frontend tests cover the model, validation, XP/levels, repository schema
-migration, store, task card, dashboard flows, session restore, undo, and a 200%
-text-scale layout. Platform storage is faked in tests, so no emulator is
-required.
+migration, store, task card, dashboard and profile flows, assistant request and
+error handling, session restore, undo, and a 200% text-scale layout. Platform
+storage is faked in tests, so no emulator is required.
 
 ## CI/CD
 

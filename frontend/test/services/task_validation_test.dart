@@ -70,24 +70,15 @@ void main() {
   });
 
   group('draft validation', () {
-    test('throws a readable validation error', () {
+    test('returns a readable validation error', () {
       expect(
-        () => validateDraft(const TaskDraft(title: '   ')),
-        throwsA(
-          isA<TaskValidationException>().having(
-            (err) => err.message,
-            'message',
-            'Enter a task title',
-          ),
-        ),
+        validateDraft(const TaskDraft(title: '   ')),
+        'Enter a task title',
       );
     });
 
     test('accepts a valid draft', () {
-      expect(
-        () => validateDraft(const TaskDraft(title: 'Valid task')),
-        returnsNormally,
-      );
+      expect(validateDraft(const TaskDraft(title: 'Valid task')), isNull);
     });
   });
 }
