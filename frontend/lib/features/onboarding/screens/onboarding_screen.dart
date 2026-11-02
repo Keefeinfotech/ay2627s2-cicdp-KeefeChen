@@ -280,7 +280,9 @@ class _OnboardingControls extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
-        border: Border(top: BorderSide(color: theme.colorScheme.outlineVariant)),
+        border: Border(
+          top: BorderSide(color: theme.colorScheme.outlineVariant),
+        ),
       ),
       padding: const EdgeInsets.fromLTRB(
         AppSpacing.xl,
@@ -419,13 +421,13 @@ class _TaskPreview extends StatelessWidget {
       meta: '3 tasks',
       child: Column(
         children: <Widget>[
-          _PreviewTaskRow(
+          const _PreviewTaskRow(
             title: 'Finish research summary',
             meta: 'Due today',
             accent: AppColors.warningAmber,
           ),
           Divider(height: 20, color: theme.colorScheme.outlineVariant),
-          _PreviewTaskRow(
+          const _PreviewTaskRow(
             title: 'Read chapter 4',
             meta: 'Tomorrow',
             accent: AppColors.clearBlue,
@@ -469,7 +471,9 @@ class _PreviewTaskRow extends StatelessWidget {
           decoration: BoxDecoration(
             color: checked ? accent : Colors.transparent,
             borderRadius: BorderRadius.circular(AppRadius.xs),
-            border: Border.all(color: checked ? accent : theme.colorScheme.outline),
+            border: Border.all(
+              color: checked ? accent : theme.colorScheme.outline,
+            ),
           ),
           child: checked
               ? const Icon(Icons.check_rounded, size: 13, color: Colors.white)
@@ -667,9 +671,7 @@ class _AssistantPreview extends StatelessWidget {
               ),
               child: Text(
                 'Help me plan my week.',
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: Colors.white,
-                ),
+                style: theme.textTheme.bodySmall?.copyWith(color: Colors.white),
               ),
             ),
           ),
@@ -703,9 +705,7 @@ class _AssistantPreview extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: AppColors.softGrey,
                     borderRadius: BorderRadius.circular(AppRadius.md),
-                    border: Border.all(
-                      color: theme.colorScheme.outlineVariant,
-                    ),
+                    border: Border.all(color: theme.colorScheme.outlineVariant),
                   ),
                   child: Text(
                     'Start with the two deadlines this week, then block two '
@@ -844,10 +844,7 @@ class _ProgressRow extends StatelessWidget {
             ),
           ),
         ),
-        Text(
-          meta,
-          style: theme.textTheme.labelSmall?.copyWith(color: color),
-        ),
+        Text(meta, style: theme.textTheme.labelSmall?.copyWith(color: color)),
       ],
     );
   }

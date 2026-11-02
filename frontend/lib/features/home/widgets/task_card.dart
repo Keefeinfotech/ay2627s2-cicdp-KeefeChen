@@ -74,10 +74,7 @@ class TaskCard extends StatelessWidget {
                     ? 'Mark ${task.title} as pending'
                     : 'Mark ${task.title} as complete',
                 toggled: completed,
-                child: Checkbox(
-                  value: completed,
-                  onChanged: (_) => onToggle(),
-                ),
+                child: Checkbox(value: completed, onChanged: (_) => onToggle()),
               ),
             ),
             Expanded(
