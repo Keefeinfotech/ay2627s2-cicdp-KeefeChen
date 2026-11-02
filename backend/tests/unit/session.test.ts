@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isSessionActive, parseDurationToMs } from "../../src/utils/session";
+import { isSessionActive, parseDurationToMs } from "../../src/shared/utils/session";
 
 const future = new Date(Date.now() + 60_000);
 const past = new Date(Date.now() - 60_000);

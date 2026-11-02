@@ -19,17 +19,17 @@ import { errorHandler } from "./middleware/errorHandler.js";
 import { notFound } from "./middleware/notFound.js";
 import { requestId } from "./middleware/requestId.js";
 import authRoutes from "./modules/auth/auth.routes.js";
-import userRoutes from "./routes/user.routes.js";
-import taskRoutes from "./routes/task.routes.js";
 import aiRoutes from "./modules/ai/ai.routes.js";
 import healthRoutes from "./modules/health/health.routes.js";
-import groupRoutes from "./routes/groups/group.routes.js";
-import roadmapRoutes from "./routes/roadmap.routes.js";
-import rubricRoutes from "./routes/rubric.routes.js";
-import feedbackRoutes from "./routes/feedback.routes.js";
-import sessionRoutes from "./routes/groups/session.routes.js";
-import progressRoutes from "./routes/progress.routes.js";
-import calendarRoutes from "./routes/calendar.routes.js";
+import userRoutes from "./modules/users/user.routes.js";
+import taskRoutes from "./modules/tasks/task.routes.js";
+import groupRoutes from "./modules/groups/group.routes.js";
+import roadmapRoutes from "./modules/roadmaps/roadmap.routes.js";
+import rubricRoutes from "./modules/rubrics/rubric.routes.js";
+import feedbackRoutes from "./modules/feedback/feedback.routes.js";
+import sessionRoutes from "./modules/sessions/session.routes.js";
+import progressRoutes from "./modules/progress/progress.routes.js";
+import calendarRoutes from "./modules/calendar/calendar.routes.js";
 
 const app = express();
 

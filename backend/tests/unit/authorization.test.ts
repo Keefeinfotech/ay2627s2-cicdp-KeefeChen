@@ -1,8 +1,8 @@
 import type { NextFunction, Request, Response } from "express";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { authorize } from "../../src/middleware/authorize";
-import { AppError } from "../../src/utils/AppError";
-import { requireUserId } from "../../src/utils/request";
+import { AppError } from "../../src/shared/utils/AppError";
+import { requireUserId } from "../../src/shared/utils/request";
 
 const mockRequest = (overrides: Partial<Request> = {}): Request =>
   ({ requestId: "req-1", ...overrides }) as Request;

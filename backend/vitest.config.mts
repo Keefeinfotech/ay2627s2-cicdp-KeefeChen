@@ -12,8 +12,11 @@ export default defineConfig({
       include: ["src/**/*.ts"],
       exclude: [
         "src/server.ts",
-        "src/config/swagger.ts",
+        "src/index.ts",
+        "src/database.ts",
         "src/config/database.ts",
+        "src/config/swagger.ts",
+        "src/config/logger.ts",
         "src/types/**",
       ],
       thresholds: {

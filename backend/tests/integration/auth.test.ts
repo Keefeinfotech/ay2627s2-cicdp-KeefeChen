@@ -18,7 +18,7 @@ vi.mock("../../src/modules/auth/auth.model.js", () => ({
 
 import app from "../../src/app";
 import { User } from "../../src/modules/auth/auth.model.js";
-import { verifyAccessToken } from "../../src/utils/tokens";
+import { verifyAccessToken } from "../../src/shared/utils/tokens";
 
 // Access mocked User model methods.
 const userModel = User as any;
