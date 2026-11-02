@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("bcrypt", () => ({
+vi.mock("bcryptjs", () => ({
   default: { compare: vi.fn() },
 }));
 
@@ -95,7 +95,7 @@ describe("user service", () => {
     };
     vi.mocked(userRepository.findByIdWithPassword).mockResolvedValue(user as any);
     vi.mocked(userRepository.deactivateAccount).mockResolvedValue(true);
-    vi.mocked((await import("bcrypt")).default.compare).mockResolvedValue(true as any);
+    vi.mocked((await import("bcryptjs")).default.compare).mockResolvedValue(true as any);
 
     await expect(userService.deleteOwnAccount("user-1", "password123")).resolves.toBeUndefined();
     expect(userRepository.deactivateAccount).toHaveBeenCalledWith("user-1");
@@ -119,7 +119,7 @@ describe("user service", () => {
     };
     vi.mocked(userRepository.findByIdWithPassword).mockResolvedValue(user as any);
 
-    const bcrypt = await import("bcrypt");
+    const bcrypt = await import("bcryptjs");
     vi.mocked(bcrypt.default.compare).mockResolvedValue(false as any);
 
     await expect(userService.deleteOwnAccount("user-1", "wrong")).rejects.toMatchObject({
@@ -138,7 +138,7 @@ describe("user service", () => {
     vi.mocked(userRepository.findByIdWithPassword).mockResolvedValue(user as any);
     vi.mocked(userRepository.deactivateAccount).mockResolvedValue(false);
 
-    const bcrypt = await import("bcrypt");
+    const bcrypt = await import("bcryptjs");
     vi.mocked(bcrypt.default.compare).mockResolvedValue(true as any);
 
     await expect(userService.deleteOwnAccount("user-1", "password123")).rejects.toMatchObject({
