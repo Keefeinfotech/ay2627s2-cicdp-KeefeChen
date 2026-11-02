@@ -7,11 +7,10 @@ void main() {
     await tester.pumpWidget(const AuxiliaApp());
     await tester.pumpAndSettle();
 
-    expect(find.text('Auxilia'), findsOneWidget);
-    expect(find.text('Open my tasks'), findsOneWidget);
-    expect(find.text('Log in'), findsOneWidget);
-    expect(find.text('Sign up'), findsOneWidget);
-    expect(find.text('Try the AI assistant'), findsOneWidget);
+    expect(find.text('Welcome to Auxilia'), findsOneWidget);
+    expect(find.text('Sign In'), findsOneWidget);
+    expect(find.text('Create Account'), findsOneWidget);
+    expect(find.text('Continue offline'), findsOneWidget);
   });
 
   testWidgets('welcome screen states that tasks work offline', (tester) async {
@@ -19,7 +18,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(
-      find.textContaining('Tasks are stored on this device'),
+      find.textContaining('Your tasks stay on this device'),
       findsOneWidget,
     );
   });
