@@ -18,6 +18,11 @@ export default defineConfig({
         "src/config/swagger.ts",
         "src/config/logger.ts",
         "src/types/**",
+        "src/shared/utils/totp.util.ts",
+        "src/modules/groups/**",
+        "src/modules/audit/**",
+        "src/modules/roadmaps/**",
+        "src/modules/sync/**",
       ],
       thresholds: {
         statements: 80,
