@@ -16,6 +16,7 @@ import '../../authentication/data/session_store.dart';
 import '../../profile/widgets/profile_sheet.dart';
 import '../data/gamification.dart';
 import '../data/task_repository.dart';
+import 'package:frontend/features/home/data/api_task_repository.dart';
 import '../data/task_store.dart';
 import '../data/task_validation.dart';
 import '../models/task.dart';
@@ -37,12 +38,22 @@ class HomeScreen extends StatefulWidget {
     this.displayName,
     this.session,
     this.store,
+    this.onOpenAssistant,
+    this.onOpenProfile,
   });
 
   final String ownerId;
   final String? displayName;
   final Session? session;
   final TaskStore? store;
+
+  /// When provided, the shell selects its Assistant tab instead of pushing the
+  /// legacy chat route.
+  final VoidCallback? onOpenAssistant;
+
+  /// When provided, the shell selects its Profile tab instead of opening the
+  /// quick profile sheet.
+  final VoidCallback? onOpenProfile;
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -60,7 +71,7 @@ class _HomeScreenState extends State<HomeScreen> {
     _store =
         widget.store ??
         TaskStore(
-          repository: SharedPreferencesTaskRepository(),
+          repository: ApiTaskRepository(token: widget.session?.token),
           ownerId: widget.ownerId,
         );
     _store.addListener(_handleStoreChanged);

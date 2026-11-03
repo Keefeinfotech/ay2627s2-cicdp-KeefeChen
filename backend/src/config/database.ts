@@ -8,11 +8,19 @@ export const connectDatabase = async (): Promise<void> => {
     if (isTest()) {
       return;
     }
-    throw new Error("MONGODB_URI is not defined in environment variables");
+
+    throw new Error(
+      "MONGODB_URI is not defined in environment variables"
+    );
   }
 
-  await mongoose.connect(mongoUri, { serverSelectionTimeoutMS: 5000 });
+  await mongoose.connect(mongoUri, {
+    dbName: "auxilia",
+    serverSelectionTimeoutMS: 5000,
+  });
+
   console.log("[database] MongoDB connected");
+  console.log(`[database] Database: ${mongoose.connection.name}`);
 };
 
 export const disconnectDatabase = async (): Promise<void> => {

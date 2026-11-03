@@ -14,34 +14,34 @@ abstract final class AppTheme {
 
   static const ColorScheme _lightScheme = ColorScheme(
     brightness: Brightness.light,
-    primary: AppColors.clearBlue,
+    primary: AppColors.trustBlue,
     onPrimary: AppColors.white,
-    primaryContainer: AppColors.blueTint,
-    onPrimaryContainer: AppColors.deepNavy,
-    secondary: AppColors.deepNavy,
+    primaryContainer: AppColors.primaryLight,
+    onPrimaryContainer: AppColors.primaryDark,
+    secondary: AppColors.primaryDark,
     onSecondary: AppColors.white,
     secondaryContainer: AppColors.navyTint,
-    onSecondaryContainer: AppColors.deepNavy,
-    tertiary: AppColors.teal,
+    onSecondaryContainer: AppColors.primaryDark,
+    tertiary: AppColors.successGreen,
     onTertiary: AppColors.white,
     tertiaryContainer: AppColors.tealTint,
-    onTertiaryContainer: Color(0xFF0B5F4F),
+    onTertiaryContainer: Color(0xFF166534),
     error: AppColors.errorRed,
     onError: AppColors.white,
     errorContainer: AppColors.errorTint,
     onErrorContainer: Color(0xFF7F1D1D),
-    surface: AppColors.white,
-    onSurface: AppColors.darkText,
-    onSurfaceVariant: AppColors.mutedText,
-    surfaceContainerHighest: Color(0xFFEEF2F6),
-    outline: AppColors.borderGrey,
+    surface: AppColors.surface,
+    onSurface: AppColors.textPrimary,
+    onSurfaceVariant: AppColors.textSecondary,
+    surfaceContainerHighest: Color(0xFFF1F5F9),
+    outline: AppColors.divider,
     outlineVariant: Color(0xFFEDF1F5),
     shadow: Color(0x1A243B53),
     scrim: Color(0x66243B53),
-    inverseSurface: AppColors.deepNavy,
+    inverseSurface: AppColors.primaryDark,
     onInverseSurface: AppColors.white,
-    inversePrimary: Color(0xFFA9C4E0),
-    surfaceTint: AppColors.clearBlue,
+    inversePrimary: Color(0xFFBFDBFE),
+    surfaceTint: AppColors.trustBlue,
   );
 
   static const ColorScheme _darkScheme = ColorScheme(
@@ -431,6 +431,19 @@ abstract final class AppTheme {
           return textTheme.labelSmall?.copyWith(color: scheme.onSurfaceVariant);
         }),
       ),
+      navigationRailTheme: NavigationRailThemeData(
+        backgroundColor: scheme.surface,
+        indicatorColor: scheme.primaryContainer,
+        selectedIconTheme: IconThemeData(color: scheme.primary),
+        unselectedIconTheme: IconThemeData(color: scheme.onSurfaceVariant),
+        selectedLabelTextStyle: textTheme.labelMedium?.copyWith(
+          color: scheme.primary,
+          fontWeight: FontWeight.w700,
+        ),
+        unselectedLabelTextStyle: textTheme.labelMedium?.copyWith(
+          color: scheme.onSurfaceVariant,
+        ),
+      ),
       scrollbarTheme: ScrollbarThemeData(
         thickness: const WidgetStatePropertyAll<double>(8),
         radius: const Radius.circular(AppRadius.sm),
@@ -482,5 +495,4 @@ abstract final class AuxiliaColors {
   static const Color darkMuted = AppColors.darkMuted;
   static const Color darkPrimary = AppColors.darkPrimary;
   static const Color darkCyan = AppColors.darkBlue;
-  static const LinearGradient brandGradient = AppColors.navyGradient;
 }

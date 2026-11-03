@@ -166,34 +166,44 @@ class BrandLockup extends StatelessWidget {
         ? Colors.white.withValues(alpha: 0.72)
         : theme.colorScheme.onSurfaceVariant;
 
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: <Widget>[
-        BrandMark(size: markSize, onDark: onDark),
-        const SizedBox(width: AppSpacing.md),
-        Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: alignment,
-          children: <Widget>[
-            Text(
-              'Auxilia',
-              style: theme.textTheme.titleLarge?.copyWith(
-                color: titleColor,
-                fontWeight: FontWeight.w700,
-                letterSpacing: -0.3,
-              ),
+    // The lockup is a logo treatment rather than body copy, so cap its text
+    // scaling. This keeps the wordmark intact on narrow screens without
+    // truncating it when the user enlarges system text.
+    return MediaQuery.withClampedTextScaling(
+      maxScaleFactor: 1.4,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: <Widget>[
+          BrandMark(size: markSize, onDark: onDark),
+          const SizedBox(width: AppSpacing.md),
+          Flexible(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: alignment,
+              children: <Widget>[
+                Text(
+                  'Auxilia',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    color: titleColor,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: -0.3,
+                  ),
+                ),
+                if (showTagline) ...<Widget>[
+                  const SizedBox(height: AppSpacing.xxs),
+                  Text(
+                    AppConstants.tagline,
+                    style: theme.textTheme.bodySmall?.copyWith(color: muted),
+                  ),
+                ],
+              ],
             ),
-            if (showTagline) ...<Widget>[
-              const SizedBox(height: AppSpacing.xxs),
-              Text(
-                AppConstants.tagline,
-                style: theme.textTheme.bodySmall?.copyWith(color: muted),
-              ),
-            ],
-          ],
-        ),
-      ],
+          ),
+        ],
+      ),
     );
   }
 }

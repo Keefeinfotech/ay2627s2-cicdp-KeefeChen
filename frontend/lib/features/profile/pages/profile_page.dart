@@ -1,0 +1,491 @@
+import 'package:flutter/material.dart';
+
+import '../../../core/constants/app_constants.dart';
+import '../../../core/routing/app_router.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
+import '../../../core/widgets/app_app_bar.dart';
+import '../../../core/widgets/app_avatar.dart';
+import '../../../core/widgets/app_dialog.dart';
+import '../../../core/widgets/app_empty_state.dart';
+import '../../../core/widgets/app_snackbar.dart';
+import '../../../core/widgets/app_status_badge.dart';
+import '../../authentication/data/auth_service.dart';
+import '../../authentication/data/session_store.dart';
+import '../../authentication/models/session.dart';
+import '../../home/data/task_store.dart';
+import '../../home/widgets/achievements_dialog.dart';
+
+/// Full-page profile and workspace settings surface.
+class ProfilePage extends StatelessWidget {
+  const ProfilePage({
+    super.key,
+    required this.store,
+    this.session,
+    this.displayName,
+    required this.onOpenAssistant,
+    this.onOpenProjects,
+    this.onOpenReports,
+  });
+
+  final TaskStore store;
+  final Session? session;
+  final String? displayName;
+  final VoidCallback onOpenAssistant;
+  final VoidCallback? onOpenProjects;
+  final VoidCallback? onOpenReports;
+
+  String get _name {
+    final name = displayName?.trim();
+    if (name != null && name.isNotEmpty) return name;
+    final sessionName = session?.name?.trim();
+    if (sessionName != null && sessionName.isNotEmpty) return sessionName;
+    return session == null ? 'Guest workspace' : AppConstants.appName;
+  }
+
+  Future<void> _showAchievements(BuildContext context) async {
+    await showAchievementsDialog(context, achievements: store.achievements);
+  }
+
+  Future<void> _clearTasks(BuildContext context) async {
+    final confirmed = await showAppConfirmDialog(
+      context,
+      title: 'Remove all local tasks?',
+      message:
+          'Every task stored on this device will be permanently deleted. '
+          'This cannot be undone.',
+      confirmLabel: 'Remove all',
+      destructive: true,
+      icon: Icons.delete_sweep_outlined,
+    );
+    if (!confirmed || !context.mounted) return;
+
+    final cleared = await store.clearAll();
+    if (!context.mounted) return;
+    AppSnackBar.show(
+      context,
+      cleared
+          ? 'All local tasks were removed.'
+          : store.error ?? 'Could not remove local tasks.',
+      type: cleared ? AppSnackType.success : AppSnackType.error,
+    );
+  }
+
+  Future<void> _signOut(BuildContext context) async {
+    try {
+      await AuthService().logout();
+    } on SessionException catch (err) {
+      if (context.mounted) AppSnackBar.error(context, err.message);
+      return;
+    }
+    if (!context.mounted) return;
+    Navigator.of(
+      context,
+    ).pushNamedAndRemoveUntil(AppRoutes.login, (route) => false);
+  }
+
+  void _signIn(BuildContext context) {
+    Navigator.pushNamed(context, AppRoutes.login);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+
+    return Scaffold(
+      appBar: const AuxiliaAppBar(
+        title: 'Profile',
+        subtitle: 'Account, progress and local data',
+      ),
+      body: SafeArea(
+        bottom: false,
+        child: AnimatedBuilder(
+          animation: store,
+          builder: (context, _) {
+            final unlocked = store.achievements
+                .where((achievement) => achievement.unlocked)
+                .length;
+            final totalAchievements = store.achievements.length;
+
+            return Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 840),
+                child: ListView(
+                  padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.lg,
+                    AppSpacing.lg,
+                    AppSpacing.lg,
+                    AppSpacing.xxl,
+                  ),
+                  children: <Widget>[
+                    _header(context),
+                    const SizedBox(height: AppSpacing.lg),
+                    _stats(context, unlocked, totalAchievements),
+                    const SizedBox(height: AppSpacing.xl),
+                    _sectionLabel(context, 'WORKSPACE'),
+                    const SizedBox(height: AppSpacing.sm),
+                    _actionGroup(
+                      context,
+                      children: <Widget>[
+                        if (onOpenProjects != null) ...<Widget>[
+                          _ProfileActionTile(
+                            icon: Icons.workspaces_outline,
+                            title: 'Projects',
+                            subtitle: 'Group tasks and track each project',
+                            onTap: onOpenProjects!,
+                          ),
+                          const Divider(height: 1),
+                        ],
+                        if (onOpenReports != null) ...<Widget>[
+                          _ProfileActionTile(
+                            icon: Icons.insights_outlined,
+                            title: 'Reports',
+                            subtitle:
+                                'Review completion, priority and workload',
+                            onTap: onOpenReports!,
+                          ),
+                          const Divider(height: 1),
+                        ],
+                        _ProfileActionTile(
+                          icon: Icons.emoji_events_outlined,
+                          title: 'Achievements',
+                          subtitle: '$unlocked of $totalAchievements unlocked',
+                          onTap: () => _showAchievements(context),
+                        ),
+                        const Divider(height: 1),
+                        _ProfileActionTile(
+                          icon: Icons.auto_awesome_outlined,
+                          title: 'AI assistant',
+                          subtitle: session == null
+                              ? 'Sign in to start a conversation'
+                              : 'Plan, summarise and change tasks',
+                          onTap: onOpenAssistant,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: AppSpacing.xl),
+                    _sectionLabel(context, 'ACCOUNT'),
+                    const SizedBox(height: AppSpacing.sm),
+                    _actionGroup(
+                      context,
+                      children: <Widget>[
+                        if (session == null)
+                          _ProfileActionTile(
+                            icon: Icons.login_rounded,
+                            title: 'Sign in',
+                            subtitle:
+                                'Unlock the AI assistant and cloud-backed account',
+                            onTap: () => _signIn(context),
+                          )
+                        else
+                          _ProfileActionTile(
+                            icon: Icons.logout_rounded,
+                            title: 'Sign out',
+                            subtitle:
+                                'Keep local tasks and return to the sign-in screen',
+                            onTap: () => _signOut(context),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: AppSpacing.xl),
+                    _sectionLabel(context, 'LOCAL DATA'),
+                    const SizedBox(height: AppSpacing.sm),
+                    _actionGroup(
+                      context,
+                      children: <Widget>[
+                        _ProfileActionTile(
+                          icon: Icons.delete_sweep_outlined,
+                          title: 'Remove all local tasks',
+                          subtitle:
+                              'Permanently delete tasks stored on this device',
+                          destructive: true,
+                          onTap: () => _clearTasks(context),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: AppSpacing.xl),
+                    Text(
+                      'Tasks stay on this device. The AI assistant sends '
+                      'messages to the Auxilia server only when you use it.',
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: scheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _header(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final level = store.levelProgress.level;
+
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      decoration: BoxDecoration(
+        color: scheme.surface,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(color: scheme.outlineVariant),
+      ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final identity = Row(
+            children: <Widget>[
+              AppAvatar(
+                name: session?.displayName ?? _name,
+                email: session?.email,
+                size: 56,
+                tooltip: 'Profile',
+              ),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(
+                      _name,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.xxs),
+                    Text(
+                      session?.email ?? 'Tasks stored on this device',
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: scheme.onSurfaceVariant,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    Wrap(
+                      spacing: AppSpacing.xs,
+                      runSpacing: AppSpacing.xs,
+                      children: <Widget>[
+                        StatusBadge(
+                          label: 'Level $level',
+                          color: scheme.primary,
+                          icon: Icons.workspace_premium_outlined,
+                        ),
+                        StatusBadge(
+                          label: session == null
+                              ? 'Local workspace'
+                              : 'Signed in',
+                          color: session == null
+                              ? scheme.onSurfaceVariant
+                              : AppColors.successGreen,
+                          icon: session == null
+                              ? Icons.phone_iphone_rounded
+                              : Icons.verified_user_outlined,
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          );
+
+          if (constraints.maxWidth < 560) return identity;
+          return Row(
+            children: <Widget>[
+              Expanded(child: identity),
+              const SizedBox(width: AppSpacing.lg),
+              Container(
+                padding: const EdgeInsets.all(AppSpacing.md),
+                decoration: BoxDecoration(
+                  color: scheme.primaryContainer.withValues(alpha: 0.5),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    Text(
+                      '${(store.levelProgress.fraction * 100).round()}%',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: scheme.onPrimaryContainer,
+                      ),
+                    ),
+                    Text(
+                      'to level ${level + 1}',
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: scheme.onPrimaryContainer,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _stats(BuildContext context, int unlocked, int total) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+      ),
+      child: IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            Expanded(
+              child: _ProfileStat(
+                label: 'Total XP',
+                value: '${store.levelProgress.totalXp}',
+              ),
+            ),
+            VerticalDivider(
+              width: 1,
+              color: Theme.of(context).colorScheme.outlineVariant,
+            ),
+            Expanded(
+              child: _ProfileStat(
+                label: 'Completed',
+                value: '${store.completedCount}',
+              ),
+            ),
+            VerticalDivider(
+              width: 1,
+              color: Theme.of(context).colorScheme.outlineVariant,
+            ),
+            Expanded(
+              child: _ProfileStat(
+                label: 'Achievements',
+                value: '$unlocked/$total',
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _sectionLabel(BuildContext context, String label) {
+    return Text(
+      label,
+      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+        color: Theme.of(context).colorScheme.onSurfaceVariant,
+        letterSpacing: 1.1,
+        fontWeight: FontWeight.w600,
+      ),
+    );
+  }
+
+  Widget _actionGroup(BuildContext context, {required List<Widget> children}) {
+    final scheme = Theme.of(context).colorScheme;
+    return Material(
+      color: scheme.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        side: BorderSide(color: scheme.outlineVariant),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(children: children),
+    );
+  }
+}
+
+class _ProfileActionTile extends StatelessWidget {
+  const _ProfileActionTile({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+    this.destructive = false,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+  final bool destructive;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final Color accent = destructive ? scheme.error : scheme.primary;
+
+    return ListTile(
+      onTap: onTap,
+      contentPadding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.xs,
+      ),
+      leading: AppIconTile(icon: icon, color: accent, size: 36),
+      title: Text(
+        title,
+        style: theme.textTheme.titleSmall?.copyWith(
+          fontWeight: FontWeight.w600,
+          color: destructive ? scheme.error : scheme.onSurface,
+        ),
+      ),
+      subtitle: Text(
+        subtitle,
+        style: theme.textTheme.bodySmall?.copyWith(
+          color: scheme.onSurfaceVariant,
+        ),
+      ),
+      trailing: const Icon(Icons.chevron_right_rounded, size: 20),
+    );
+  }
+}
+
+class _ProfileStat extends StatelessWidget {
+  const _ProfileStat({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.sm,
+        vertical: AppSpacing.md,
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xxs),
+          Text(
+            label,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

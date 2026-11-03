@@ -6,10 +6,10 @@
 
 import { createHash, randomBytes } from "node:crypto";
 
-import { GroupRepository } from "../group/group.repository.js";
+import { GroupRepository } from "../core/group.repository.js";
 import { MemberRepository } from "../member/member.repository.js";
 
-import { GroupRole } from "../group/group.types.js";
+import { GroupRole } from "../core/group.types.js";
 
 import { InvitationRepository } from "./invitation.repository.js";
 

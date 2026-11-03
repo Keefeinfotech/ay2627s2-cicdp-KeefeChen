@@ -1,7 +1,7 @@
 # Auxilia Project Plan
 
 Status: living proposal for the NP-S1 sprint and the wider Auxilia roadmap.
-Owner: Keefe Chen. Last updated: 31 October 2026.
+Owner: Keefe Chen. Last updated: 3 November 2026.
 
 ## Status key
 
@@ -61,6 +61,10 @@ administration.
   legacy v1 key and safe handling of corrupt or newer data.
 - Guest mode, signup/login, secure session storage, session restore at launch,
   and named application routes.
+- A persisted first-launch onboarding introduction, separate onboarding,
+  sign-in, and registration screens, bundled Inter typography, and a consistent
+  mobile-first design system across the dashboard, editor, assistant, and
+  profile surfaces.
 - Protected backend AI endpoint using a mock provider, JWT authentication,
   bcrypt password hashing, input validation, rate limits, and CORS allowlisting.
 - CI: formatting, analysis, backend typecheck/build/tests, frontend tests, a 60%
@@ -94,6 +98,8 @@ merge are the remaining release steps.
 | LMS / rubric import integrations | Deferred | Post-release |
 | File export/import of task data | Deferred | Post-release |
 | Dashboard quick due presets and pull-to-refresh | Deferred | Next UX pass |
+| Google/GitHub OAuth | Deferred | Requires provider configuration plus backend callback endpoints |
+| Password reset | Deferred | Requires an email provider and reset-token endpoints |
 | Local task-data encryption at rest | Deferred | Requires key management and migration |
 | Institutional analytics and teacher dashboards | Deferred | Not in current scope |
 
@@ -104,8 +110,8 @@ Flutter client
 ├── core           design tokens/theme, shared widgets, API client, endpoints,
 │                  formatters, named routes and typed route arguments
 ├── features
-│   ├── authentication  welcome, login, signup, startup gate, auth/session,
-│   │                   captcha
+│   ├── onboarding      first-launch introduction and completion store
+│   ├── authentication  login, signup, startup gate, auth/session, captcha
 │   ├── home            dashboard, task model/store/repository, task editor,
 │   │                   validation, gamification
 │   ├── assistant       chat screen, composer, bubbles, assistant API service
@@ -307,6 +313,8 @@ POST   /api/roadmaps/:id/approve
   allowlist.
 - Secrets only in environment variables; `.env` is never committed.
 - Tokens in platform secure storage, never in shared preferences or source.
+- Authentication is email/password only. OAuth and password reset are deferred
+  and must not be presented in the client as working flows.
 - CI runs Trivy and fails on type, test, analysis, and coverage regressions.
 
 ### Privacy
@@ -316,7 +324,7 @@ POST   /api/roadmaps/:id/approve
 - AI requests contain only the message the student sends; no task list is
   uploaded automatically.
 - Planned rubric processing must define retention, provider data handling, and a
-  deletion path before launch. See `docs/PRIVACY.md`.
+  deletion path before launch. See `docs/compliance/PRIVACY.md`.
 - Generated roadmaps are labelled AI-assisted and remain editable.
 
 ### Permissions (planned)

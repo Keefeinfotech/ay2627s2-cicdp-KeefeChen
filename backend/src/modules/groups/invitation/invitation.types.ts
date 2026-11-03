@@ -5,7 +5,7 @@
  * Author: Keefe Chen
  */
 
-import type { GroupRole } from "../group/group.types.js";
+import type { GroupRole } from "../core/group.types.js";
 
 /**
  * Represents the current state of an invitation.

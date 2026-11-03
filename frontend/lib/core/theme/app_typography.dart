@@ -2,20 +2,19 @@ import 'package:flutter/material.dart';
 
 /// Auxilia's central type system.
 ///
-/// Inter is bundled with the application so the product keeps the same
-/// typographic voice offline and on every platform. The scale deliberately
-/// stays compact: page titles are readable without dominating the screen, and
-/// body copy remains comfortable at mobile reading distances.
+/// Roboto is the primary typeface across every surface so the scale renders
+/// consistently on mobile, tablet and desktop. Native UI fonts are used as
+/// fallbacks if Roboto cannot be loaded. The scale stays compact enough for
+/// long mobile lists while remaining comfortable on a desktop canvas.
 abstract final class AppTypography {
   const AppTypography._();
 
-  static const String fontFamily = 'Inter';
+  static const String fontFamily = 'Roboto';
 
-  /// Native fallbacks used if the bundled font cannot be loaded.
+  /// Native fallbacks used if Roboto cannot be loaded.
   static const List<String> fontFamilyFallback = <String>[
-    'SF Pro Text',
     'Segoe UI',
-    'Roboto',
+    'SF Pro Text',
     'sans-serif',
   ];
 

@@ -53,6 +53,18 @@ const taskSchema = new Schema<TaskRecord>(
       maxlength: 5000,
     },
 
+    course: {
+      type: String,
+      default: "",
+      trim: true,
+      maxlength: 120,
+    },
+
+    reminderAt: {
+      type: Date,
+      default: null,
+    },
+
     status: {
       type: String,
       enum: TASK_STATUSES,

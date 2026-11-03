@@ -32,6 +32,8 @@ describe("task repository", () => {
       userId: "user-1",
       title: "Ship it",
       description: null,
+      course: "",
+      reminderAt: null,
       priority: "medium",
       dueDate: null,
     });

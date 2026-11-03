@@ -17,33 +17,33 @@ router.use(authenticate);
 
 // Create a group.
 router.post(
-  "/groups",
+  "/",
   validateBody(createGroupSchema),
   GroupController.create,
 );
 
 // List groups belonging to the current user.
 router.get(
-  "/groups",
+  "/",
   GroupController.list,
 );
 
 // Retrieve a group.
 router.get(
-  "/groups/:groupId",
+  "/:groupId",
   GroupController.get,
 );
 
 // Update group details.
 router.patch(
-  "/groups/:groupId",
+  "/:groupId",
   validateBody(updateGroupSchema),
   GroupController.update,
 );
 
 // Archive a group.
 router.delete(
-  "/groups/:groupId",
+  "/:groupId",
   GroupController.archive,
 );
 

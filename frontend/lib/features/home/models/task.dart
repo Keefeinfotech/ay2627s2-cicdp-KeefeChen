@@ -50,6 +50,46 @@ class Task {
   });
 
   static const Object _unset = Object();
+
+  static Task? tryFromBackend(Map<String, dynamic> json) {
+    final id = json['_id'] ?? json['id'];
+    if (id is! String || id.isEmpty) return null;
+    final title = (json['title'] as String?)?.trim() ?? '';
+    if (title.isEmpty) return null;
+    final notes = (json['description'] as String?)?.trim() ?? '';
+    final course = (json['course'] as String?)?.trim() ?? '';
+    final priority = TaskPriorityLabel.fromName(
+      (json['priority'] as String?)?.toLowerCase(),
+    );
+    final statusName = (json['status'] as String?)?.toLowerCase();
+    final status = statusName == 'completed' || statusName == 'archived'
+        ? TaskStatus.completed
+        : TaskStatus.pending;
+    final dueRaw = json['dueDate'];
+    final reminderRaw = json['reminderAt'];
+    final createdRaw = json['createdAt'];
+    final updatedRaw = json['updatedAt'];
+    final completedRaw = json['completedAt'];
+    return Task(
+      id: id,
+      title: title,
+      notes: notes,
+      course: course,
+      priority: priority,
+      status: status,
+      dueDate: dueRaw is String ? DateTime.tryParse(dueRaw) : null,
+      reminderAt: reminderRaw is String ? DateTime.tryParse(reminderRaw) : null,
+      createdAt: createdRaw is String
+          ? (DateTime.tryParse(createdRaw) ?? DateTime.now())
+          : DateTime.now(),
+      updatedAt: updatedRaw is String
+          ? (DateTime.tryParse(updatedRaw) ?? DateTime.now())
+          : DateTime.now(),
+      completedAt: completedRaw is String ? DateTime.tryParse(completedRaw) : null,
+      xpAwarded: status == TaskStatus.completed,
+    );
+  }
+
   static final Random _random = Random();
   static int _sequence = 0;
 
@@ -188,9 +228,17 @@ class Task {
   }
 
   static String _generateId(DateTime timestamp) {
-    final sequence = (_sequence++).toRadixString(36);
-    final random = _random.nextInt(0x7fffffff).toRadixString(36);
-    return '${timestamp.microsecondsSinceEpoch}-$sequence-$random';
+    // RFC4122 version 4 UUID, generated locally so task IDs are stable
+    // across the offline-first cache and the backend REST API.
+    final rnd = Random.secure();
+    final bytes = List<int>.generate(16, (_) => rnd.nextInt(256));
+    bytes[6] = (bytes[6] & 0x0f) | 0x40;
+    bytes[8] = (bytes[8] & 0x3f) | 0x80;
+    String hex(int value) => value.toRadixString(16).padLeft(2, '0');
+    final hexed = bytes.map(hex).join();
+    return '${hexed.substring(0, 8)}-${hexed.substring(8, 12)}-'
+        '${hexed.substring(12, 16)}-${hexed.substring(16, 20)}-'
+        '${hexed.substring(20)}';
   }
 
   @override

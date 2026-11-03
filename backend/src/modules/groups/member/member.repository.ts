@@ -8,7 +8,7 @@ import mongoose from "mongoose";
 
 import { Member } from "./member.model";
 
-import type { GroupRole } from "../group/group.types.js";
+import type { GroupRole } from "../core/group.types.js";
 
 interface CreateMemberInput {
   groupId: string;

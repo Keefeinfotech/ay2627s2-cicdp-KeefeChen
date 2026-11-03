@@ -51,9 +51,11 @@ export interface TaskRecord {
   userId: string;
   title: string;
   description: string | null;
+  course: string;
   status: TaskStatus;
   priority: TaskPriority;
   dueDate: Date | null;
+  reminderAt: Date | null;
   completedAt: Date | null;
   deletedAt: Date | null;
   createdAt: Date;
@@ -68,8 +70,11 @@ export interface TaskRecord {
  * Payload data accepted when creating a task.
  */
 export interface CreateTaskInput {
+  id?: string;
   title: string;
   description?: string | null;
+  course?: string;
+  reminderAt?: Date | null;
   priority?: TaskPriority;
   dueDate?: Date | null;
 }
@@ -80,6 +85,8 @@ export interface CreateTaskInput {
 export interface UpdateTaskInput {
   title?: string;
   description?: string | null;
+  course?: string;
+  reminderAt?: Date | null;
   priority?: TaskPriority;
   status?: TaskStatus;
   dueDate?: Date | null;

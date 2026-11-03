@@ -9,6 +9,14 @@ export interface IUser extends Document {
   lastLoginAt?: Date | null;
   activeSessionId?: string | null;
   activeSessionExpiresAt?: Date | null;
+  // MFA
+  mfaEnabled?: boolean;
+  mfaSecretEncrypted?: string | null;
+  mfaPendingSecretEncrypted?: string | null;
+  mfaPendingExpiresAt?: Date | null;
+  mfaRecoveryCodeHashes?: string[];
+  mfaLastUsedStep?: number | null;
+  mfaEnabledAt?: Date | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -34,6 +42,15 @@ const UserSchema = new Schema<IUser>(
     lastLoginAt: { type: Date, default: null },
     activeSessionId: { type: String, default: null },
     activeSessionExpiresAt: { type: Date, default: null },
+
+    // MFA
+    mfaEnabled: { type: Boolean, default: false },
+    mfaSecretEncrypted: { type: String, default: null, select: false },
+    mfaPendingSecretEncrypted: { type: String, default: null, select: false },
+    mfaPendingExpiresAt: { type: Date, default: null },
+    mfaRecoveryCodeHashes: { type: [String], default: [], select: false },
+    mfaLastUsedStep: { type: Number, default: null, select: false },
+    mfaEnabledAt: { type: Date, default: null },
   },
   { timestamps: true }
 );

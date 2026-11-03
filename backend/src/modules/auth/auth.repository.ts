@@ -12,6 +12,15 @@ export const findUserByEmail = async (
 export const findUserById = async (userId: string): Promise<IUser | null> =>
   User.findById(userId).exec();
 
+export const findUserByIdWithMfaSecrets = async (
+  userId: string,
+): Promise<IUser | null> =>
+  User.findById(userId)
+    .select(
+      "+mfaSecretEncrypted +mfaPendingSecretEncrypted +mfaRecoveryCodeHashes +mfaLastUsedStep",
+    )
+    .exec();
+
 export const createUser = async (input: {
   name?: string;
   email: string;

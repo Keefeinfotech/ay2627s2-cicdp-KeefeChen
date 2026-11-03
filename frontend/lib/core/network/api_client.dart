@@ -35,6 +35,39 @@ class ApiClient {
   final http.Client _client;
   final Duration _timeout;
 
+  Future<Map<String, dynamic>> getJson(
+    String path, {
+    Map<String, String>? query,
+    String? token,
+  }) async {
+    final uri = Uri.parse(
+      '$baseUrl$path',
+    ).replace(queryParameters: query == null || query.isEmpty ? null : query);
+
+    late final http.Response response;
+    try {
+      response = await _client
+          .get(
+            uri,
+            headers: <String, String>{
+              'Accept': 'application/json',
+              if (token != null) 'Authorization': 'Bearer $token',
+            },
+          )
+          .timeout(_timeout);
+    } on TimeoutException {
+      throw ApiException(
+        'The server took too long to respond. Please try again.',
+      );
+    } on http.ClientException {
+      throw ApiException(
+        'Could not reach the server. Check your connection and try again.',
+      );
+    }
+
+    return _handleResponse(response);
+  }
+
   Future<Map<String, dynamic>> postJson(
     String path,
     Map<String, dynamic> body, {
@@ -64,6 +97,77 @@ class ApiClient {
       );
     }
 
+    return _handleResponse(response);
+  }
+
+  Future<Map<String, dynamic>> patchJson(
+    String path,
+    Map<String, dynamic> body, {
+    String? token,
+  }) async {
+    final uri = Uri.parse('$baseUrl$path');
+
+    late final http.Response response;
+    try {
+      response = await _client
+          .patch(
+            uri,
+            headers: <String, String>{
+              'Content-Type': 'application/json',
+              if (token != null) 'Authorization': 'Bearer $token',
+            },
+            body: jsonEncode(body),
+          )
+          .timeout(_timeout);
+    } on TimeoutException {
+      throw ApiException(
+        'The server took too long to respond. Please try again.',
+      );
+    } on http.ClientException {
+      throw ApiException(
+        'Could not reach the server. Check your connection and try again.',
+      );
+    }
+
+    return _handleResponse(response);
+  }
+
+  Future<void> deleteJson(String path, {String? token}) async {
+    final uri = Uri.parse('$baseUrl$path');
+
+    late final http.Response response;
+    try {
+      response = await _client
+          .delete(
+            uri,
+            headers: <String, String>{
+              if (token != null) 'Authorization': 'Bearer $token',
+            },
+          )
+          .timeout(_timeout);
+    } on TimeoutException {
+      throw ApiException(
+        'The server took too long to respond. Please try again.',
+      );
+    } on http.ClientException {
+      throw ApiException(
+        'Could not reach the server. Check your connection and try again.',
+      );
+    }
+
+    if (response.statusCode >= 200 && response.statusCode < 300) return;
+
+    final data = _decodeBody(response.body);
+    throw ApiException(
+      data?['error'] as String? ??
+          data?['message'] as String? ??
+          'Request failed (${response.statusCode}). Please try again.',
+      statusCode: response.statusCode,
+      code: data?['code'] as String?,
+    );
+  }
+
+  Map<String, dynamic> _handleResponse(http.Response response) {
     final data = _decodeBody(response.body);
     final isSuccess = response.statusCode >= 200 && response.statusCode < 300;
 
@@ -79,6 +183,7 @@ class ApiClient {
 
     throw ApiException(
       data?['error'] as String? ??
+          data?['message'] as String? ??
           'Request failed (${response.statusCode}). Please try again.',
       statusCode: response.statusCode,
       code: data?['code'] as String?,

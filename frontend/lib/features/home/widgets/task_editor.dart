@@ -13,9 +13,13 @@ import '../models/task.dart';
 /// screens and when the software keyboard is open, while the fields scroll
 /// independently.
 class TaskEditor extends StatefulWidget {
-  const TaskEditor({super.key, this.initial});
+  const TaskEditor({super.key, this.initial, this.initialCourse});
 
   final Task? initial;
+
+  /// Pre-fills the course/subject field when creating a task from a project
+  /// workspace. Ignored when [initial] is supplied.
+  final String? initialCourse;
 
   @override
   State<TaskEditor> createState() => _TaskEditorState();
@@ -30,7 +34,7 @@ class _TaskEditorState extends State<TaskEditor> {
     text: widget.initial?.notes ?? '',
   );
   late final TextEditingController _course = TextEditingController(
-    text: widget.initial?.course ?? '',
+    text: widget.initial?.course ?? widget.initialCourse ?? '',
   );
   late TaskPriority _priority = widget.initial?.priority ?? TaskPriority.medium;
   late DateTime? _dueDate = widget.initial?.dueDate;

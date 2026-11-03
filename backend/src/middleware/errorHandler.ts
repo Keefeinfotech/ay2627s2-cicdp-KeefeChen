@@ -5,6 +5,8 @@ import { logServerError } from "../shared/utils/securityLogger.js";
 interface RequestError extends Error {
   type?: string;
   status?: number;
+  statusCode?: number;
+  code?: string;
 }
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -58,6 +60,14 @@ export const errorHandler = (
     res.status(413).json({
       error: "Request body is too large",
       code: "PAYLOAD_TOO_LARGE",
+    });
+    return;
+  }
+
+  if (requestError?.statusCode && typeof requestError.statusCode === "number") {
+    res.status(requestError.statusCode).json({
+      error: requestError.message || "Request failed",
+      code: requestError.code ?? "ERROR",
     });
     return;
   }

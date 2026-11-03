@@ -6,9 +6,9 @@ import '../../features/authentication/screens/login_screen.dart';
 import '../../features/authentication/screens/signup_screen.dart';
 import '../../features/authentication/screens/startup_gate.dart';
 import '../../features/authentication/screens/welcome_screen.dart';
-import '../../features/home/screens/home_screen.dart';
 import '../../features/onboarding/screens/onboarding_screen.dart';
 import '../constants/app_constants.dart';
+import '../layout/app_shell.dart';
 
 /// Named routes keep navigation, arguments and back-stack behaviour in one
 /// place instead of duplicating [MaterialPageRoute] construction in screens.
@@ -78,7 +78,7 @@ class AppRouter {
             : const HomeArgs(ownerId: AppConstants.guestOwnerId);
         return MaterialPageRoute<void>(
           settings: settings,
-          builder: (_) => HomeScreen(
+          builder: (_) => AppShell(
             ownerId: homeArgs.ownerId,
             displayName: homeArgs.displayName,
             session: homeArgs.session,

@@ -122,3 +122,45 @@ groupSchema.index(
 export const Group: Model<GroupRecord> =
   (mongoose.models.Group as Model<GroupRecord> | undefined) ??
   mongoose.model<GroupRecord>("Group", groupSchema);
+
+  /**
+ * Represents the persisted Group Member fields.
+ */
+export interface GroupMemberRecord {
+  groupId: string;
+  userId: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export type GroupMemberDocument = HydratedDocument<GroupMemberRecord>;
+
+const groupMemberSchema = new Schema<GroupMemberRecord>(
+  {
+    groupId: {
+      type: String,
+      required: true,
+      ref: "Group",
+    },
+    userId: {
+      type: String,
+      required: true,
+      ref: "User",
+    },
+  },
+  {
+    timestamps: true,
+    versionKey: false,
+    strict: "throw",
+  }
+);
+
+// Prevent duplicate membership records
+groupMemberSchema.index(
+  { groupId: 1, userId: 1 },
+  { unique: true, name: "ux_group_members_group_user" }
+);
+
+export const GroupMemberModel: Model<GroupMemberRecord> =
+  (mongoose.models.GroupMember as Model<GroupMemberRecord> | undefined) ??
+  mongoose.model<GroupMemberRecord>("GroupMember", groupMemberSchema);

@@ -25,6 +25,8 @@ const nullableDate = z.union([
 export const createTaskSchema = z.object({
   body: z
     .object({
+      id: z.string().uuid().optional(),
+
       title: z
         .string()
         .trim()
@@ -37,6 +39,14 @@ export const createTaskSchema = z.object({
         .max(5000, "Description cannot exceed 5000 characters.")
         .nullable()
         .optional(),
+
+      course: z
+        .string()
+        .trim()
+        .max(120, "Course cannot exceed 120 characters.")
+        .optional(),
+
+      reminderAt: nullableDate.optional(),
 
       priority: z
         .enum(TASK_PRIORITIES)
@@ -70,6 +80,14 @@ export const updateTaskSchema = z.object({
         .max(5000)
         .nullable()
         .optional(),
+
+      course: z
+        .string()
+        .trim()
+        .max(120)
+        .optional(),
+
+      reminderAt: nullableDate.optional(),
 
       priority: z
         .enum(TASK_PRIORITIES)
