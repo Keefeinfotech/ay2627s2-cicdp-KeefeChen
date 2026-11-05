@@ -11,7 +11,6 @@ import '../../../../core/widgets/app_loading.dart';
 import '../../../../core/widgets/app_snackbar.dart';
 import '../../../../core/widgets/app_status_badge.dart';
 import '../../../../core/widgets/app_text_field.dart';
-import '../../../home/data/task_repository.dart';
 import 'package:frontend/features/home/data/api_task_repository.dart';
 import '../../../home/data/task_store.dart';
 import '../../../home/data/task_validation.dart';
@@ -46,10 +45,7 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
     _ownsStore = widget.store == null;
     _store =
         widget.store ??
-        TaskStore(
-          repository: ApiTaskRepository(),
-          ownerId: widget.ownerId,
-        );
+        TaskStore(repository: ApiTaskRepository(), ownerId: widget.ownerId);
     _repository = TaskManagementRepository(_store);
     _store.addListener(_changed);
     if (!_store.hasLoaded && !_store.isLoading) _store.load();
@@ -94,7 +90,7 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
-      builder: (_) => TaskEditor(initial: task),
+      builder: (_) => TaskEditor(initial: task, existingTags: _store.allTags),
     );
     if (draft == null || !mounted) return;
     try {
@@ -246,7 +242,7 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
                   AppTextField(
                     controller: _search,
                     useFormField: false,
-                    hintText: 'Search tasks by title, notes or project',
+                    hintText: 'Search tasks by title, notes, tags or project',
                     prefixIcon: Icons.search_rounded,
                     textInputAction: TextInputAction.search,
                     onChanged: (value) {
@@ -387,32 +383,64 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
   }
 
   Widget _buildFilters(BuildContext context) {
-    return Wrap(
-      spacing: AppSpacing.sm,
-      runSpacing: AppSpacing.sm,
+    final tags = _store.allTags;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        _FilterChip(
-          label: 'All (${_store.tasks.length})',
-          selected: _store.filter == TaskFilter.all,
-          onTap: () => _store.setFilter(TaskFilter.all),
+        Wrap(
+          spacing: AppSpacing.sm,
+          runSpacing: AppSpacing.sm,
+          children: <Widget>[
+            _FilterChip(
+              label: 'All (${_store.tasks.length})',
+              selected: _store.filter == TaskFilter.all,
+              onTap: () => _store.setFilter(TaskFilter.all),
+            ),
+            _FilterChip(
+              label: 'To do (${_store.pendingCount})',
+              selected: _store.filter == TaskFilter.pending,
+              onTap: () => _store.setFilter(TaskFilter.pending),
+            ),
+            if (_store.overdueCount > 0)
+              _FilterChip(
+                label: 'Overdue (${_store.overdueCount})',
+                selected: _store.filter == TaskFilter.overdue,
+                onTap: () => _store.setFilter(TaskFilter.overdue),
+                warning: true,
+              ),
+            _FilterChip(
+              label: 'Done (${_store.completedCount})',
+              selected: _store.filter == TaskFilter.completed,
+              onTap: () => _store.setFilter(TaskFilter.completed),
+            ),
+          ],
         ),
-        _FilterChip(
-          label: 'To do (${_store.pendingCount})',
-          selected: _store.filter == TaskFilter.pending,
-          onTap: () => _store.setFilter(TaskFilter.pending),
-        ),
-        if (_store.overdueCount > 0)
-          _FilterChip(
-            label: 'Overdue (${_store.overdueCount})',
-            selected: _store.filter == TaskFilter.overdue,
-            onTap: () => _store.setFilter(TaskFilter.overdue),
-            warning: true,
+        if (tags.isNotEmpty) ...<Widget>[
+          const SizedBox(height: AppSpacing.sm),
+          Text(
+            'Filter by tag',
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+              fontWeight: FontWeight.w600,
+            ),
           ),
-        _FilterChip(
-          label: 'Done (${_store.completedCount})',
-          selected: _store.filter == TaskFilter.completed,
-          onTap: () => _store.setFilter(TaskFilter.completed),
-        ),
+          const SizedBox(height: AppSpacing.xs),
+          Wrap(
+            spacing: AppSpacing.xs,
+            runSpacing: AppSpacing.xs,
+            children: <Widget>[
+              for (final tag in tags)
+                FilterChip(
+                  label: Text('#$tag'),
+                  selected:
+                      _store.tagFilter?.toLowerCase() == tag.toLowerCase(),
+                  showCheckmark: false,
+                  onSelected: (selected) =>
+                      _store.setTagFilter(selected ? tag : null),
+                ),
+            ],
+          ),
+        ],
       ],
     );
   }
@@ -469,8 +497,7 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
             action: OutlinedButton.icon(
               onPressed: () {
                 _search.clear();
-                _store.setQuery('');
-                _store.setFilter(TaskFilter.all);
+                _store.clearFilters();
                 setState(() {});
               },
               icon: const Icon(Icons.filter_alt_off_rounded),
@@ -670,6 +697,18 @@ class _SwipeTaskRow extends StatelessWidget {
                             label: task.course,
                             color: scheme.primary,
                             icon: Icons.workspaces_outline,
+                          ),
+                        if (task.assigneeName != null)
+                          StatusBadge(
+                            label: task.assigneeName!,
+                            color: scheme.tertiary,
+                            icon: Icons.person_outline_rounded,
+                          ),
+                        for (final tag in task.tags.take(3))
+                          StatusBadge(
+                            label: '#$tag',
+                            color: scheme.onSurfaceVariant,
+                            icon: Icons.sell_outlined,
                           ),
                       ],
                     ),

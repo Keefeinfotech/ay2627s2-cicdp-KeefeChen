@@ -4,6 +4,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/widgets/app_avatar.dart';
 import '../../home/data/task_store.dart';
+import '../../profile/data/avatar_store.dart';
 
 /// The calm overview at the top of the dashboard.
 ///
@@ -17,12 +18,14 @@ class DashboardHeader extends StatelessWidget {
     required this.displayName,
     required this.onAchievements,
     required this.onProfile,
+    this.avatarStore,
   });
 
   final TaskStore store;
   final String? displayName;
   final VoidCallback onAchievements;
   final VoidCallback onProfile;
+  final AvatarStore? avatarStore;
 
   @override
   Widget build(BuildContext context) {
@@ -112,11 +115,22 @@ class DashboardHeader extends StatelessWidget {
                     icon: const Icon(Icons.emoji_events_outlined),
                   ),
                   const SizedBox(width: AppSpacing.xxs),
-                  AppAvatar(
-                    name: displayName,
-                    tooltip: 'Profile and settings',
-                    onTap: onProfile,
-                  ),
+                  if (avatarStore == null)
+                    AppAvatar(
+                      name: displayName,
+                      tooltip: 'Profile and settings',
+                      onTap: onProfile,
+                    )
+                  else
+                    AnimatedBuilder(
+                      animation: avatarStore!,
+                      builder: (context, _) => AppAvatar(
+                        name: displayName,
+                        style: avatarStore!.style,
+                        tooltip: 'Profile and settings',
+                        onTap: onProfile,
+                      ),
+                    ),
                 ],
               ),
               const SizedBox(height: AppSpacing.lg),

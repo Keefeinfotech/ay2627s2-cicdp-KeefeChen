@@ -1,9 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:frontend/features/authentication/models/session.dart';
-import 'package:frontend/models/task.dart';
-import 'package:frontend/screens/home_screen.dart';
-import 'package:frontend/services/task_repository.dart';
-import 'package:frontend/services/task_store.dart';
+import 'package:frontend/features/home/models/task.dart';
+import 'package:frontend/features/home/screens/home_screen.dart';
+import 'package:frontend/features/home/data/task_repository.dart';
+import 'package:frontend/features/home/data/task_store.dart';
 
 import '../helpers.dart';
 

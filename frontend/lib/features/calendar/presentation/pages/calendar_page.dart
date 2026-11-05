@@ -10,7 +10,6 @@ import '../../../../core/widgets/app_loading.dart';
 import '../../../../core/widgets/app_snackbar.dart';
 import '../../../../core/widgets/app_status_badge.dart';
 import '../../../authentication/models/session.dart';
-import '../../../home/data/task_repository.dart';
 import 'package:frontend/features/home/data/api_task_repository.dart';
 import '../../../home/data/task_store.dart';
 import '../../data/datasources/calendar_api_data_source.dart';
@@ -52,10 +51,7 @@ class _CalendarPageState extends State<CalendarPage> {
     _ownsStore = widget.store == null;
     _store =
         widget.store ??
-        TaskStore(
-          repository: ApiTaskRepository(),
-          ownerId: widget.ownerId,
-        );
+        TaskStore(repository: ApiTaskRepository(), ownerId: widget.ownerId);
     final repository = CalendarRepository(
       store: _store,
       api: CalendarApiDataSource(api: widget.api),

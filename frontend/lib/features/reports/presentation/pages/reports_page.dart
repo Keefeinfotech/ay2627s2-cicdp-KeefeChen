@@ -10,7 +10,6 @@ import '../../../../core/widgets/app_error_state.dart';
 import '../../../../core/widgets/app_loading.dart';
 import '../../../../core/widgets/app_status_badge.dart';
 import '../../../../core/widgets/responsive_page_layout.dart';
-import '../../../home/data/task_repository.dart';
 import 'package:frontend/features/home/data/api_task_repository.dart';
 import '../../../home/data/task_store.dart';
 import '../../data/models/report_snapshot.dart';
@@ -39,10 +38,7 @@ class _ReportsPageState extends State<ReportsPage> {
     _ownsStore = widget.store == null;
     _store =
         widget.store ??
-        TaskStore(
-          repository: ApiTaskRepository(),
-          ownerId: widget.ownerId,
-        );
+        TaskStore(repository: ApiTaskRepository(), ownerId: widget.ownerId);
     _controller = ReportsController(store: _store);
     _controller.initialize();
   }

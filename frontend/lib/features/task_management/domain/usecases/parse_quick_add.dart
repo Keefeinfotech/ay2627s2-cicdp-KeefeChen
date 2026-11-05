@@ -64,6 +64,14 @@ class ParseQuickAdd {
       }
     }
 
+    // Hashtags become task tags. They are removed from the title so the
+    // captured task reads naturally.
+    final tags = <String>[];
+    title = title.replaceAllMapped(RegExp(r'(?:^|\s)#([^\s#]{1,24})'), (match) {
+      tags.add(match.group(1)!);
+      return ' ';
+    });
+
     final DateTime? dueDate = _parseDate(lower, reference);
     if (dueDate != null) {
       title = _stripDatePhrase(title);
@@ -88,13 +96,15 @@ class ParseQuickAdd {
         (title.isNotEmpty && title != original ? 0.35 : 0.2) +
         (priority != TaskPriority.medium ? 0.2 : 0) +
         (dueDate != null ? 0.25 : 0) +
-        (project != null ? 0.2 : 0);
+        (project != null ? 0.2 : 0) +
+        (tags.isNotEmpty ? 0.1 : 0);
 
     return QuickAddPreview(
       title: title,
       priority: priority,
       dueDate: dueDate,
       project: project,
+      tags: Task.normalizeTags(tags),
       originalText: original,
       confidence: confidence.clamp(0.25, 0.98),
     );

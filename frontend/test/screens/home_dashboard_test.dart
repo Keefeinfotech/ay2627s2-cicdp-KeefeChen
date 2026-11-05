@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:frontend/models/task.dart';
-import 'package:frontend/screens/home_screen.dart';
-import 'package:frontend/services/task_repository.dart';
-import 'package:frontend/services/task_store.dart';
-import 'package:frontend/theme/app_theme.dart';
+import 'package:frontend/features/home/models/task.dart';
+import 'package:frontend/features/home/screens/home_screen.dart';
+import 'package:frontend/features/home/data/task_repository.dart';
+import 'package:frontend/features/home/data/task_store.dart';
+import 'package:frontend/core/theme/app_theme.dart';
 
 import '../helpers.dart';
 

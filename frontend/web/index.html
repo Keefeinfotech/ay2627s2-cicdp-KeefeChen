@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <!--
     If you are serving your web app in a path other than the root, change the
@@ -18,18 +18,39 @@
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="A new Flutter project.">
+  <meta name="description" content="Auxilia keeps study tasks, reminders and shared group work in one calm workspace.">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+
+  <!--
+    Content Security Policy for the Flutter web build.
+
+    * Scripts stay same-origin; the only third-party script is Cloudflare
+      Turnstile, which is used for bot protection on authentication forms.
+    * CanvasKit/WASM needs 'wasm-unsafe-eval'. Release builds do not require
+      'unsafe-eval'; keep it out so injected strings cannot be evaluated.
+    * Flutter renders through inline styles, so style-src needs
+      'unsafe-inline'. Styles carry no secrets.
+    * API calls are limited to HTTPS plus localhost for development.
+
+    Serve these headers from the production host as well (meta tags cannot set
+    frame-ancestors or HSTS):
+      Content-Security-Policy: frame-ancestors 'none'
+      Strict-Transport-Security: max-age=31536000; includeSubDomains
+      X-Content-Type-Options: nosniff
+      Referrer-Policy: strict-origin-when-cross-origin
+  -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; script-src 'self' 'wasm-unsafe-eval' https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://challenges.cloudflare.com; worker-src 'self' blob:;">
 
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="apple-mobile-web-app-title" content="frontend">
+  <meta name="apple-mobile-web-app-title" content="Auxilia">
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
 
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon.png"/>
 
-  <title>frontend</title>
+  <title>Auxilia</title>
   <link rel="manifest" href="manifest.json">
 </head>
 <body>

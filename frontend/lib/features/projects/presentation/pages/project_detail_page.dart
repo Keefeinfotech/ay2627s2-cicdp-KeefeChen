@@ -11,7 +11,6 @@ import '../../../../core/widgets/app_error_state.dart';
 import '../../../../core/widgets/app_loading.dart';
 import '../../../../core/widgets/app_snackbar.dart';
 import '../../../../core/widgets/app_status_badge.dart';
-import '../../../home/data/task_repository.dart';
 import 'package:frontend/features/home/data/api_task_repository.dart';
 import '../../../home/data/task_store.dart';
 import '../../../home/models/task.dart';
@@ -54,10 +53,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
     _ownsStore = widget.store == null;
     _store =
         widget.store ??
-        TaskStore(
-          repository: ApiTaskRepository(),
-          ownerId: widget.ownerId,
-        );
+        TaskStore(repository: ApiTaskRepository(), ownerId: widget.ownerId);
     _ownsController = widget.controller == null;
     _controller =
         widget.controller ??
@@ -116,7 +112,8 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
-      builder: (_) => TaskEditor(initialCourse: project.name),
+      builder: (_) =>
+          TaskEditor(initialCourse: project.name, existingTags: _store.allTags),
     );
     if (draft == null || !mounted) return;
     final saved = await _store.addTask(
@@ -124,6 +121,10 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
         title: draft.title,
         notes: draft.notes,
         course: project.name,
+        tags: draft.tags,
+        groupId: draft.groupId,
+        assigneeId: draft.assigneeId,
+        assigneeName: draft.assigneeName,
         priority: draft.priority,
         dueDate: draft.dueDate,
         reminderAt: draft.reminderAt,
@@ -141,7 +142,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
-      builder: (_) => TaskEditor(initial: task),
+      builder: (_) => TaskEditor(initial: task, existingTags: _store.allTags),
     );
     if (draft == null || !mounted) return;
     final saved = await _store.updateTask(task.id, draft);

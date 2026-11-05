@@ -13,10 +13,11 @@ import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/widgets/app_text_field.dart';
 import '../../authentication/data/auth_service.dart';
 import '../../authentication/data/session_store.dart';
+import '../../profile/data/avatar_store.dart';
 import '../../profile/widgets/profile_sheet.dart';
+import '../../reminders/widgets/reminder_host.dart';
+import '../data/api_task_repository.dart';
 import '../data/gamification.dart';
-import '../data/task_repository.dart';
-import 'package:frontend/features/home/data/api_task_repository.dart';
 import '../data/task_store.dart';
 import '../data/task_validation.dart';
 import '../models/task.dart';
@@ -38,6 +39,7 @@ class HomeScreen extends StatefulWidget {
     this.displayName,
     this.session,
     this.store,
+    this.avatarStore,
     this.onOpenAssistant,
     this.onOpenProfile,
   });
@@ -46,6 +48,7 @@ class HomeScreen extends StatefulWidget {
   final String? displayName;
   final Session? session;
   final TaskStore? store;
+  final AvatarStore? avatarStore;
 
   /// When provided, the shell selects its Assistant tab instead of pushing the
   /// legacy chat route.
@@ -71,7 +74,7 @@ class _HomeScreenState extends State<HomeScreen> {
     _store =
         widget.store ??
         TaskStore(
-          repository: ApiTaskRepository(token: widget.session?.token),
+          repository: ApiTaskRepository(token: widget.session?.token ?? ''),
           ownerId: widget.ownerId,
         );
     _store.addListener(_handleStoreChanged);
@@ -103,7 +106,7 @@ class _HomeScreenState extends State<HomeScreen> {
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
-      builder: (_) => const TaskEditor(),
+      builder: (_) => TaskEditor(existingTags: _store.allTags),
     );
     if (draft == null || !mounted) return;
 
@@ -128,7 +131,7 @@ class _HomeScreenState extends State<HomeScreen> {
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
-      builder: (_) => TaskEditor(initial: task),
+      builder: (_) => TaskEditor(initial: task, existingTags: _store.allTags),
     );
     if (draft == null || !mounted) return;
 
@@ -347,6 +350,7 @@ class _HomeScreenState extends State<HomeScreen> {
           DashboardHeader(
             store: _store,
             displayName: widget.displayName,
+            avatarStore: widget.avatarStore,
             onAchievements: _showAchievements,
             onProfile: _showProfile,
           ),
@@ -355,6 +359,10 @@ class _HomeScreenState extends State<HomeScreen> {
           if (_store.pageCount > 1) ...<Widget>[
             const SizedBox(height: AppSpacing.md),
             _pagination(context),
+          ],
+          if (_store.upcomingReminders.isNotEmpty) ...<Widget>[
+            const SizedBox(height: AppSpacing.lg),
+            ReminderSection(store: _store, onOpenTask: _editTask),
           ],
           const SizedBox(height: AppSpacing.xl),
           AppSectionHeader(

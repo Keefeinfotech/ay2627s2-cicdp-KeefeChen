@@ -42,6 +42,7 @@ class _QuickAddTaskSheetState extends State<QuickAddTaskSheet> {
   );
   late TaskPriority _priority = widget.initialPriority;
   late String? _project = widget.initialProject;
+  List<String> _tags = const <String>[];
   DateTime? _dueDate;
   bool _saving = false;
   bool _manualEdit = false;
@@ -69,6 +70,7 @@ class _QuickAddTaskSheetState extends State<QuickAddTaskSheet> {
     _priority = preview.priority;
     _dueDate = preview.dueDate;
     _project = preview.project ?? _project;
+    _tags = preview.tags;
     _manualEdit = false;
   }
 
@@ -127,6 +129,7 @@ class _QuickAddTaskSheetState extends State<QuickAddTaskSheet> {
         priority: _priority,
         dueDate: _dueDate,
         course: _project ?? '',
+        tags: _tags,
       ),
     );
 
@@ -372,6 +375,26 @@ class _QuickAddTaskSheetState extends State<QuickAddTaskSheet> {
                                     label: const Text('Clear due date'),
                                   ),
                                 ),
+                              if (_tags.isNotEmpty) ...<Widget>[
+                                const SizedBox(height: AppSpacing.xs),
+                                Wrap(
+                                  spacing: AppSpacing.xs,
+                                  runSpacing: AppSpacing.xs,
+                                  children: <Widget>[
+                                    for (final tag in _tags)
+                                      InputChip(
+                                        label: Text('#$tag'),
+                                        onDeleted: () => setState(() {
+                                          _tags = _tags
+                                              .where((item) => item != tag)
+                                              .toList(growable: false);
+                                        }),
+                                        deleteButtonTooltipMessage:
+                                            'Remove tag $tag',
+                                      ),
+                                  ],
+                                ),
+                              ],
                             ],
                           ),
                         ),

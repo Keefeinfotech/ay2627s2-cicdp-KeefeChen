@@ -4,7 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:frontend/features/onboarding/data/onboarding_store.dart';
 import 'package:frontend/features/onboarding/screens/onboarding_screen.dart';
-import 'package:frontend/theme/app_theme.dart';
+import 'package:frontend/core/theme/app_theme.dart';
 
 void main() {
   setUp(() {

@@ -10,7 +10,6 @@ import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_snackbar.dart';
 import '../../../../core/widgets/app_status_badge.dart';
 import '../../../authentication/models/session.dart';
-import '../../../home/data/task_repository.dart';
 import 'package:frontend/features/home/data/api_task_repository.dart';
 import '../../../home/data/task_store.dart';
 import '../../../home/models/task.dart';
@@ -69,10 +68,7 @@ class _AssistantPageState extends State<AssistantPage> {
     _ownsStore = widget.store == null;
     _store =
         widget.store ??
-        TaskStore(
-          repository: ApiTaskRepository(),
-          ownerId: widget.ownerId,
-        );
+        TaskStore(repository: ApiTaskRepository(), ownerId: widget.ownerId);
     if (_ownsStore && !_store.hasLoaded && !_store.isLoading) _store.load();
   }
 

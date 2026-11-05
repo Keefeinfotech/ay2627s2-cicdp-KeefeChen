@@ -8,7 +8,7 @@ import 'package:frontend/features/authentication/screens/startup_gate.dart';
 import 'package:frontend/features/home/data/task_repository.dart';
 import 'package:frontend/features/home/data/task_store.dart';
 import 'package:frontend/features/onboarding/data/onboarding_store.dart';
-import 'package:frontend/theme/app_theme.dart';
+import 'package:frontend/core/theme/app_theme.dart';
 
 class _FakeAuth extends AuthService {
   _FakeAuth(this.session);

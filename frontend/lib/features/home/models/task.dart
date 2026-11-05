@@ -43,6 +43,10 @@ class Task {
     required this.createdAt,
     required this.updatedAt,
     this.course = '',
+    this.tags = const <String>[],
+    this.groupId,
+    this.assigneeId,
+    this.assigneeName,
     this.dueDate,
     this.reminderAt,
     this.completedAt,
@@ -50,6 +54,36 @@ class Task {
   });
 
   static const Object _unset = Object();
+
+  /// Maximum number of tags a single task may carry. Kept in sync with the
+  /// backend schema and the editor validation.
+  static const int maxTags = 8;
+
+  /// Maximum length of one tag, excluding the leading `#`.
+  static const int maxTagLength = 24;
+
+  /// Normalises user-entered tags by trimming, collapsing whitespace and
+  /// de-duplicating case-insensitively. The original casing of the first
+  /// occurrence is preserved so `#Maths` stays readable.
+  static List<String> normalizeTags(Iterable<String> raw) {
+    final seen = <String>{};
+    final result = <String>[];
+    for (final value in raw) {
+      final trimmed = value
+          .replaceFirst(RegExp(r'^#+'), '')
+          .replaceAll(RegExp(r'\s+'), ' ')
+          .trim();
+      if (trimmed.isEmpty) continue;
+      if (trimmed.length > maxTagLength) {
+        continue;
+      }
+      final key = trimmed.toLowerCase();
+      if (!seen.add(key)) continue;
+      result.add(trimmed);
+      if (result.length >= maxTags) break;
+    }
+    return List<String>.unmodifiable(result);
+  }
 
   static Task? tryFromBackend(Map<String, dynamic> json) {
     final id = json['_id'] ?? json['id'];
@@ -70,11 +104,18 @@ class Task {
     final createdRaw = json['createdAt'];
     final updatedRaw = json['updatedAt'];
     final completedRaw = json['completedAt'];
+    final tagsRaw = json['tags'];
     return Task(
       id: id,
       title: title,
       notes: notes,
       course: course,
+      tags: tagsRaw is List
+          ? normalizeTags(tagsRaw.whereType<String>())
+          : const <String>[],
+      groupId: _stringOrNull(json['groupId']),
+      assigneeId: _stringOrNull(json['assigneeId']),
+      assigneeName: _stringOrNull(json['assigneeName']),
       priority: priority,
       status: status,
       dueDate: dueRaw is String ? DateTime.tryParse(dueRaw) : null,
@@ -85,18 +126,28 @@ class Task {
       updatedAt: updatedRaw is String
           ? (DateTime.tryParse(updatedRaw) ?? DateTime.now())
           : DateTime.now(),
-      completedAt: completedRaw is String ? DateTime.tryParse(completedRaw) : null,
+      completedAt: completedRaw is String
+          ? DateTime.tryParse(completedRaw)
+          : null,
       xpAwarded: status == TaskStatus.completed,
     );
   }
-
-  static final Random _random = Random();
-  static int _sequence = 0;
 
   final String id;
   final String title;
   final String notes;
   final String course;
+
+  /// Lightweight user-defined labels such as `Maths` or `Group project`.
+  final List<String> tags;
+
+  /// Optional group workspace this task belongs to.
+  final String? groupId;
+
+  /// Optional group member the task is assigned to.
+  final String? assigneeId;
+  final String? assigneeName;
+
   final TaskPriority priority;
   final TaskStatus status;
   final DateTime? dueDate;
@@ -114,10 +165,26 @@ class Task {
   bool get isOverdue =>
       !isCompleted && dueDate != null && dueDate!.isBefore(DateTime.now());
 
+  bool get hasReminder => reminderAt != null;
+
+  bool get isAssigned => assigneeId != null && assigneeId!.isNotEmpty;
+
+  /// A reminder is due when it is at or before [now] and the task is still
+  /// open. Completed tasks never raise reminders.
+  bool isReminderDue([DateTime? now]) {
+    final reminder = reminderAt;
+    if (reminder == null || isCompleted) return false;
+    return !reminder.isAfter(now ?? DateTime.now());
+  }
+
   factory Task.create({
     required String title,
     String notes = '',
     String course = '',
+    Iterable<String> tags = const <String>[],
+    String? groupId,
+    String? assigneeId,
+    String? assigneeName,
     TaskPriority priority = TaskPriority.medium,
     DateTime? dueDate,
     DateTime? reminderAt,
@@ -129,6 +196,10 @@ class Task {
       title: title.trim(),
       notes: notes.trim(),
       course: course.trim(),
+      tags: normalizeTags(tags),
+      groupId: _stringOrNull(groupId),
+      assigneeId: _stringOrNull(assigneeId),
+      assigneeName: _stringOrNull(assigneeName),
       priority: priority,
       status: TaskStatus.pending,
       dueDate: dueDate,
@@ -142,6 +213,10 @@ class Task {
     String? title,
     String? notes,
     String? course,
+    Iterable<String>? tags,
+    Object? groupId = _unset,
+    Object? assigneeId = _unset,
+    Object? assigneeName = _unset,
     TaskPriority? priority,
     TaskStatus? status,
     DateTime? updatedAt,
@@ -155,6 +230,16 @@ class Task {
       title: title ?? this.title,
       notes: notes ?? this.notes,
       course: course ?? this.course,
+      tags: tags == null ? this.tags : normalizeTags(tags),
+      groupId: identical(groupId, _unset)
+          ? this.groupId
+          : _stringOrNull(groupId),
+      assigneeId: identical(assigneeId, _unset)
+          ? this.assigneeId
+          : _stringOrNull(assigneeId),
+      assigneeName: identical(assigneeName, _unset)
+          ? this.assigneeName
+          : _stringOrNull(assigneeName),
       priority: priority ?? this.priority,
       status: status ?? this.status,
       dueDate: identical(dueDate, _unset) ? this.dueDate : dueDate as DateTime?,
@@ -176,6 +261,10 @@ class Task {
       'title': title,
       'notes': notes,
       'course': course,
+      'tags': tags,
+      'groupId': groupId,
+      'assigneeId': assigneeId,
+      'assigneeName': assigneeName,
       'priority': priority.name,
       'status': status.name,
       'dueDate': dueDate?.toUtc().toIso8601String(),
@@ -206,11 +295,18 @@ class Task {
       return null;
     }
 
+    final rawTags = raw['tags'];
     return Task(
       id: id,
       title: title.trim(),
       notes: raw['notes'] is String ? raw['notes'] as String : '',
       course: raw['course'] is String ? (raw['course'] as String).trim() : '',
+      tags: rawTags is List
+          ? normalizeTags(rawTags.whereType<String>())
+          : const <String>[],
+      groupId: _stringOrNull(raw['groupId']),
+      assigneeId: _stringOrNull(raw['assigneeId']),
+      assigneeName: _stringOrNull(raw['assigneeName']),
       priority: TaskPriorityLabel.fromName(raw['priority'] as String?),
       status: TaskStatusLabel.fromName(raw['status'] as String?),
       dueDate: _parseDate(raw['dueDate']),
@@ -225,6 +321,12 @@ class Task {
   static DateTime? _parseDate(Object? value) {
     if (value is! String || value.isEmpty) return null;
     return DateTime.tryParse(value)?.toLocal();
+  }
+
+  static String? _stringOrNull(Object? value) {
+    if (value is! String) return null;
+    final trimmed = value.trim();
+    return trimmed.isEmpty ? null : trimmed;
   }
 
   static String _generateId(DateTime timestamp) {
@@ -251,6 +353,10 @@ class TaskDraft {
     required this.title,
     this.notes = '',
     this.course = '',
+    this.tags = const <String>[],
+    this.groupId,
+    this.assigneeId,
+    this.assigneeName,
     this.priority = TaskPriority.medium,
     this.dueDate,
     this.reminderAt,
@@ -259,6 +365,10 @@ class TaskDraft {
   final String title;
   final String notes;
   final String course;
+  final List<String> tags;
+  final String? groupId;
+  final String? assigneeId;
+  final String? assigneeName;
   final TaskPriority priority;
   final DateTime? dueDate;
   final DateTime? reminderAt;
@@ -267,6 +377,10 @@ class TaskDraft {
     String? title,
     String? notes,
     String? course,
+    Iterable<String>? tags,
+    Object? groupId = Task._unset,
+    Object? assigneeId = Task._unset,
+    Object? assigneeName = Task._unset,
     TaskPriority? priority,
     Object? dueDate = Task._unset,
     Object? reminderAt = Task._unset,
@@ -275,6 +389,16 @@ class TaskDraft {
       title: title ?? this.title,
       notes: notes ?? this.notes,
       course: course ?? this.course,
+      tags: tags == null ? this.tags : Task.normalizeTags(tags),
+      groupId: identical(groupId, Task._unset)
+          ? this.groupId
+          : groupId as String?,
+      assigneeId: identical(assigneeId, Task._unset)
+          ? this.assigneeId
+          : assigneeId as String?,
+      assigneeName: identical(assigneeName, Task._unset)
+          ? this.assigneeName
+          : assigneeName as String?,
       priority: priority ?? this.priority,
       dueDate: identical(dueDate, Task._unset)
           ? this.dueDate

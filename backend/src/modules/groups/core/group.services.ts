@@ -108,7 +108,34 @@ export class GroupService {
       };
     }
 
-    return groupRepository.list(groupIds, page, limit, search);
+    const result = await groupRepository.list(
+      groupIds,
+      page,
+      limit,
+      search,
+    );
+
+    // Attach the caller's role so the client can show owner/admin actions
+    // without a second request per group.
+    const memberships =
+      await memberRepository.findActiveByUserAndGroupIds(
+        userId,
+        result.items.map((group) => group.groupId),
+      );
+    const roleByGroupId = new Map(
+      memberships.map((membership) => [
+        membership.groupId,
+        membership.role,
+      ]),
+    );
+
+    return {
+      ...result,
+      items: result.items.map((group) => ({
+        ...group,
+        role: roleByGroupId.get(group.groupId) ?? null,
+      })),
+    };
   }
 
   /**

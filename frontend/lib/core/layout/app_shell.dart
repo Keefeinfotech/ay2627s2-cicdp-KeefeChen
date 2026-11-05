@@ -3,15 +3,17 @@ import 'package:flutter/material.dart';
 import '../../features/assistant/presentation/pages/assistant_page.dart';
 import '../../features/authentication/models/session.dart';
 import '../../features/calendar/presentation/pages/calendar_page.dart';
-import '../../features/home/data/task_repository.dart';
-import 'package:frontend/features/home/data/api_task_repository.dart';
+import '../../features/groups/presentation/pages/groups_page.dart';
+import '../../features/home/data/api_task_repository.dart';
 import '../../features/home/data/task_store.dart';
 import '../../features/home/screens/home_screen.dart';
+import '../../features/profile/data/avatar_store.dart';
 import '../../features/profile/pages/profile_page.dart';
 import '../../features/projects/presentation/pages/projects_page.dart';
+import '../../features/reminders/widgets/reminder_host.dart';
 import '../../features/reports/presentation/pages/reports_page.dart';
+import '../../features/sync/widgets/sync_status_banner.dart';
 import '../../features/task_management/presentation/pages/task_management_page.dart';
-import '../theme/app_spacing.dart';
 import '../widgets/app_navigation.dart';
 
 /// The primary destinations of the application shell.
@@ -32,6 +34,11 @@ enum ShellDestination {
     label: 'Projects',
     icon: Icons.workspaces_outline,
     selectedIcon: Icons.workspaces_rounded,
+  ),
+  groups(
+    label: 'Groups',
+    icon: Icons.groups_outlined,
+    selectedIcon: Icons.groups_rounded,
   ),
   calendar(
     label: 'Calendar',
@@ -119,6 +126,7 @@ class _AppShellState extends State<AppShell> {
 
   late final TaskStore _store;
   late final bool _ownsStore;
+  late final AvatarStore _avatarStore;
   final Map<ShellDestination, Widget> _pages = <ShellDestination, Widget>{};
   ShellDestination _selected = ShellDestination.home;
 
@@ -137,15 +145,22 @@ class _AppShellState extends State<AppShell> {
     _store =
         widget.store ??
         TaskStore(
-          repository: ApiTaskRepository(),
+          // Guest workspaces are local-only. Passing an empty token prevents
+          // the repository from probing secure storage, which also keeps the
+          // offline flow deterministic in tests and on platforms without a
+          // secure-storage implementation.
+          repository: ApiTaskRepository(token: widget.session?.token ?? ''),
           ownerId: widget.ownerId,
         );
     if (!_store.hasLoaded && !_store.isLoading) _store.load();
+    _avatarStore = AvatarStore(ownerId: widget.ownerId);
+    _avatarStore.load();
     _pages[ShellDestination.home] = _buildPage(ShellDestination.home);
   }
 
   @override
   void dispose() {
+    _avatarStore.dispose();
     if (_ownsStore) _store.dispose();
     super.dispose();
   }
@@ -158,6 +173,7 @@ class _AppShellState extends State<AppShell> {
         displayName: displayName,
         session: widget.session,
         store: _store,
+        avatarStore: _avatarStore,
         onOpenAssistant: () => _selectPage(ShellDestination.assistant),
         onOpenProfile: () => _selectPage(ShellDestination.profile),
       ),
@@ -168,6 +184,10 @@ class _AppShellState extends State<AppShell> {
       ShellDestination.projects => ProjectsPage(
         ownerId: widget.ownerId,
         store: _store,
+      ),
+      ShellDestination.groups => GroupsPage(
+        store: _store,
+        session: widget.session,
       ),
       ShellDestination.calendar => CalendarPage(
         ownerId: widget.ownerId,
@@ -187,8 +207,10 @@ class _AppShellState extends State<AppShell> {
         store: _store,
         session: widget.session,
         displayName: displayName,
+        avatarStore: _avatarStore,
         onOpenAssistant: () => _selectPage(ShellDestination.assistant),
         onOpenProjects: () => _selectPage(ShellDestination.projects),
+        onOpenGroups: () => _selectPage(ShellDestination.groups),
         onOpenReports: () => _selectPage(ShellDestination.reports),
       ),
     };
@@ -249,26 +271,38 @@ class _AppShellState extends State<AppShell> {
     final bool showRail = !showSidebar && width >= _railBreakpoint;
     final bool compactPhones = width < _compactPhoneBreakpoint;
 
-    final pages = IndexedStack(
-      index: _selected.index,
+    // The sync strip sits above every page so a queued or conflicted change is
+    // visible no matter which workspace the user is in.
+    final pages = Column(
       children: <Widget>[
-        for (final destination in ShellDestination.values)
-          _pages[destination] ?? const SizedBox.shrink(),
+        SyncStatusBanner(store: _store),
+        Expanded(
+          child: IndexedStack(
+            index: _selected.index,
+            children: <Widget>[
+              for (final destination in ShellDestination.values)
+                _pages[destination] ?? const SizedBox.shrink(),
+            ],
+          ),
+        ),
       ],
     );
 
-    return PopScope(
-      canPop: _selected == ShellDestination.home,
-      onPopInvokedWithResult: (didPop, _) {
-        if (!didPop && _selected != ShellDestination.home) {
-          _selectPage(ShellDestination.home);
-        }
-      },
-      child: showSidebar
-          ? _desktopFrame(pages)
-          : showRail
-          ? _tabletFrame(pages)
-          : _phoneFrame(pages, compact: compactPhones),
+    return ReminderHost(
+      store: _store,
+      child: PopScope(
+        canPop: _selected == ShellDestination.home,
+        onPopInvokedWithResult: (didPop, _) {
+          if (!didPop && _selected != ShellDestination.home) {
+            _selectPage(ShellDestination.home);
+          }
+        },
+        child: showSidebar
+            ? _desktopFrame(pages)
+            : showRail
+            ? _tabletFrame(pages)
+            : _phoneFrame(pages, compact: compactPhones),
+      ),
     );
   }
 
@@ -277,16 +311,22 @@ class _AppShellState extends State<AppShell> {
     return Scaffold(
       body: Row(
         children: <Widget>[
-          AppSidebar(
-            destinations: _sidebarDestinations,
-            selectedIndex: _sidebarIndex,
-            onSelected: (index) {
-              if (index < 0 || index >= ShellDestination.values.length) return;
-              _selectPage(ShellDestination.values[index]);
-            },
-            userName: _displayName,
-            userEmail: widget.session?.email,
-            onProfile: () => _selectPage(ShellDestination.profile),
+          AnimatedBuilder(
+            animation: _avatarStore,
+            builder: (context, _) => AppSidebar(
+              destinations: _sidebarDestinations,
+              selectedIndex: _sidebarIndex,
+              onSelected: (index) {
+                if (index < 0 || index >= ShellDestination.values.length) {
+                  return;
+                }
+                _selectPage(ShellDestination.values[index]);
+              },
+              userName: _displayName,
+              userEmail: widget.session?.email,
+              avatarStyle: _avatarStore.style,
+              onProfile: () => _selectPage(ShellDestination.profile),
+            ),
           ),
           VerticalDivider(
             width: 1,
@@ -300,52 +340,21 @@ class _AppShellState extends State<AppShell> {
   }
 
   Widget _tabletFrame(Widget pages) {
-    final theme = Theme.of(context);
     return Scaffold(
-      body: SafeArea(
-        right: false,
-        child: Row(
-          children: <Widget>[
-            DecoratedBox(
-              decoration: BoxDecoration(
-                color: theme.colorScheme.surface,
-                border: Border(
-                  right: BorderSide(color: theme.colorScheme.outlineVariant),
-                ),
-              ),
-              child: NavigationRail(
-                selectedIndex: _sidebarIndex,
-                onDestinationSelected: (index) {
-                  if (index < 0 || index >= ShellDestination.values.length) {
-                    return;
-                  }
-                  _selectPage(ShellDestination.values[index]);
-                },
-                labelType: NavigationRailLabelType.all,
-                groupAlignment: -0.92,
-                leading: const Padding(
-                  padding: EdgeInsets.only(
-                    top: AppSpacing.md,
-                    bottom: AppSpacing.lg,
-                  ),
-                  child: NavigationBrandMark(size: 36),
-                ),
-                destinations: <NavigationRailDestination>[
-                  for (final destination in ShellDestination.values)
-                    NavigationRailDestination(
-                      icon: Icon(destination.icon),
-                      selectedIcon: Icon(destination.selectedIcon),
-                      label: Text(destination.label),
-                      padding: const EdgeInsets.symmetric(
-                        vertical: AppSpacing.xxs,
-                      ),
-                    ),
-                ],
-              ),
-            ),
-            Expanded(child: pages),
-          ],
-        ),
+      body: Row(
+        children: <Widget>[
+          AppNavigationRail(
+            destinations: _sidebarDestinations,
+            selectedIndex: _sidebarIndex,
+            onSelected: (index) {
+              if (index < 0 || index >= ShellDestination.values.length) {
+                return;
+              }
+              _selectPage(ShellDestination.values[index]);
+            },
+          ),
+          Expanded(child: pages),
+        ],
       ),
     );
   }

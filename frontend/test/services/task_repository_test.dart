@@ -3,8 +3,8 @@ import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:frontend/models/task.dart';
-import 'package:frontend/services/task_repository.dart';
+import 'package:frontend/features/home/models/task.dart';
+import 'package:frontend/features/home/data/task_repository.dart';
 
 import '../helpers.dart';
 
