@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../data/task_store.dart';
 
-/// Compact status filters with a Clear Blue selected state.
+/// Compact status and tag filters with a Trust Blue selected state.
 class TaskFilterBar extends StatelessWidget {
   const TaskFilterBar({super.key, required this.store});
 
@@ -11,15 +11,46 @@ class TaskFilterBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Wrap(
-      spacing: AppSpacing.sm,
-      runSpacing: AppSpacing.sm,
+    final tags = store.allTags;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        _chip(context, TaskFilter.all, 'All (${store.tasks.length})'),
-        _chip(context, TaskFilter.pending, 'To do (${store.pendingCount})'),
-        if (store.overdueCount > 0)
-          _chip(context, TaskFilter.overdue, 'Overdue (${store.overdueCount})'),
-        _chip(context, TaskFilter.completed, 'Done (${store.completedCount})'),
+        Wrap(
+          spacing: AppSpacing.sm,
+          runSpacing: AppSpacing.sm,
+          children: <Widget>[
+            _chip(context, TaskFilter.all, 'All (${store.tasks.length})'),
+            _chip(context, TaskFilter.pending, 'To do (${store.pendingCount})'),
+            if (store.overdueCount > 0)
+              _chip(
+                context,
+                TaskFilter.overdue,
+                'Overdue (${store.overdueCount})',
+              ),
+            _chip(
+              context,
+              TaskFilter.completed,
+              'Done (${store.completedCount})',
+            ),
+          ],
+        ),
+        if (tags.isNotEmpty) ...<Widget>[
+          const SizedBox(height: AppSpacing.sm),
+          Wrap(
+            spacing: AppSpacing.xs,
+            runSpacing: AppSpacing.xs,
+            children: <Widget>[
+              for (final tag in tags.take(8))
+                FilterChip(
+                  label: Text('#$tag'),
+                  selected: store.tagFilter?.toLowerCase() == tag.toLowerCase(),
+                  showCheckmark: false,
+                  onSelected: (selected) =>
+                      store.setTagFilter(selected ? tag : null),
+                ),
+            ],
+          ),
+        ],
       ],
     );
   }

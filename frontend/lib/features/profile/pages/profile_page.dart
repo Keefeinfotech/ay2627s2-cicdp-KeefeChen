@@ -2,18 +2,24 @@ import 'package:flutter/material.dart';
 import 'package:frontend/features/authentication/models/session.dart';
 import 'package:frontend/features/home/data/task_store.dart';
 
-import 'package:frontend/core/constants/app_constants.dart';
-import 'package:frontend/core/routing/app_router.dart';
-import 'package:frontend/core/theme/app_colors.dart';
-import 'package:frontend/core/theme/app_spacing.dart';
-import 'package:frontend/core/widgets/app_app_bar.dart';
-import 'package:frontend/core/widgets/app_avatar.dart';
-import 'package:frontend/core/widgets/app_dialog.dart';
-import 'package:frontend/core/widgets/app_snackbar.dart';
-import 'package:frontend/core/widgets/app_status_badge.dart';
-import 'package:frontend/features/authentication/data/auth_service.dart';
-import 'package:frontend/features/authentication/data/session_store.dart';
-import 'package:frontend/features/home/widgets/achievements_dialog.dart';
+import '../../../core/constants/app_constants.dart';
+import '../../../core/routing/app_router.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
+import '../../../core/widgets/app_app_bar.dart';
+import '../../../core/widgets/app_avatar.dart';
+import '../../../core/widgets/app_dialog.dart';
+import '../../../core/widgets/app_empty_state.dart';
+import '../../../core/widgets/app_snackbar.dart';
+import '../../../core/widgets/app_status_badge.dart';
+import '../../authentication/data/auth_service.dart';
+import '../../authentication/data/session_store.dart';
+import '../../authentication/models/session.dart';
+import '../../home/data/task_store.dart';
+import '../../home/widgets/achievements_dialog.dart';
+import '../../sync/widgets/sync_center_dialog.dart';
+import '../data/avatar_store.dart';
+import '../widgets/avatar_editor_dialog.dart';
 
 /// Full-page profile and workspace settings surface.
 class ProfilePage extends StatelessWidget {
@@ -22,16 +28,20 @@ class ProfilePage extends StatelessWidget {
     required this.store,
     this.session,
     this.displayName,
+    this.avatarStore,
     required this.onOpenAssistant,
     this.onOpenProjects,
+    this.onOpenGroups,
     this.onOpenReports,
   });
 
   final TaskStore store;
   final Session? session;
   final String? displayName;
+  final AvatarStore? avatarStore;
   final VoidCallback onOpenAssistant;
   final VoidCallback? onOpenProjects;
+  final VoidCallback? onOpenGroups;
   final VoidCallback? onOpenReports;
 
   String get _name {
@@ -44,6 +54,20 @@ class ProfilePage extends StatelessWidget {
 
   Future<void> _showAchievements(BuildContext context) async {
     await showAchievementsDialog(context, achievements: store.achievements);
+  }
+
+  Future<void> _editAvatar(BuildContext context) async {
+    final avatarStore = this.avatarStore;
+    if (avatarStore == null) return;
+    final saved = await showAvatarEditorDialog(
+      context,
+      avatarStore,
+      name: session?.displayName ?? _name,
+      email: session?.email,
+    );
+    if (saved && context.mounted) {
+      AppSnackBar.success(context, 'Avatar updated.');
+    }
   }
 
   Future<void> _clearTasks(BuildContext context) async {
@@ -146,12 +170,33 @@ class ProfilePage extends StatelessWidget {
                           ),
                           const Divider(height: 1),
                         ],
+                        if (onOpenGroups != null) ...<Widget>[
+                          _ProfileActionTile(
+                            icon: Icons.groups_outlined,
+                            title: 'Groups',
+                            subtitle:
+                                'Invite teammates and assign shared tasks',
+                            onTap: onOpenGroups!,
+                          ),
+                          const Divider(height: 1),
+                        ],
                         _ProfileActionTile(
                           icon: Icons.emoji_events_outlined,
                           title: 'Achievements',
                           subtitle: '$unlocked of $totalAchievements unlocked',
                           onTap: () => _showAchievements(context),
                         ),
+                        if (store.isSyncAware) ...<Widget>[
+                          const Divider(height: 1),
+                          _ProfileActionTile(
+                            icon: Icons.cloud_sync_outlined,
+                            title: 'Sync centre',
+                            subtitle:
+                                store.syncSnapshot?.label ??
+                                'Review queued changes and conflicts',
+                            onTap: () => showSyncCenterDialog(context, store),
+                          ),
+                        ],
                         const Divider(height: 1),
                         _ProfileActionTile(
                           icon: Icons.auto_awesome_outlined,
@@ -169,6 +214,16 @@ class ProfilePage extends StatelessWidget {
                     _actionGroup(
                       context,
                       children: <Widget>[
+                        if (avatarStore != null) ...<Widget>[
+                          _ProfileActionTile(
+                            icon: Icons.face_retouching_natural_outlined,
+                            title: 'Customize avatar',
+                            subtitle:
+                                'Choose an accent colour and a glyph or initials',
+                            onTap: () => _editAvatar(context),
+                          ),
+                          const Divider(height: 1),
+                        ],
                         if (session == null)
                           _ProfileActionTile(
                             icon: Icons.login_rounded,
@@ -233,12 +288,25 @@ class ProfilePage extends StatelessWidget {
         builder: (context, constraints) {
           final identity = Row(
             children: <Widget>[
-              AppAvatar(
-                name: session?.displayName ?? _name,
-                email: session?.email,
-                size: 56,
-                tooltip: 'Profile',
-              ),
+              if (avatarStore == null)
+                AppAvatar(
+                  name: session?.displayName ?? _name,
+                  email: session?.email,
+                  size: 56,
+                  tooltip: 'Profile',
+                )
+              else
+                AnimatedBuilder(
+                  animation: avatarStore!,
+                  builder: (context, _) => AppAvatar(
+                    name: session?.displayName ?? _name,
+                    email: session?.email,
+                    size: 56,
+                    style: avatarStore!.style,
+                    tooltip: 'Customize avatar',
+                    onTap: () => _editAvatar(context),
+                  ),
+                ),
               const SizedBox(width: AppSpacing.md),
               Expanded(
                 child: Column(

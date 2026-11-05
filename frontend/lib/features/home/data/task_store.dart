@@ -1,5 +1,8 @@
 import 'package:flutter/foundation.dart';
 
+import '../../sync/models/sync_conflict.dart';
+import '../../sync/models/sync_operation.dart';
+import '../../sync/models/sync_snapshot.dart';
 import '../models/task.dart';
 import 'gamification.dart';
 import 'task_repository.dart';
@@ -7,18 +10,35 @@ import 'task_validation.dart';
 
 enum TaskFilter { all, pending, overdue, completed }
 
-enum SyncStatus { synced, pendingSync, syncing, syncFailed, conflict }
+enum SyncStatus {
+  localOnly,
+  synced,
+  pendingSync,
+  syncing,
+  offline,
+  syncFailed,
+  conflict,
+}
 
 class TaskStore extends ChangeNotifier {
   TaskStore({
     required this.repository,
     required this.ownerId,
     this.pageSize = 20,
-  }) : assert(pageSize > 0);
+  }) : assert(pageSize > 0) {
+    final candidate = repository;
+    if (candidate is SyncAwareTaskRepository) {
+      _syncAware = candidate;
+      _syncAware!.syncState.addListener(_onSyncChanged);
+      _applySnapshot(_syncAware!.syncState.value);
+    }
+  }
 
   final TaskRepository repository;
   final String ownerId;
   final int pageSize;
+
+  SyncAwareTaskRepository? _syncAware;
 
   List<Task> _tasks = <Task>[];
   List<Task>? _filteredTasksCache;
@@ -30,6 +50,7 @@ class TaskStore extends ChangeNotifier {
   String? _error;
 
   TaskFilter _filter = TaskFilter.all;
+  String? _tagFilter;
   String _query = '';
   int _page = 0;
 
@@ -39,16 +60,54 @@ class TaskStore extends ChangeNotifier {
 
   SyncStatus get syncStatus => _syncStatus;
 
+  SyncSnapshot? get syncSnapshot => _syncAware?.syncState.value;
+
+  List<SyncConflict> get syncConflicts =>
+      _syncAware?.conflicts ?? const <SyncConflict>[];
+
+  List<SyncOperation> get pendingOperations =>
+      _syncAware?.operations ?? const <SyncOperation>[];
+
+  bool get isSyncAware => _syncAware != null;
+
   bool get isLoading => _loading;
 
   bool get hasLoaded => _hasLoaded;
 
   SyncStatus? get syncStatusOpt =>
-      _syncStatus == SyncStatus.synced ? null : _syncStatus;
+      _syncStatus == SyncStatus.synced || _syncStatus == SyncStatus.localOnly
+      ? null
+      : _syncStatus;
+
+  /// Replays the offline queue. A no-op for local-only repositories.
+  Future<void> retrySync() async {
+    await _syncAware?.retrySync();
+  }
+
+  /// Resolves a queued conflict and refreshes the local list afterwards.
+  Future<bool> resolveSyncConflict(
+    SyncConflict conflict,
+    ConflictResolution resolution,
+  ) async {
+    final syncAware = _syncAware;
+    if (syncAware == null) return false;
+
+    final result = await syncAware.resolveConflict(conflict, resolution);
+    if (!result.success) {
+      _error = result.error;
+      notifyListeners();
+      return false;
+    }
+
+    await load();
+    return true;
+  }
 
   String? get error => _error;
 
   TaskFilter get filter => _filter;
+
+  String? get tagFilter => _tagFilter;
 
   String get query => _query;
 
@@ -62,6 +121,43 @@ class TaskStore extends ChangeNotifier {
   int get completedCount => _tasks.length - pendingCount;
 
   int get overdueCount => _tasks.where((task) => task.isOverdue).length;
+
+  /// Every tag in use, ordered by frequency and then alphabetically. The
+  /// result is stable so filter chips do not jump between rebuilds.
+  List<String> get allTags {
+    final counts = <String, int>{};
+    final labels = <String, String>{};
+    for (final task in _tasks) {
+      for (final tag in task.tags) {
+        final key = tag.toLowerCase();
+        counts[key] = (counts[key] ?? 0) + 1;
+        labels.putIfAbsent(key, () => tag);
+      }
+    }
+    final keys = counts.keys.toList(growable: false)
+      ..sort((a, b) {
+        final byCount = counts[b]!.compareTo(counts[a]!);
+        return byCount != 0 ? byCount : a.compareTo(b);
+      });
+    return keys.map((key) => labels[key]!).toList(growable: false);
+  }
+
+  /// Open tasks with a reminder, earliest first.
+  List<Task> get upcomingReminders {
+    final reminders = _tasks
+        .where((task) => !task.isCompleted && task.reminderAt != null)
+        .toList(growable: false);
+    reminders.sort((a, b) => a.reminderAt!.compareTo(b.reminderAt!));
+    return reminders;
+  }
+
+  /// Reminders that are due at [now] and have not been completed.
+  List<Task> dueReminders({DateTime? now}) {
+    final reference = now ?? DateTime.now();
+    return _tasks
+        .where((task) => task.isReminderDue(reference))
+        .toList(growable: false);
+  }
 
   int get dueTodayCount => _tasks.where(_isDueToday).length;
 
@@ -118,11 +214,24 @@ class TaskStore extends ChangeNotifier {
               break;
           }
 
+          final tagFilter = _tagFilter;
+          if (tagFilter != null &&
+              !task.tags.any(
+                (tag) => tag.toLowerCase() == tagFilter.toLowerCase(),
+              )) {
+            return false;
+          }
+
           if (normalizedQuery.isEmpty) return true;
 
           return task.title.toLowerCase().contains(normalizedQuery) ||
               task.notes.toLowerCase().contains(normalizedQuery) ||
-              task.course.toLowerCase().contains(normalizedQuery);
+              task.course.toLowerCase().contains(normalizedQuery) ||
+              task.tags.any(
+                (tag) => tag.toLowerCase().contains(normalizedQuery),
+              ) ||
+              (task.assigneeName?.toLowerCase().contains(normalizedQuery) ??
+                  false);
         })
         .toList(growable: false);
 
@@ -175,6 +284,31 @@ class TaskStore extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Applies a tag filter. Passing null clears it.
+  void setTagFilter(String? tag) {
+    final normalized = tag?.trim();
+    if (_tagFilter == normalized) return;
+
+    _tagFilter = normalized == null || normalized.isEmpty ? null : normalized;
+    _invalidateCache();
+    _page = 0;
+
+    notifyListeners();
+  }
+
+  /// Clears every list filter and the search query in one step.
+  void clearFilters() {
+    if (_filter == TaskFilter.all && _tagFilter == null && _query.isEmpty) {
+      return;
+    }
+    _filter = TaskFilter.all;
+    _tagFilter = null;
+    _query = '';
+    _invalidateCache();
+    _page = 0;
+    notifyListeners();
+  }
+
   void nextPage() {
     if (!canGoToNextPage) return;
 
@@ -205,6 +339,31 @@ class TaskStore extends ChangeNotifier {
     _syncStatus = status;
 
     notifyListeners();
+  }
+
+  void _onSyncChanged() {
+    final snapshot = _syncAware?.syncState.value;
+    if (snapshot == null) return;
+    _applySnapshot(snapshot);
+    notifyListeners();
+  }
+
+  void _applySnapshot(SyncSnapshot snapshot) {
+    _syncStatus = switch (snapshot.phase) {
+      SyncPhase.localOnly => SyncStatus.localOnly,
+      SyncPhase.synced => SyncStatus.synced,
+      SyncPhase.pending => SyncStatus.pendingSync,
+      SyncPhase.syncing => SyncStatus.syncing,
+      SyncPhase.offline => SyncStatus.offline,
+      SyncPhase.failed => SyncStatus.syncFailed,
+      SyncPhase.conflict => SyncStatus.conflict,
+    };
+  }
+
+  @override
+  void dispose() {
+    _syncAware?.syncState.removeListener(_onSyncChanged);
+    super.dispose();
   }
 
   // ---------------------------------------------------------------------------
@@ -261,6 +420,10 @@ class TaskStore extends ChangeNotifier {
       title: draft.title,
       notes: draft.notes,
       course: draft.course,
+      tags: draft.tags,
+      groupId: draft.groupId,
+      assigneeId: draft.assigneeId,
+      assigneeName: draft.assigneeName,
       priority: draft.priority,
       dueDate: draft.dueDate,
       reminderAt: draft.reminderAt,
@@ -296,6 +459,10 @@ class TaskStore extends ChangeNotifier {
       title: draft.title.trim(),
       notes: draft.notes.trim(),
       course: draft.course.trim(),
+      tags: draft.tags,
+      groupId: draft.groupId,
+      assigneeId: draft.assigneeId,
+      assigneeName: draft.assigneeName,
       priority: draft.priority,
       dueDate: draft.dueDate,
       reminderAt: draft.reminderAt,
@@ -338,6 +505,65 @@ class TaskStore extends ChangeNotifier {
 
     next[index] = updated;
 
+    return _commit(next);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Reminders
+  // ---------------------------------------------------------------------------
+
+  /// Moves a reminder forward so it appears again later without changing the
+  /// due date.
+  Future<bool> snoozeReminder(
+    String id, {
+    Duration delay = const Duration(minutes: 10),
+  }) async {
+    final index = _tasks.indexWhere((task) => task.id == id);
+    if (index < 0) return false;
+
+    final next = List<Task>.of(_tasks);
+    next[index] = _tasks[index].copyWith(
+      reminderAt: DateTime.now().add(delay),
+      updatedAt: DateTime.now(),
+    );
+    return _commit(next);
+  }
+
+  /// Removes a reminder while keeping the task itself intact.
+  Future<bool> clearReminder(String id) async {
+    final index = _tasks.indexWhere((task) => task.id == id);
+    if (index < 0) return false;
+
+    final next = List<Task>.of(_tasks);
+    next[index] = _tasks[index].copyWith(
+      reminderAt: null,
+      updatedAt: DateTime.now(),
+    );
+    return _commit(next);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Assignment
+  // ---------------------------------------------------------------------------
+
+  /// Assigns or unassigns a task. Passing null for [assigneeId] clears the
+  /// assignment; [groupId] identifies the workspace the assignee belongs to.
+  Future<bool> assignTask(
+    String id, {
+    required String? groupId,
+    required String? assigneeId,
+    String? assigneeName,
+  }) async {
+    final index = _tasks.indexWhere((task) => task.id == id);
+    if (index < 0) return false;
+
+    final next = List<Task>.of(_tasks);
+    next[index] = _tasks[index].copyWith(
+      groupId: groupId,
+      assigneeId: assigneeId,
+      assigneeName: assigneeId == null ? null : assigneeName,
+      updatedAt: DateTime.now(),
+    );
     return _commit(next);
   }
 

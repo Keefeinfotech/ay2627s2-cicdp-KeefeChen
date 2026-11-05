@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:frontend/features/home/widgets/task_card.dart';
 
 import 'package:frontend/features/home/models/task.dart';
+import 'package:frontend/features/home/widgets/task_card.dart';
 
 import '../helpers.dart';
 

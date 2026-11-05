@@ -1,108 +1,76 @@
-import { Response, NextFunction } from "express";
-import { MemberService } from "./member.services.js";
-import { AuthenticatedRequest } from "./member.types.js";
+/**
+ * File Name: member.controller.ts
+ * Description: Handles HTTP requests for group member operations.
+ */
+
+import type {
+  Request,
+  Response,
+  NextFunction,
+} from "express";
+
+import { MemberService } from "./member.service.js";
+
+const memberService = new MemberService();
+
+function getAuthenticatedUserId(req: Request): string {
+  const userId = req.userId;
+
+  if (!userId) {
+    throw new Error("Authentication required.");
+  }
+
+  return userId;
+}
+
+function getGroupId(req: Request): string {
+  const groupId = req.params.groupId;
+
+  if (typeof groupId !== "string" || groupId.length === 0) {
+    throw new Error("Invalid group ID.");
+  }
+
+  return groupId;
+}
 
 export class MemberController {
-  constructor(private readonly memberService: MemberService) {}
-
-  public list = async (
-    req: AuthenticatedRequest,
+  /**
+   * GET /api/groups/:groupId/members
+   */
+  static list = async (
+    req: Request,
     res: Response,
-    next: NextFunction
-  ): Promise<void> => {
+    next: NextFunction,
+  ) => {
     try {
-      const userId = req.user?.id;
-      if (!userId) {
-        res.status(401).json({ success: false, error: "Unauthorized" });
-        return;
-      }
+      const userId = getAuthenticatedUserId(req);
+      const groupId = getGroupId(req);
 
-      const groupId = req.params.groupId as string;
-      const members = await this.memberService.listMembers(groupId, userId);
-      res.status(200).json({ success: true, data: members });
+      const requestedPage = Number(req.query.page);
+      const requestedLimit = Number(req.query.limit);
+
+      const page =
+        Number.isInteger(requestedPage) && requestedPage > 0
+          ? requestedPage
+          : 1;
+
+      const limit =
+        Number.isInteger(requestedLimit) && requestedLimit > 0
+          ? Math.min(requestedLimit, 100)
+          : 50;
+
+      const result = await memberService.list(groupId, userId, {
+        page,
+        limit,
+      });
+
+      return res.status(200).json({
+        message: "Group members retrieved successfully.",
+        data: result.items,
+        pagination: result.pagination,
+      });
     } catch (error) {
-      next(error);
-    }
-  };
-
-  public add = async (
-    req: AuthenticatedRequest,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> => {
-    try {
-      const userId = req.user?.id;
-      if (!userId) {
-        res.status(401).json({ success: false, error: "Unauthorized" });
-        return;
-      }
-
-      const groupId = req.params.groupId as string;
-      const { userId: targetUserId, role } = req.body;
-
-      const member = await this.memberService.addMember(
-        groupId,
-        userId,
-        targetUserId,
-        role
-      );
-      res.status(201).json({ success: true, data: member });
-    } catch (error) {
-      next(error);
-    }
-  };
-
-  public updateRole = async (
-    req: AuthenticatedRequest,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> => {
-    try {
-      const userId = req.user?.id;
-      if (!userId) {
-        res.status(401).json({ success: false, error: "Unauthorized" });
-        return;
-      }
-
-      const groupId = req.params.groupId as string;
-      const targetUserId = req.params.userId as string;
-      const { role } = req.body;
-
-      const updated = await this.memberService.updateMemberRole(
-        groupId,
-        userId,
-        targetUserId,
-        role
-      );
-      res.status(200).json({ success: true, data: updated });
-    } catch (error) {
-      next(error);
-    }
-  };
-
-  public remove = async (
-    req: AuthenticatedRequest,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> => {
-    try {
-      const userId = req.user?.id;
-      if (!userId) {
-        res.status(401).json({ success: false, error: "Unauthorized" });
-        return;
-      }
-
-      const groupId = req.params.groupId as string;
-      const targetUserId = req.params.userId as string;
-
-      const removed = await this.memberService.removeMember(
-        groupId,
-        userId,
-        targetUserId
-      );
-      res.status(200).json({ success: true, data: removed });
-    } catch (error) {
-      next(error);
+      return next(error);
     }
   };
 }

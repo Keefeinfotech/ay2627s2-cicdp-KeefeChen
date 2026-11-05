@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 
-import 'package:frontend/core/theme/app_colors.dart';
-import 'package:frontend/core/theme/app_spacing.dart';
-import 'package:frontend/core/widgets/app_avatar.dart';
-import 'package:frontend/features/home/data/task_store.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
+import '../../../core/widgets/app_avatar.dart';
+import '../../home/data/task_store.dart';
+import '../../profile/data/avatar_store.dart';
 
 /// The calm overview at the top of the dashboard.
 ///
@@ -17,51 +18,19 @@ class DashboardHeader extends StatelessWidget {
     required this.displayName,
     required this.onAchievements,
     required this.onProfile,
+    this.avatarStore,
   });
 
   final TaskStore store;
   final String? displayName;
   final VoidCallback onAchievements;
   final VoidCallback onProfile;
+  final AvatarStore? avatarStore;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
-    // progress unused — removed store.levelProgress
-
-    // (removed — was unused)
-  // final Widget greeting = Column(
-  //     crossAxisAlignment: CrossAxisAlignment.start,
-  //     mainAxisSize: MainAxisSize.min,
-  //     children: <Widget>[
-  //       Text(
-  //         'Welcome back',
-  //         style: theme.textTheme.labelMedium?.copyWith(
-  //           color: scheme.onSurfaceVariant,
-  //           fontWeight: FontWeight.w500,
-  //         ),
-  //       ),
-  //       const SizedBox(height: AppSpacing.xxs),
-  //       Text(
-  //         displayName ?? 'My workspace',
-  //         maxLines: 2,
-  //         overflow: TextOverflow.ellipsis,
-  //         style: theme.textTheme.headlineSmall?.copyWith(
-  //           fontWeight: FontWeight.w600,
-  //         ),
-  //       ),
-  //       const SizedBox(height: AppSpacing.xs),
-  //       Text(
-  //         '${progress.totalXp} XP · ${store.completedCount} of ${store.tasks.length} complete',
-  //         maxLines: 2,
-  //         overflow: TextOverflow.ellipsis,
-  //         style: theme.textTheme.bodySmall?.copyWith(
-  //           color: scheme.onSurfaceVariant,
-  //         ),
-  //       ),
-  //     ],
-  // );
 
     return ConstrainedBox(
       constraints: const BoxConstraints(maxWidth: 1120),
@@ -92,9 +61,7 @@ class DashboardHeader extends StatelessWidget {
                         'Workspace',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          color: scheme.onSurfaceVariant,
-                        ),
+                        style: theme.textTheme.labelSmall,
                       ),
                     ],
                   ),
@@ -105,11 +72,22 @@ class DashboardHeader extends StatelessWidget {
                   icon: const Icon(Icons.emoji_events_outlined),
                 ),
                 const SizedBox(width: AppSpacing.xxs),
-                AppAvatar(
-                  name: displayName,
-                  tooltip: 'Profile and settings',
-                  onTap: onProfile,
-                ),
+                if (avatarStore == null)
+                  AppAvatar(
+                    name: displayName,
+                    tooltip: 'Profile and settings',
+                    onTap: onProfile,
+                  )
+                else
+                  AnimatedBuilder(
+                    animation: avatarStore!,
+                    builder: (context, _) => AppAvatar(
+                      name: displayName,
+                      style: avatarStore!.style,
+                      tooltip: 'Profile and settings',
+                      onTap: onProfile,
+                    ),
+                  ),
               ],
             ),
             const SizedBox(height: AppSpacing.lg),
@@ -132,7 +110,9 @@ class DashboardHeader extends StatelessWidget {
                 _DashboardStat(
                   label: 'Overdue',
                   value: '${store.overdueCount}',
-                  accent: store.overdueCount > 0 ? AppColors.warningAmber : null,
+                  accent: store.overdueCount > 0
+                      ? AppColors.warningAmber
+                      : null,
                 ),
                 const SizedBox(width: AppSpacing.lg),
                 _DashboardStat(
@@ -260,6 +240,22 @@ class _LevelProgress extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Fallback BrandMark if not imported elsewhere
+class BrandMark extends StatelessWidget {
+  const BrandMark({super.key, this.size = 34});
+
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    return Icon(
+      Icons.auto_awesome,
+      size: size,
+      color: Theme.of(context).colorScheme.primary,
     );
   }
 }

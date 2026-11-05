@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 
 import '../../../home/data/task_store.dart';
@@ -33,6 +35,7 @@ class CalendarController extends ChangeNotifier {
   String? _error;
   String? _warning;
   int _request = 0;
+  bool _reloadRequested = false;
 
   DateTime get focusDate => _focusDate;
   CalendarViewMode get view => _view;
@@ -131,7 +134,12 @@ class CalendarController extends ChangeNotifier {
   }
 
   Future<void> load() async {
-    if (_loading) return;
+    if (_loading) {
+      // Remember the request so the newest query still runs once the
+      // in-flight one finishes instead of silently dropping a view change.
+      _reloadRequested = true;
+      return;
+    }
     final request = ++_request;
     _loading = true;
     _error = null;
@@ -161,6 +169,10 @@ class CalendarController extends ChangeNotifier {
       if (request == _request) {
         _loading = false;
         notifyListeners();
+        if (_reloadRequested) {
+          _reloadRequested = false;
+          unawaited(load());
+        }
       }
     }
   }

@@ -127,6 +127,19 @@ class TaskCard extends StatelessWidget {
                             icon: Icons.school_outlined,
                             color: muted,
                           ),
+                        if (task.assigneeName != null)
+                          _MetaItem(
+                            label: task.assigneeName!,
+                            icon: Icons.person_outline_rounded,
+                            color: muted,
+                          ),
+                        if (task.reminderAt != null)
+                          _MetaItem(
+                            label:
+                                'Reminder ${formatTaskDate(task.reminderAt!)}',
+                            icon: Icons.notifications_active_outlined,
+                            color: muted,
+                          ),
                         _MetaItem(
                           label: _dueText,
                           icon: task.isOverdue
@@ -147,6 +160,17 @@ class TaskCard extends StatelessWidget {
                         ),
                       ],
                     ),
+                    if (task.tags.isNotEmpty) ...<Widget>[
+                      const SizedBox(height: AppSpacing.xs),
+                      Wrap(
+                        spacing: AppSpacing.xs,
+                        runSpacing: AppSpacing.xs,
+                        children: <Widget>[
+                          for (final tag in task.tags)
+                            _TagPill(label: tag, muted: muted),
+                        ],
+                      ),
+                    ],
                     if (onEdit != null || onDelete != null)
                       Padding(
                         padding: const EdgeInsets.only(top: AppSpacing.xs),
@@ -195,6 +219,36 @@ class TaskCard extends StatelessWidget {
         minimumSize: const Size(40, 40),
         padding: EdgeInsets.zero,
         foregroundColor: Theme.of(context).colorScheme.onSurfaceVariant,
+      ),
+    );
+  }
+}
+
+class _TagPill extends StatelessWidget {
+  const _TagPill({required this.label, required this.muted});
+
+  final String label;
+  final Color muted;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.sm,
+        vertical: 2,
+      ),
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainerHighest.withValues(alpha: 0.6),
+        borderRadius: BorderRadius.circular(AppRadius.pill),
+        border: Border.all(color: scheme.outlineVariant),
+      ),
+      child: Text(
+        '#$label',
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+          color: muted,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }

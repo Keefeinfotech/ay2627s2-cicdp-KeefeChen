@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 
 import '../constants/app_constants.dart';
+import '../models/avatar_style.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
 
-/// User avatar with initials and a consistent 48px touch target.
+/// User avatar with initials or a chosen glyph and a consistent 48px touch
+/// target.
 class AppAvatar extends StatelessWidget {
   const AppAvatar({
     super.key,
@@ -14,6 +16,7 @@ class AppAvatar extends StatelessWidget {
     this.onDark = false,
     this.onTap,
     this.tooltip = 'Account',
+    this.style,
   });
 
   final String? name;
@@ -22,6 +25,9 @@ class AppAvatar extends StatelessWidget {
   final bool onDark;
   final VoidCallback? onTap;
   final String tooltip;
+
+  /// User-chosen accent and glyph. Null keeps the default Trust Blue initials.
+  final AvatarStyle? style;
 
   String get _initials {
     final String source = (name?.trim().isNotEmpty ?? false)
@@ -42,16 +48,20 @@ class AppAvatar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final AvatarStyle? style = this.style;
     final Color background = onDark
         ? Colors.white.withValues(alpha: 0.16)
-        : scheme.primary;
+        : (style?.accent.background ?? scheme.primary);
     final Color foreground = onDark ? Colors.white : scheme.onPrimary;
     final String initials = _initials;
+    final String? glyph = style?.usesGlyph == true ? style!.glyph : null;
 
     final Widget avatar = CircleAvatar(
       radius: size / 2,
       backgroundColor: background,
-      child: initials.isEmpty
+      child: glyph != null
+          ? Text(glyph, style: TextStyle(fontSize: size * 0.42, height: 1))
+          : initials.isEmpty
           ? Icon(
               Icons.person_outline_rounded,
               size: size * 0.5,

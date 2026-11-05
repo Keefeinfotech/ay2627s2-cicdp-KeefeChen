@@ -11,6 +11,7 @@ import { MemberRepository } from "../member/member.repository.js";
 
 import {
   GroupRole,
+  GroupStatus,
   GroupVisibility,
   MemberStatus,
   type CreateGroupInput,
@@ -96,7 +97,7 @@ export class GroupService {
     const { page, limit, search } = query;
 
     const groupIds =
-      await this.memberRepository.findActiveGroupIdsByUser(userId);
+      await this.memberRepository.findActiveByGroupAndUser(userId);
 
     if (groupIds.length === 0) {
       return {
@@ -110,7 +111,34 @@ export class GroupService {
       };
     }
 
-    return this.groupRepository.list(groupIds, page, limit, search);
+    const result = await this.groupRepository.list(
+      groupIds,
+      page,
+      limit,
+      search,
+    );
+
+    // Attach the caller's role so the client can show owner/admin actions
+    // without a second request per group.
+    const memberships =
+      await this.memberRepository.findActiveByUserAndGroupIds(
+        userId,
+        result.items.map((group: { groupId: any; }) => group.groupId),
+      );
+    const roleByGroupId = new Map(
+      memberships.map((membership: { groupId: any; role: any; }) => [
+        membership.groupId,
+        membership.role,
+      ]),
+    );
+
+    return {
+      ...result,
+      items: result.items.map((group: { groupId: any; role?: any; name?: string; description?: string | undefined; visibility?: GroupVisibility; status?: GroupStatus; ownerId?: string; createdAt?: Date; updatedAt?: Date; _id?: mongoose.Types.ObjectId; __v?: number; }) => ({
+        ...group,
+        role: roleByGroupId.get(group.groupId) ?? null,
+      })),
+    };
   }
 
   /**

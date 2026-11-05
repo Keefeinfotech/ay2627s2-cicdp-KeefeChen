@@ -12,6 +12,8 @@ class TaskValidationException implements Exception {
 const int maxTitleLength = 120;
 const int maxNotesLength = 2000;
 const int maxCourseLength = 60;
+const int maxTags = Task.maxTags;
+const int maxTagLength = Task.maxTagLength;
 
 String? validateTitle(String? value) {
   final title = (value ?? '').trim();
@@ -38,6 +40,23 @@ String? validateCourse(String? value) {
   return null;
 }
 
+String? validateTags(Iterable<String> tags) {
+  final cleaned = tags
+      .map((tag) => tag.replaceFirst(RegExp(r'^#+'), '').trim())
+      .where((tag) => tag.isNotEmpty)
+      .toList(growable: false);
+  final uniqueKeys = cleaned.map((tag) => tag.toLowerCase()).toSet();
+  if (uniqueKeys.length > maxTags) {
+    return 'Use up to $maxTags tags';
+  }
+  for (final tag in cleaned) {
+    if (tag.length > maxTagLength) {
+      return 'Keep each tag under $maxTagLength characters';
+    }
+  }
+  return null;
+}
+
 String? validateSchedule({DateTime? dueDate, DateTime? reminderAt}) {
   if (reminderAt != null && dueDate == null) {
     return 'Add a due date before setting a reminder';
@@ -60,6 +79,9 @@ String? validateDraft(TaskDraft draft) {
 
   final courseError = validateCourse(draft.course);
   if (courseError != null) return courseError;
+
+  final tagsError = validateTags(draft.tags);
+  if (tagsError != null) return tagsError;
 
   final scheduleError = validateSchedule(
     dueDate: draft.dueDate,

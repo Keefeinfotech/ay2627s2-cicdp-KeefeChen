@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:frontend/core/layout/app_shell.dart';
 import 'package:frontend/core/theme/app_theme.dart';
+import 'package:frontend/core/widgets/app_navigation.dart';
 import 'package:frontend/features/home/data/task_repository.dart';
 import 'package:frontend/features/home/data/task_store.dart';
 import 'package:frontend/features/home/models/task.dart';
@@ -102,19 +103,23 @@ void main() {
     await tester.pumpWidget(_app(store));
     await tester.pumpAndSettle();
 
-    expect(find.byType(NavigationRail), findsOneWidget);
+    expect(find.byType(AppNavigationRail), findsOneWidget);
     expect(find.byType(NavigationBar), findsNothing);
 
     await tester.tap(find.text('Projects'));
     await tester.pumpAndSettle();
     expect(find.text('No projects yet'), findsOneWidget);
 
+    await tester.tap(find.text('Groups'));
+    await tester.pumpAndSettle();
+    expect(find.text('Sign in to use groups'), findsOneWidget);
+
     await tester.tap(find.text('Reports'));
     await tester.pumpAndSettle();
     expect(find.text('Your progress'), findsOneWidget);
   });
 
-  testWidgets('desktop shell uses the sidebar with all seven destinations', (
+  testWidgets('desktop shell uses the sidebar with all eight destinations', (
     tester,
   ) async {
     _setSize(tester, const Size(1280, 900));
@@ -127,6 +132,7 @@ void main() {
     expect(find.byType(NavigationBar), findsNothing);
     expect(find.text('AI Assistant'), findsOneWidget);
     expect(find.text('Reports'), findsOneWidget);
+    expect(find.text('Groups'), findsOneWidget);
 
     await tester.tap(find.text('Tasks'));
     await tester.pumpAndSettle();

@@ -43,10 +43,7 @@ class _ProjectsPageState extends State<ProjectsPage> {
     _ownsStore = widget.store == null;
     _store =
         widget.store ??
-        TaskStore(
-          repository: ApiTaskRepository(),
-          ownerId: widget.ownerId,
-        );
+        TaskStore(repository: ApiTaskRepository(), ownerId: widget.ownerId);
     _controller = ProjectController(store: _store, ownerId: widget.ownerId)
       ..addListener(_changed);
     if (!_store.hasLoaded && !_store.isLoading) _store.load();

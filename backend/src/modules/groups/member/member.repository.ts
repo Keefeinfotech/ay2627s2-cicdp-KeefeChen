@@ -4,9 +4,10 @@
  * Author: Keefe Chen
  */
 
-import { ClientSession } from "mongoose";
+import mongoose, { ClientSession } from "mongoose";
 import { Member, MemberStatus, type MemberRecord } from "./member.model.js";
 import { GroupRole } from "../core/group.types.js";
+import { CreateMemberInput } from "./member.types.js";
 
 export class MemberRepository {
   /**
@@ -26,21 +27,38 @@ export class MemberRepository {
   }
 
   /**
-   * Finds active group IDs for a user.
+   * Creates or reactivates a membership.
+   *
+   * The unique (groupId, userId) index means a user who previously left must
+   * reuse the existing record instead of inserting a duplicate.
    */
-  async findActiveGroupIdsByUser(userId: string): Promise<string[]> {
-    const members = await Member.find({
-      userId,
-      status: MemberStatus.ACTIVE,
-    })
-      .select("groupId")
-      .lean();
-
-    return members.map((m) => m.groupId);
+  async activate(
+    input: CreateMemberInput,
+    session?: mongoose.ClientSession,
+  ) {
+    return Member.findOneAndUpdate(
+      {
+        groupId: input.groupId,
+        userId: input.userId,
+      },
+      {
+        $set: {
+          role: input.role,
+          status: input.status,
+        },
+      },
+      {
+        new: true,
+        upsert: true,
+        runValidators: true,
+        setDefaultsOnInsert: true,
+        session,
+      },
+    ).lean();
   }
 
   /**
-   * Finds active membership for a group and user.
+   * Finds an active membership using group ID and user ID.
    */
   async findActiveByGroupAndUser(
     groupId: string,
@@ -54,7 +72,28 @@ export class MemberRepository {
   }
 
   /**
-   * Lists all active members of a group.
+   * Retrieves a user's active memberships for a set of groups.
+   *
+   * Used to attach the caller's role to group list results without one query
+   * per group.
+   */
+  async findActiveByUserAndGroupIds(
+    userId: string,
+    groupIds: string[],
+  ) {
+    if (groupIds.length === 0) {
+      return [];
+    }
+
+    return Member.find({
+      userId,
+      groupId: { $in: groupIds },
+      status: "ACTIVE",
+    }).lean();
+  }
+
+  /**
+   * Retrieves all active group IDs belonging to a user.
    */
   async findByGroup(groupId: string): Promise<MemberRecord[]> {
     return Member.find({
@@ -64,7 +103,33 @@ export class MemberRepository {
   }
 
   /**
-   * Updates a member's role.
+   * Retrieves one page of active group members plus the total count.
+   */
+  async listActiveByGroup(
+    groupId: string,
+    page: number,
+    limit: number,
+  ) {
+    const filter = {
+      groupId,
+      status: "ACTIVE" as const,
+    };
+
+    const [items, totalItems] = await Promise.all([
+      Member.find(filter)
+        .sort({ createdAt: 1 })
+        .skip((page - 1) * limit)
+        .limit(limit)
+        .lean(),
+
+      Member.countDocuments(filter),
+    ]);
+
+    return { items, totalItems };
+  }
+
+  /**
+   * Updates a member's role within a group.
    */
   async updateRole(
     groupId: string,

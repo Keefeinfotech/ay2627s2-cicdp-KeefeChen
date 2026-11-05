@@ -68,10 +68,7 @@ class _AssistantPageState extends State<AssistantPage> {
     _ownsStore = widget.store == null;
     _store =
         widget.store ??
-        TaskStore(
-          repository: ApiTaskRepository(),
-          ownerId: widget.ownerId,
-        );
+        TaskStore(repository: ApiTaskRepository(), ownerId: widget.ownerId);
     if (_ownsStore && !_store.hasLoaded && !_store.isLoading) _store.load();
   }
 

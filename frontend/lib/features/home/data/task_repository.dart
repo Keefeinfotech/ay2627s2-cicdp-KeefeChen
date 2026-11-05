@@ -1,7 +1,11 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../sync/models/sync_conflict.dart';
+import '../../sync/models/sync_operation.dart';
+import '../../sync/models/sync_snapshot.dart';
 import '../models/task.dart';
 
 class TaskStorageException implements Exception {
@@ -21,6 +25,25 @@ abstract class TaskRepository {
   Future<void> save(String ownerId, List<Task> tasks);
 
   Future<void> clear(String ownerId);
+}
+
+/// Implemented by repositories that can replay an offline queue.
+///
+/// The store depends on this narrow interface rather than the concrete API
+/// repository so tests can keep using [InMemoryTaskRepository].
+abstract interface class SyncAwareTaskRepository implements TaskRepository {
+  ValueListenable<SyncSnapshot> get syncState;
+
+  List<SyncConflict> get conflicts;
+
+  List<SyncOperation> get operations;
+
+  Future<void> retrySync();
+
+  Future<SyncResolutionResult> resolveConflict(
+    SyncConflict conflict,
+    ConflictResolution resolution,
+  );
 }
 
 class SharedPreferencesTaskRepository implements TaskRepository {

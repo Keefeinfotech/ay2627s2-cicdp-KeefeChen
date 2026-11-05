@@ -14,6 +14,7 @@ class QuickAddPreview {
     required this.dueDate,
     required this.project,
     required this.originalText,
+    this.tags = const <String>[],
     this.confidence = 0.8,
   });
 
@@ -21,6 +22,7 @@ class QuickAddPreview {
   final TaskPriority priority;
   final DateTime? dueDate;
   final String? project;
+  final List<String> tags;
   final String originalText;
   final double confidence;
 
@@ -59,12 +61,14 @@ class QuickAddPreview {
     TaskPriority? priority,
     Object? dueDate = _unset,
     Object? project = _unset,
+    Iterable<String>? tags,
   }) {
     return QuickAddPreview(
       title: title ?? this.title,
       priority: priority ?? this.priority,
       dueDate: identical(dueDate, _unset) ? this.dueDate : dueDate as DateTime?,
       project: identical(project, _unset) ? this.project : project as String?,
+      tags: tags == null ? this.tags : Task.normalizeTags(tags),
       originalText: originalText,
       confidence: confidence,
     );

@@ -4,7 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:frontend/core/routing/app_router.dart';
 import 'package:frontend/features/authentication/screens/login_screen.dart';
-import 'package:frontend/theme/app_theme.dart';
+import 'package:frontend/core/theme/app_theme.dart';
 
 void main() {
   setUp(() {

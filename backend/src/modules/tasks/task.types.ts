@@ -52,6 +52,10 @@ export interface TaskRecord {
   title: string;
   description: string | null;
   course: string;
+  tags: string[];
+  groupId: string | null;
+  assigneeId: string | null;
+  assigneeName: string | null;
   status: TaskStatus;
   priority: TaskPriority;
   dueDate: Date | null;
@@ -74,6 +78,10 @@ export interface CreateTaskInput {
   title: string;
   description?: string | null;
   course?: string;
+  tags?: string[];
+  groupId?: string | null;
+  assigneeId?: string | null;
+  assigneeName?: string | null;
   reminderAt?: Date | null;
   priority?: TaskPriority;
   dueDate?: Date | null;
@@ -86,6 +94,10 @@ export interface UpdateTaskInput {
   title?: string;
   description?: string | null;
   course?: string;
+  tags?: string[];
+  groupId?: string | null;
+  assigneeId?: string | null;
+  assigneeName?: string | null;
   reminderAt?: Date | null;
   priority?: TaskPriority;
   status?: TaskStatus;

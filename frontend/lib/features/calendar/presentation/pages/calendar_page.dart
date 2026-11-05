@@ -12,6 +12,7 @@ import 'package:frontend/features/home/data/task_store.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
+<<<<<<< HEAD
 import 'package:frontend/core/widgets/app_app_bar.dart';
 import 'package:frontend/core/widgets/app_button.dart';
 import 'package:frontend/core/widgets/app_error_state.dart';
@@ -20,6 +21,25 @@ import 'package:frontend/core/widgets/app_status_badge.dart';
 import 'package:frontend/features/calendar/presentation/widgets/calendar_views.dart';
 import 'package:frontend/features/calendar/presentation/widgets/schedule_optimization_banner.dart';
 import 'package:frontend/features/calendar/domain/usecases/analyze_schedule.dart';
+=======
+import '../../../../core/widgets/app_app_bar.dart';
+import '../../../../core/widgets/app_button.dart';
+import '../../../../core/widgets/app_error_state.dart';
+import '../../../../core/widgets/app_loading.dart';
+import '../../../../core/widgets/app_snackbar.dart';
+import '../../../../core/widgets/app_status_badge.dart';
+import '../../../authentication/models/session.dart';
+import 'package:frontend/features/home/data/api_task_repository.dart';
+import '../../../home/data/task_store.dart';
+import '../../data/datasources/calendar_api_data_source.dart';
+import '../../data/models/calendar_event.dart';
+import '../../data/repositories/calendar_repository.dart';
+import '../../domain/usecases/analyze_schedule.dart';
+import '../controllers/calendar_controller.dart';
+import '../widgets/calendar_event_editor.dart';
+import '../widgets/calendar_views.dart';
+import '../widgets/schedule_optimization_banner.dart';
+>>>>>>> 06813916ce8f43ce72f216bc9d2806e2a161b11e
 
 /// Calendar surface with range queries, workload analysis and three views.
 class CalendarPage extends StatefulWidget {

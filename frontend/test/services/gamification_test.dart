@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:frontend/models/task.dart';
-import 'package:frontend/services/gamification.dart';
+import 'package:frontend/features/home/models/task.dart';
+import 'package:frontend/features/home/data/gamification.dart';
 
 import '../helpers.dart';
 

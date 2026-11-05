@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:video_player/video_player.dart';
+import 'package:frontend/core/constants/app_constants.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/widgets/app_avatar.dart';
+import '../../../core/widgets/app_video_background.dart';
 
 /// Desktop/Web layout with split form (left) and brand panel (right).
 /// Mobile devices collapse down to a single scrollable form.
@@ -151,61 +152,83 @@ class _AuthForm extends StatelessWidget {
         ),
         const SizedBox(height: AppSpacing.xxl),
         child,
-        if (footer != null) ...[
-          const SizedBox(height: AppSpacing.xl),
-          footer!,
-        ],
+        if (footer != null) ...[const SizedBox(height: AppSpacing.xl), footer!],
       ],
     );
   }
 }
 
-class _AuthBrandPanel extends StatefulWidget {
+class _AuthBrandPanel extends StatelessWidget {
   const _AuthBrandPanel();
 
   @override
-  State<_AuthBrandPanel> createState() => _AuthBrandPanelState();
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return AppVideoBackground(
+      assetPath: 'assets/video/auth_bg.mp4',
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.huge),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            const BrandLockup(onDark: true, markSize: 52, showTagline: true),
+            const SizedBox(height: AppSpacing.xxl),
+            Text(
+              'A clear place for your responsibilities.',
+              style: theme.textTheme.headlineLarge?.copyWith(
+                color: AppColors.white,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            Text(
+              AppConstants.shortDescription,
+              style: theme.textTheme.bodyLarge?.copyWith(
+                color: AppColors.white.withValues(alpha: 0.74),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.xxl),
+            const _FeatureLine(
+              icon: Icons.checklist_rounded,
+              label: 'Plan tasks, deadlines and priorities',
+            ),
+            const SizedBox(height: AppSpacing.md),
+            const _FeatureLine(
+              icon: Icons.event_outlined,
+              label: 'Keep your week and reminders in view',
+            ),
+            const SizedBox(height: AppSpacing.md),
+            const _FeatureLine(
+              icon: Icons.chat_bubble_outline_rounded,
+              label: 'Get help from the assistant when needed',
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
-class _AuthBrandPanelState extends State<_AuthBrandPanel> {
-  late VideoPlayerController _controller;
+class _FeatureLine extends StatelessWidget {
+  const _FeatureLine({required this.icon, required this.label});
 
-  @override
-  void initState() {
-    super.initState();
-    _controller = VideoPlayerController.asset('assets/videos/auth_bg.mp4')
-      ..initialize().then((_) {
-        if (mounted) {
-          setState(() {});
-          _controller.setLooping(true);
-          _controller.setVolume(0.0);
-          _controller.play();
-        }
-      });
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
+  final IconData icon;
+  final String label;
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      fit: StackFit.expand,
+    return Row(
       children: <Widget>[
-        if (_controller.value.isInitialized)
-          FittedBox(
-            fit: BoxFit.cover,
-            child: SizedBox(
-              width: _controller.value.size.width,
-              height: _controller.value.size.height,
-              child: VideoPlayer(_controller),
-            ),
-          )
-        else
-          const ColoredBox(color: AppColors.deepNavy),
+        Icon(icon, color: AppColors.white, size: 20),
+        const SizedBox(width: AppSpacing.sm),
+        Expanded(
+          child: Text(
+            label,
+            style: const TextStyle(color: AppColors.white, fontSize: 14),
+          ),
+        ),
       ],
     );
   }

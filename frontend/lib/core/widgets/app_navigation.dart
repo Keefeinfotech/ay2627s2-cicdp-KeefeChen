@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../models/avatar_style.dart';
 import '../theme/app_spacing.dart';
 import 'app_avatar.dart';
 
@@ -28,6 +29,7 @@ class AppSidebar extends StatelessWidget {
     this.width = 248,
     this.userName,
     this.userEmail,
+    this.avatarStyle,
     this.onProfile,
   });
 
@@ -37,6 +39,7 @@ class AppSidebar extends StatelessWidget {
   final double width;
   final String? userName;
   final String? userEmail;
+  final AvatarStyle? avatarStyle;
   final VoidCallback? onProfile;
 
   @override
@@ -122,6 +125,7 @@ class AppSidebar extends StatelessWidget {
                           name: userName,
                           email: userEmail,
                           size: 32,
+                          style: avatarStyle,
                           tooltip: 'Profile and settings',
                           onTap: onProfile,
                         ),
@@ -235,6 +239,140 @@ class _SidebarItem extends StatelessWidget {
                       ),
                     ),
                 ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Scrollable navigation rail for tablets.
+///
+/// Material's [NavigationRail] lays destinations out in a non-scrollable
+/// column, which overflows once the app has more than a handful of
+/// destinations or the viewport is short. This rail keeps the same visual
+/// language as the sidebar while remaining usable at 200% text scaling.
+class AppNavigationRail extends StatelessWidget {
+  const AppNavigationRail({
+    super.key,
+    required this.destinations,
+    required this.selectedIndex,
+    required this.onSelected,
+    this.width = 92,
+  });
+
+  final List<AppNavDestination> destinations;
+  final int selectedIndex;
+  final ValueChanged<int> onSelected;
+  final double width;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+
+    return Container(
+      width: width,
+      decoration: BoxDecoration(
+        color: scheme.surface,
+        border: Border(right: BorderSide(color: scheme.outlineVariant)),
+      ),
+      child: SafeArea(
+        right: false,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: AppSpacing.md),
+              child: Center(child: NavigationBrandMark(size: 36)),
+            ),
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.xs,
+                  vertical: AppSpacing.xs,
+                ),
+                children: <Widget>[
+                  for (var index = 0; index < destinations.length; index++)
+                    _RailItem(
+                      destination: destinations[index],
+                      selected: index == selectedIndex,
+                      onTap: () => onSelected(index),
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _RailItem extends StatelessWidget {
+  const _RailItem({
+    required this.destination,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final AppNavDestination destination;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final Color foreground = selected
+        ? scheme.onPrimaryContainer
+        : scheme.onSurfaceVariant;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.xxs),
+      child: Tooltip(
+        message: destination.label,
+        waitDuration: const Duration(milliseconds: 600),
+        child: Material(
+          color: selected ? scheme.primaryContainer : Colors.transparent,
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: onTap,
+            child: Semantics(
+              selected: selected,
+              button: true,
+              label: destination.label,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.xxs,
+                  vertical: AppSpacing.sm,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    Icon(
+                      selected ? destination.selectedIcon : destination.icon,
+                      size: AppSizes.iconMd,
+                      color: selected ? scheme.primary : foreground,
+                    ),
+                    const SizedBox(height: AppSpacing.xxs),
+                    Text(
+                      destination.label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: foreground,
+                        fontWeight: selected
+                            ? FontWeight.w700
+                            : FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
