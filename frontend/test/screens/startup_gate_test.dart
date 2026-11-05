@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:frontend/models/task.dart';
-import 'package:frontend/services/task_validation.dart';
+import 'package:frontend/features/home/models/task.dart';
+import 'package:frontend/features/home/data/task_validation.dart';
 
 void main() {
   group('TaskValidationException', () {

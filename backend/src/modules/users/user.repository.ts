@@ -47,6 +47,25 @@ export const userRepository = {
   },
 
   /**
+   * Finds multiple users by UUID in one query.
+   *
+   * Used by group member listings so a roster can be rendered with names and
+   * emails without an N+1 lookup per member.
+   */
+  async findByIds(userIds: string[]): Promise<UserRecord[]> {
+    if (userIds.length === 0) {
+      return [];
+    }
+
+    return User.find({
+      _id: { $in: userIds },
+      deletedAt: null,
+    })
+      .lean<UserRecord[]>()
+      .exec();
+  },
+
+  /**
    * Finds an active user using their UUID and retrieves
    * their password hash for password verification.
    */

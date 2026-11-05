@@ -13,9 +13,21 @@ import '../models/task.dart';
 /// screens and when the software keyboard is open, while the fields scroll
 /// independently.
 class TaskEditor extends StatefulWidget {
-  const TaskEditor({super.key, this.initial});
+  const TaskEditor({
+    super.key,
+    this.initial,
+    this.initialCourse,
+    this.existingTags = const <String>[],
+  });
 
   final Task? initial;
+
+  /// Pre-fills the course/subject field when creating a task from a project
+  /// workspace. Ignored when [initial] is supplied.
+  final String? initialCourse;
+
+  /// Tags already used elsewhere in the workspace, offered as quick picks.
+  final List<String> existingTags;
 
   @override
   State<TaskEditor> createState() => _TaskEditorState();
@@ -30,12 +42,17 @@ class _TaskEditorState extends State<TaskEditor> {
     text: widget.initial?.notes ?? '',
   );
   late final TextEditingController _course = TextEditingController(
-    text: widget.initial?.course ?? '',
+    text: widget.initial?.course ?? widget.initialCourse ?? '',
+  );
+  late final TextEditingController _tag = TextEditingController();
+  late List<String> _tags = Task.normalizeTags(
+    widget.initial?.tags ?? const <String>[],
   );
   late TaskPriority _priority = widget.initial?.priority ?? TaskPriority.medium;
   late DateTime? _dueDate = widget.initial?.dueDate;
   late DateTime? _reminderAt = widget.initial?.reminderAt;
   String? _scheduleError;
+  String? _tagError;
 
   bool get _isEditing => widget.initial != null;
 
@@ -44,7 +61,43 @@ class _TaskEditorState extends State<TaskEditor> {
     _title.dispose();
     _notes.dispose();
     _course.dispose();
+    _tag.dispose();
     super.dispose();
+  }
+
+  void _addTag([String? value]) {
+    final raw = (value ?? _tag.text).trim();
+    if (raw.isEmpty) return;
+
+    final candidate = raw.replaceFirst(RegExp(r'^#+'), '').trim();
+    if (candidate.length > maxTagLength) {
+      setState(() {
+        _tagError = 'Keep each tag under $maxTagLength characters';
+      });
+      return;
+    }
+    if (_tags.length >= maxTags) {
+      setState(() => _tagError = 'Use up to $maxTags tags');
+      return;
+    }
+    if (_tags.any((tag) => tag.toLowerCase() == candidate.toLowerCase())) {
+      _tag.clear();
+      setState(() => _tagError = null);
+      return;
+    }
+
+    setState(() {
+      _tags = <String>[..._tags, candidate];
+      _tag.clear();
+      _tagError = null;
+    });
+  }
+
+  void _removeTag(String tag) {
+    setState(() {
+      _tags = _tags.where((item) => item != tag).toList(growable: false);
+      _tagError = null;
+    });
   }
 
   Future<DateTime?> _pickDateTime(DateTime initial) async {
@@ -104,6 +157,7 @@ class _TaskEditorState extends State<TaskEditor> {
         title: _title.text.trim(),
         notes: _notes.text.trim(),
         course: _course.text.trim(),
+        tags: _tags,
         priority: _priority,
         dueDate: _dueDate,
         reminderAt: _reminderAt,
@@ -205,6 +259,90 @@ class _TaskEditorState extends State<TaskEditor> {
                             textCapitalization: TextCapitalization.characters,
                             validator: validateCourse,
                           ),
+                          const SizedBox(height: AppSpacing.md),
+                          Text(
+                            'Tags (optional)',
+                            style: theme.textTheme.labelLarge?.copyWith(
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const SizedBox(height: AppSpacing.xs),
+                          if (_tags.isNotEmpty)
+                            Padding(
+                              padding: const EdgeInsets.only(
+                                bottom: AppSpacing.sm,
+                              ),
+                              child: Wrap(
+                                spacing: AppSpacing.xs,
+                                runSpacing: AppSpacing.xs,
+                                children: <Widget>[
+                                  for (final tag in _tags)
+                                    InputChip(
+                                      label: Text(tag),
+                                      onDeleted: () => _removeTag(tag),
+                                      deleteButtonTooltipMessage:
+                                          'Remove tag $tag',
+                                    ),
+                                ],
+                              ),
+                            ),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: <Widget>[
+                              Expanded(
+                                child: AppTextField(
+                                  controller: _tag,
+                                  useFormField: false,
+                                  hintText: 'Add a tag, then press Enter',
+                                  prefixIcon: Icons.sell_outlined,
+                                  textInputAction: TextInputAction.done,
+                                  textCapitalization:
+                                      TextCapitalization.sentences,
+                                  maxLength: maxTagLength,
+                                  counterText: '',
+                                  onFieldSubmitted: _addTag,
+                                  errorText: _tagError,
+                                ),
+                              ),
+                              const SizedBox(width: AppSpacing.xs),
+                              IconButton.filledTonal(
+                                tooltip: 'Add tag',
+                                onPressed: _addTag,
+                                icon: const Icon(Icons.add_rounded),
+                              ),
+                            ],
+                          ),
+                          if (widget.existingTags.any(
+                            (tag) => !_tags.any(
+                              (selected) =>
+                                  selected.toLowerCase() == tag.toLowerCase(),
+                            ),
+                          ))
+                            Padding(
+                              padding: const EdgeInsets.only(
+                                top: AppSpacing.xs,
+                              ),
+                              child: Wrap(
+                                spacing: AppSpacing.xs,
+                                runSpacing: AppSpacing.xs,
+                                children: <Widget>[
+                                  for (final tag
+                                      in widget.existingTags
+                                          .where(
+                                            (tag) => !_tags.any(
+                                              (selected) =>
+                                                  selected.toLowerCase() ==
+                                                  tag.toLowerCase(),
+                                            ),
+                                          )
+                                          .take(6))
+                                    ActionChip(
+                                      label: Text('#$tag'),
+                                      onPressed: () => _addTag(tag),
+                                    ),
+                                ],
+                              ),
+                            ),
                           const SizedBox(height: AppSpacing.sm),
                           AppTextField(
                             controller: _notes,

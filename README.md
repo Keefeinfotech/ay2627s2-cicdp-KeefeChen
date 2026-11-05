@@ -21,10 +21,12 @@ Built with Flutter, Express.js, TypeScript, MongoDB, and GitHub Actions.
 - Deadline awareness: due-today and overdue counts on the dashboard.
 - XP and levels based on completed priority; achievements for milestones.
 - Guest mode with local tasks; optional sign-up and sign-in for the assistant.
+- A one-time onboarding introduction that persists completion locally, followed
+  by separate sign-in and registration screens.
 - Session restore plus an explicit splash gate at launch and named routes.
 - AI assistant screen backed by the API (mock provider by default).
-- Unified Deep Navy design system with light/dark themes, shared components,
-  semantic labels, and support for 200% text scaling.
+- Bundled Inter typography and a unified Deep Navy design system with light/dark
+  themes, shared components, semantic labels, and support for 200% text scaling.
 
 ## Architecture
 
@@ -56,7 +58,8 @@ docs/      Release gates, release checklist, privacy, dependencies
 ```
 lib/core/        design tokens, shared widgets, API client, named-route table
 lib/features/
-  authentication/ welcome, login, signup, startup gate, auth/session/captcha
+  onboarding/     first-launch product introduction and completion store
+  authentication/ login, signup, startup gate, auth/session/captcha
   home/           dashboard, task model/store/repository, editor, gamification
   assistant/      chat screen, composer, bubbles, assistant API service
   profile/        profile and local-data actions sheet
@@ -136,7 +139,7 @@ capped at 10 kb.
 ## Data and privacy
 
 Tasks stay on the device. Accounts store a name (optional), email, and bcrypt
-password hash. See [docs/PRIVACY.md](docs/PRIVACY.md) for the full data
+password hash. See [docs/compliance/PRIVACY.md](docs/compliance/PRIVACY.md) for the full data
 inventory, deletion paths, and the AI data flow.
 
 ## Testing
@@ -150,15 +153,16 @@ npm run build
 cd ../frontend
 dart format --output=none --set-exit-if-changed lib test tool
 flutter analyze
-flutter test --coverage  # 102 tests, including accessibility checks
+flutter test --coverage  # 118 tests, including accessibility checks
 dart run tool/check_coverage.dart 60
 flutter build web --release
 ```
 
 Frontend tests cover the model, validation, XP/levels, repository schema
-migration, store, task card, dashboard and profile flows, assistant request and
-error handling, session restore, undo, and a 200% text-scale layout. Platform
-storage is faked in tests, so no emulator is required.
+migration, store, task card, dashboard and profile flows, onboarding completion,
+login validation and guest access, startup routing, assistant request and error
+handling, session restore, undo, and 200% text-scale layouts. Platform storage is
+faked in tests, so no emulator is required.
 
 ## CI/CD
 
@@ -174,8 +178,10 @@ storage is faked in tests, so no emulator is required.
 
 Backend coverage gates: 80% statements/lines/functions, 60% branches. Frontend
 coverage is gated at 60% lines by `frontend/tool/check_coverage.dart`. Full gate
-definitions are in [docs/NFR_RELEASE_GATES.md](docs/NFR_RELEASE_GATES.md); use
-[docs/RELEASE_CHECKLIST.md](docs/RELEASE_CHECKLIST.md) before tagging a release.
+definitions are in
+[docs/compliance/NFR_RELEASE_GATES.md](docs/compliance/NFR_RELEASE_GATES.md); use
+[docs/release/RELEASE_CHECKLIST.md](docs/release/RELEASE_CHECKLIST.md) before
+tagging a release.
 
 ## Accessibility
 
@@ -187,19 +193,21 @@ definitions are in [docs/NFR_RELEASE_GATES.md](docs/NFR_RELEASE_GATES.md); use
 ## Limitations
 
 - No account deletion in the app yet; contact the maintainer.
+- No Google/GitHub sign-in or password reset. The backend exposes email/password
+  signup and login only, so the login screen does not simulate those flows.
 - No server-side task sync; tasks are per-device and per-owner.
 - Reminders are stored and validated but are not scheduled as notifications.
 - Group workspaces and the AI rubric-to-roadmap workflow are planned, not
-  implemented. See [docs/PROJECT_PLAN.md](docs/PROJECT_PLAN.md).
+  implemented. See [docs/planning/PROJECT_PLAN.md](docs/planning/PROJECT_PLAN.md).
 - The AI provider is a mock; a real provider must be implemented behind the
   existing endpoint.
 - Swagger UI is intentionally unavailable when `NODE_ENV=production`.
 
 ## Documentation
 
-- [Project plan](docs/PROJECT_PLAN.md)
-- [Release gates](docs/NFR_RELEASE_GATES.md)
-- [Release checklist](docs/RELEASE_CHECKLIST.md)
-- [Privacy notice](docs/PRIVACY.md)
-- [Dependencies](docs/DEPENDENCIES.md)
+- [Project plan](docs/planning/PROJECT_PLAN.md)
+- [Release gates](docs/compliance/NFR_RELEASE_GATES.md)
+- [Release checklist](docs/release/RELEASE_CHECKLIST.md)
+- [Privacy notice](docs/compliance/PRIVACY.md)
+- [Dependencies](docs/release/DEPENDENCIES.md)
 - [Security policy](SECURITY.md)

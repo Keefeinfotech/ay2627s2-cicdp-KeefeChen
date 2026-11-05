@@ -53,6 +53,48 @@ const taskSchema = new Schema<TaskRecord>(
       maxlength: 5000,
     },
 
+    course: {
+      type: String,
+      default: "",
+      trim: true,
+      maxlength: 120,
+    },
+
+    /**
+     * Lightweight user-defined labels. The API validates the count and length;
+     * the schema keeps the stored shape bounded as well.
+     */
+    tags: {
+      type: [String],
+      default: [],
+    },
+
+    /**
+     * Optional group workspace and member assignment. Both are UUIDs so they
+     * can reference Group and User documents without an ObjectId conversion.
+     */
+    groupId: {
+      type: String,
+      default: null,
+    },
+
+    assigneeId: {
+      type: String,
+      default: null,
+    },
+
+    assigneeName: {
+      type: String,
+      default: null,
+      trim: true,
+      maxlength: 120,
+    },
+
+    reminderAt: {
+      type: Date,
+      default: null,
+    },
+
     status: {
       type: String,
       enum: TASK_STATUSES,

@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:frontend/models/task.dart';
-import 'package:frontend/services/task_repository.dart';
-import 'package:frontend/services/task_store.dart';
+import 'package:frontend/features/home/models/task.dart';
+import 'package:frontend/features/home/data/task_repository.dart';
+import 'package:frontend/features/home/data/task_store.dart';
 
 import '../helpers.dart';
 
@@ -380,6 +380,143 @@ void main() {
       expect(await store.clearAll(), isFalse);
       expect(store.tasks, hasLength(1));
       expect(store.error, isNotNull);
+    });
+  });
+
+  group('tags and assignment', () {
+    test('normalises and filters by tags', () async {
+      final repository = InMemoryTaskRepository(
+        seed: <String, List<Task>>{
+          'owner': <Task>[
+            makeTask(id: '1', tags: <String>['Maths', 'Urgent']),
+            makeTask(id: '2', tags: <String>['maths']),
+            makeTask(id: '3'),
+          ],
+        },
+      );
+      final store = buildStore(repository);
+      await store.load();
+
+      expect(store.allTags, <String>['Maths', 'Urgent']);
+      expect(store.allTags.first, 'Maths');
+
+      store.setTagFilter('MATHS');
+      expect(store.filteredTasks.map((task) => task.id), <String>['1', '2']);
+
+      store.clearFilters();
+      expect(store.tagFilter, isNull);
+      expect(store.filteredCount, 3);
+    });
+
+    test('searches tags and assignee names', () async {
+      final repository = InMemoryTaskRepository(
+        seed: <String, List<Task>>{
+          'owner': <Task>[
+            makeTask(
+              id: '1',
+              title: 'Slides',
+              tags: <String>['Presentation'],
+              assigneeName: 'Alex Chen',
+            ),
+            makeTask(id: '2', title: 'Notes'),
+          ],
+        },
+      );
+      final store = buildStore(repository);
+      await store.load();
+
+      store.setQuery('presentation');
+      expect(store.filteredTasks.single.id, '1');
+
+      store.setQuery('alex');
+      expect(store.filteredTasks.single.id, '1');
+    });
+
+    test('assigns a task and clears the assignment', () async {
+      final repository = InMemoryTaskRepository(
+        seed: <String, List<Task>>{
+          'owner': <Task>[makeTask(id: '1')],
+        },
+      );
+      final store = buildStore(repository);
+      await store.load();
+
+      expect(
+        await store.assignTask(
+          '1',
+          groupId: 'group-1',
+          assigneeId: 'user-2',
+          assigneeName: 'Alex Chen',
+        ),
+        isTrue,
+      );
+      expect(store.tasks.single.groupId, 'group-1');
+      expect(store.tasks.single.assigneeId, 'user-2');
+      expect(store.tasks.single.assigneeName, 'Alex Chen');
+
+      expect(
+        await store.assignTask('1', groupId: null, assigneeId: null),
+        isTrue,
+      );
+      expect(store.tasks.single.isAssigned, isFalse);
+      expect(store.tasks.single.assigneeName, isNull);
+    });
+  });
+
+  group('reminders', () {
+    test('lists open reminders in chronological order', () async {
+      final repository = InMemoryTaskRepository(
+        seed: <String, List<Task>>{
+          'owner': <Task>[
+            makeTask(id: 'late', reminderAt: DateTime(2026, 3, 1, 12)),
+            makeTask(id: 'early', reminderAt: DateTime(2026, 2, 1, 12)),
+            makeTask(
+              id: 'done',
+              status: TaskStatus.completed,
+              reminderAt: DateTime(2026, 1, 1, 12),
+            ),
+            makeTask(id: 'none'),
+          ],
+        },
+      );
+      final store = buildStore(repository);
+      await store.load();
+
+      expect(store.upcomingReminders.map((task) => task.id), <String>[
+        'early',
+        'late',
+      ]);
+    });
+
+    test('finds due reminders and snoozes them', () async {
+      final repository = InMemoryTaskRepository(
+        seed: <String, List<Task>>{
+          'owner': <Task>[
+            makeTask(id: '1', reminderAt: DateTime(2026, 1, 1, 9)),
+          ],
+        },
+      );
+      final store = buildStore(repository);
+      await store.load();
+
+      expect(store.dueReminders(now: DateTime(2026, 1, 1, 10)), hasLength(1));
+      expect(store.dueReminders(now: DateTime(2026, 1, 1, 8)), isEmpty);
+
+      expect(await store.snoozeReminder('1'), isTrue);
+      expect(store.tasks.single.reminderAt!.isAfter(DateTime.now()), isTrue);
+
+      expect(await store.clearReminder('1'), isTrue);
+      expect(store.tasks.single.hasReminder, isFalse);
+    });
+
+    test('completed tasks never raise reminders', () {
+      final task = makeTask(
+        status: TaskStatus.completed,
+        reminderAt: DateTime(2026, 1, 1),
+      );
+
+      expect(task.isReminderDue(DateTime(2026, 2, 1)), isFalse);
+      expect(task.hasReminder, isTrue);
     });
   });
 }

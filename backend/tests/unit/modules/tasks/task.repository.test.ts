@@ -32,6 +32,12 @@ describe("task repository", () => {
       userId: "user-1",
       title: "Ship it",
       description: null,
+      course: "",
+      tags: [],
+      groupId: null,
+      assigneeId: null,
+      assigneeName: null,
+      reminderAt: null,
       priority: "medium",
       dueDate: null,
     });

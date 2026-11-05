@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/constants/app_constants.dart';
+import '../../../core/layout/app_shell.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/widgets/app_avatar.dart';
 import '../../home/data/task_store.dart';
-import '../../home/screens/home_screen.dart';
 import '../../onboarding/data/onboarding_store.dart';
 import '../../onboarding/screens/onboarding_screen.dart';
 import '../data/auth_service.dart';
@@ -80,7 +80,7 @@ class _StartupGateState extends State<StartupGate> {
 
     final session = _session;
     if (session != null) {
-      return HomeScreen(
+      return AppShell(
         ownerId: session.email,
         displayName: session.displayName,
         session: session,

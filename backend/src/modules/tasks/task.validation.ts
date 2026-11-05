@@ -20,11 +20,48 @@ const nullableDate = z.union([
 ]);
 
 /**
+ * Accepts either a UUID or null, used for optional group/member references.
+ */
+const nullableUuid = z.union([
+  z.string().uuid("Invalid identifier."),
+  z.null(),
+]);
+
+/**
+ * Normalises tags: trims them, removes duplicates case-insensitively and
+ * preserves the first spelling. The 8 x 24 limit matches the client editor.
+ */
+const taskTagsSchema = z
+  .array(
+    z
+      .string()
+      .trim()
+      .min(1, "Tags cannot be empty.")
+      .max(24, "A tag cannot exceed 24 characters.")
+  )
+  .max(8, "A task cannot have more than 8 tags.")
+  .transform((tags) => {
+    const seen = new Set<string>();
+    const normalized: string[] = [];
+
+    for (const tag of tags) {
+      const key = tag.toLowerCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      normalized.push(tag);
+    }
+
+    return normalized;
+  });
+
+/**
  * POST /api/tasks
  */
 export const createTaskSchema = z.object({
   body: z
     .object({
+      id: z.string().uuid().optional(),
+
       title: z
         .string()
         .trim()
@@ -37,6 +74,27 @@ export const createTaskSchema = z.object({
         .max(5000, "Description cannot exceed 5000 characters.")
         .nullable()
         .optional(),
+
+      course: z
+        .string()
+        .trim()
+        .max(120, "Course cannot exceed 120 characters.")
+        .optional(),
+
+      tags: taskTagsSchema.optional(),
+
+      groupId: nullableUuid.optional(),
+
+      assigneeId: nullableUuid.optional(),
+
+      assigneeName: z
+        .string()
+        .trim()
+        .max(120, "Assignee name cannot exceed 120 characters.")
+        .nullable()
+        .optional(),
+
+      reminderAt: nullableDate.optional(),
 
       priority: z
         .enum(TASK_PRIORITIES)
@@ -70,6 +128,27 @@ export const updateTaskSchema = z.object({
         .max(5000)
         .nullable()
         .optional(),
+
+      course: z
+        .string()
+        .trim()
+        .max(120)
+        .optional(),
+
+      tags: taskTagsSchema.optional(),
+
+      groupId: nullableUuid.optional(),
+
+      assigneeId: nullableUuid.optional(),
+
+      assigneeName: z
+        .string()
+        .trim()
+        .max(120)
+        .nullable()
+        .optional(),
+
+      reminderAt: nullableDate.optional(),
 
       priority: z
         .enum(TASK_PRIORITIES)

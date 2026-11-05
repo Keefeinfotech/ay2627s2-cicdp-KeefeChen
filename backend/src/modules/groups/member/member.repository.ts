@@ -8,7 +8,7 @@ import mongoose from "mongoose";
 
 import { Member } from "./member.model";
 
-import type { GroupRole } from "../group/group.types.js";
+import type { GroupRole } from "../core/group.types.js";
 
 interface CreateMemberInput {
   groupId: string;
@@ -36,6 +36,37 @@ export class MemberRepository {
   }
 
   /**
+   * Creates or reactivates a membership.
+   *
+   * The unique (groupId, userId) index means a user who previously left must
+   * reuse the existing record instead of inserting a duplicate.
+   */
+  async activate(
+    input: CreateMemberInput,
+    session?: mongoose.ClientSession,
+  ) {
+    return Member.findOneAndUpdate(
+      {
+        groupId: input.groupId,
+        userId: input.userId,
+      },
+      {
+        $set: {
+          role: input.role,
+          status: input.status,
+        },
+      },
+      {
+        new: true,
+        upsert: true,
+        runValidators: true,
+        setDefaultsOnInsert: true,
+        session,
+      },
+    ).lean();
+  }
+
+  /**
    * Finds an active membership using group ID and user ID.
    */
   async findActiveByGroupAndUser(
@@ -45,6 +76,27 @@ export class MemberRepository {
     return Member.findOne({
       groupId,
       userId,
+      status: "ACTIVE",
+    }).lean();
+  }
+
+  /**
+   * Retrieves a user's active memberships for a set of groups.
+   *
+   * Used to attach the caller's role to group list results without one query
+   * per group.
+   */
+  async findActiveByUserAndGroupIds(
+    userId: string,
+    groupIds: string[],
+  ) {
+    if (groupIds.length === 0) {
+      return [];
+    }
+
+    return Member.find({
+      userId,
+      groupId: { $in: groupIds },
       status: "ACTIVE",
     }).lean();
   }
@@ -71,6 +123,32 @@ export class MemberRepository {
       groupId,
       status: "ACTIVE",
     }).lean();
+  }
+
+  /**
+   * Retrieves one page of active group members plus the total count.
+   */
+  async listActiveByGroup(
+    groupId: string,
+    page: number,
+    limit: number,
+  ) {
+    const filter = {
+      groupId,
+      status: "ACTIVE" as const,
+    };
+
+    const [items, totalItems] = await Promise.all([
+      Member.find(filter)
+        .sort({ createdAt: 1 })
+        .skip((page - 1) * limit)
+        .limit(limit)
+        .lean(),
+
+      Member.countDocuments(filter),
+    ]);
+
+    return { items, totalItems };
   }
 
   /**

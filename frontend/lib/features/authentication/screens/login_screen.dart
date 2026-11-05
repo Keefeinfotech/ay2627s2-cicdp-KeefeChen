@@ -157,7 +157,7 @@ class _LoginScreenState extends State<LoginScreen> {
               AppTextField(
                 controller: _password,
                 labelText: 'Password',
-                hintText: 'Enter your password',
+                hintText: 'Your password',
                 obscureText: true,
                 showObscureToggle: true,
                 enabled: !_loading,

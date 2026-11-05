@@ -6,7 +6,7 @@
 
 import { z } from "zod";
 
-import { GroupRole } from "../group/group.types.js";
+import { GroupRole } from "../core/group.types.js";
 import { InvitationStatus } from "./invitation.types.js";
 
 /**

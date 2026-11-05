@@ -4,6 +4,7 @@ import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/widgets/app_avatar.dart';
+import '../../../core/widgets/app_video_background.dart';
 
 /// Shared layout for sign-in and registration.
 ///
@@ -169,8 +170,8 @@ class _AuthBrandPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return ColoredBox(
-      color: AppColors.deepNavy,
+    return AppVideoBackground(
+      assetPath: 'assets/video/auth_bg.mp4',
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.huge),
         child: Column(

@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [ main, develop, 'feature/**', 'release/**', 'hotfix/**' ]
+    branches: [ main, develop, 'feature/**', 'feat/**', 'release/**', 'hotfix/**' ]
   pull_request:
-    branches: [ main, develop, 'release/**' ]
+    branches: [ main, develop, 'feature/**', 'feat/**', 'release/**' ]
 
 permissions:
   contents: read
@@ -38,6 +38,38 @@ jobs:
         continue-on-error: true
         with:
           sarif_file: 'trivy-results.sarif'
+
+  secret-scan:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Scan for committed secrets
+        shell: bash
+        run: |
+          set -euo pipefail
+          patterns=(
+            'AKIA[0-9A-Z]{16}'
+            '-----BEGIN (RSA |EC |OPENSSH |PGP |)PRIVATE KEY-----'
+            'ghp_[A-Za-z0-9]{36}'
+            'gho_[A-Za-z0-9]{36}'
+            'xox[baprs]-[A-Za-z0-9-]{10,}'
+            'AIza[0-9A-Za-z_-]{35}'
+          )
+          failed=0
+          for pattern in "${patterns[@]}"; do
+            if git grep -n -E -e "$pattern" -- . ':!.github/workflows'; then
+              failed=1
+            fi
+          done
+          if [ "$failed" -ne 0 ]; then
+            echo '::error::A high-confidence secret pattern was found in the tree.'
+            exit 1
+          fi
+          echo 'No high-confidence secrets detected.'
 
   backend:
     runs-on: ubuntu-latest
@@ -121,3 +153,27 @@ jobs:
           path: frontend/coverage/lcov.info
           if-no-files-found: ignore
           retention-days: 7
+
+  ci-summary:
+    runs-on: ubuntu-latest
+    needs: [security-scan, secret-scan, backend, frontend]
+    if: always()
+    permissions:
+      contents: read
+    steps:
+      - name: Report results
+        shell: bash
+        run: |
+          {
+            echo '## CI summary'
+            echo ''
+            echo "- security-scan: ${{ needs.security-scan.result }}"
+            echo "- secret-scan: ${{ needs.secret-scan.result }}"
+            echo "- backend: ${{ needs.backend.result }}"
+            echo "- frontend: ${{ needs.frontend.result }}"
+          } >> "$GITHUB_STEP_SUMMARY"
+          if [[ "${{ contains(needs.*.result, 'failure') }}" == "true" ]]; then
+            echo '::error::One or more jobs failed. Check the logs above and the uploaded coverage artifacts.'
+            exit 1
+          fi
+          echo 'All quality gates passed.'

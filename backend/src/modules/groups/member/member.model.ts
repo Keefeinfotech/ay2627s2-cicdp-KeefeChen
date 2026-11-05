@@ -9,7 +9,7 @@ import mongoose, {
   type InferSchemaType,
 } from "mongoose";
 
-import { GroupRole } from "../group/group.types.js";
+import { GroupRole } from "../core/group.types.js";
 
 export enum MemberStatus {
   ACTIVE = "ACTIVE",

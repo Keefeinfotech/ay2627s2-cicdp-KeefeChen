@@ -6,10 +6,13 @@
 
 import { createHash, randomBytes } from "node:crypto";
 
-import { GroupRepository } from "../group/group.repository.js";
-import { MemberRepository } from "../member/member.repository.js";
+import mongoose from "mongoose";
 
-import { GroupRole } from "../group/group.types.js";
+import { GroupRepository } from "../core/group.repository.js";
+import { MemberRepository } from "../member/member.repository.js";
+import { userRepository } from "../../users/user.repository.js";
+
+import { GroupRole } from "../core/group.types.js";
 
 import { InvitationRepository } from "./invitation.repository.js";
 
@@ -185,31 +188,63 @@ export class InvitationService {
       throw new Error("This invitation has expired.");
     }
 
-    /*
-     * IMPORTANT:
-     * This method currently marks the invitation as accepted.
-     * It does NOT create a group membership.
-     *
-     * The complete workflow requires:
-     * - Looking up the authenticated user.
-     * - Verifying the user's email.
-     * - Matching the verified email to invitation.email.
-     * - Creating or reactivating the membership.
-     * - Accepting the invitation in the same transaction.
-     */
+    // 5. Bind the token to the signed-in account. An invitation token is
+    //    delivered to one email address, so accepting it with a different
+    //    account must not grant membership.
+    const user = await userRepository.findById(userId);
 
-    const acceptedInvitation =
-      await invitationRepository.accept(
-        invitation.invitationId,
-      );
+    if (!user) {
+      throw new Error("Your account could not be found.");
+    }
 
-    if (!acceptedInvitation) {
+    if (
+      user.email.trim().toLowerCase() !==
+      invitation.email.trim().toLowerCase()
+    ) {
       throw new Error(
-        "The invitation has already been accepted, expired or revoked.",
+        "This invitation was sent to a different email address.",
       );
     }
 
-    return acceptedInvitation;
+    // 6. Activate the membership and accept the invitation atomically. If
+    //    either write fails, neither the roster nor the invitation changes.
+    const session = await mongoose.startSession();
+
+    try {
+      let acceptedInvitation:
+        | Awaited<
+            ReturnType<typeof invitationRepository.accept>
+          >
+        | null = null;
+
+      await session.withTransaction(async () => {
+        await memberRepository.activate(
+          {
+            groupId: invitation.groupId,
+            userId,
+            role: invitation.role,
+            status: "ACTIVE",
+          },
+          session,
+        );
+
+        acceptedInvitation =
+          await invitationRepository.accept(
+            invitation.invitationId,
+            session,
+          );
+      });
+
+      if (!acceptedInvitation) {
+        throw new Error(
+          "The invitation has already been accepted, expired or revoked.",
+        );
+      }
+
+      return acceptedInvitation;
+    } finally {
+      await session.endSession();
+    }
   }
 
   /**

@@ -25,9 +25,16 @@ export const taskRepository = {
     input: CreateTaskInput
   ): Promise<TaskRecord> {
     const task = await Task.create({
+      ...(input.id ? { _id: input.id } : {}),
       userId,
       title: input.title,
       description: input.description ?? null,
+      course: input.course ?? "",
+      tags: input.tags ?? [],
+      groupId: input.groupId ?? null,
+      assigneeId: input.assigneeId ?? null,
+      assigneeName: input.assigneeName ?? null,
+      reminderAt: input.reminderAt ?? null,
       priority: input.priority ?? "medium",
       dueDate: input.dueDate ?? null,
     });

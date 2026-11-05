@@ -13,7 +13,7 @@ import mongoose, {
   type Model,
 } from "mongoose";
 
-import { GroupRole } from "../group/group.types.js";
+import { GroupRole } from "../core/group.types.js";
 import { InvitationStatus } from "./invitation.types.js";
 
 /**

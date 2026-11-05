@@ -2,61 +2,78 @@ import 'package:flutter/material.dart';
 
 /// Auxilia's central colour system.
 ///
-/// Deep Navy is the primary brand colour. Clear Blue and Teal are supporting
-/// accents only; surfaces stay white or soft grey so the navy remains dominant.
+/// Trust Blue is reserved for primary actions and selected states, with a
+/// darker shade for pressed states and links. The canvas and surfaces stay
+/// neutral so content remains legible and calm.
 abstract final class AppColors {
   // ---------------------------------------------------------------------------
-  // Official palette
+  // Core palette
   // ---------------------------------------------------------------------------
 
-  /// Primary brand colour used for headers, primary actions and selected states.
-  static const Color deepNavy = Color(0xFF243B53);
+  /// Trust Blue: primary action colour used for buttons, links and selections.
+  static const Color trustBlue = Color(0xFF2563EB);
 
-  /// Secondary accent for interactive highlights and links.
-  static const Color clearBlue = Color(0xFF2F80ED);
+  /// Primary Dark: pressed states, links and high-contrast accents.
+  static const Color primaryDark = Color(0xFF1D4ED8);
+
+  /// Light blue tint for selected rows, icon tiles and informational surfaces.
+  static const Color primaryLight = Color(0xFFDBEAFE);
 
   /// Main application background.
-  static const Color softGrey = Color(0xFFF5F7FA);
+  static const Color background = Color(0xFFF8FAFC);
 
   /// Cards and content surfaces.
-  static const Color white = Color(0xFFFFFFFF);
+  static const Color surface = Color(0xFFFFFFFF);
 
-  /// Success and positive feedback.
-  static const Color teal = Color(0xFF16A085);
-
-  /// Main body text.
-  static const Color darkText = Color(0xFF1F2937);
+  /// Main text and headings.
+  static const Color textPrimary = Color(0xFF0F172A);
 
   /// Secondary text and captions.
-  static const Color mutedText = Color(0xFF64748B);
+  static const Color textSecondary = Color(0xFF64748B);
 
-  /// Dividers and card borders.
-  static const Color borderGrey = Color(0xFFE2E8F0);
-
-  /// Errors and destructive actions.
-  static const Color errorRed = Color(0xFFDC2626);
+  /// Success and task completion.
+  static const Color successGreen = Color(0xFF16A34A);
 
   /// Warnings and attention states.
   static const Color warningAmber = Color(0xFFD97706);
 
+  /// Errors and destructive actions.
+  static const Color errorRed = Color(0xFFDC2626);
+
+  /// Dividers and card borders.
+  static const Color divider = Color(0xFFE2E8F0);
+
   // ---------------------------------------------------------------------------
-  // Derived tints and shades
+  // Backwards-compatible aliases
+  //
+  // Existing widgets were built around these palette names. Keeping the aliases
+  // lets the whole application share one set of values without duplicating
+  // components.
   // ---------------------------------------------------------------------------
 
-  /// A darker navy used at the end of brand gradients.
-  static const Color navyDeep = Color(0xFF1B2E42);
+  static const Color deepNavy = primaryDark;
+  static const Color clearBlue = trustBlue;
+  static const Color softGrey = background;
+  static const Color white = surface;
+  static const Color teal = successGreen;
+  static const Color darkText = textPrimary;
+  static const Color mutedText = textSecondary;
+  static const Color borderGrey = divider;
 
-  /// A lighter navy for gradients and hover states.
-  static const Color navyLight = Color(0xFF34506C);
+  /// A darker blue used for high-contrast brand surfaces.
+  static const Color navyDeep = Color(0xFF172554);
 
-  /// Very light navy tint for selected rows and icon tiles.
-  static const Color navyTint = Color(0xFFE9EFF5);
+  /// A lighter blue for hover states and quiet accents.
+  static const Color navyLight = Color(0xFF3B82F6);
+
+  /// Very light blue tint for selected rows and icon tiles.
+  static const Color navyTint = Color(0xFFEFF6FF);
 
   /// Light blue tint for informational surfaces.
-  static const Color blueTint = Color(0xFFEAF2FD);
+  static const Color blueTint = primaryLight;
 
-  /// Light teal tint for success surfaces.
-  static const Color tealTint = Color(0xFFE7F6F2);
+  /// Light green tint for success surfaces.
+  static const Color tealTint = Color(0xFFDCFCE7);
 
   /// Light amber tint for warning surfaces.
   static const Color warningTint = Color(0xFFFEF3C7);
@@ -65,10 +82,10 @@ abstract final class AppColors {
   static const Color errorTint = Color(0xFFFEE2E2);
 
   /// Accessible darker blue for text links on light surfaces.
-  static const Color clearBlueText = Color(0xFF1D63B8);
+  static const Color clearBlueText = primaryDark;
 
   // Semantic aliases used by feature widgets.
-  static const Color success = teal;
+  static const Color success = successGreen;
   static const Color warning = warningAmber;
   static const Color danger = errorRed;
 
@@ -76,33 +93,13 @@ abstract final class AppColors {
   // Dark theme surfaces
   // ---------------------------------------------------------------------------
 
-  static const Color darkCanvas = Color(0xFF0E1925);
-  static const Color darkSurface = Color(0xFF16273A);
-  static const Color darkSurfaceAlt = Color(0xFF1E3044);
-  static const Color darkBorder = Color(0xFF2C4259);
-  static const Color darkOnSurface = Color(0xFFE6EDF5);
+  static const Color darkCanvas = Color(0xFF0B1220);
+  static const Color darkSurface = Color(0xFF111B2E);
+  static const Color darkSurfaceAlt = Color(0xFF1B2940);
+  static const Color darkBorder = Color(0xFF2C3E57);
+  static const Color darkOnSurface = Color(0xFFE8EEF7);
   static const Color darkMuted = Color(0xFF9FB0C3);
-  static const Color darkPrimary = Color(0xFF9DB9D8);
-  static const Color darkBlue = Color(0xFF6FA8F5);
-  static const Color darkTeal = Color(0xFF4FD1B5);
-
-  // ---------------------------------------------------------------------------
-  // Gradients
-  // ---------------------------------------------------------------------------
-
-  /// Subtle navy-only gradient. Kept deliberately restrained so the identity
-  /// stays recognisably Deep Navy rather than becoming a multicolour gradient.
-  static const LinearGradient navyGradient = LinearGradient(
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
-    colors: <Color>[deepNavy, navyLight],
-  );
-
-  /// A deeper variant used for splash and welcome backgrounds.
-  static const LinearGradient navyBackdrop = LinearGradient(
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
-    colors: <Color>[navyDeep, deepNavy, navyLight],
-    stops: <double>[0, 0.55, 1],
-  );
+  static const Color darkPrimary = Color(0xFFB9CCE8);
+  static const Color darkBlue = Color(0xFF7DABF8);
+  static const Color darkTeal = Color(0xFF4ADE80);
 }

@@ -1,7 +1,7 @@
 name: frontend
 description: "Auxilia - offline-first task manager with accounts and an AI assistant."
 
-# Prevent accidental publication to pub.dev.
+# Prevent accidental publication to pub.dSev.
 publish_to: 'none'
 
 # Application version and build number.
@@ -18,6 +18,9 @@ dependencies:
 
   # UI and platform utilities.
   cupertino_icons: ^1.0.8
+
+  # Video playback support
+  video_player: ^2.8.2
 
   # Networking.
   http: ^1.6.0
@@ -40,7 +43,6 @@ dependencies:
 
   # Local database and file management.
   drift: ^2.35.3
-  # sqlite3_flutter_libs: ^0.6.0+eol  # EOL - consider alternative
   path_provider: ^2.1.6
   path: ^1.9.1
 
@@ -73,6 +75,10 @@ dev_dependencies:
 flutter:
   uses-material-design: true
 
+  # Bundled assets. Keep paths aligned with the files committed under assets/.
+  assets:
+    - assets/video/auth_bg.mp4
+
   fonts:
     - family: Inter
       fonts:
@@ -84,7 +90,3 @@ flutter:
           weight: 600
         - asset: assets/fonts/Inter-Bold.ttf
           weight: 700
-
-  # Add application assets here when required.
-  # assets:
-  #   - assets/images/

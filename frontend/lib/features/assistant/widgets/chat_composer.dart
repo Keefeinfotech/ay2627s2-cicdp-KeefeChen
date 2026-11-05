@@ -12,6 +12,7 @@ class ChatComposer extends StatelessWidget {
     this.focusNode,
     this.enabled = true,
     this.isSending = false,
+    this.hintText = 'Type a message...',
   });
 
   final TextEditingController controller;
@@ -19,6 +20,7 @@ class ChatComposer extends StatelessWidget {
   final FocusNode? focusNode;
   final bool enabled;
   final bool isSending;
+  final String hintText;
 
   @override
   Widget build(BuildContext context) {
@@ -53,7 +55,7 @@ class ChatComposer extends StatelessWidget {
                       focusNode: focusNode,
                       enabled: enabled,
                       useFormField: false,
-                      hintText: 'Type a message...',
+                      hintText: hintText,
                       textInputAction: TextInputAction.send,
                       onFieldSubmitted: (_) {
                         if (canSend) onSend();
