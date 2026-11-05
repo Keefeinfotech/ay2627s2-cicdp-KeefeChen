@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/core/widgets/app_snackbar.dart';
 
 import '../../../core/network/api_client.dart';
 import '../../../core/routing/app_router.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/widgets/app_button.dart';
-import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/widgets/app_text_field.dart';
 import '../data/auth_service.dart';
 import '../data/session_store.dart';
@@ -26,6 +26,7 @@ class _SignupScreenState extends State<SignupScreen> {
   final TextEditingController _password = TextEditingController();
   late final AuthService _auth = widget.auth ?? AuthService();
   bool _loading = false;
+  final bool _showPasswordRequirements = false;
 
   @override
   void dispose() {
@@ -83,6 +84,7 @@ class _SignupScreenState extends State<SignupScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final bool showPasswordRequirements = !_loading;
 
     return AuthShell(
       title: 'Create your account',
@@ -106,71 +108,96 @@ class _SignupScreenState extends State<SignupScreen> {
       child: AutofillGroup(
         child: Form(
           key: _formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: <Widget>[
-              AppTextField(
-                controller: _name,
-                labelText: 'Name (optional)',
-                hintText: 'How should we address you?',
-                textInputAction: TextInputAction.next,
-                textCapitalization: TextCapitalization.words,
-                enabled: !_loading,
-                autofillHints: const <String>[AutofillHints.name],
-                validator: (value) {
-                  if ((value ?? '').trim().length > 80) {
-                    return 'Keep your name under 80 characters';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: AppSpacing.lg),
-              AppTextField(
-                controller: _email,
-                labelText: 'Email address',
-                hintText: 'you@example.com',
-                keyboardType: TextInputType.emailAddress,
-                textInputAction: TextInputAction.next,
-                enabled: !_loading,
-                autofillHints: const <String>[AutofillHints.email],
-                validator: (value) {
-                  final email = (value ?? '').trim();
-                  if (email.isEmpty) return 'Enter your email address';
-                  if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(email)) {
-                    return 'Enter a valid email address';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: AppSpacing.lg),
-              AppTextField(
-                controller: _password,
-                labelText: 'Password',
-                hintText: 'At least 8 characters',
-                helperText: 'Use at least 8 characters.',
-                obscureText: true,
-                showObscureToggle: true,
-                enabled: !_loading,
-                textInputAction: TextInputAction.done,
-                autofillHints: const <String>[AutofillHints.newPassword],
-                onFieldSubmitted: (_) => _signup(),
-                validator: (value) {
-                  if (value == null || value.length < 8) {
-                    return 'Use at least 8 characters';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: AppSpacing.xl),
-              AppButton(
-                label: _loading ? 'Creating Account...' : 'Create Account',
-                onPressed: _loading ? null : _signup,
-                isLoading: _loading,
-                expand: true,
-                size: AppButtonSize.large,
-              ),
-            ],
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 420),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: <Widget>[
+                // Name field
+                AppTextField(
+                  controller: _name,
+                  labelText: 'Name (optional)',
+                  hintText: 'How should we address you?',
+                  textInputAction: TextInputAction.next,
+                  textCapitalization: TextCapitalization.words,
+                  enabled: !_loading,
+                  autofillHints: const <String>[AutofillHints.name],
+                  validator: (value) {
+                    if ((value ?? '').trim().length > 80) {
+                      return 'Keep your name under 80 characters';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: AppSpacing.lg),
+
+                // Email field
+                AppTextField(
+                  controller: _email,
+                  labelText: 'Email address',
+                  hintText: 'you@example.com',
+                  keyboardType: TextInputType.emailAddress,
+                  textInputAction: TextInputAction.next,
+                  enabled: !_loading,
+                  autofillHints: const <String>[AutofillHints.email],
+                  validator: (value) {
+                    final email = (value ?? '').trim();
+                    if (email.isEmpty) return 'Enter your email address';
+                    if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(email)) {
+                      return 'Enter a valid email address';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: AppSpacing.lg),
+
+                // Password field
+                AppTextField(
+                  controller: _password,
+                  labelText: 'Password',
+                  hintText: 'Enter your password',
+                  helperText: _showPasswordRequirements
+                      ? 'Use at least 8 characters including uppercase, lowercase and number'
+                      : 'Use at least 8 characters',
+                  obscureText: true,
+                  showObscureToggle: true,
+                  enabled: !_loading,
+                  textInputAction: TextInputAction.done,
+                  autofillHints: const <String>[AutofillHints.newPassword],
+                  onFieldSubmitted: (_) => _signup(),
+                  validator: (value) {
+                    if (value == null || value.length < 8) {
+                      return 'Use at least 8 characters';
+                    }
+                    return null;
+                  },
+                ),
+                if (showPasswordRequirements) ...[
+                  const SizedBox(height: AppSpacing.xs),
+                  Padding(
+                    padding: const EdgeInsets.only(left: AppSpacing.sm),
+                    child: Text(
+                      'At least 8 characters',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+                ],
+                const SizedBox(height: AppSpacing.xl),
+
+                // Create Account button
+                AppButton(
+                  label: _loading ? 'Creating Account...' : 'Create Account',
+                  onPressed: _loading ? null : _signup,
+                  isLoading: _loading,
+                  expand: true,
+                  size: AppButtonSize.large,
+                ),
+              ],
+            ),
           ),
         ),
       ),

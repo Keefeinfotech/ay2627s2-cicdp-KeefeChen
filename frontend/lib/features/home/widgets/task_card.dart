@@ -99,7 +99,7 @@ class TaskCard extends StatelessWidget {
                         fontWeight: FontWeight.w600,
                       ),
                     ),
-                    if (task.notes.trim().isNotEmpty) ...<Widget>[
+                    if (task.notes.trim().isNotEmpty) ...[
                       const SizedBox(height: AppSpacing.xs),
                       Text(
                         task.notes.trim(),

@@ -4,6 +4,8 @@
  * Author: Keefe Chen
  */
 
+import { Request } from 'express';
+
 export interface TaskChange {
   id: string;
   userId: string;
@@ -24,4 +26,19 @@ export interface SyncChangesResult {
   serverTime: Date;
   since: Date;
   tasks: TaskChange[];
+}
+
+export interface PushChangesDTO {
+  userId: string;
+  changes: Partial<TaskChange>[];
+}
+
+export interface AuthenticatedUser {
+  id: string;
+  email?: string;
+  [key: string]: unknown;
+}
+
+export interface AuthenticatedRequest extends Request {
+  user?: AuthenticatedUser;
 }

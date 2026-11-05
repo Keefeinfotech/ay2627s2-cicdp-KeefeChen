@@ -89,7 +89,7 @@ class ProjectCard extends StatelessWidget {
                           ),
                           if (project.description
                               .trim()
-                              .isNotEmpty) ...<Widget>[
+                              .isNotEmpty) ...[
                             const SizedBox(height: AppSpacing.xxs),
                             Text(
                               project.description.trim(),

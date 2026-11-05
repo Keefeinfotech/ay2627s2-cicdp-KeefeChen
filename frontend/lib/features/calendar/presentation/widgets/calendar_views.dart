@@ -78,10 +78,7 @@ class DailyCalendarView extends StatelessWidget {
   final VoidCallback onCreate;
 
   Set<String> get _overlapIds => <String>{
-    for (final overlap in overlaps) ...<String>[
-      overlap.first.id,
-      overlap.second.id,
-    ],
+    for (final overlap in overlaps) ...[overlap.first.id, overlap.second.id],
   };
 
   @override
@@ -169,11 +166,7 @@ class DailyCalendarView extends StatelessWidget {
             ),
             child: Column(
               children: <Widget>[
-                for (
-                  var index = 0;
-                  index < day.events.length;
-                  index++
-                ) ...<Widget>[
+                for (var index = 0; index < day.events.length; index++) ...[
                   if (index > 0) const Divider(height: 1),
                   Padding(
                     padding: const EdgeInsets.fromLTRB(

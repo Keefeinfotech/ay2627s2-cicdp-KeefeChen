@@ -1,71 +1,42 @@
-/**
- * File Name: sync.controller.ts
- * Description: Handles HTTP requests for the change feed.
- * Author: Keefe Chen
- */
+import { Response, NextFunction } from 'express';
+import { AuthenticatedRequest } from './sync.types';
+import { SyncService } from './sync.service';
 
-import type {
-  NextFunction,
-  Request,
-  Response,
-} from "express";
+export class SyncController {
+  constructor(private readonly syncService: SyncService) {}
 
-import { AppError } from "../../shared/utils/AppError.js";
-import { syncService } from "./sync.service.js";
-
-function requireUserId(req: Request, res: Response): string | null {
-  if (!req.userId) {
-    res.status(401).json({
-      code: "UNAUTHENTICATED",
-      message: "Authentication is required.",
-    });
-
-    return null;
-  }
-
-  return req.userId;
-}
-
-export const syncController = {
-  /**
-   * GET /api/sync/changes
-   * Returns tasks updated since the supplied timestamp.
-   */
-  async changes(
-    req: Request,
-    res: Response,
-    next: NextFunction,
-  ): Promise<void> {
+  public getChanges = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const userId = requireUserId(req, res);
-      if (!userId) return;
-
-      const sinceParam = req.query.since;
-
-      let since: Date | null = null;
-
-      if (typeof sinceParam === "string" && sinceParam.trim().length > 0) {
-        const parsed = new Date(sinceParam);
-
-        if (Number.isNaN(parsed.getTime())) {
-          throw new AppError(
-            400,
-            "INVALID_SYNC_CURSOR",
-            "The 'since' query parameter must be a valid ISO date.",
-          );
-        }
-
-        since = parsed;
+      const userId = req.user?.id || (req.query.userId as string);
+      if (!userId) {
+        res.status(400).json({ success: false, error: 'User ID is required.' });
+        return;
       }
 
-      const result = await syncService.getChanges(userId, since);
+      const sinceParam = req.query.since as string | undefined;
+      const since = sinceParam ? new Date(sinceParam) : new Date(0);
 
-      res.status(200).json({
-        message: "Changes retrieved successfully.",
-        data: result,
-      });
+      const result = await this.syncService.getChangesSince(userId, since);
+      res.status(200).json({ success: true, data: result });
     } catch (error) {
       next(error);
     }
-  },
-};
+  };
+
+  public pushChanges = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const userId = req.user?.id || req.body.userId;
+      if (!userId) {
+        res.status(400).json({ success: false, error: 'User ID is required.' });
+        return;
+      }
+
+      const changes = Array.isArray(req.body.changes) ? req.body.changes : [];
+      const result = await this.syncService.pushChanges(userId, changes);
+
+      res.status(200).json({ success: true, data: result });
+    } catch (error) {
+      next(error);
+    }
+  };
+}

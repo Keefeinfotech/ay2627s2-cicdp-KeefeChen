@@ -90,8 +90,9 @@ class Task {
     );
   }
 
-  static final Random _random = Random();
-  static int _sequence = 0;
+  // (removed unused fields)
+  // static final Random _random = Random();
+  // static const int _sequence = 0;
 
   final String id;
   final String title;

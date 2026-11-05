@@ -66,7 +66,7 @@ class AppEmptyState extends StatelessWidget {
               ),
             ),
           ),
-          if (action != null) ...<Widget>[
+          if (action != null) ...[
             const SizedBox(height: AppSpacing.xl),
             action!,
           ],

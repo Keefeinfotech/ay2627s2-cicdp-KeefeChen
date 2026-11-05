@@ -375,7 +375,7 @@ class _QuickAddTaskSheetState extends State<QuickAddTaskSheet> {
                             ],
                           ),
                         ),
-                        if (_error != null) ...<Widget>[
+                        if (_error != null) ...[
                           const SizedBox(height: AppSpacing.md),
                           Container(
                             padding: const EdgeInsets.all(AppSpacing.md),

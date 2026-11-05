@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/core/widgets/app_snackbar.dart';
 
 import '../../../core/constants/app_constants.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/routing/app_router.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/widgets/app_button.dart';
-import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/widgets/app_text_field.dart';
 import '../data/auth_service.dart';
 import '../data/session_store.dart';
@@ -82,29 +82,9 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  /// The backend exposes no password-reset endpoint, so the link explains the
-  /// limitation instead of presenting a reset flow that cannot complete.
-  Future<void> _showPasswordHelp() {
-    return showDialog<void>(
-      context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          title: const Text('Password reset'),
-          content: const Text(
-            'Password reset is not available in this version of Auxilia. '
-            'You can create a new account, or continue without an account and '
-            'keep using tasks on this device.',
-          ),
-          actions: <Widget>[
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('Close'),
-            ),
-          ],
-        );
-      },
-    );
-  }
+  // (Password reset dialog removed — was an unused helper.)
+
+  // ignore: unused_element
 
   @override
   Widget build(BuildContext context) {
@@ -132,100 +112,112 @@ class _LoginScreenState extends State<LoginScreen> {
       child: AutofillGroup(
         child: Form(
           key: _formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: <Widget>[
-              AppTextField(
-                controller: _email,
-                labelText: 'Email address',
-                hintText: 'you@example.com',
-                keyboardType: TextInputType.emailAddress,
-                textInputAction: TextInputAction.next,
-                autofillHints: const <String>[AutofillHints.email],
-                enabled: !_loading,
-                validator: (value) {
-                  final email = (value ?? '').trim();
-                  if (email.isEmpty) return 'Enter your email address';
-                  if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(email)) {
-                    return 'Enter a valid email address';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: AppSpacing.lg),
-              AppTextField(
-                controller: _password,
-                labelText: 'Password',
-                hintText: 'Your password',
-                obscureText: true,
-                showObscureToggle: true,
-                enabled: !_loading,
-                textInputAction: TextInputAction.done,
-                autofillHints: const <String>[AutofillHints.password],
-                onFieldSubmitted: (_) => _login(),
-                validator: (value) => (value == null || value.isEmpty)
-                    ? 'Enter your password'
-                    : null,
-              ),
-              Align(
-                alignment: Alignment.centerRight,
-                child: TextButton(
-                  onPressed: _loading ? null : _showPasswordHelp,
-                  style: TextButton.styleFrom(
-                    padding: EdgeInsets.zero,
-                    minimumSize: const Size(0, 44),
-                  ),
-                  child: const Text('Forgot password?'),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 420),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: <Widget>[
+                // Email field
+                AppTextField(
+                  controller: _email,
+                  labelText: 'Email address',
+                  hintText: 'you@example.com',
+                  keyboardType: TextInputType.emailAddress,
+                  textInputAction: TextInputAction.next,
+                  autofillHints: const <String>[AutofillHints.email],
+                  enabled: !_loading,
+                  validator: (value) {
+                    final email = (value ?? '').trim();
+                    if (email.isEmpty) return 'Enter your email address';
+                    if (!RegExp(
+                      r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
+                    ).hasMatch(email)) {
+                      return 'Enter a valid email address';
+                    }
+                    return null;
+                  },
                 ),
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              AppButton(
-                label: _loading ? 'Signing In...' : 'Sign In',
-                onPressed: _loading ? null : _login,
-                isLoading: _loading,
-                expand: true,
-                size: AppButtonSize.large,
-              ),
-              const SizedBox(height: AppSpacing.xl),
-              Row(
-                children: <Widget>[
-                  const Expanded(child: Divider()),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.md,
+                const SizedBox(height: AppSpacing.lg),
+
+                // Password field
+                AppTextField(
+                  controller: _password,
+                  labelText: 'Password',
+                  hintText: 'Your password',
+                  obscureText: true,
+                  showObscureToggle: true,
+                  enabled: !_loading,
+                  textInputAction: TextInputAction.done,
+                  autofillHints: const <String>[AutofillHints.password],
+                  onFieldSubmitted: (_) => _login(),
+                  validator: (value) => (value == null || value.isEmpty)
+                      ? 'Enter your password'
+                      : null,
+                ),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: null,
+                    style: TextButton.styleFrom(
+                      padding: EdgeInsets.zero,
+                      minimumSize: const Size(0, 44),
                     ),
-                    child: Text(
-                      'or',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
+                    child: const Text('Forgot password?'),
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.sm),
+
+                // Sign In button
+                AppButton(
+                  label: _loading ? 'Signing In...' : 'Sign In',
+                  onPressed: _loading ? null : _login,
+                  isLoading: _loading,
+                  expand: true,
+                  size: AppButtonSize.large,
+                ),
+                const SizedBox(height: AppSpacing.xl),
+
+                Row(
+                  children: <Widget>[
+                    const Expanded(child: Divider()),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.md,
+                      ),
+                      child: Text(
+                        'or',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
                       ),
                     ),
-                  ),
-                  const Expanded(child: Divider()),
-                ],
-              ),
-              const SizedBox(height: AppSpacing.lg),
-              AppButton(
-                label: 'Continue offline',
-                icon: Icons.cloud_off_outlined,
-                onPressed: _loading ? null : _continueOffline,
-                variant: AppButtonVariant.outline,
-                expand: true,
-                size: AppButtonSize.large,
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              Text(
-                'Your tasks stay on this device.',
-                textAlign: TextAlign.center,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
+                    const Expanded(child: Divider()),
+                  ],
                 ),
-              ),
-              // Google and GitHub sign-in are intentionally absent: the current
-              // backend exposes only email/password authentication, so rendering
-              // provider buttons would promise a flow that cannot complete.
-            ],
+                const SizedBox(height: AppSpacing.lg),
+
+                // Continue offline button
+                AppButton(
+                  label: 'Continue offline',
+                  icon: Icons.cloud_off_outlined,
+                  onPressed: _loading ? null : _continueOffline,
+                  variant: AppButtonVariant.outline,
+                  expand: true,
+                  size: AppButtonSize.large,
+                ),
+                const SizedBox(height: AppSpacing.sm),
+
+                Text(
+                  'Your tasks stay on this device.',
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.sm),
+              ],
+            ),
           ),
         ),
       ),

@@ -1,26 +1,25 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_spacing.dart';
-import '../../../../core/utils/formatters.dart';
-import '../../../../core/widgets/app_app_bar.dart';
-import '../../../../core/widgets/app_dialog.dart';
-import '../../../../core/widgets/app_empty_state.dart';
-import '../../../../core/widgets/app_error_state.dart';
-import '../../../../core/widgets/app_loading.dart';
-import '../../../../core/widgets/app_snackbar.dart';
-import '../../../../core/widgets/app_status_badge.dart';
-import '../../../../core/widgets/app_text_field.dart';
-import '../../../home/data/task_repository.dart';
+import 'package:frontend/core/theme/app_colors.dart';
+import 'package:frontend/core/theme/app_spacing.dart';
+import 'package:frontend/core/utils/formatters.dart';
+import 'package:frontend/core/widgets/app_app_bar.dart';
+import 'package:frontend/core/widgets/app_dialog.dart';
+import 'package:frontend/core/widgets/app_empty_state.dart';
+import 'package:frontend/core/widgets/app_error_state.dart';
+import 'package:frontend/core/widgets/app_loading.dart';
+import 'package:frontend/core/widgets/app_snackbar.dart';
+import 'package:frontend/core/widgets/app_status_badge.dart';
+import 'package:frontend/core/widgets/app_text_field.dart';
 import 'package:frontend/features/home/data/api_task_repository.dart';
-import '../../../home/data/task_store.dart';
-import '../../../home/data/task_validation.dart';
-import '../../../home/models/task.dart';
-import '../../../home/widgets/task_editor.dart';
-import '../../data/models/task_breakdown.dart';
-import '../../data/repositories/task_management_repository.dart';
-import '../widgets/quick_add_task_sheet.dart';
-import '../widgets/task_breakdown_sheet.dart';
+import 'package:frontend/features/home/data/task_store.dart';
+import 'package:frontend/features/home/data/task_validation.dart';
+import 'package:frontend/features/home/models/task.dart';
+import 'package:frontend/features/home/widgets/task_editor.dart';
+import 'package:frontend/features/task_management/data/models/task_breakdown.dart';
+import 'package:frontend/features/task_management/data/repositories/task_management_repository.dart';
+import 'package:frontend/features/task_management/presentation/widgets/quick_add_task_sheet.dart';
+import 'package:frontend/features/task_management/presentation/widgets/task_breakdown_sheet.dart';
 
 /// Full task-management surface with natural-language quick add, filtering,
 /// swipe actions and AI-assisted breakdowns.
@@ -152,7 +151,7 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
           final restored = await _store.restoreTask(task);
           if (!mounted) return;
           _showSnack(
-            restored ? 'Task restored.' : 'Could not restore the task.',
+            restored ? 'Task restored.' : _store.error ?? 'Could not restore the task.',
             type: restored ? AppSnackType.success : AppSnackType.error,
           );
         },
@@ -228,7 +227,7 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(
-              maxWidth: AppSizes.maxContentWidth,
+              maxWidth: 1120,
             ),
             child: RefreshIndicator(
               onRefresh: _store.load,
@@ -238,7 +237,7 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
                   AppSpacing.lg,
                   AppSpacing.lg,
                   AppSpacing.lg,
-                  120,
+                  AppSpacing.xxl,
                 ),
                 children: <Widget>[
                   _buildSummary(context),
@@ -283,8 +282,7 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
                         onRetry: _store.retry,
                       ),
                     )
-                  else
-                    ..._buildTaskSection(context),
+                  else ..._buildTaskSection(context),
                 ],
               ),
             ),
@@ -420,14 +418,8 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
   List<Widget> _buildTaskSection(BuildContext context) {
     if (_store.tasks.isEmpty) {
       return <Widget>[
-        Container(
-          decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surface,
-            borderRadius: BorderRadius.circular(AppRadius.lg),
-            border: Border.all(
-              color: Theme.of(context).colorScheme.outlineVariant,
-            ),
-          ),
+        Padding(
+          padding: const EdgeInsets.all(AppSpacing.lg),
           child: AppEmptyState(
             icon: Icons.task_alt_rounded,
             title: 'A clear task list',
@@ -453,14 +445,8 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
 
     if (_store.filteredCount == 0) {
       return <Widget>[
-        Container(
-          decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surface,
-            borderRadius: BorderRadius.circular(AppRadius.lg),
-            border: Border.all(
-              color: Theme.of(context).colorScheme.outlineVariant,
-            ),
-          ),
+        Padding(
+          padding: const EdgeInsets.all(AppSpacing.lg),
           child: AppEmptyState(
             compact: true,
             icon: Icons.filter_alt_off_outlined,
@@ -482,7 +468,7 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
     }
 
     return <Widget>[
-      if (_store.error != null) ...<Widget>[
+      if (_store.error != null) ...[
         AppErrorBanner(
           message: _store.error!,
           onRetry: _store.retry,
@@ -490,15 +476,8 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
         ),
         const SizedBox(height: AppSpacing.sm),
       ],
-      Container(
-        clipBehavior: Clip.antiAlias,
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface,
-          borderRadius: BorderRadius.circular(AppRadius.lg),
-          border: Border.all(
-            color: Theme.of(context).colorScheme.outlineVariant,
-          ),
-        ),
+      Padding(
+        padding: const EdgeInsets.all(AppSpacing.lg),
         child: Column(
           children: <Widget>[
             for (
@@ -519,7 +498,7 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
           ],
         ),
       ),
-      if (_store.pageCount > 1) ...<Widget>[
+      if (_store.pageCount > 1) ...[
         const SizedBox(height: AppSpacing.md),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -627,7 +606,7 @@ class _SwipeTaskRow extends StatelessWidget {
                         color: completed ? scheme.onSurfaceVariant : null,
                       ),
                     ),
-                    if (task.notes.trim().isNotEmpty) ...<Widget>[
+                    if (task.notes.trim().isNotEmpty) ...[
                       const SizedBox(height: AppSpacing.xxs),
                       Text(
                         task.notes.trim(),

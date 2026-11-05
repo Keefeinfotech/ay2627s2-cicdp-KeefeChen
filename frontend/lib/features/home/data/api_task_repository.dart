@@ -1,4 +1,3 @@
-import 'dart:convert';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -36,7 +35,7 @@ class ApiTaskRepository implements TaskRepository {
   final SharedPreferencesTaskRepository _cache;
 
   Future<String?> _token() async {
-    if (_tokenValue != null && _tokenValue!.isNotEmpty) return _tokenValue;
+    if (_tokenValue != null && _tokenValue.isNotEmpty) return _tokenValue;
     if (_sessions == null) return null;
     final session = await _sessions.read();
     return session?.token;
@@ -55,7 +54,6 @@ class ApiTaskRepository implements TaskRepository {
       // re-created on the server (updatedAt-wins for shared tasks).
       final cached = await _cache.load(ownerId);
       final remoteById = <String, Task>{for (final t in remote) t.id: t};
-      final merged = <Task>[];
       final toCreate = <Task>[];
       final toUpdate = <Task>[];
       for (final task in cached) {

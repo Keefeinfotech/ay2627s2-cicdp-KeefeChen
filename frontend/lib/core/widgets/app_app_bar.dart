@@ -67,7 +67,7 @@ class AuxiliaAppBar extends StatelessWidget implements PreferredSizeWidget {
               fontWeight: FontWeight.w700,
             ),
           ),
-          if (subtitle != null) ...<Widget>[
+          if (subtitle != null) ...[
             const SizedBox(height: AppSpacing.xxs),
             Text(
               subtitle!,

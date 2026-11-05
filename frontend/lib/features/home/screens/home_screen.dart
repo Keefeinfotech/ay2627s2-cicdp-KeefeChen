@@ -16,7 +16,6 @@ import '../../authentication/data/session_store.dart';
 import '../../profile/widgets/profile_sheet.dart';
 import '../data/gamification.dart';
 import '../data/task_repository.dart';
-import 'package:frontend/features/home/data/api_task_repository.dart';
 import '../data/task_store.dart';
 import '../data/task_validation.dart';
 import '../models/task.dart';
@@ -68,12 +67,10 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _ownsStore = widget.store == null;
-    _store =
-        widget.store ??
-        TaskStore(
-          repository: ApiTaskRepository(token: widget.session?.token),
-          ownerId: widget.ownerId,
-        );
+    _store = widget.store ?? TaskStore(
+      repository: SharedPreferencesTaskRepository(),
+      ownerId: widget.ownerId,
+    );
     _store.addListener(_handleStoreChanged);
     _store.load();
   }
@@ -218,9 +215,7 @@ class _HomeScreenState extends State<HomeScreen> {
           final restored = await _store.restoreTask(task);
           if (!mounted) return;
           _showSnack(
-            restored
-                ? 'Task restored.'
-                : _store.error ?? 'Could not restore the task.',
+            restored ? 'Task restored.' : _store.error ?? 'Could not restore the task.',
             type: restored ? AppSnackType.success : AppSnackType.error,
           );
         },
@@ -315,7 +310,7 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(
-              maxWidth: AppSizes.maxContentWidth,
+              maxWidth: 1120,
             ),
             child: _buildBody(context),
           ),
@@ -339,7 +334,7 @@ class _HomeScreenState extends State<HomeScreen> {
         AppSpacing.lg,
         AppSpacing.lg,
         AppSpacing.lg,
-        120,
+        AppSpacing.xxl,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -352,7 +347,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           const SizedBox(height: AppSpacing.lg),
           _toolbar(context),
-          if (_store.pageCount > 1) ...<Widget>[
+          if (_store.pageCount > 1) ...[
             const SizedBox(height: AppSpacing.md),
             _pagination(context),
           ],
@@ -361,14 +356,14 @@ class _HomeScreenState extends State<HomeScreen> {
             title: 'Your tasks',
             subtitle: '${_store.filteredCount} shown',
           ),
-          if (_store.isLoading && _store.hasLoaded) ...<Widget>[
+          if (_store.isLoading && _store.hasLoaded) ...[
             const SizedBox(height: AppSpacing.md),
             ClipRRect(
               borderRadius: BorderRadius.circular(2),
               child: const LinearProgressIndicator(minHeight: 3),
             ),
           ],
-          if (_store.error != null) ...<Widget>[
+          if (_store.error != null) ...[
             const SizedBox(height: AppSpacing.md),
             AppErrorBanner(
               message: _store.error!,
@@ -417,7 +412,7 @@ class _HomeScreenState extends State<HomeScreen> {
         AppCard(
           padding: const EdgeInsets.all(AppSpacing.lg),
           child: AppEmptyState(
-            icon: Icons.checklist_rtl_rounded,
+            icon: Icons.checklist_rounded,
             title: 'No tasks yet',
             message:
                 'Create your first task to start tracking progress and '

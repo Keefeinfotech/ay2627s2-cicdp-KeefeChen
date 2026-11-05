@@ -11,7 +11,6 @@ import '../../../../core/widgets/app_error_state.dart';
 import '../../../../core/widgets/app_loading.dart';
 import '../../../../core/widgets/app_snackbar.dart';
 import '../../../../core/widgets/app_status_badge.dart';
-import '../../../home/data/task_repository.dart';
 import 'package:frontend/features/home/data/api_task_repository.dart';
 import '../../../home/data/task_store.dart';
 import '../../../home/models/task.dart';
@@ -331,7 +330,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
                     children: <Widget>[
                       if (project.effectiveStatus == ProjectStatus.archived)
                         _archivedBanner(context, project),
-                      if (_controller.error != null) ...<Widget>[
+                      if (_controller.error != null) ...[
                         AppErrorBanner(
                           message: _controller.error!,
                           onRetry: _controller.retry,
@@ -492,7 +491,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
               ),
             ],
           ),
-          if (project.description.trim().isNotEmpty) ...<Widget>[
+          if (project.description.trim().isNotEmpty) ...[
             const SizedBox(height: AppSpacing.md),
             Text(
               project.description.trim(),
@@ -670,7 +669,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
       ),
       child: Column(
         children: <Widget>[
-          for (var index = 0; index < tasks.length; index++) ...<Widget>[
+          for (var index = 0; index < tasks.length; index++) ...[
             if (index > 0) const Divider(height: 1),
             Dismissible(
               key: ValueKey<String>('project-task-${tasks[index].id}'),
@@ -771,7 +770,7 @@ class _ProjectTaskRow extends StatelessWidget {
                       color: completed ? scheme.onSurfaceVariant : null,
                     ),
                   ),
-                  if (task.notes.trim().isNotEmpty) ...<Widget>[
+                  if (task.notes.trim().isNotEmpty) ...[
                     const SizedBox(height: AppSpacing.xxs),
                     Text(
                       task.notes.trim(),

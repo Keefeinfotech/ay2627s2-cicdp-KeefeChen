@@ -12,7 +12,6 @@ import '../../../../core/widgets/app_snackbar.dart';
 import '../../../../core/widgets/app_status_badge.dart';
 import '../../../../core/widgets/app_text_field.dart';
 import '../../../../core/widgets/responsive_page_layout.dart';
-import '../../../home/data/task_repository.dart';
 import 'package:frontend/features/home/data/api_task_repository.dart';
 import '../../../home/data/task_store.dart';
 import '../../data/models/project.dart';
@@ -74,9 +73,7 @@ class _ProjectsPageState extends State<ProjectsPage> {
     if (!mounted) return;
     AppSnackBar.show(
       context,
-      saved
-          ? 'Project created.'
-          : _controller.error ?? 'Could not create the project.',
+      saved ? 'Project created.' : _controller.error ?? 'Could not create the project.',
       type: saved ? AppSnackType.success : AppSnackType.error,
     );
   }
@@ -220,7 +217,7 @@ class _ProjectsPageState extends State<ProjectsPage> {
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(
-              maxWidth: AppSizes.maxContentWidth,
+              maxWidth: 1120,
             ),
             child: RefreshIndicator(
               onRefresh: _controller.retry,
@@ -230,14 +227,14 @@ class _ProjectsPageState extends State<ProjectsPage> {
                   AppSpacing.lg,
                   AppSpacing.lg,
                   AppSpacing.lg,
-                  120,
+                  AppSpacing.xxl,
                 ),
                 children: <Widget>[
                   if (_controller.hasLoaded) _summary(context),
                   if (_controller.hasLoaded)
                     const SizedBox(height: AppSpacing.lg),
                   _toolbar(context),
-                  if (_controller.error != null) ...<Widget>[
+                  if (_controller.error != null) ...[
                     const SizedBox(height: AppSpacing.md),
                     AppErrorBanner(
                       message: _controller.error!,
@@ -278,13 +275,8 @@ class _ProjectsPageState extends State<ProjectsPage> {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
 
-    return Container(
+    return Padding(
       padding: const EdgeInsets.all(AppSpacing.lg),
-      decoration: BoxDecoration(
-        color: scheme.surface,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: scheme.outlineVariant),
-      ),
       child: LayoutBuilder(
         builder: (context, constraints) {
           final progress = Column(
@@ -421,12 +413,8 @@ class _ProjectsPageState extends State<ProjectsPage> {
   }
 
   Widget _emptyState(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
-      ),
+    return Padding(
+      padding: const EdgeInsets.all(AppSpacing.lg),
       child: AppEmptyState(
         icon: Icons.workspaces_outline,
         title: 'No projects yet',
@@ -445,12 +433,8 @@ class _ProjectsPageState extends State<ProjectsPage> {
   }
 
   Widget _noMatches(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
-      ),
+    return Padding(
+      padding: const EdgeInsets.all(AppSpacing.lg),
       child: AppEmptyState(
         compact: true,
         icon: Icons.filter_alt_off_outlined,

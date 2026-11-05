@@ -110,7 +110,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
   }
 
   void _clearConversation() {
-    setState(_messages.clear);
+    setState(() => _messages.clear);
   }
 
   void _openLogin() {

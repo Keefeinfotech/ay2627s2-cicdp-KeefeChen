@@ -60,7 +60,7 @@ class _VideoBackgroundState extends State<VideoBackground> {
 
         // Semi-transparent overlay to ensure text readability
         Container(
-          color: Colors.black.withOpacity(widget.overlayOpacity),
+          color: Colors.black.withValues(alpha: widget.overlayOpacity),
         ),
 
         // Text & Branding content layer

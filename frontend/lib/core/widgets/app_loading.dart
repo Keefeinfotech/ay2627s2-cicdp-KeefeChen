@@ -117,7 +117,7 @@ class TaskListSkeleton extends StatelessWidget {
         padding: const EdgeInsets.all(AppSpacing.lg),
         child: Column(
           children: <Widget>[
-            for (var index = 0; index < itemCount; index++) ...<Widget>[
+            for (var index = 0; index < itemCount; index++) ...[
               if (index > 0) const SizedBox(height: AppSpacing.lg),
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,

@@ -12,7 +12,7 @@ import {
 } from "../shared/membership.js";
 import { auditService } from "../../audit/audit.service.js";
 import { AUDIT_ACTIONS } from "../../audit/audit.types.js";
-import { batchRepository } from "./batch.repository.js";
+import { BatchRepository } from "./batch.repository.js";
 
 import type {
   BatchAddMembersInput,
@@ -55,12 +55,12 @@ export const batchService = {
       // Atomic execution is an all-or-nothing transaction: a failure aborts
       // every change, so partial results are never recorded.
       try {
-        const result = await batchRepository.addMembersAtomic(
+        const result = await BatchRepository.addMembersAtomic(
           groupId,
           memberIds,
         );
 
-        const job = await batchRepository.recordJob({
+        const job = await BatchRepository.recordJob({
           groupId,
           requestedBy: requesterId,
           totalCount: memberIds.length,
@@ -80,7 +80,7 @@ export const batchService = {
 
         return { mode: "atomic", result, job };
       } catch (error) {
-        await batchRepository.recordJob({
+        await BatchRepository.recordJob({
           groupId,
           requestedBy: requesterId,
           totalCount: memberIds.length,
@@ -102,12 +102,12 @@ export const batchService = {
       }
     }
 
-    const result = await batchRepository.addMembersPartial(
+    const result = await BatchRepository.addMembersPartial(
       groupId,
       memberIds,
     );
 
-    const job = await batchRepository.recordJob({
+    const job = await BatchRepository.recordJob({
       groupId,
       requestedBy: requesterId,
       totalCount: result.totalProcessed,

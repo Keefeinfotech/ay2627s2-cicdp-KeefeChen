@@ -51,7 +51,7 @@ class AppErrorState extends StatelessWidget {
               color: scheme.onSurfaceVariant,
             ),
           ),
-          if (onRetry != null) ...<Widget>[
+          if (onRetry != null) ...[
             const SizedBox(height: AppSpacing.lg),
             AppButton(
               label: retryLabel,

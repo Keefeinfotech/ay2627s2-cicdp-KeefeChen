@@ -4,7 +4,6 @@ import '../../features/assistant/presentation/pages/assistant_page.dart';
 import '../../features/authentication/models/session.dart';
 import '../../features/calendar/presentation/pages/calendar_page.dart';
 import '../../features/home/data/task_repository.dart';
-import 'package:frontend/features/home/data/api_task_repository.dart';
 import '../../features/home/data/task_store.dart';
 import '../../features/home/screens/home_screen.dart';
 import '../../features/profile/pages/profile_page.dart';
@@ -137,7 +136,7 @@ class _AppShellState extends State<AppShell> {
     _store =
         widget.store ??
         TaskStore(
-          repository: ApiTaskRepository(),
+          repository: SharedPreferencesTaskRepository(),
           ownerId: widget.ownerId,
         );
     if (!_store.hasLoaded && !_store.isLoading) _store.load();
@@ -249,11 +248,19 @@ class _AppShellState extends State<AppShell> {
     final bool showRail = !showSidebar && width >= _railBreakpoint;
     final bool compactPhones = width < _compactPhoneBreakpoint;
 
+    // Use a KeyedSubtree per page so each child keeps its own state and
+    // semantics don't get dirtied by IndexedStack's offstage children.
+    // The IndexedStack itself is retained for state preservation; wrapping
+    // each child in a KeyedSubtree with a stable key prevents the
+    // 'parentDataDirty' assertion in _RenderObjectSemantics.
     final pages = IndexedStack(
       index: _selected.index,
       children: <Widget>[
         for (final destination in ShellDestination.values)
-          _pages[destination] ?? const SizedBox.shrink(),
+          KeyedSubtree(
+            key: ValueKey<String>('shell-page-${destination.name}'),
+            child: _pages[destination] ?? const SizedBox.shrink(),
+          ),
       ],
     );
 

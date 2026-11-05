@@ -18,6 +18,8 @@ abstract final class AppTypography {
     'sans-serif',
   ];
 
+  /// Auxilia typography scale — compact on mobile, comfortable on desktop.
+  /// All sizes use Roboto with native fallbacks.
   static const TextStyle displayLarge = TextStyle(
     fontFamily: fontFamily,
     fontFamilyFallback: fontFamilyFallback,

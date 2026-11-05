@@ -1,20 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/features/authentication/models/session.dart';
+import 'package:frontend/features/home/data/task_store.dart';
 
-import '../../../core/constants/app_constants.dart';
-import '../../../core/routing/app_router.dart';
-import '../../../core/theme/app_colors.dart';
-import '../../../core/theme/app_spacing.dart';
-import '../../../core/widgets/app_app_bar.dart';
-import '../../../core/widgets/app_avatar.dart';
-import '../../../core/widgets/app_dialog.dart';
-import '../../../core/widgets/app_empty_state.dart';
-import '../../../core/widgets/app_snackbar.dart';
-import '../../../core/widgets/app_status_badge.dart';
-import '../../authentication/data/auth_service.dart';
-import '../../authentication/data/session_store.dart';
-import '../../authentication/models/session.dart';
-import '../../home/data/task_store.dart';
-import '../../home/widgets/achievements_dialog.dart';
+import 'package:frontend/core/constants/app_constants.dart';
+import 'package:frontend/core/routing/app_router.dart';
+import 'package:frontend/core/theme/app_colors.dart';
+import 'package:frontend/core/theme/app_spacing.dart';
+import 'package:frontend/core/widgets/app_app_bar.dart';
+import 'package:frontend/core/widgets/app_avatar.dart';
+import 'package:frontend/core/widgets/app_dialog.dart';
+import 'package:frontend/core/widgets/app_snackbar.dart';
+import 'package:frontend/core/widgets/app_status_badge.dart';
+import 'package:frontend/features/authentication/data/auth_service.dart';
+import 'package:frontend/features/authentication/data/session_store.dart';
+import 'package:frontend/features/home/widgets/achievements_dialog.dart';
 
 /// Full-page profile and workspace settings surface.
 class ProfilePage extends StatelessWidget {
@@ -228,13 +227,8 @@ class ProfilePage extends StatelessWidget {
     final scheme = theme.colorScheme;
     final level = store.levelProgress.level;
 
-    return Container(
+    return Padding(
       padding: const EdgeInsets.all(AppSpacing.lg),
-      decoration: BoxDecoration(
-        color: scheme.surface,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: scheme.outlineVariant),
-      ),
       child: LayoutBuilder(
         builder: (context, constraints) {
           final identity = Row(
@@ -334,69 +328,69 @@ class ProfilePage extends StatelessWidget {
   }
 
   Widget _stats(BuildContext context, int unlocked, int total) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
-      ),
-      child: IntrinsicHeight(
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: <Widget>[
-            Expanded(
-              child: _ProfileStat(
-                label: 'Total XP',
-                value: '${store.levelProgress.totalXp}',
-              ),
+    return Padding(
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          Expanded(
+            child: _ProfileStat(
+              label: 'Total XP',
+              value: '${store.levelProgress.totalXp}',
             ),
-            VerticalDivider(
-              width: 1,
-              color: Theme.of(context).colorScheme.outlineVariant,
+          ),
+          const VerticalDivider(
+            width: 1,
+            color: Color(0xFFE2E8F0),
+          ),
+          Expanded(
+            child: _ProfileStat(
+              label: 'Completed',
+              value: '${store.completedCount}',
             ),
-            Expanded(
-              child: _ProfileStat(
-                label: 'Completed',
-                value: '${store.completedCount}',
-              ),
+          ),
+          const VerticalDivider(
+            width: 1,
+            color: Color(0xFFE2E8F0),
+          ),
+          Expanded(
+            child: _ProfileStat(
+              label: 'Achievements',
+              value: '$unlocked/$total',
             ),
-            VerticalDivider(
-              width: 1,
-              color: Theme.of(context).colorScheme.outlineVariant,
-            ),
-            Expanded(
-              child: _ProfileStat(
-                label: 'Achievements',
-                value: '$unlocked/$total',
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 
   Widget _sectionLabel(BuildContext context, String label) {
-    return Text(
-      label,
-      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-        color: Theme.of(context).colorScheme.onSurfaceVariant,
-        letterSpacing: 1.1,
-        fontWeight: FontWeight.w600,
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+      child: Text(
+        label,
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
+          letterSpacing: 1.1,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }
 
   Widget _actionGroup(BuildContext context, {required List<Widget> children}) {
     final scheme = Theme.of(context).colorScheme;
-    return Material(
-      color: scheme.surface,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        side: BorderSide(color: scheme.outlineVariant),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+      child: Material(
+        color: scheme.surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          side: BorderSide(color: scheme.outlineVariant),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Column(children: children),
       ),
-      clipBehavior: Clip.antiAlias,
-      child: Column(children: children),
     );
   }
 }
@@ -428,7 +422,7 @@ class _ProfileActionTile extends StatelessWidget {
         horizontal: AppSpacing.md,
         vertical: AppSpacing.xs,
       ),
-      leading: AppIconTile(icon: icon, color: accent, size: 36),
+      leading: _ProfileIconTile(icon: icon, color: accent, size: 36),
       title: Text(
         title,
         style: theme.textTheme.titleSmall?.copyWith(
@@ -443,6 +437,30 @@ class _ProfileActionTile extends StatelessWidget {
         ),
       ),
       trailing: const Icon(Icons.chevron_right_rounded, size: 20),
+    );
+  }
+}
+
+class _ProfileIconTile extends StatelessWidget {
+  const _ProfileIconTile({
+    required this.icon,
+    required this.color,
+    required this.size,
+  });
+
+  final IconData icon;
+  final Color color;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(AppRadius.md),
+      ),
+      child: Icon(icon, size: size, color: color),
     );
   }
 }

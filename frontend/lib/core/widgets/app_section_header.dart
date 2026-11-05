@@ -37,7 +37,7 @@ class AppSectionHeader extends StatelessWidget {
                     fontWeight: FontWeight.w700,
                   ),
                 ),
-                if (subtitle != null) ...<Widget>[
+                if (subtitle != null) ...[
                   const SizedBox(height: AppSpacing.xxs),
                   Text(
                     subtitle!,
@@ -49,7 +49,7 @@ class AppSectionHeader extends StatelessWidget {
               ],
             ),
           ),
-          if (action != null) ...<Widget>[
+          if (action != null) ...[
             const SizedBox(width: AppSpacing.md),
             action!,
           ],

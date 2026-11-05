@@ -33,7 +33,8 @@ import sessionRoutes from "./modules/sessions/session.routes.js";
 import progressRoutes from "./modules/progress/progress.routes.js";
 import calendarRoutes from "./modules/calendar/calendar.routes.js";
 import mfaRoutes from "./modules/auth/mfa/mfa.routes.js";
-import syncRoutes from "./modules/sync/sync.routes.js";
+import syncRoutes from "./modules/sync/index.js";
+import reminderRoutes from "./modules/reminders/reminder.routes.js";
 
 const app = express();
 
@@ -68,7 +69,6 @@ app.use(
   },
   authRoutes
 );
-app.use("/api/auth/mfa", mfaRoutes);
 app.use("/api/ai", aiRoutes);
 
 app.use("/api/users", userRoutes);
@@ -85,6 +85,7 @@ app.use("/api/groups/:groupId/audit", auditRoutes);
 
 app.use("/api/feedback", feedbackRoutes);
 app.use("/api/calendar", calendarRoutes);
+app.use("/api/reminders", reminderRoutes);
 app.use("/api/sync", syncRoutes);
 
 // --------------------------------------------------

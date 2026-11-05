@@ -1,137 +1,101 @@
 /**
  * File Name: batch.repository.ts
- * Description: Persists bulk group membership changes and their audit records.
+ * Description: Enterprise data access layer for atomic and resilient batch operations.
  * Author: Keefe Chen
  */
 
 import mongoose from "mongoose";
-
-import { Member } from "../member/member.model.js";
+import { GroupMemberModel } from "../core/group.model.js";
 import {
   BatchJob,
   BatchJobStatus,
   BatchOperationType,
+  type BatchItemError,
+  type BatchJobRecord,
 } from "./batch.model.js";
+import type { BatchAtomicResult, BatchProcessResult } from "./batch.types.js";
 
-import type {
-  BatchAtomicResult,
-  BatchItemError,
-  BatchProcessResult,
-} from "./batch.types.js";
+export const BatchRepository = {
+  CHUNK_SIZE: 100,
 
-import type { BatchJobRecord } from "./batch.model.js";
-
-const CHUNK_SIZE = 100;
-
-/**
- * Reactivates an existing membership instead of creating a duplicate.
- * The unique (groupId, userId) index makes this operation idempotent.
- */
-const membershipUpsert = (groupId: string, userId: string) => ({
-  updateOne: {
-    filter: { groupId, userId },
-    update: {
-      $set: { status: "ACTIVE" },
-      $setOnInsert: { role: "MEMBER" },
-    },
-    upsert: true,
-  },
-});
-
-interface WriteErrorShape {
-  index?: number;
-  code?: number | string;
-  errmsg?: string;
-  message?: string;
-}
-
-const writeErrorsOf = (error: unknown): WriteErrorShape[] => {
-  if (typeof error !== "object" || error === null) {
-    return [];
-  }
-
-  const candidate = error as {
-    writeErrors?: WriteErrorShape[];
-    result?: { writeErrors?: WriteErrorShape[] };
-  };
-
-  return candidate.writeErrors ?? candidate.result?.writeErrors ?? [];
-};
-
-export const batchRepository = {
   /**
-   * Applies every membership change inside one MongoDB transaction.
+   * Atomic Execution: Uses Mongoose ACID Transactions.
    */
   async addMembersAtomic(
     groupId: string,
-    memberIds: string[],
+    memberIds: string[]
   ): Promise<BatchAtomicResult> {
     const session = await mongoose.startSession();
+    session.startTransaction();
 
     try {
-      let count = 0;
-
-      await session.withTransaction(async () => {
-        const result = await Member.bulkWrite(
-          memberIds.map((userId) => membershipUpsert(groupId, userId)),
-          { session, ordered: true },
-        );
-
-        count = result.upsertedCount + result.modifiedCount;
+      const docs = memberIds.map((userId) => ({ groupId, userId }));
+      const insertedDocs = await GroupMemberModel.insertMany(docs, {
+        session,
+        ordered: true,
       });
 
-      return { count };
+      await session.commitTransaction();
+
+      return {
+        count: insertedDocs.length,
+      };
+    } catch (error) {
+      await session.abortTransaction();
+      throw error;
     } finally {
       await session.endSession();
     }
   },
 
   /**
-   * Applies membership changes in chunks and reports item-level failures.
+   * Resilient Execution: Performs chunked bulkWrite operations to capture per-item errors.
    */
   async addMembersPartial(
     groupId: string,
-    memberIds: string[],
+    memberIds: string[]
   ): Promise<BatchProcessResult> {
     const successful: string[] = [];
     const failed: BatchItemError[] = [];
 
-    for (let start = 0; start < memberIds.length; start += CHUNK_SIZE) {
-      const chunk = memberIds.slice(start, start + CHUNK_SIZE);
-      const failures = new Map<number, BatchItemError>();
+    for (let i = 0; i < memberIds.length; i += this.CHUNK_SIZE) {
+      const chunk = memberIds.slice(i, i + this.CHUNK_SIZE);
+      const bulkOps = chunk.map((userId) => ({
+        insertOne: { document: { groupId, userId } },
+      }));
 
       try {
-        await Member.bulkWrite(
-          chunk.map((userId) => membershipUpsert(groupId, userId)),
-          { ordered: false },
-        );
-      } catch (error) {
-        for (const writeError of writeErrorsOf(error)) {
-          const index = Number(writeError.index);
-          if (!Number.isInteger(index) || index < 0 || index >= chunk.length) {
-            continue;
-          }
+        await GroupMemberModel.bulkWrite(bulkOps, { ordered: false });
+        chunk.forEach((userId) => successful.push(userId));
+      } catch (error: any) {
+        if (error.name === "MongoBulkWriteError" && Array.isArray(error.writeErrors)) {
+          const failedIndices = new Set(error.writeErrors.map((e: any) => e.index));
 
-          failures.set(index, {
-            index: start + index,
-            id: chunk[index],
-            code: String(writeError.code ?? "INSERT_FAILED"),
-            message:
-              writeError.errmsg ??
-              writeError.message ??
-              "Failed to add member.",
+          chunk.forEach((userId, chunkIdx) => {
+            const globalIdx = i + chunkIdx;
+            if (failedIndices.has(chunkIdx)) {
+              const writeErr = error.writeErrors.find((e: any) => e.index === chunkIdx);
+              failed.push({
+                index: globalIdx,
+                memberId: userId,
+                code: writeErr?.code === 11000 ? "DUPLICATE_ENTRY" : "INSERT_FAILED",
+                message: writeErr?.errmsg || "Failed to insert member into group",
+              });
+            } else {
+              successful.push(userId);
+            }
+          });
+        } else {
+          chunk.forEach((userId, chunkIdx) => {
+            failed.push({
+              index: i + chunkIdx,
+              memberId: userId,
+              code: "BATCH_ERROR",
+              message: error.message || "Unknown write error",
+            });
           });
         }
       }
-
-      chunk.forEach((userId, index) => {
-        const failure = failures.get(index);
-        if (failure) {
-          failed.push(failure);
-        } else {
-          successful.push(userId);
-        }
-      });
     }
 
     return {
@@ -142,9 +106,9 @@ export const batchRepository = {
   },
 
   /**
-   * Persists a completed batch job for auditing and retries.
+   * Persists job audit logs using your `BatchJob` Mongoose model.
    */
-  async recordJob(input: {
+  async recordJob(payload: {
     groupId: string;
     requestedBy: string;
     totalCount: number;
@@ -152,19 +116,20 @@ export const batchRepository = {
     failureCount: number;
     errors: BatchItemError[];
   }): Promise<BatchJobRecord> {
-    const status =
-      input.failureCount === 0
-        ? BatchJobStatus.COMPLETED
-        : input.successCount === 0
-          ? BatchJobStatus.FAILED
-          : BatchJobStatus.PARTIALLY_FAILED;
+    let status: BatchJobStatus = BatchJobStatus.COMPLETED;
+    if (payload.failureCount > 0) {
+      status =
+        payload.successCount > 0
+          ? BatchJobStatus.PARTIALLY_FAILED
+          : BatchJobStatus.FAILED;
+    }
 
     const job = await BatchJob.create({
-      ...input,
+      ...payload,
       operationType: BatchOperationType.ADD_MEMBERS,
       status,
     });
 
-    return job.toObject() as BatchJobRecord;
+    return job.toObject();
   },
 };

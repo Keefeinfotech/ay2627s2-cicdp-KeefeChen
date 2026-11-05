@@ -60,7 +60,7 @@ class ChatBubble extends StatelessWidget {
           Row(
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
-              if (message.isError) ...<Widget>[
+              if (message.isError) ...[
                 Icon(
                   Icons.error_outline_rounded,
                   size: AppSizes.iconSm,
@@ -100,7 +100,7 @@ class ChatBubble extends StatelessWidget {
             : MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.end,
         children: <Widget>[
-          if (!isUser) ...<Widget>[
+          if (!isUser) ...[
             const AppIconTile(
               icon: Icons.chat_bubble_outline_rounded,
               color: AppColors.deepNavy,

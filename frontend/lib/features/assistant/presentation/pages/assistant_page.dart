@@ -10,7 +10,6 @@ import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_snackbar.dart';
 import '../../../../core/widgets/app_status_badge.dart';
 import '../../../authentication/models/session.dart';
-import '../../../home/data/task_repository.dart';
 import 'package:frontend/features/home/data/api_task_repository.dart';
 import '../../../home/data/task_store.dart';
 import '../../../home/models/task.dart';
@@ -958,7 +957,7 @@ class _TypingIndicator extends StatelessWidget {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: <Widget>[
-                for (var index = 0; index < 3; index++) ...<Widget>[
+                for (var index = 0; index < 3; index++) ...[
                   if (index > 0) const SizedBox(width: 4),
                   Container(
                     width: 6,
