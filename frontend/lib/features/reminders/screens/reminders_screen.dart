@@ -16,9 +16,7 @@ class RemindersScreen extends ConsumerWidget {
     final isLoading = ref.watch(isLoadingRemindersProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Reminders'),
-      ),
+      appBar: AppBar(title: const Text('Reminders')),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
           : Column(
@@ -42,7 +40,9 @@ class RemindersScreen extends ConsumerWidget {
                         final reminder = asyncPending.value![index];
                         return Card(
                           margin: const EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 8),
+                            horizontal: 16,
+                            vertical: 8,
+                          ),
                           child: ListTile(
                             title: Text(reminder.message),
                             subtitle: Text(
@@ -100,7 +100,9 @@ class RemindersScreen extends ConsumerWidget {
                         // TODO: Show dialog to create reminder
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
-                            content: Text('Add reminder functionality coming soon'),
+                            content: Text(
+                              'Add reminder functionality coming soon',
+                            ),
                           ),
                         );
                       },
@@ -114,7 +116,9 @@ class RemindersScreen extends ConsumerWidget {
 
   String _formatDate(DateTime date) {
     final now = DateTime.now();
-    if (date.day == now.day && date.month == now.month && date.year == now.year) {
+    if (date.day == now.day &&
+        date.month == now.month &&
+        date.year == now.year) {
       return 'Today';
     }
     return '${date.day}/${date.month}/${date.year}';

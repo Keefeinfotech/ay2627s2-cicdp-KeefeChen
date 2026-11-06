@@ -15,9 +15,7 @@ class GroupsScreen extends ConsumerWidget {
     final groups = ref.watch(groupProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Groups'),
-      ),
+      appBar: AppBar(title: const Text('Groups')),
       body: groups.when(
         data: (groups) {
           if (groups.isEmpty) {
@@ -33,8 +31,7 @@ class GroupsScreen extends ConsumerWidget {
                 leading: const Icon(Icons.group),
                 title: Text(group.name),
                 subtitle: Text(group.description ?? ''),
-                trailing: const Icon(Icons.arrow_forward_ios,
-                    size: 16),
+                trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                 onTap: () {
                   // TODO: Navigate to group detail screen
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -52,7 +49,9 @@ class GroupsScreen extends ConsumerWidget {
         onPressed: () {
           // TODO: Show dialog to create new group
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Create group functionality coming soon')),
+            const SnackBar(
+              content: Text('Create group functionality coming soon'),
+            ),
           );
         },
         child: const Icon(Icons.add),

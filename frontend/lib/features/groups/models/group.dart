@@ -116,40 +116,50 @@ class GroupMember {
 
 /// Result of creating a group invitation.
 ///
-/// The backend currently returns the raw token so it can be delivered manually
-/// until the email outbox worker is enabled.
+/// When SMTP delivery succeeds the response omits the raw token and reports
+/// `delivery: email`; otherwise the token is returned for manual delivery.
 class GroupInvitation {
   const GroupInvitation({
     required this.invitationId,
     required this.groupId,
     required this.email,
     required this.role,
-    required this.token,
+    required this.delivery,
     required this.expiresAt,
+    this.token,
   });
 
   final String invitationId;
   final String groupId;
   final String email;
   final String role;
-  final String token;
+  final String delivery;
+  final String? token;
   final DateTime expiresAt;
+
+  bool get wasDeliveredByEmail => delivery == 'email';
 
   static GroupInvitation? tryFromJson(Object? raw) {
     if (raw is! Map) return null;
     final invitation = raw['invitation'];
-    final token = raw['invitationToken'];
-    if (invitation is! Map || token is! String || token.isEmpty) return null;
+    if (invitation is! Map) return null;
 
     final invitationId = invitation['invitationId'];
     final groupId = invitation['groupId'];
     if (invitationId is! String || groupId is! String) return null;
+
+    final delivery = (raw['delivery'] as String?) ?? 'manual';
+    final token = raw['invitationToken'] as String?;
+    if (delivery != 'email' && (token == null || token.isEmpty)) {
+      return null;
+    }
 
     return GroupInvitation(
       invitationId: invitationId,
       groupId: groupId,
       email: (invitation['email'] as String?) ?? '',
       role: (invitation['role'] as String?) ?? 'MEMBER',
+      delivery: delivery,
       token: token,
       expiresAt: invitation['expiresAt'] is String
           ? (DateTime.tryParse(invitation['expiresAt'] as String)?.toLocal() ??

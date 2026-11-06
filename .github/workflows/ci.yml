@@ -25,6 +25,29 @@ concurrency:
 
 jobs:
   # ==========================================
+  # STAGE 0: DEPENDENCY REVIEW (PULL REQUESTS)
+  # ==========================================
+
+  dependency-review:
+    name: Dependencies - Review
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Review dependency changes
+        uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: high
+
+  # ==========================================
   # STAGE 1: SECURITY VALIDATION
   # ==========================================
 
@@ -212,8 +235,10 @@ jobs:
     name: Code Quality - SonarQube
     runs-on: ubuntu-latest
     timeout-minutes: 15
-
     needs: [backend]
+
+    env:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
     # Skip external fork PRs where repository secrets
     # are not available.
@@ -223,21 +248,22 @@ jobs:
 
     steps:
       - name: Checkout repository
+        if: ${{ env.SONAR_TOKEN != '' }}
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
           persist-credentials: false
 
       - name: Download backend coverage
+        if: ${{ env.SONAR_TOKEN != '' }}
         uses: actions/download-artifact@v4
         with:
           name: backend-coverage
           path: backend/coverage
 
       - name: SonarQube analysis
+        if: ${{ env.SONAR_TOKEN != '' }}
         uses: SonarSource/sonarqube-scan-action@v6
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:
           projectBaseDir: backend
           args: >
@@ -254,6 +280,7 @@ jobs:
     timeout-minutes: 5
 
     needs:
+      - dependency-review
       - security-scan
       - secret-scan
       - backend
@@ -266,6 +293,7 @@ jobs:
       - name: Evaluate pipeline results
         shell: bash
         env:
+          DEPENDENCY_REVIEW: ${{ needs.dependency-review.result }}
           SECURITY: ${{ needs.security-scan.result }}
           SECRETS: ${{ needs.secret-scan.result }}
           BACKEND: ${{ needs.backend.result }}
@@ -278,6 +306,7 @@ jobs:
             echo ""
             echo "| Quality Gate | Result |"
             echo "|---|---|"
+            echo "| Dependency Review | $DEPENDENCY_REVIEW |"
             echo "| Security Scan | $SECURITY |"
             echo "| Secret Detection | $SECRETS |"
             echo "| Backend | $BACKEND |"
@@ -288,6 +317,7 @@ jobs:
           failed=0
 
           for result in \
+            "$DEPENDENCY_REVIEW" \
             "$SECURITY" \
             "$SECRETS" \
             "$BACKEND" \

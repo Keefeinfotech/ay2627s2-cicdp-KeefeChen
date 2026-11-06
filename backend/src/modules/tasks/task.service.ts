@@ -7,6 +7,8 @@
 import { AppError } from "../../../src/shared/utils/AppError";
 
 import { taskRepository } from "./task.repository.js";
+import { requireGroupMembership } from "../groups/shared/membership.js";
+import { Member } from "../groups/member/member.model.js";
 
 import type {
   CreateTaskInput,
@@ -15,6 +17,51 @@ import type {
   TaskRecord,
   UpdateTaskInput,
 } from "./task.types.js";
+
+/**
+ * Enforces the group assignment contract on the write path:
+ *
+ * * a caller may only attach a task to a group they actively belong to,
+ * * an assignee must be an active member of that group, and a task cannot
+ *   name an assignee without a group to scope the assignment.
+ *
+ * Passing `null`/`undefined` for a value means "not set" and skips that check.
+ */
+async function assertValidAssignment(
+  userId: string,
+  groupId: string | null | undefined,
+  assigneeId: string | null | undefined,
+): Promise<void> {
+  if (groupId) {
+    await requireGroupMembership(groupId, userId);
+  }
+
+  if (assigneeId) {
+    if (!groupId) {
+      throw new AppError(
+        422,
+        "ASSIGNEE_REQUIRES_GROUP",
+        "A task assigned to a member must name that member's group.",
+      );
+    }
+
+    const membership = await Member.findOne({
+      groupId,
+      userId: assigneeId,
+      status: "ACTIVE",
+    })
+      .select("_id")
+      .lean();
+
+    if (!membership) {
+      throw new AppError(
+        422,
+        "ASSIGNEE_NOT_IN_GROUP",
+        "The assignee is not an active member of that group.",
+      );
+    }
+  }
+}
 
 export const taskService = {
   /**
@@ -31,6 +78,8 @@ export const taskService = {
         "Authentication is required."
       );
     }
+
+    await assertValidAssignment(userId, input.groupId, input.assigneeId);
 
     return taskRepository.create(userId, input);
   },
@@ -88,6 +137,25 @@ export const taskService = {
     taskId: string,
     input: UpdateTaskInput
   ): Promise<TaskRecord> {
+    const current = await taskRepository.findByIdForUser(taskId, userId);
+
+    if (!current) {
+      throw new AppError(
+        404,
+        "TASK_NOT_FOUND",
+        "Task was not found."
+      );
+    }
+
+    const effectiveGroupId = input.groupId === undefined
+      ? current.groupId
+      : input.groupId;
+    const effectiveAssigneeId = input.assigneeId === undefined
+      ? current.assigneeId
+      : input.assigneeId;
+
+    await assertValidAssignment(userId, effectiveGroupId, effectiveAssigneeId);
+
     const task = await taskRepository.updateForUser(
       taskId,
       userId,

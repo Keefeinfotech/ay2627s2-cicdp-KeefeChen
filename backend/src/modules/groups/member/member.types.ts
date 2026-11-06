@@ -1,18 +1,9 @@
 import { Request } from "express";
 import { ClientSession, Document, Types } from "mongoose";
 
-export enum GroupRole {
-  OWNER = "OWNER",
-  ADMIN = "ADMIN",
-  MEMBER = "MEMBER",
-}
+import { GroupRole, MemberStatus } from "../core/group.types.js";
 
-export enum MemberStatus {
-  ACTIVE = "ACTIVE",
-  PENDING = "PENDING",
-  REJECTED = "REJECTED",
-  LEFT = "LEFT",
-}
+export { GroupRole, MemberStatus };
 
 export interface IMember {
   _id?: Types.ObjectId;

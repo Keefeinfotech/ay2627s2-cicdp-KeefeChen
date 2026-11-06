@@ -54,6 +54,45 @@ void main() {
     expect(preview.dueDate, DateTime(2026, 3, 7, 17));
   });
 
+  test('parses a time of day with a relative date', () {
+    final preview = parser('Submit lab report tomorrow at 5pm', now: now);
+
+    expect(preview.title, 'Submit lab report');
+    expect(preview.dueDate, DateTime(2026, 3, 5, 17));
+  });
+
+  test('parses a 24-hour time with a weekday', () {
+    final preview = parser('Revise calculus Friday at 18:30', now: now);
+
+    expect(preview.title, 'Revise calculus');
+    expect(preview.dueDate, DateTime(2026, 3, 6, 18, 30));
+  });
+
+  test('uses a future time today when only a time is given', () {
+    final preview = parser('Join study group at 8pm', now: now);
+
+    expect(preview.title, 'Join study group');
+    expect(preview.dueDate, DateTime(2026, 3, 4, 20));
+  });
+
+  test('rolls a past time without a date into tomorrow', () {
+    final preview = parser('Join study group at 7am', now: now);
+
+    expect(preview.title, 'Join study group');
+    expect(preview.dueDate, DateTime(2026, 3, 5, 7));
+  });
+
+  test('parses noon and midnight explicitly', () {
+    expect(
+      parser('Lunch with tutor tomorrow at noon', now: now).dueDate,
+      DateTime(2026, 3, 5, 12),
+    );
+    expect(
+      parser('Submit backup tomorrow at midnight', now: now).dueDate,
+      DateTime(2026, 3, 5),
+    );
+  });
+
   test('parses numeric dates with a two digit year', () {
     final preview = parser('Pay rent 15/03/26', now: now);
 

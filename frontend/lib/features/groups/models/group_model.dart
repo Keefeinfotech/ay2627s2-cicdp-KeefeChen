@@ -15,7 +15,8 @@ class GroupModel {
     required this.createdAt,
   });
 
-  factory GroupModel.fromJson(Map<String, dynamic> json) => _$GroupModelFromJson(json);
+  factory GroupModel.fromJson(Map<String, dynamic> json) =>
+      _$GroupModelFromJson(json);
 
   Map<String, dynamic> toJson() => _$GroupModelToJson(this);
 
@@ -34,10 +35,11 @@ GroupModel _$GroupModelFromJson(Map<String, dynamic> json) => GroupModel(
   createdAt: json['createdAt'] as String,
 );
 
-Map<String, dynamic> _$GroupModelToJson(GroupModel instance) => <String, dynamic>{
-  'id': instance.id,
-  'name': instance.name,
-  'description': instance.description,
-  'memberCount': instance.memberCount,
-  'createdAt': instance.createdAt,
-};
+Map<String, dynamic> _$GroupModelToJson(GroupModel instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'name': instance.name,
+      'description': instance.description,
+      'memberCount': instance.memberCount,
+      'createdAt': instance.createdAt,
+    };

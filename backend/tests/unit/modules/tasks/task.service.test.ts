@@ -10,6 +10,18 @@ vi.mock("../../../../src/modules/tasks/task.repository.js", () => ({
   },
 }));
 
+vi.mock("../../../../src/modules/groups/shared/membership.js", () => ({
+  requireGroupMembership: vi.fn(),
+}));
+
+vi.mock("../../../../src/modules/groups/member/member.model.js", () => ({
+  Member: {
+    findOne: vi.fn(),
+  },
+}));
+
+import { requireGroupMembership } from "../../../../src/modules/groups/shared/membership.js";
+import { Member } from "../../../../src/modules/groups/member/member.model.js";
 import { taskRepository } from "../../../../src/modules/tasks/task.repository.js";
 import { taskService } from "../../../../src/modules/tasks/task.service.js";
 import { AppError } from "../../../../src/shared/utils/AppError";
@@ -95,8 +107,65 @@ describe("task service", () => {
     ).rejects.toMatchObject({ status: 400, code: "INVALID_DATE_RANGE" });
   });
 
+  it("rejects an assignee without a group on create", async () => {
+    await expect(
+      taskService.createTask("user-1", {
+        title: "Assigned",
+        assigneeId: "user-2",
+      } as any)
+    ).rejects.toMatchObject({ status: 422, code: "ASSIGNEE_REQUIRES_GROUP" });
+
+    expect(taskRepository.create).not.toHaveBeenCalled();
+  });
+
+  it("creates a group task when caller and assignee are members", async () => {
+    const task = { _id: "task-1", title: "Group task" };
+    vi.mocked(requireGroupMembership).mockResolvedValue({
+      groupId: "group-1",
+      userId: "user-1",
+      role: "MEMBER" as any,
+      status: "ACTIVE",
+    });
+    vi.mocked(Member.findOne as any).mockReturnValue({
+      select: () => ({ lean: async () => ({ _id: "membership-1" }) }),
+    });
+    vi.mocked(taskRepository.create).mockResolvedValue(task as any);
+
+    const result = await taskService.createTask("user-1", {
+      title: "Group task",
+      groupId: "group-1",
+      assigneeId: "user-2",
+    } as any);
+
+    expect(result).toBe(task);
+    expect(requireGroupMembership).toHaveBeenCalledWith("group-1", "user-1");
+  });
+
+  it("rejects an assignee who is not an active group member", async () => {
+    vi.mocked(requireGroupMembership).mockResolvedValue({
+      groupId: "group-1",
+      userId: "user-1",
+      role: "MEMBER" as any,
+      status: "ACTIVE",
+    });
+    vi.mocked(Member.findOne as any).mockReturnValue({
+      select: () => ({ lean: async () => null }),
+    });
+
+    await expect(
+      taskService.createTask("user-1", {
+        title: "Group task",
+        groupId: "group-1",
+        assigneeId: "user-2",
+      } as any)
+    ).rejects.toMatchObject({ status: 422, code: "ASSIGNEE_NOT_IN_GROUP" });
+
+    expect(taskRepository.create).not.toHaveBeenCalled();
+  });
+
   it("updates a task", async () => {
     const task = { _id: "task-1", status: "COMPLETED" };
+    vi.mocked(taskRepository.findByIdForUser).mockResolvedValue(task as any);
     vi.mocked(taskRepository.updateForUser).mockResolvedValue(task as any);
 
     await expect(

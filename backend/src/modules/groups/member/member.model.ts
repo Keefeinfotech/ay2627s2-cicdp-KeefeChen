@@ -6,12 +6,9 @@
 
 import mongoose, { Schema, type InferSchemaType } from "mongoose";
 import { GroupRole } from "../core/group.types.js";
+import { MemberStatus } from "./member.types.js";
 
-export enum MemberStatus {
-  ACTIVE = "ACTIVE",
-  LEFT = "LEFT",
-  REMOVED = "REMOVED",
-}
+export { MemberStatus };
 
 const memberSchema = new Schema(
   {

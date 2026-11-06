@@ -11,16 +11,18 @@ import '../models/reminder_model.dart';
 final reminderRepositoryProvider = Provider((ref) => ReminderRepository());
 
 // Future providers watched by screens via ref.watch()
-final remindersProvider = FutureProvider.autoDispose<List<ReminderModel>>((ref) {
+final remindersProvider = FutureProvider.autoDispose<List<ReminderModel>>((
+  ref,
+) {
   final repo = ref.watch(reminderRepositoryProvider);
   return repo.fetchAll();
 });
 
 final pendingRemindersProvider =
     FutureProvider.autoDispose<List<ReminderModel>>((ref) {
-  final repo = ref.watch(reminderRepositoryProvider);
-  return repo.fetchPending();
-});
+      final repo = ref.watch(reminderRepositoryProvider);
+      return repo.fetchPending();
+    });
 
 // Loading state — Riverpod 3.x uses NotifierProvider
 // (StateProvider was removed in Riverpod 3.0).
@@ -33,8 +35,9 @@ class _BoolNotifier extends Notifier<bool> {
   }
 }
 
-final isLoadingRemindersProvider =
-    NotifierProvider<_BoolNotifier, bool>(_BoolNotifier.new);
+final isLoadingRemindersProvider = NotifierProvider<_BoolNotifier, bool>(
+  _BoolNotifier.new,
+);
 
 // Function to create a reminder - called from WidgetRef context
 Future<ReminderModel> createReminder(

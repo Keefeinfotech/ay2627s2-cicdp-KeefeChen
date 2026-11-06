@@ -4,14 +4,16 @@
  * Author: Keefe Chen
  */
 
-import { Request } from 'express';
-
 export interface TaskChange {
   id: string;
   userId: string;
   title: string;
   description: string | null;
   course: string;
+  tags: string[];
+  groupId: string | null;
+  assigneeId: string | null;
+  assigneeName: string | null;
   reminderAt: Date | null;
   status: string;
   priority: string;
@@ -26,19 +28,4 @@ export interface SyncChangesResult {
   serverTime: Date;
   since: Date;
   tasks: TaskChange[];
-}
-
-export interface PushChangesDTO {
-  userId: string;
-  changes: Partial<TaskChange>[];
-}
-
-export interface AuthenticatedUser {
-  id: string;
-  email?: string;
-  [key: string]: unknown;
-}
-
-export interface AuthenticatedRequest extends Request {
-  user?: AuthenticatedUser;
 }

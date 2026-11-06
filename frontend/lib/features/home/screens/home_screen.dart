@@ -221,7 +221,9 @@ class _HomeScreenState extends State<HomeScreen> {
           final restored = await _store.restoreTask(task);
           if (!mounted) return;
           _showSnack(
-            restored ? 'Task restored.' : _store.error ?? 'Could not restore the task.',
+            restored
+                ? 'Task restored.'
+                : _store.error ?? 'Could not restore the task.',
             type: restored ? AppSnackType.success : AppSnackType.error,
           );
         },
@@ -315,9 +317,7 @@ class _HomeScreenState extends State<HomeScreen> {
         bottom: false,
         child: Center(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(
-              maxWidth: 1120,
-            ),
+            constraints: const BoxConstraints(maxWidth: 1120),
             child: _buildBody(context),
           ),
         ),

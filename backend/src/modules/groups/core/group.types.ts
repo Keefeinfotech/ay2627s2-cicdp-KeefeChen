@@ -18,6 +18,8 @@ export enum GroupStatus {
 
 export enum MemberStatus {
   ACTIVE = "ACTIVE",
+  PENDING = "PENDING",
+  REJECTED = "REJECTED",
   LEFT = "LEFT",
   REMOVED = "REMOVED",
 }

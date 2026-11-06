@@ -72,9 +72,33 @@ class ParseQuickAdd {
       return ' ';
     });
 
-    final DateTime? dueDate = _parseDate(lower, reference);
+    final time = _parseTime(lower);
+    DateTime? dueDate = _parseDate(lower, reference);
+    if (dueDate != null && time != null) {
+      dueDate = DateTime(
+        dueDate.year,
+        dueDate.month,
+        dueDate.day,
+        time.hour,
+        time.minute,
+      );
+    } else if (dueDate == null && time != null) {
+      final today = DateTime(
+        reference.year,
+        reference.month,
+        reference.day,
+        time.hour,
+        time.minute,
+      );
+      dueDate = today.isAfter(reference)
+          ? today
+          : today.add(const Duration(days: 1));
+    }
     if (dueDate != null) {
       title = _stripDatePhrase(title);
+    }
+    if (time != null) {
+      title = _stripTimePhrase(title);
     }
 
     title = title
@@ -108,6 +132,62 @@ class ParseQuickAdd {
       originalText: original,
       confidence: confidence.clamp(0.25, 0.98),
     );
+  }
+
+  _ParsedTime? _parseTime(String lower) {
+    final ampm = RegExp(
+      r'\b(?:at|by|before)?\s*(\d{1,2})(?::([0-5]\d))?\s*(am|pm)\b',
+    ).firstMatch(lower);
+    if (ampm != null) {
+      var hour = int.tryParse(ampm.group(1) ?? '') ?? 0;
+      final minute = int.tryParse(ampm.group(2) ?? '0') ?? 0;
+      final meridiem = ampm.group(3);
+      if (hour < 1 || hour > 12) return null;
+      if (meridiem == 'am') {
+        if (hour == 12) hour = 0;
+      } else if (hour != 12) {
+        hour += 12;
+      }
+      return _ParsedTime(hour, minute);
+    }
+
+    final twentyFourHour = RegExp(
+      r'\b(?:at|by|before)\s*([01]?\d|2[0-3]):([0-5]\d)\b',
+    ).firstMatch(lower);
+    if (twentyFourHour != null) {
+      final hour = int.tryParse(twentyFourHour.group(1) ?? '') ?? 0;
+      final minute = int.tryParse(twentyFourHour.group(2) ?? '0') ?? 0;
+      return _ParsedTime(hour, minute);
+    }
+
+    if (RegExp(r'\b(noon|midday)\b').hasMatch(lower)) {
+      return const _ParsedTime(12, 0);
+    }
+    if (RegExp(r'\bmidnight\b').hasMatch(lower)) {
+      return const _ParsedTime(0, 0);
+    }
+    return null;
+  }
+
+  String _stripTimePhrase(String input) {
+    return input
+        .replaceAll(
+          RegExp(
+            r'\b(?:at|by|before)?\s*\d{1,2}(?::[0-5]\d)?\s*(?:am|pm)\b',
+            caseSensitive: false,
+          ),
+          '',
+        )
+        .replaceAll(
+          RegExp(
+            r'\b(?:at|by|before)\s*(?:[01]?\d|2[0-3]):[0-5]\d\b',
+            caseSensitive: false,
+          ),
+          '',
+        )
+        .replaceAll(RegExp(r'\b(?:noon|midday|midnight)\b'), '')
+        .replaceAll(RegExp(r'\s{2,}'), ' ')
+        .trim();
   }
 
   DateTime? _parseDate(String lower, DateTime reference) {
@@ -204,6 +284,13 @@ class ParseQuickAdd {
         )
         .replaceAll(RegExp(r'\b\d{1,2}[/\-]\d{1,2}([/\-]\d{2,4})?\b'), '');
   }
+}
+
+class _ParsedTime {
+  const _ParsedTime(this.hour, this.minute);
+
+  final int hour;
+  final int minute;
 }
 
 /// Keeps the public use-case name explicit for callers and tests.

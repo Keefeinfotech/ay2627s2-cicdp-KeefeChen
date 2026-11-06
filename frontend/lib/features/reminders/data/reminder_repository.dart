@@ -25,10 +25,10 @@ class ReminderRepository {
 
   /// Create a new reminder
   Future<ReminderModel> create(String message, DateTime dueAt) async {
-    final response = await _dio.post('/reminders', data: {
-      'message': message,
-      'dueAt': dueAt.toIso8601String(),
-    });
+    final response = await _dio.post(
+      '/reminders',
+      data: {'message': message, 'dueAt': dueAt.toIso8601String()},
+    );
     if (response.statusCode == 201) {
       return ReminderModel.fromJson(response.data);
     }

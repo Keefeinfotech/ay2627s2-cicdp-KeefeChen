@@ -396,7 +396,7 @@ class ProfilePage extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.all(AppSpacing.lg),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: <Widget>[
           Expanded(
             child: _ProfileStat(
@@ -404,20 +404,14 @@ class ProfilePage extends StatelessWidget {
               value: '${store.levelProgress.totalXp}',
             ),
           ),
-          const VerticalDivider(
-            width: 1,
-            color: Color(0xFFE2E8F0),
-          ),
+          const VerticalDivider(width: 1, color: Color(0xFFE2E8F0)),
           Expanded(
             child: _ProfileStat(
               label: 'Completed',
               value: '${store.completedCount}',
             ),
           ),
-          const VerticalDivider(
-            width: 1,
-            color: Color(0xFFE2E8F0),
-          ),
+          const VerticalDivider(width: 1, color: Color(0xFFE2E8F0)),
           Expanded(
             child: _ProfileStat(
               label: 'Achievements',

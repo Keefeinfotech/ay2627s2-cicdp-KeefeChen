@@ -58,7 +58,7 @@ void main() {
 
     expect(find.byType(NavigationBar), findsOneWidget);
     expect(find.byType(NavigationRail), findsNothing);
-    expect(find.text('Welcome back'), findsOneWidget);
+    expect(find.text('Auxilia'), findsOneWidget);
 
     final nav = find.byType(NavigationBar);
     for (final label in <String>[
@@ -150,7 +150,7 @@ void main() {
     await tester.pumpWidget(_app(store, textScale: 2));
     await tester.pumpAndSettle();
 
-    expect(find.text('Welcome back'), findsOneWidget);
+    expect(find.text('Auxilia'), findsOneWidget);
     expect(find.byType(NavigationBar), findsOneWidget);
     expect(tester.takeException(), isNull);
   });

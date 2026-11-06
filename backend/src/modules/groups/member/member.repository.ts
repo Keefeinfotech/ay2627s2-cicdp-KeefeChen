@@ -93,6 +93,21 @@ export class MemberRepository {
   }
 
   /**
+   * Retrieves the IDs of all groups the user actively belongs to.
+   */
+  async findActiveGroupIdsByUser(userId: string): Promise<string[]> {
+    const memberships = await Member.find({
+      userId,
+      status: MemberStatus.ACTIVE,
+    })
+      .select("groupId")
+      .lean()
+      .exec();
+
+    return memberships.map((membership) => membership.groupId);
+  }
+
+  /**
    * Retrieves all active group IDs belonging to a user.
    */
   async findByGroup(groupId: string): Promise<MemberRecord[]> {

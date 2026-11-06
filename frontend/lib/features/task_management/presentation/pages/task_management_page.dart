@@ -148,7 +148,9 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
           final restored = await _store.restoreTask(task);
           if (!mounted) return;
           _showSnack(
-            restored ? 'Task restored.' : _store.error ?? 'Could not restore the task.',
+            restored
+                ? 'Task restored.'
+                : _store.error ?? 'Could not restore the task.',
             type: restored ? AppSnackType.success : AppSnackType.error,
           );
         },
@@ -223,9 +225,7 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
         bottom: false,
         child: Center(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(
-              maxWidth: 1120,
-            ),
+            constraints: const BoxConstraints(maxWidth: 1120),
             child: RefreshIndicator(
               onRefresh: _store.load,
               child: ListView(
@@ -279,7 +279,8 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
                         onRetry: _store.retry,
                       ),
                     )
-                  else ..._buildTaskSection(context),
+                  else
+                    ..._buildTaskSection(context),
                 ],
               ),
             ),

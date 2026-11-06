@@ -61,20 +61,18 @@ void main() {
     expect(find.byTooltip('Hide password'), findsOneWidget);
   });
 
-  testWidgets('explains that password reset is unavailable', (tester) async {
+  testWidgets('keeps the unavailable password reset action disabled', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       MaterialApp(theme: AuxiliaTheme.light(), home: const LoginScreen()),
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Forgot password?'));
-    await tester.pumpAndSettle();
-
-    expect(find.text('Password reset'), findsOneWidget);
-    expect(
-      find.textContaining('Password reset is not available'),
-      findsOneWidget,
+    final resetAction = tester.widget<TextButton>(
+      find.widgetWithText(TextButton, 'Forgot password?'),
     );
+    expect(resetAction.onPressed, isNull);
   });
 
   testWidgets('continuing offline keeps guest access reachable', (
@@ -93,7 +91,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('No tasks yet'), findsOneWidget);
-    expect(find.text('My workspace'), findsOneWidget);
+    expect(find.text('Home'), findsOneWidget);
   });
 
   testWidgets('remains usable at 200% text scaling on a narrow screen', (

@@ -70,7 +70,9 @@ class _ProjectsPageState extends State<ProjectsPage> {
     if (!mounted) return;
     AppSnackBar.show(
       context,
-      saved ? 'Project created.' : _controller.error ?? 'Could not create the project.',
+      saved
+          ? 'Project created.'
+          : _controller.error ?? 'Could not create the project.',
       type: saved ? AppSnackType.success : AppSnackType.error,
     );
   }
@@ -213,9 +215,7 @@ class _ProjectsPageState extends State<ProjectsPage> {
         bottom: false,
         child: Center(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(
-              maxWidth: 1120,
-            ),
+            constraints: const BoxConstraints(maxWidth: 1120),
             child: RefreshIndicator(
               onRefresh: _controller.retry,
               child: ListView(

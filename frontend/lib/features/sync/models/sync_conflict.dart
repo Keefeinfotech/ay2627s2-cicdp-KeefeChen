@@ -41,10 +41,11 @@ class SyncConflict {
   final Task? remoteTask;
   final DateTime detectedAt;
 
+  /// The queued operation kind this conflict came from.
   SyncOperationType get operationType => switch (kind) {
     SyncConflictKind.createCollision => SyncOperationType.create,
     SyncConflictKind.updateCollision => SyncOperationType.update,
-    SyncConflictKind.deleteCollision => SyncOperationType.delete,
+    SyncConflictKind.deleteCollision => SyncOperationType.update,
   };
 
   Map<String, dynamic> toJson() => <String, dynamic>{

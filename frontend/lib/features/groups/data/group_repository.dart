@@ -25,10 +25,10 @@ class GroupRepository {
 
   /// Create a new group
   Future<GroupModel> create(String name, String description) async {
-    final response = await _dio.post('/groups', data: {
-      'name': name,
-      'description': description,
-    });
+    final response = await _dio.post(
+      '/groups',
+      data: {'name': name, 'description': description},
+    );
     if (response.statusCode == 201) {
       return GroupModel.fromJson(response.data);
     }
@@ -46,10 +46,10 @@ class GroupRepository {
 
   /// Update a group
   Future<GroupModel?> update(String id, String name, String description) async {
-    final response = await _dio.put('/groups/$id', data: {
-      'name': name,
-      'description': description,
-    });
+    final response = await _dio.put(
+      '/groups/$id',
+      data: {'name': name, 'description': description},
+    );
     if (response.statusCode == 200) {
       return GroupModel.fromJson(response.data);
     }

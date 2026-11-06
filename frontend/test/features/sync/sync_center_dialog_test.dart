@@ -46,6 +46,11 @@ class _FakeSyncRepository implements SyncAwareTaskRepository {
   Future<void> clear(String ownerId) async {}
 
   @override
+  Future<void> discardOperation(String operationId) async {
+    operations.removeWhere((operation) => operation.id == operationId);
+  }
+
+  @override
   Future<void> retrySync() async {
     retryCount += 1;
   }

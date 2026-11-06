@@ -40,6 +40,9 @@ abstract interface class SyncAwareTaskRepository implements TaskRepository {
 
   Future<void> retrySync();
 
+  /// Removes an operation from the durable queue after user review.
+  Future<void> discardOperation(String operationId);
+
   Future<SyncResolutionResult> resolveConflict(
     SyncConflict conflict,
     ConflictResolution resolution,

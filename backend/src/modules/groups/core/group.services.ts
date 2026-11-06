@@ -97,7 +97,7 @@ export class GroupService {
     const { page, limit, search } = query;
 
     const groupIds =
-      await this.memberRepository.findActiveByGroupAndUser(userId);
+      await this.memberRepository.findActiveGroupIdsByUser(userId);
 
     if (groupIds.length === 0) {
       return {

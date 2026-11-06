@@ -27,16 +27,9 @@ class ResponsivePageLayout extends StatelessWidget {
       appBar: showAppBar ? _buildAppBar(context) : null,
       body: Center(
         child: ConstrainedBox(
-          constraints: const BoxConstraints(
-            maxWidth: 1120,
-          ),
+          constraints: const BoxConstraints(maxWidth: 1120),
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(
-              16,
-              24,
-              16,
-              16,
-            ),
+            padding: const EdgeInsets.fromLTRB(16, 24, 16, 16),
             child: child,
           ),
         ),
@@ -75,15 +68,18 @@ class ResponsiveGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final int columns =
-            (constraints.maxWidth / minItemWidth).floor().clamp(1, 6);
+        final int columns = (constraints.maxWidth / minItemWidth).floor().clamp(
+          1,
+          6,
+        );
         return Wrap(
           spacing: spacing,
           runSpacing: runSpacing,
           children: <Widget>[
             for (final child in children)
               SizedBox(
-                width: (constraints.maxWidth - spacing * (columns - 1)) / columns,
+                width:
+                    (constraints.maxWidth - spacing * (columns - 1)) / columns,
                 child: child,
               ),
           ],

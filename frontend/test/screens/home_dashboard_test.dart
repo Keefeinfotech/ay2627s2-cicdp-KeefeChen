@@ -6,6 +6,7 @@ import 'package:frontend/features/home/screens/home_screen.dart';
 import 'package:frontend/features/home/data/task_repository.dart';
 import 'package:frontend/features/home/data/task_store.dart';
 import 'package:frontend/core/theme/app_theme.dart';
+import 'package:frontend/features/home/widgets/dashboard_header.dart';
 
 import '../helpers.dart';
 
@@ -49,12 +50,33 @@ void main() {
       ],
     );
 
-    expect(find.text('0 XP · 0 of 1 complete'), findsOneWidget);
+    final header = find.byType(DashboardHeader);
+    expect(
+      find.descendant(of: header, matching: find.text('Total XP')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: header, matching: find.text('Done')),
+      findsOneWidget,
+    );
 
     await tester.tap(find.byType(Checkbox));
     await tester.pumpAndSettle();
 
-    expect(find.text('30 XP · 1 of 1 complete'), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byType(DashboardHeader),
+        matching: find.text('30'),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: find.byType(DashboardHeader),
+        matching: find.text('1'),
+      ),
+      findsOneWidget,
+    );
   });
 
   testWidgets('renders in the dark theme without layout errors', (

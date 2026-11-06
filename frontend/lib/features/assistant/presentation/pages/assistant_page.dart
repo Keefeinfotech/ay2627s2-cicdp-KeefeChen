@@ -263,14 +263,8 @@ class _AssistantPageState extends State<AssistantPage> {
         'change task ',
         'rename task ',
       ]);
-      final task = _findTask(rest);
-      if (task == null) {
-        _addAssistantMessage(
-          'I could not find a task matching that title. Try using the exact '
-          'task title, or update it from the Tasks tab.',
-        );
-        return null;
-      }
+      final task = _resolveTaskMatch(_taskLookupQuery(rest), action: 'update');
+      if (task == null) return null;
       return _AssistantAction(
         kind: _ActionKind.update,
         task: task,
@@ -290,14 +284,8 @@ class _AssistantPageState extends State<AssistantPage> {
         'remove task ',
         'remove the task ',
       ]);
-      final task = _findTask(rest);
-      if (task == null) {
-        _addAssistantMessage(
-          'I could not find a task matching that title. Try using the exact '
-          'task title, or delete it from the Tasks tab.',
-        );
-        return null;
-      }
+      final task = _resolveTaskMatch(_taskLookupQuery(rest), action: 'delete');
+      if (task == null) return null;
       return _AssistantAction(
         kind: _ActionKind.delete,
         task: task,
@@ -324,26 +312,56 @@ class _AssistantPageState extends State<AssistantPage> {
     return text.trim();
   }
 
-  Task? _findTask(String query) {
-    final normalized = _normalize(query);
-    if (normalized.isEmpty) return null;
+  /// Resolves a user-supplied title to one task. Exact matches win; when
+  /// several partial matches remain, the assistant asks for clarification
+  /// instead of silently choosing one.
+  Task? _resolveTaskMatch(String query, {required String action}) {
+    final candidates = _findTaskCandidates(query);
+    if (candidates.isEmpty) {
+      _addAssistantMessage(
+        'I could not find a task matching that title. Try using the exact '
+        'task title, or $action it from the Tasks tab.',
+      );
+      return null;
+    }
 
-    Task? best;
-    var bestLength = 0;
+    final normalized = _normalize(query);
+    final exact = candidates
+        .where((task) => _normalize(task.title) == normalized)
+        .toList(growable: false);
+    if (exact.length == 1) return exact.single;
+
+    if (candidates.length > 1) {
+      final preview = candidates
+          .take(3)
+          .map((task) => '"${task.title}"')
+          .join(', ');
+      _addAssistantMessage(
+        'I found several matching tasks: $preview. '
+        'Please use the exact task title so I do not $action the wrong one.',
+      );
+      return null;
+    }
+
+    return candidates.single;
+  }
+
+  List<Task> _findTaskCandidates(String query) {
+    final normalized = _normalize(query);
+    if (normalized.isEmpty) return const <Task>[];
+
+    final matches = <Task>[];
     for (final task in _store.tasks) {
       final title = _normalize(task.title);
       if (title.isEmpty) continue;
-      final matches =
-          title == normalized ||
+      if (title == normalized ||
           normalized.contains(title) ||
-          title.contains(normalized);
-      if (!matches) continue;
-      if (title.length > bestLength) {
-        best = task;
-        bestLength = title.length;
+          title.contains(normalized)) {
+        matches.add(task);
       }
     }
-    return best;
+    matches.sort((a, b) => b.title.length.compareTo(a.title.length));
+    return List<Task>.unmodifiable(matches);
   }
 
   String _normalize(String value) {
@@ -352,6 +370,12 @@ class _AssistantPageState extends State<AssistantPage> {
         .replaceAll(RegExp(r'[^a-z0-9\s]'), ' ')
         .replaceAll(RegExp(r'\s+'), ' ')
         .trim();
+  }
+
+  /// Extracts the likely existing-task title from a natural-language command.
+  /// Dates and priorities are modifiers, not part of the title.
+  String _taskLookupQuery(String text) {
+    return _parse(text).title;
   }
 
   TaskQuickAddData _parse(String text) {
@@ -1199,9 +1223,9 @@ class _ActionCard extends StatelessWidget {
 
   String _kindCaption(_ActionKind kind) {
     return switch (kind) {
-      _ActionKind.create => 'Review before adding',
-      _ActionKind.update => 'Review before saving',
-      _ActionKind.delete => 'Review before removing',
+      _ActionKind.create => 'AI-assisted · Review before adding',
+      _ActionKind.update => 'AI-assisted · Review before saving',
+      _ActionKind.delete => 'AI-assisted · Review before removing',
     };
   }
 }

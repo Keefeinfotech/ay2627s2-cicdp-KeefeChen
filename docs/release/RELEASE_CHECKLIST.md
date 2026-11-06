@@ -13,8 +13,8 @@ the completed checklist with the release notes.
 - [ ] Review merged pull requests for anything that changes data storage,
       authentication, or the public API.
 - [ ] Confirm documentation is current: `README.md`,
-      `docs/PROJECT_PLAN.md`, `docs/NFR_RELEASE_GATES.md`, `docs/PRIVACY.md`,
-      `docs/DEPENDENCIES.md`.
+      `docs/planning/PROJECT_PLAN.md`, `docs/compliance/NFR_RELEASE_GATES.md`,
+      `docs/compliance/PRIVACY.md`, `docs/release/DEPENDENCIES.md`.
 
 ## 2. Verify locally
 
@@ -48,9 +48,11 @@ flutter build web --release
 - [ ] `CORS_ORIGIN` lists only the deployed web origins.
 - [ ] `NODE_ENV=production` so Swagger UI is not served.
 - [ ] Trivy results from the latest CI run reviewed; any accepted risk is
-      recorded.
+      recorded in the release notes.
+- [ ] Dependency Review results for merged pull requests contain no high or
+      critical findings, or the exceptions are recorded in the release notes.
 - [ ] Privacy impact considered: no new personal data collected or transmitted
-      without updating `docs/PRIVACY.md`.
+      without updating `docs/compliance/PRIVACY.md`.
 
 ## 4. Deploy
 
@@ -64,6 +66,14 @@ flutter build web --release
 
 ## 5. Smoke test
 
+Run the non-mutating API smoke test first:
+
+```bash
+node scripts/smoke-test.mjs https://<api-host>
+```
+
+- [ ] Smoke test passes (`/api/health` returns 200, unauthenticated AI chat
+      returns 401, unknown API routes return 404).
 - [ ] Create, edit, complete, delete, and clear tasks.
 - [ ] Reload the app and confirm tasks persist.
 - [ ] Sign up, sign out, and sign back in; confirm the session is restored.
@@ -82,8 +92,11 @@ flutter build web --release
 
 ## 7. After release
 
-- [ ] Tag the release and publish release notes (changes, known issues,
-      accepted risks).
+- [ ] Tag `v*.*.*` and push; the release workflow verifies versions, reruns CI,
+      packages `frontend/build/web`, attests provenance, and publishes the
+      GitHub release with notes.
+- [ ] Or, for a manual release, publish the same artifact and attach this
+      checklist to the release notes.
 - [ ] Merge `release/x.y.z` back into `develop` and `main`.
 - [ ] Watch error logs and CI for 24 hours.
 - [ ] Close follow-up issues created for deferred work.
