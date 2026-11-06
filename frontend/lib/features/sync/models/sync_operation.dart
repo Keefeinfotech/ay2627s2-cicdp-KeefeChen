@@ -26,6 +26,8 @@ class SyncOperation {
     this.baseUpdatedAt,
     this.attempts = 0,
     this.lastError,
+    this.nextAttemptAt,
+    this.deadLetteredAt,
   });
 
   final String id;
@@ -41,6 +43,17 @@ class SyncOperation {
   final int attempts;
   final String? lastError;
 
+  /// Earliest time an automatic flush may try this operation again.
+  final DateTime? nextAttemptAt;
+
+  /// Set when the server repeatedly rejects the operation. Dead-lettered
+  /// operations are skipped by automatic flushes until retried or discarded.
+  final DateTime? deadLetteredAt;
+
+  bool get isDeadLetter => deadLetteredAt != null;
+  bool get isDue =>
+      nextAttemptAt == null || !nextAttemptAt!.isAfter(DateTime.now());
+
   Task? get task => Task.tryFromJson(payload);
 
   SyncOperation copyWith({
@@ -51,6 +64,10 @@ class SyncOperation {
     int? attempts,
     String? lastError,
     bool clearError = false,
+    DateTime? nextAttemptAt,
+    bool clearNextAttempt = false,
+    DateTime? deadLetteredAt,
+    bool clearDeadLetter = false,
   }) {
     return SyncOperation(
       id: id,
@@ -61,6 +78,12 @@ class SyncOperation {
       baseUpdatedAt: baseUpdatedAt ?? this.baseUpdatedAt,
       attempts: attempts ?? this.attempts,
       lastError: clearError ? null : (lastError ?? this.lastError),
+      nextAttemptAt: clearNextAttempt
+          ? null
+          : (nextAttemptAt ?? this.nextAttemptAt),
+      deadLetteredAt: clearDeadLetter
+          ? null
+          : (deadLetteredAt ?? this.deadLetteredAt),
     );
   }
 
@@ -73,6 +96,8 @@ class SyncOperation {
     'baseUpdatedAt': baseUpdatedAt?.toUtc().toIso8601String(),
     'attempts': attempts,
     'lastError': lastError,
+    'nextAttemptAt': nextAttemptAt?.toUtc().toIso8601String(),
+    'deadLetteredAt': deadLetteredAt?.toUtc().toIso8601String(),
   };
 
   static SyncOperation? tryFromJson(Object? raw) {
@@ -105,6 +130,8 @@ class SyncOperation {
       baseUpdatedAt: _date(raw['baseUpdatedAt']),
       attempts: raw['attempts'] is int ? raw['attempts'] as int : 0,
       lastError: raw['lastError'] is String ? raw['lastError'] as String : null,
+      nextAttemptAt: _date(raw['nextAttemptAt']),
+      deadLetteredAt: _date(raw['deadLetteredAt']),
     );
   }
 

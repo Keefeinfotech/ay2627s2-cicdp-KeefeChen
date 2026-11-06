@@ -241,6 +241,14 @@ class ApiTaskRepository implements SyncAwareTaskRepository {
   }
 
   @override
+  Future<void> discardOperation(String operationId) async {
+    final ownerId = _serviceOwner;
+    if (ownerId == null) return;
+    final service = await _serviceFor(ownerId);
+    await service.discard(operationId);
+  }
+
+  @override
   Future<SyncResolutionResult> resolveConflict(
     SyncConflict conflict,
     ConflictResolution resolution,

@@ -100,6 +100,7 @@ class _FakeGroupsRepository extends GroupsRepository {
       groupId: groupId,
       email: email,
       role: role,
+      delivery: 'manual',
       token: 'invite-token-123',
       expiresAt: DateTime(2026, 2, 1),
     );

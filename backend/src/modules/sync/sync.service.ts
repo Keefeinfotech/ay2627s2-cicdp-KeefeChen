@@ -20,7 +20,7 @@ export const syncService = {
     const sinceDate = since ?? new Date(0);
 
     const documents = await Task.find({
-      userId,
+      $or: [{ userId }, { assigneeId: userId }],
       updatedAt: { $gt: sinceDate },
     })
       .select("+deletedAt")
@@ -31,6 +31,10 @@ export const syncService = {
           title: string;
           description: string | null;
           course: string;
+          tags: string[];
+          groupId: string | null;
+          assigneeId: string | null;
+          assigneeName: string | null;
           reminderAt: Date | null;
           status: string;
           priority: string;
@@ -49,6 +53,10 @@ export const syncService = {
       title: document.title,
       description: document.description,
       course: document.course,
+      tags: document.tags ?? [],
+      groupId: document.groupId ?? null,
+      assigneeId: document.assigneeId ?? null,
+      assigneeName: document.assigneeName ?? null,
       reminderAt: document.reminderAt,
       status: document.status,
       priority: document.priority,

@@ -103,6 +103,12 @@ class TaskStore extends ChangeNotifier {
     return true;
   }
 
+  /// Discards a queued change after the user reviews its failure.
+  Future<void> discardPendingOperation(String operationId) async {
+    await _syncAware?.discardOperation(operationId);
+    await load();
+  }
+
   String? get error => _error;
 
   TaskFilter get filter => _filter;

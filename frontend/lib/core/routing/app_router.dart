@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../features/assistant/screens/ai_chat_screen.dart';
+import '../../features/assistant/presentation/pages/assistant_page.dart';
 import '../../features/authentication/models/session.dart';
 import '../../features/authentication/screens/login_screen.dart';
 import '../../features/authentication/screens/signup_screen.dart';
@@ -86,10 +86,12 @@ class AppRouter {
         );
       case AppRoutes.assistant:
         final args = settings.arguments;
+        final session = args is AssistantArgs ? args.session : null;
         return MaterialPageRoute<void>(
           settings: settings,
-          builder: (_) => AiChatScreen(
-            session: args is AssistantArgs ? args.session : null,
+          builder: (_) => AssistantPage(
+            ownerId: session?.email ?? AppConstants.guestOwnerId,
+            session: session,
           ),
         );
       default:

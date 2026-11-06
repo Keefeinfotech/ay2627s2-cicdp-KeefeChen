@@ -12,6 +12,7 @@ import '../../features/profile/pages/profile_page.dart';
 import '../../features/projects/presentation/pages/projects_page.dart';
 import '../../features/reminders/widgets/reminder_host.dart';
 import '../../features/reports/presentation/pages/reports_page.dart';
+import '../../features/sync/data/background_sync_handler.dart';
 import '../../features/sync/widgets/sync_status_banner.dart';
 import '../../features/task_management/presentation/pages/task_management_page.dart';
 import '../widgets/app_navigation.dart';
@@ -127,6 +128,7 @@ class _AppShellState extends State<AppShell> {
   late final TaskStore _store;
   late final bool _ownsStore;
   late final AvatarStore _avatarStore;
+  late final BackgroundSyncHandler _backgroundSync;
   final Map<ShellDestination, Widget> _pages = <ShellDestination, Widget>{};
   ShellDestination _selected = ShellDestination.home;
 
@@ -153,6 +155,7 @@ class _AppShellState extends State<AppShell> {
           ownerId: widget.ownerId,
         );
     if (!_store.hasLoaded && !_store.isLoading) _store.load();
+    _backgroundSync = BackgroundSyncHandler(store: _store)..start();
     _avatarStore = AvatarStore(ownerId: widget.ownerId);
     _avatarStore.load();
     _pages[ShellDestination.home] = _buildPage(ShellDestination.home);
@@ -160,6 +163,7 @@ class _AppShellState extends State<AppShell> {
 
   @override
   void dispose() {
+    _backgroundSync.dispose();
     _avatarStore.dispose();
     if (_ownsStore) _store.dispose();
     super.dispose();

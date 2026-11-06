@@ -48,6 +48,12 @@ class _SyncCenterDialogState extends State<SyncCenterDialog> {
     }
   }
 
+  Future<void> _discard(SyncOperation operation) async {
+    await widget.store.discardPendingOperation(operation.id);
+    if (!mounted) return;
+    AppSnackBar.success(context, 'Queued change discarded.');
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -128,7 +134,12 @@ class _SyncCenterDialogState extends State<SyncCenterDialog> {
                       _sectionLabel(context, 'WAITING TO SEND'),
                       const SizedBox(height: AppSpacing.sm),
                       for (final operation in operations)
-                        _OperationRow(operation: operation),
+                        _OperationRow(
+                          operation: operation,
+                          onDiscard: operation.isDeadLetter
+                              ? () => _discard(operation)
+                              : null,
+                        ),
                     ],
                   ],
                 ],
@@ -275,9 +286,19 @@ class _ConflictCard extends StatelessWidget {
 }
 
 class _OperationRow extends StatelessWidget {
-  const _OperationRow({required this.operation});
+  const _OperationRow({required this.operation, this.onDiscard});
 
   final SyncOperation operation;
+  final VoidCallback? onDiscard;
+
+  String _formatTime(DateTime value) {
+    final local = value.toLocal();
+    final hour = local.hour.toString().padLeft(2, '0');
+    final minute = local.minute.toString().padLeft(2, '0');
+    return '${local.day.toString().padLeft(2, '0')}/'
+        '${local.month.toString().padLeft(2, '0')}/${local.year} '
+        '$hour:$minute';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -315,6 +336,7 @@ class _OperationRow extends StatelessWidget {
                 Text(
                   '${operation.type.label}'
                   '${operation.attempts > 0 ? ' · ${operation.attempts} attempts' : ''}'
+                  '${operation.deadLetteredAt != null ? ' · discarded from automatic retry' : ''}'
                   '${operation.lastError == null ? '' : ' · ${operation.lastError}'}',
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
@@ -324,6 +346,24 @@ class _OperationRow extends StatelessWidget {
                         : scheme.error,
                   ),
                 ),
+                if (operation.nextAttemptAt != null &&
+                    operation.deadLetteredAt == null)
+                  Text(
+                    'Next retry ${_formatTime(operation.nextAttemptAt!)}',
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: scheme.onSurfaceVariant,
+                    ),
+                  ),
+                if (onDiscard != null) ...<Widget>[
+                  const SizedBox(height: AppSpacing.xxs),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: TextButton(
+                      onPressed: onDiscard,
+                      child: const Text('Discard change'),
+                    ),
+                  ),
+                ],
               ],
             ),
           ),

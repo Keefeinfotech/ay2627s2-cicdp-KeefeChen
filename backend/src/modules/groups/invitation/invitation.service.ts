@@ -8,6 +8,9 @@ import { createHash, randomBytes } from "node:crypto";
 
 import mongoose from "mongoose";
 
+import { getAppBaseUrl } from "../../../config/environment.js";
+import logger from "../../../config/logger.js";
+import { sendGroupInvitationEmail } from "../../../services/email.service.js";
 import { GroupRepository } from "../core/group.repository.js";
 import { MemberRepository } from "../member/member.repository.js";
 import { userRepository } from "../../users/user.repository.js";
@@ -99,9 +102,27 @@ export class InvitationService {
       expiresAt,
     });
 
-    // 9. Return the invitation and token.
-    // IMPORTANT: Replace token delivery with your encrypted
-    // outbox/email worker before production deployment.
+    // 9. Deliver the token. Email is preferred; when SMTP is unavailable the
+    //    raw token is returned for manual delivery inside the same response.
+    const acceptUrl =
+      `${getAppBaseUrl()}/invitations/accept?token=${encodeURIComponent(rawToken)}`;
+    let delivery: "email" | "manual" = "manual";
+    try {
+      const delivered = await sendGroupInvitationEmail({
+        recipient: email,
+        acceptUrl,
+        groupName: group.name,
+        role: input.role,
+      });
+      if (delivered) delivery = "email";
+    } catch (error) {
+      logger.warn("group.invitation.email_failed", {
+        invitationId: invitation.invitationId,
+        groupId: input.groupId,
+        message: error instanceof Error ? error.message : String(error),
+      });
+    }
+
     return {
       invitation: {
         invitationId: invitation.invitationId,
@@ -113,7 +134,8 @@ export class InvitationService {
         expiresAt: invitation.expiresAt,
         createdAt: invitation.createdAt,
       },
-      invitationToken: rawToken,
+      delivery,
+      ...(delivery === "manual" ? { invitationToken: rawToken } : {}),
     };
   }
 

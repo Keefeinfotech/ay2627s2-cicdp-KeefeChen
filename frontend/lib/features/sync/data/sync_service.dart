@@ -40,6 +40,8 @@ class SyncService {
     const SyncSnapshot(),
   );
 
+  static const int _deadLetterAfterFailures = 3;
+
   List<SyncOperation> _operations = <SyncOperation>[];
   List<SyncConflict> _conflicts = <SyncConflict>[];
   DateTime? _lastSyncedAt;
@@ -153,6 +155,12 @@ class SyncService {
 
     for (var index = 0; index < _operations.length; index++) {
       final operation = _operations[index];
+
+      if (operation.isDeadLetter || !operation.isDue) {
+        remaining.add(operation);
+        continue;
+      }
+
       final outcome = await _apply(operation, token);
 
       switch (outcome) {
@@ -166,9 +174,11 @@ class SyncService {
           remaining.addAll(_operations.sublist(index));
           index = _operations.length;
         case _ApplyOutcome.failed:
-          failure = operation.lastError;
-          remaining.addAll(_operations.sublist(index));
-          index = _operations.length;
+          // A permanent failure is retained for inspection and later manual
+          // retry or discard, but it must not block unrelated queued work.
+          final failedOperation = _operations[index];
+          failure = failedOperation.lastError ?? operation.lastError;
+          remaining.add(failedOperation);
       }
     }
 
@@ -180,21 +190,52 @@ class SyncService {
     }
 
     await _persist();
+    final deadLetterCount = _operations
+        .where((operation) => operation.isDeadLetter)
+        .length;
+    final failureMessage =
+        failure ??
+        (deadLetterCount > 0
+            ? '$deadLetterCount ${deadLetterCount == 1 ? 'change' : 'changes'} need attention.'
+            : null);
     await _publish(
       phase: _conflicts.isNotEmpty
           ? SyncPhase.conflict
           : offline
           ? SyncPhase.offline
-          : failure != null
+          : failureMessage != null
           ? SyncPhase.failed
           : _operations.isNotEmpty
           ? SyncPhase.pending
           : SyncPhase.synced,
-      message: failure,
+      message: failureMessage,
     );
   }
 
-  Future<void> retry() => flush();
+  /// Manual retry. Clears automatic backoff and dead-letter state so the
+  /// user can rescue an operation after fixing the underlying problem.
+  Future<void> retry() async {
+    await load();
+    _operations = _operations
+        .map(
+          (operation) =>
+              operation.copyWith(clearNextAttempt: true, clearDeadLetter: true),
+        )
+        .toList(growable: false);
+    await _persist();
+    return flush();
+  }
+
+  /// Removes an operation from the durable queue. Used for dead-lettered
+  /// changes the user chooses to discard after reviewing the error.
+  Future<void> discard(String operationId) async {
+    await load();
+    _operations = _operations
+        .where((operation) => operation.id != operationId)
+        .toList(growable: false);
+    await _persist();
+    await _publish();
+  }
 
   Future<SyncResolutionResult> resolveConflict(
     SyncConflict conflict,
@@ -303,17 +344,23 @@ class SyncService {
         return _ApplyOutcome.conflict;
       }
       if (error.isUnauthorized) {
-        _markFailed(operation, 'Your session expired. Sign in to sync.');
+        // Authentication can be restored; keep the operation available for
+        // manual retry once the user signs in again.
+        _markFailed(
+          operation,
+          'Your session expired. Sign in to sync.',
+          permanent: false,
+        );
         return _ApplyOutcome.failed;
       }
       if (error.statusCode == null || error.statusCode! >= 500) {
-        _markFailed(operation, error.message);
+        _markFailed(operation, error.message, permanent: false);
         return _ApplyOutcome.offline;
       }
-      _markFailed(operation, error.message);
+      _markFailed(operation, error.message, permanent: true);
       return _ApplyOutcome.failed;
     } catch (_) {
-      _markFailed(operation, 'Could not reach the server.');
+      _markFailed(operation, 'Could not reach the server.', permanent: false);
       return _ApplyOutcome.offline;
     }
   }
@@ -344,13 +391,11 @@ class SyncService {
     }
 
     if (remote == null) {
-      // The task disappeared remotely. Re-create it from the local copy.
-      await _api.postJson(
-        ApiEndpoints.tasks,
-        TaskApiMapper.toCreateJson(task),
-        token: token,
-      );
-      return _ApplyOutcome.applied;
+      // The task was removed elsewhere. The local edit cannot be applied
+      // idempotently without resurrecting a deleted task, and it must not be
+      // dropped either, so the user decides.
+      _addConflict(operation, task, null, SyncConflictKind.deleteCollision);
+      return _ApplyOutcome.conflict;
     }
 
     final base = operation.baseUpdatedAt ?? operation.queuedAt;
@@ -423,13 +468,30 @@ class SyncService {
     _conflicts.removeWhere((item) => item.id == conflict.id);
   }
 
-  void _markFailed(SyncOperation operation, String message) {
+  void _markFailed(
+    SyncOperation operation,
+    String message, {
+    required bool permanent,
+  }) {
     final index = _operations.indexWhere((item) => item.id == operation.id);
     if (index < 0) return;
+    final attempts = operation.attempts + 1;
+    final nextAttemptAt = DateTime.now().add(_backoffFor(attempts));
     _operations[index] = operation.copyWith(
-      attempts: operation.attempts + 1,
+      attempts: attempts,
       lastError: message,
+      nextAttemptAt: nextAttemptAt,
+      deadLetteredAt: permanent && attempts >= _deadLetterAfterFailures
+          ? DateTime.now()
+          : null,
     );
+  }
+
+  Duration _backoffFor(int attempts) {
+    final exponent = attempts < 1 ? 0 : attempts - 1;
+    final minutes = pow(2, exponent).toInt().clamp(1, 60).toInt();
+    // A small deterministic jitter avoids every client retrying in lockstep.
+    return Duration(minutes: minutes + (attempts % 3));
   }
 
   // ---------------------------------------------------------------------------

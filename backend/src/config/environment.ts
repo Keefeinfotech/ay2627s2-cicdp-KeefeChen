@@ -50,6 +50,20 @@ export const getCorsOrigins = (): string[] =>
     .map((origin) => origin.trim())
     .filter(Boolean);
 
+export const getAppBaseUrl = (): string =>
+  (process.env.APP_BASE_URL?.trim() || "http://localhost:8080").replace(
+    /\/+$/,
+    "",
+  );
+
+export const isSmtpConfigured = (): boolean =>
+  Boolean(
+    process.env.SMTP_HOST?.trim() &&
+      process.env.SMTP_USER?.trim() &&
+      process.env.SMTP_PASS?.trim() &&
+      process.env.EMAIL_FROM?.trim(),
+  );
+
 export const getAuthRateLimitMax = (): number => {
   const parsed = Number(process.env.AUTH_RATE_LIMIT_MAX);
   return Number.isInteger(parsed) && parsed > 0 ? parsed : 10;
@@ -61,10 +75,34 @@ export const getAiRateLimitPerUser = (): number => {
 };
 
 export const getAiProvider = (): string =>
-  process.env.AI_PROVIDER?.trim() || "mock";
+  process.env.AI_PROVIDER?.trim().toLowerCase() || "mock";
 
 export const getAiModel = (): string =>
-  process.env.AI_MODEL?.trim() || "mock-model";
+  process.env.AI_MODEL?.trim() ||
+  (getAiProvider() === "mock" ? "mock-model" : "gpt-4o-mini");
+
+export const getAiBaseUrl = (): string =>
+  (process.env.AI_BASE_URL?.trim() || "https://api.openai.com/v1").replace(
+    /\/+$/,
+    "",
+  );
+
+export const getAiApiKey = (): string | null =>
+  process.env.AI_API_KEY?.trim() || null;
+
+export const getAiMaxTokens = (): number => {
+  const parsed = Number(process.env.AI_MAX_TOKENS);
+  return Number.isInteger(parsed) && parsed >= 32 && parsed <= 4096
+    ? parsed
+    : 400;
+};
+
+export const getAiTimeoutMs = (): number => {
+  const parsed = Number(process.env.AI_TIMEOUT_MS);
+  return Number.isInteger(parsed) && parsed >= 1000 && parsed <= 60000
+    ? parsed
+    : 15000;
+};
 
 export const shouldTrustProxy = (): boolean =>
   process.env.TRUST_PROXY === "true";
@@ -82,6 +120,10 @@ export const assertRuntimeEnv = (): void => {
     throw new EnvError(
       "CAPTCHA_ENABLED=true requires TURNSTILE_SECRET_KEY to be set"
     );
+  }
+
+  if (getAiProvider() !== "mock" && !getAiApiKey()) {
+    throw new EnvError("AI_PROVIDER is not mock but AI_API_KEY is not set");
   }
 
   if (isProduction()) {
