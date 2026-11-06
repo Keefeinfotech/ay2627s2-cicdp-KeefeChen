@@ -1,7 +1,13 @@
 # Auxilia Project Plan
 
 Status: living proposal for the NP-S1 sprint and the wider Auxilia roadmap.
-Owner: Keefe Chen. Last updated: 3 November 2026.
+Owner: Keefe Chen. Last updated: 6 November 2026.
+
+Implementation update (6 November 2026): the group workspace, invitations,
+shared assignments, offline change queue, retry/backoff, conflict handling,
+sync status, and in-app reminders are implemented and covered by automated
+tests. See `docs/reports/USER_STORY_CICD_REPORT.md` for the story-by-story
+evidence and remaining release gates.
 
 ## Status key
 

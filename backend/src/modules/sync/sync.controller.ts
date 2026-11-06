@@ -1,9 +1,3 @@
-/**
- * File Name: sync.controller.ts
- * Description: Handles HTTP requests for the change feed.
- * Author: Keefe Chen
- */
-
 import type {
   NextFunction,
   Request,
@@ -11,61 +5,58 @@ import type {
 } from "express";
 
 import { AppError } from "../../shared/utils/AppError.js";
-import { syncService } from "./sync.service.js";
+import type { SyncService } from "./sync.service.js";
 
-function requireUserId(req: Request, res: Response): string | null {
-  if (!req.userId) {
-    res.status(401).json({
-      code: "UNAUTHENTICATED",
-      message: "Authentication is required.",
-    });
+const getAuthenticatedUserId = (req: Request): string => {
+  const userId = req.userId;
 
-    return null;
+  if (!userId) {
+    throw new AppError(401, "UNAUTHENTICATED", "Authentication required.");
   }
 
-  return req.userId;
-}
+  return userId;
+};
 
-export const syncController = {
-  /**
-   * GET /api/sync/changes
-   * Returns tasks updated since the supplied timestamp.
-   */
-  async changes(
+const parseSince = (value: unknown): Date => {
+  if (value === undefined) {
+    return new Date(0);
+  }
+
+  if (typeof value !== "string") {
+    throw new AppError(400, "INVALID_SINCE", "The sync cursor must be a date.");
+  }
+
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    throw new AppError(
+      400,
+      "INVALID_SINCE",
+      "The sync cursor must be a valid ISO-8601 date.",
+    );
+  }
+
+  return parsed;
+};
+
+export class SyncController {
+  constructor(private readonly syncService: SyncService) {}
+
+  public getChanges = async (
     req: Request,
     res: Response,
     next: NextFunction,
-  ): Promise<void> {
+  ): Promise<void> => {
     try {
-      const userId = requireUserId(req, res);
-      if (!userId) return;
-
-      const sinceParam = req.query.since;
-
-      let since: Date | null = null;
-
-      if (typeof sinceParam === "string" && sinceParam.trim().length > 0) {
-        const parsed = new Date(sinceParam);
-
-        if (Number.isNaN(parsed.getTime())) {
-          throw new AppError(
-            400,
-            "INVALID_SYNC_CURSOR",
-            "The 'since' query parameter must be a valid ISO date.",
-          );
-        }
-
-        since = parsed;
-      }
-
-      const result = await syncService.getChanges(userId, since);
+      const userId = getAuthenticatedUserId(req);
+      const since = parseSince(req.query.since);
+      const result = await this.syncService.getChangesSince(userId, since);
 
       res.status(200).json({
-        message: "Changes retrieved successfully.",
+        message: "Sync changes retrieved successfully.",
         data: result,
       });
     } catch (error) {
       next(error);
     }
-  },
-};
+  };
+}

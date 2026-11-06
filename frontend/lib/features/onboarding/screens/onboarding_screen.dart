@@ -4,8 +4,8 @@ import '../../../core/constants/app_constants.dart';
 import '../../../core/routing/app_router.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
-import '../../../core/widgets/app_avatar.dart';
-import '../../../core/widgets/app_button.dart';
+import 'package:frontend/core/widgets/app_avatar.dart';
+import 'package:frontend/core/widgets/app_button.dart';
 import '../data/onboarding_store.dart';
 
 /// A short, product-led introduction shown once before authentication.
@@ -318,7 +318,7 @@ class _OnboardingControls extends StatelessWidget {
           const SizedBox(height: AppSpacing.md),
           Row(
             children: <Widget>[
-              if (onPrevious != null) ...<Widget>[
+              if (onPrevious != null) ...[
                 Expanded(
                   child: AppButton(
                     label: 'Previous',

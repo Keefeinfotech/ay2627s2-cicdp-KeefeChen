@@ -13,13 +13,11 @@ import {
   GroupRole,
   GroupStatus,
   GroupVisibility,
+  MemberStatus,
   type CreateGroupInput,
   type GroupListQuery,
   type UpdateGroupInput,
 } from "./group.types.js";
-
-const groupRepository = new GroupRepository();
-const memberRepository = new MemberRepository();
 
 type ServiceError = Error & {
   statusCode: number;
@@ -38,6 +36,11 @@ const createError = (
 };
 
 export class GroupService {
+  constructor(
+    private readonly groupRepository: GroupRepository,
+    private readonly memberRepository: MemberRepository,
+  ) {}
+
   /**
    * Creates a group and registers its creator as the owner.
    * Both operations are performed in one transaction.
@@ -47,11 +50,11 @@ export class GroupService {
 
     try {
       let createdGroup: Awaited<
-        ReturnType<typeof groupRepository.create>
+        ReturnType<typeof this.groupRepository.create>
       > | null = null;
 
       await session.withTransaction(async () => {
-        createdGroup = await groupRepository.create(
+        createdGroup = await this.groupRepository.create(
           {
             ...input,
             name: input.name.trim(),
@@ -62,12 +65,12 @@ export class GroupService {
           session,
         );
 
-        await memberRepository.create(
+        await this.memberRepository.create(
           {
             groupId: createdGroup.groupId,
             userId,
             role: GroupRole.OWNER,
-            status: "ACTIVE",
+            status: MemberStatus.ACTIVE,
           },
           session,
         );
@@ -94,7 +97,7 @@ export class GroupService {
     const { page, limit, search } = query;
 
     const groupIds =
-      await memberRepository.findActiveGroupIdsByUser(userId);
+      await this.memberRepository.findActiveGroupIdsByUser(userId);
 
     if (groupIds.length === 0) {
       return {
@@ -108,7 +111,7 @@ export class GroupService {
       };
     }
 
-    const result = await groupRepository.list(
+    const result = await this.groupRepository.list(
       groupIds,
       page,
       limit,
@@ -118,12 +121,12 @@ export class GroupService {
     // Attach the caller's role so the client can show owner/admin actions
     // without a second request per group.
     const memberships =
-      await memberRepository.findActiveByUserAndGroupIds(
+      await this.memberRepository.findActiveByUserAndGroupIds(
         userId,
-        result.items.map((group) => group.groupId),
+        result.items.map((group: { groupId: any; }) => group.groupId),
       );
     const roleByGroupId = new Map(
-      memberships.map((membership) => [
+      memberships.map((membership: { groupId: any; role: any; }) => [
         membership.groupId,
         membership.role,
       ]),
@@ -131,7 +134,7 @@ export class GroupService {
 
     return {
       ...result,
-      items: result.items.map((group) => ({
+      items: result.items.map((group: { groupId: any; role?: any; name?: string; description?: string | undefined; visibility?: GroupVisibility; status?: GroupStatus; ownerId?: string; createdAt?: Date; updatedAt?: Date; _id?: mongoose.Types.ObjectId; __v?: number; }) => ({
         ...group,
         role: roleByGroupId.get(group.groupId) ?? null,
       })),
@@ -143,7 +146,7 @@ export class GroupService {
    * or the group is publicly visible.
    */
   async get(groupId: string, userId: string) {
-    const group = await groupRepository.findById(groupId);
+    const group = await this.groupRepository.findById(groupId);
 
     if (!group) {
       throw createError(
@@ -154,7 +157,7 @@ export class GroupService {
     }
 
     const membership =
-      await memberRepository.findActiveByGroupAndUser(
+      await this.memberRepository.findActiveByGroupAndUser(
         groupId,
         userId,
       );
@@ -181,7 +184,7 @@ export class GroupService {
     userId: string,
     input: UpdateGroupInput,
   ) {
-    const group = await groupRepository.findOwned(groupId, userId);
+    const group = await this.groupRepository.findOwned(groupId, userId);
 
     if (!group) {
       throw createError(
@@ -205,7 +208,7 @@ export class GroupService {
       updateData.visibility = input.visibility;
     }
 
-    const updatedGroup = await groupRepository.update(
+    const updatedGroup = await this.groupRepository.update(
       groupId,
       userId,
       updateData,
@@ -227,7 +230,7 @@ export class GroupService {
    * Only the group owner can archive the group.
    */
   async archive(groupId: string, userId: string) {
-    const archivedGroup = await groupRepository.archive(
+    const archivedGroup = await this.groupRepository.archive(
       groupId,
       userId,
     );

@@ -1,3 +1,11 @@
+/**
+ * File Name: group.types.ts
+ * Description: Data transfer objects, enums, and request types for groups.
+ * Author: Keefe Chen
+ */
+
+import { Request } from "express";
+
 export enum GroupVisibility {
   PRIVATE = "PRIVATE",
   PUBLIC = "PUBLIC",
@@ -6,6 +14,14 @@ export enum GroupVisibility {
 export enum GroupStatus {
   ACTIVE = "ACTIVE",
   ARCHIVED = "ARCHIVED",
+}
+
+export enum MemberStatus {
+  ACTIVE = "ACTIVE",
+  PENDING = "PENDING",
+  REJECTED = "REJECTED",
+  LEFT = "LEFT",
+  REMOVED = "REMOVED",
 }
 
 export enum GroupRole {
@@ -30,4 +46,14 @@ export interface GroupListQuery {
   page: number;
   limit: number;
   search?: string;
+}
+
+export interface AuthenticatedUser {
+  id: string;
+  email?: string;
+  [key: string]: unknown;
+}
+
+export interface AuthenticatedRequest extends Request {
+  user?: AuthenticatedUser;
 }

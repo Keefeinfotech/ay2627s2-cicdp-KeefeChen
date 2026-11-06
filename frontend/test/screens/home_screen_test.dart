@@ -40,7 +40,8 @@ void main() {
 
     expect(find.text('No tasks yet'), findsOneWidget);
     expect(find.text('Create your first task'), findsOneWidget);
-    expect(find.text('0 XP · 0 of 0 complete'), findsOneWidget);
+    expect(find.text('Total XP'), findsOneWidget);
+    expect(find.text('To do'), findsOneWidget);
   });
 
   testWidgets('creates a task through the editor', (tester) async {

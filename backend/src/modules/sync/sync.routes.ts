@@ -1,21 +1,21 @@
 /**
  * File Name: sync.routes.ts
- * Description: Defines the change-feed API routes.
+ * Description: Authenticated HTTP endpoint definitions for sync.
  * Author: Keefe Chen
  */
 
 import { Router } from "express";
 
 import { authenticate } from "../../middleware/authenticate.js";
-import { syncController } from "./sync.controller.js";
+import type { SyncController } from "./sync.controller.js";
 
-const router = Router();
+export function createSyncRouter(syncController: SyncController): Router {
+  const router = Router();
 
-router.use(authenticate);
+  router.use(authenticate);
 
-/**
- * GET /api/sync/changes
- */
-router.get("/changes", syncController.changes);
+  // GET /api/sync/changes?since=2026-01-01T00:00:00.000Z
+  router.get("/changes", syncController.getChanges);
 
-export default router;
+  return router;
+}

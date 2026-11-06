@@ -211,7 +211,7 @@ class ScheduleOptimizationSheet extends StatelessWidget {
                     ),
                   )
                 else
-                  for (final suggestion in suggestions) ...<Widget>[
+                  for (final suggestion in suggestions) ...[
                     Container(
                       padding: const EdgeInsets.all(AppSpacing.lg),
                       decoration: BoxDecoration(

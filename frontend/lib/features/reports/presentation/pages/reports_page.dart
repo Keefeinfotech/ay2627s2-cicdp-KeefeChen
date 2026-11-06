@@ -1,19 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/core/widgets/app_error_state.dart';
+import 'package:frontend/core/widgets/app_loading.dart';
+import 'package:frontend/features/home/data/api_task_repository.dart';
+import 'package:frontend/features/home/data/task_store.dart';
+import 'package:frontend/features/reports/data/models/report_snapshot.dart';
+import 'package:frontend/features/reports/presentation/controllers/reports_controller.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
-import '../../../../core/utils/formatters.dart';
 import '../../../../core/widgets/app_app_bar.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_empty_state.dart';
-import '../../../../core/widgets/app_error_state.dart';
-import '../../../../core/widgets/app_loading.dart';
 import '../../../../core/widgets/app_status_badge.dart';
 import '../../../../core/widgets/responsive_page_layout.dart';
-import 'package:frontend/features/home/data/api_task_repository.dart';
-import '../../../home/data/task_store.dart';
-import '../../data/models/report_snapshot.dart';
-import '../controllers/reports_controller.dart';
 import '../widgets/report_charts.dart';
 
 /// Progress reporting surface built from live task data.
@@ -71,9 +70,7 @@ class _ReportsPageState extends State<ReportsPage> {
             bottom: false,
             child: Center(
               child: ConstrainedBox(
-                constraints: const BoxConstraints(
-                  maxWidth: AppSizes.maxContentWidth,
-                ),
+                constraints: const BoxConstraints(maxWidth: 1120),
                 child: RefreshIndicator(
                   onRefresh: _controller.refresh,
                   child: ListView(
@@ -98,14 +95,7 @@ class _ReportsPageState extends State<ReportsPage> {
                         const TaskListSkeleton(itemCount: 4)
                       else if (!_controller.hasLoaded &&
                           _controller.error != null)
-                        Container(
-                          decoration: _cardDecoration(context),
-                          child: AppErrorState(
-                            title: 'Reports could not be loaded',
-                            message: _controller.error!,
-                            onRetry: _controller.refresh,
-                          ),
-                        )
+                        _errorState(context)
                       else if (_controller.snapshot.isEmpty)
                         _emptyState(context)
                       else
@@ -159,7 +149,7 @@ class _ReportsPageState extends State<ReportsPage> {
             const SizedBox(height: AppSpacing.xs),
             Text(
               '${_controller.period.label} · generated '
-              '${formatDateOnly(_controller.snapshot.generatedAt)}',
+              '${_formatDateOnly(_controller.snapshot.generatedAt)}',
               style: theme.textTheme.bodySmall?.copyWith(
                 color: scheme.onSurfaceVariant,
               ),
@@ -244,7 +234,7 @@ class _ReportsPageState extends State<ReportsPage> {
           color: rateColor,
         ),
         _ReportKpiCard(
-          icon: Icons.task_alt_rounded,
+          icon: Icons.task_alt_outlined,
           label: 'Completed',
           value: '${snapshot.completedTasks}',
           caption: '${snapshot.completedInPeriod} finished in period',
@@ -257,7 +247,7 @@ class _ReportsPageState extends State<ReportsPage> {
           caption: '${snapshot.createdInPeriod} created in period',
         ),
         _ReportKpiCard(
-          icon: Icons.warning_amber_rounded,
+          icon: Icons.warning_amber_outlined,
           label: 'Overdue',
           value: '${snapshot.overdueTasks}',
           caption: snapshot.overdueTasks == 0
@@ -288,9 +278,8 @@ class _ReportsPageState extends State<ReportsPage> {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
 
-    return Container(
+    return Padding(
       padding: const EdgeInsets.all(AppSpacing.lg),
-      decoration: _cardDecoration(context),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
@@ -333,7 +322,7 @@ class _ReportsPageState extends State<ReportsPage> {
               child: Column(
                 children: <Widget>[
                   Icon(
-                    Icons.bar_chart_rounded,
+                    Icons.bar_chart_outlined,
                     size: 36,
                     color: scheme.onSurfaceVariant,
                   ),
@@ -362,9 +351,8 @@ class _ReportsPageState extends State<ReportsPage> {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
 
-    return Container(
+    return Padding(
       padding: const EdgeInsets.all(AppSpacing.lg),
-      decoration: _cardDecoration(context),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
@@ -392,9 +380,8 @@ class _ReportsPageState extends State<ReportsPage> {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
 
-    return Container(
+    return Padding(
       padding: const EdgeInsets.all(AppSpacing.lg),
-      decoration: _cardDecoration(context),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
@@ -452,13 +439,8 @@ class _ReportsPageState extends State<ReportsPage> {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
 
-    return Container(
+    return Padding(
       padding: const EdgeInsets.all(AppSpacing.lg),
-      decoration: BoxDecoration(
-        color: scheme.primaryContainer.withValues(alpha: 0.55),
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: scheme.primary.withValues(alpha: 0.18)),
-      ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
@@ -491,8 +473,8 @@ class _ReportsPageState extends State<ReportsPage> {
   }
 
   Widget _emptyState(BuildContext context) {
-    return Container(
-      decoration: _cardDecoration(context),
+    return Padding(
+      padding: const EdgeInsets.all(AppSpacing.lg),
       child: AppEmptyState(
         icon: Icons.insights_outlined,
         title: 'No progress to report yet',
@@ -509,14 +491,19 @@ class _ReportsPageState extends State<ReportsPage> {
     );
   }
 
-  BoxDecoration _cardDecoration(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return BoxDecoration(
-      color: scheme.surface,
-      borderRadius: BorderRadius.circular(AppRadius.lg),
-      border: Border.all(color: scheme.outlineVariant),
+  Widget _errorState(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      child: AppErrorState(
+        title: 'Reports could not be loaded',
+        message: _controller.error ?? 'An unexpected error occurred.',
+        onRetry: _controller.refresh,
+      ),
     );
   }
+
+  String _formatDateOnly(DateTime date) =>
+      '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
 }
 
 class _ReportKpiCard extends StatelessWidget {

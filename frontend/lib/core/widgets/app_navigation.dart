@@ -452,7 +452,7 @@ class PageHeading extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              if (eyebrow != null) ...<Widget>[
+              if (eyebrow != null) ...[
                 Text(
                   eyebrow!.toUpperCase(),
                   style: theme.textTheme.labelSmall?.copyWith(
@@ -468,7 +468,7 @@ class PageHeading extends StatelessWidget {
                   fontWeight: FontWeight.w700,
                 ),
               ),
-              if (subtitle != null) ...<Widget>[
+              if (subtitle != null) ...[
                 const SizedBox(height: AppSpacing.xs),
                 Text(
                   subtitle!,
@@ -480,7 +480,7 @@ class PageHeading extends StatelessWidget {
             ],
           ),
         ),
-        if (actions.isNotEmpty) ...<Widget>[
+        if (actions.isNotEmpty) ...[
           const SizedBox(width: AppSpacing.md),
           Wrap(
             spacing: AppSpacing.sm,

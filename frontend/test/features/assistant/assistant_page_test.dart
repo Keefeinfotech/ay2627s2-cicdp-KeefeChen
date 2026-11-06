@@ -70,7 +70,7 @@ void main() {
     await _send(tester, 'Revise calculus tomorrow high priority');
 
     expect(find.text('Create task'), findsOneWidget);
-    expect(find.text('Review before adding'), findsOneWidget);
+    expect(find.text('AI-assisted · Review before adding'), findsOneWidget);
     expect(find.text('Revise calculus'), findsOneWidget);
     expect(find.textContaining('Due Tomorrow'), findsOneWidget);
     expect(find.text('Confirm'), findsOneWidget);
@@ -154,5 +154,27 @@ void main() {
     expect(store.tasks, hasLength(1));
     expect(store.tasks.single.title, 'Old note');
     expect(find.text('Task restored.'), findsOneWidget);
+  });
+
+  testWidgets('asks for clarification instead of updating an ambiguous match', (
+    tester,
+  ) async {
+    final store = await _pumpAssistant(
+      tester,
+      seed: <Task>[
+        makeTask(id: 'calc-1', title: 'Revise calculus chapter 1'),
+        makeTask(id: 'calc-2', title: 'Revise calculus chapter 2'),
+      ],
+    );
+
+    await _send(tester, 'Update task calculus tomorrow high priority');
+
+    expect(find.textContaining('several matching tasks'), findsOneWidget);
+    expect(find.text('Confirm'), findsNothing);
+    expect(store.tasks, hasLength(2));
+    expect(
+      store.tasks.every((task) => task.priority == TaskPriority.medium),
+      isTrue,
+    );
   });
 }

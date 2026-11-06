@@ -1,25 +1,25 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/core/widgets/app_app_bar.dart';
+import 'package:frontend/core/widgets/app_button.dart';
+import 'package:frontend/core/widgets/app_error_state.dart';
+import 'package:frontend/core/widgets/app_loading.dart';
+import 'package:frontend/core/widgets/app_snackbar.dart';
+import 'package:frontend/core/widgets/app_status_badge.dart';
+import 'package:frontend/features/authentication/models/session.dart';
+import 'package:frontend/features/calendar/data/datasources/calendar_api_data_source.dart';
+import 'package:frontend/features/calendar/data/models/calendar_event.dart';
+import 'package:frontend/features/calendar/data/repositories/calendar_repository.dart';
+import 'package:frontend/features/calendar/domain/usecases/analyze_schedule.dart';
+import 'package:frontend/features/calendar/presentation/controllers/calendar_controller.dart';
+import 'package:frontend/features/calendar/presentation/widgets/calendar_event_editor.dart';
+import 'package:frontend/features/calendar/presentation/widgets/calendar_views.dart';
+import 'package:frontend/features/calendar/presentation/widgets/schedule_optimization_banner.dart';
+import 'package:frontend/features/home/data/api_task_repository.dart';
+import 'package:frontend/features/home/data/task_store.dart';
 
 import '../../../../core/network/api_client.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
-import '../../../../core/widgets/app_app_bar.dart';
-import '../../../../core/widgets/app_button.dart';
-import '../../../../core/widgets/app_error_state.dart';
-import '../../../../core/widgets/app_loading.dart';
-import '../../../../core/widgets/app_snackbar.dart';
-import '../../../../core/widgets/app_status_badge.dart';
-import '../../../authentication/models/session.dart';
-import 'package:frontend/features/home/data/api_task_repository.dart';
-import '../../../home/data/task_store.dart';
-import '../../data/datasources/calendar_api_data_source.dart';
-import '../../data/models/calendar_event.dart';
-import '../../data/repositories/calendar_repository.dart';
-import '../../domain/usecases/analyze_schedule.dart';
-import '../controllers/calendar_controller.dart';
-import '../widgets/calendar_event_editor.dart';
-import '../widgets/calendar_views.dart';
-import '../widgets/schedule_optimization_banner.dart';
 
 /// Calendar surface with range queries, workload analysis and three views.
 class CalendarPage extends StatefulWidget {
@@ -175,9 +175,7 @@ class _CalendarPageState extends State<CalendarPage> {
         bottom: false,
         child: Center(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(
-              maxWidth: AppSizes.maxContentWidth,
-            ),
+            constraints: const BoxConstraints(maxWidth: 1120),
             child: RefreshIndicator(
               onRefresh: _controller.retry,
               child: ListView(
@@ -186,7 +184,7 @@ class _CalendarPageState extends State<CalendarPage> {
                   AppSpacing.lg,
                   AppSpacing.lg,
                   AppSpacing.lg,
-                  120,
+                  AppSpacing.xxl,
                 ),
                 children: <Widget>[
                   _buildToolbar(context),
@@ -231,10 +229,10 @@ class _CalendarPageState extends State<CalendarPage> {
     final bool isDaily = _controller.view == CalendarViewMode.daily;
     final bool isWeekly = _controller.view == CalendarViewMode.weekly;
     final String label = isDaily
-        ? calendarDateLabel(_controller.focusDate)
+        ? _calendarDateLabel(_controller.focusDate)
         : isWeekly
-        ? calendarWeekLabel(_controller.rangeStart)
-        : calendarMonthLabel(_controller.focusDate);
+        ? _calendarWeekLabel(_controller.rangeStart)
+        : _calendarMonthLabel(_controller.focusDate);
 
     return Container(
       padding: const EdgeInsets.all(AppSpacing.md),
@@ -363,6 +361,32 @@ class _CalendarPageState extends State<CalendarPage> {
         );
     }
   }
+
+  String _calendarDateLabel(DateTime date) =>
+      '${_monthName(date.month)} ${date.day}, ${date.year}';
+
+  String _calendarWeekLabel(DateTime rangeStart) =>
+      'Week of ${_monthName(rangeStart.month)} ${rangeStart.day}';
+
+  String _calendarMonthLabel(DateTime focusDate) => _monthName(focusDate.month);
+
+  String _monthName(int month) {
+    const names = <String>[
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    return names[month - 1];
+  }
 }
 
 class _ProjectFilter extends StatelessWidget {
@@ -408,22 +432,15 @@ class _WarningBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return Padding(
       padding: const EdgeInsets.all(AppSpacing.md),
-      decoration: BoxDecoration(
-        color: AppColors.warningTint,
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(
-          color: AppColors.warningAmber.withValues(alpha: 0.3),
-        ),
-      ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           const Icon(
             Icons.cloud_off_outlined,
-            color: AppColors.warningAmber,
-            size: AppSizes.iconMd,
+            color: Color(0xFFD97706),
+            size: 20,
           ),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
@@ -437,7 +454,7 @@ class _WarningBanner extends StatelessWidget {
           IconButton(
             tooltip: 'Dismiss calendar warning',
             onPressed: onDismiss,
-            icon: const Icon(Icons.close_rounded, size: AppSizes.iconSm),
+            icon: const Icon(Icons.close_rounded, size: 18),
             color: const Color(0xFF92400E),
             visualDensity: VisualDensity.compact,
           ),
@@ -452,15 +469,8 @@ class _CalendarSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-
-    return Container(
+    return Padding(
       padding: const EdgeInsets.all(AppSpacing.lg),
-      decoration: BoxDecoration(
-        color: scheme.surface,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: scheme.outlineVariant),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
@@ -582,7 +592,7 @@ class _EventDetailsSheet extends StatelessWidget {
                 _DetailRow(
                   icon: Icons.event_outlined,
                   label: 'Date',
-                  value: calendarDateLabel(event.startTime),
+                  value: _calendarDateLabel(event.startTime),
                 ),
                 const SizedBox(height: AppSpacing.md),
                 _DetailRow(
@@ -644,6 +654,27 @@ class _EventDetailsSheet extends StatelessWidget {
   String _time(DateTime date) =>
       '${date.hour.toString().padLeft(2, '0')}:'
       '${date.minute.toString().padLeft(2, '0')}';
+
+  String _calendarDateLabel(DateTime date) =>
+      '${_monthName(date.month)} ${date.day}, ${date.year}';
+
+  String _monthName(int month) {
+    const names = <String>[
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    return names[month - 1];
+  }
 }
 
 class _DetailRow extends StatelessWidget {

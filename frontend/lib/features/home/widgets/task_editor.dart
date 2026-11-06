@@ -442,7 +442,7 @@ class _TaskEditorState extends State<TaskEditor> {
                                 label: const Text('Clear reminder'),
                               ),
                             ),
-                          if (_scheduleError != null) ...<Widget>[
+                          if (_scheduleError != null) ...[
                             const SizedBox(height: AppSpacing.sm),
                             Row(
                               crossAxisAlignment: CrossAxisAlignment.start,

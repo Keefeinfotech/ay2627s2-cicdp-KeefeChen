@@ -1,16 +1,45 @@
+
+# ==========================================
+# Stage 1: Build
+# ==========================================
 FROM node:22-alpine AS build
+
 WORKDIR /app
+
+# Copy dependency manifests
 COPY package*.json ./
-RUN npm ci
+
+# Install dependencies
+RUN npm ci --ignore-scripts
+
+# Copy TypeScript configuration and source
 COPY tsconfig.json ./
 COPY src ./src
+
+# Compile TypeScript
 RUN npm run build
 
+
+# ==========================================
+# Stage 2: Production Runtime
+# ==========================================
 FROM node:22-alpine AS runtime
+
 WORKDIR /app
+
 ENV NODE_ENV=production
+
+# Copy dependency manifests
 COPY package*.json ./
-RUN npm ci --omit=dev
+
+# Install production dependencies only
+RUN npm ci --omit=dev --ignore-scripts && npm cache clean --force
+
+# Copy compiled JavaScript
 COPY --from=build /app/dist ./dist
+
+# Expose application port
 EXPOSE 3000
+
+# Start application
 CMD ["npm", "start"]

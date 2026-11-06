@@ -215,9 +215,7 @@ class _ProjectsPageState extends State<ProjectsPage> {
         bottom: false,
         child: Center(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(
-              maxWidth: AppSizes.maxContentWidth,
-            ),
+            constraints: const BoxConstraints(maxWidth: 1120),
             child: RefreshIndicator(
               onRefresh: _controller.retry,
               child: ListView(
@@ -226,14 +224,14 @@ class _ProjectsPageState extends State<ProjectsPage> {
                   AppSpacing.lg,
                   AppSpacing.lg,
                   AppSpacing.lg,
-                  120,
+                  AppSpacing.xxl,
                 ),
                 children: <Widget>[
                   if (_controller.hasLoaded) _summary(context),
                   if (_controller.hasLoaded)
                     const SizedBox(height: AppSpacing.lg),
                   _toolbar(context),
-                  if (_controller.error != null) ...<Widget>[
+                  if (_controller.error != null) ...[
                     const SizedBox(height: AppSpacing.md),
                     AppErrorBanner(
                       message: _controller.error!,
@@ -274,13 +272,8 @@ class _ProjectsPageState extends State<ProjectsPage> {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
 
-    return Container(
+    return Padding(
       padding: const EdgeInsets.all(AppSpacing.lg),
-      decoration: BoxDecoration(
-        color: scheme.surface,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: scheme.outlineVariant),
-      ),
       child: LayoutBuilder(
         builder: (context, constraints) {
           final progress = Column(
@@ -417,12 +410,8 @@ class _ProjectsPageState extends State<ProjectsPage> {
   }
 
   Widget _emptyState(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
-      ),
+    return Padding(
+      padding: const EdgeInsets.all(AppSpacing.lg),
       child: AppEmptyState(
         icon: Icons.workspaces_outline,
         title: 'No projects yet',
@@ -441,12 +430,8 @@ class _ProjectsPageState extends State<ProjectsPage> {
   }
 
   Widget _noMatches(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
-      ),
+    return Padding(
+      padding: const EdgeInsets.all(AppSpacing.lg),
       child: AppEmptyState(
         compact: true,
         icon: Icons.filter_alt_off_outlined,

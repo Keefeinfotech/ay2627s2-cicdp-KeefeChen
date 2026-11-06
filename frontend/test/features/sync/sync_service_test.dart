@@ -362,4 +362,133 @@ void main() {
       expect(service.conflicts, isEmpty);
     },
   );
+
+  test('an update to a task deleted elsewhere surfaces a conflict', () async {
+    final requests = <http.Request>[];
+    final client = MockClient((request) async {
+      requests.add(request);
+      if (request.method == 'GET') {
+        return _json(<String, dynamic>{
+          'message': 'Task was not found.',
+        }, statusCode: 404);
+      }
+      return _json(<String, dynamic>{'data': <String, dynamic>{}});
+    });
+    final service = _service(client);
+    await service.enqueue(
+      type: SyncOperationType.update,
+      task: makeTask(id: 'task-a', title: 'Edited offline'),
+      baseUpdatedAt: DateTime(2026, 1, 1),
+    );
+
+    await service.flush();
+
+    expect(requests.where((request) => request.method == 'PATCH'), isEmpty);
+    expect(requests.where((request) => request.method == 'POST'), isEmpty);
+    expect(service.conflicts, hasLength(1));
+    final conflict = service.conflicts.single;
+    expect(conflict.kind, SyncConflictKind.deleteCollision);
+    expect(conflict.localTask.title, 'Edited offline');
+    expect(conflict.remoteTask, isNull);
+    expect(service.snapshot.value.phase, SyncPhase.conflict);
+  });
+
+  test('keeping local in a delete conflict recreates the task', () async {
+    final bodies = <Map<String, dynamic>>[];
+    final client = MockClient((request) async {
+      if (request.method == 'GET') {
+        return _json(<String, dynamic>{
+          'message': 'Task was not found.',
+        }, statusCode: 404);
+      }
+      if (request.method == 'POST') {
+        bodies.add(jsonDecode(request.body) as Map<String, dynamic>);
+        return _json(<String, dynamic>{
+          'data': <String, dynamic>{},
+        }, statusCode: 201);
+      }
+      return _json(<String, dynamic>{});
+    });
+    final service = _service(client);
+    await service.enqueue(
+      type: SyncOperationType.update,
+      task: makeTask(id: 'task-a', title: 'Edited offline'),
+      baseUpdatedAt: DateTime(2026, 1, 1),
+    );
+    await service.flush();
+
+    final result = await service.resolveConflict(
+      service.conflicts.single,
+      ConflictResolution.keepLocal,
+    );
+
+    expect(result.success, isTrue);
+    expect(bodies, hasLength(1));
+    expect(bodies.single['title'], 'Edited offline');
+    expect(service.conflicts, isEmpty);
+  });
+
+  test(
+    'a permanently rejected change dead-letters after retries and can be discarded',
+    () async {
+      var attempts = 0;
+      final client = MockClient((request) async {
+        attempts += 1;
+        return _json(<String, dynamic>{
+          'message': 'Invalid task.',
+        }, statusCode: 400);
+      });
+      final service = _service(client);
+      await service.enqueue(
+        type: SyncOperationType.create,
+        task: makeTask(id: 'task-a', title: 'Rejected offline'),
+      );
+
+      await service.retry();
+      await service.retry();
+      await service.retry();
+
+      expect(attempts, 3);
+      expect(service.operations.single.attempts, 3);
+      expect(service.operations.single.isDeadLetter, isTrue);
+
+      // Automatic flushes skip dead-lettered work until the user intervenes.
+      await service.flush();
+      expect(attempts, 3);
+
+      await service.discard(service.operations.single.id);
+      expect(service.operations, isEmpty);
+      expect(attempts, 3);
+    },
+  );
+
+  test('keeping remote in a delete conflict drops the local copy', () async {
+    var writes = 0;
+    final client = MockClient((request) async {
+      if (request.method == 'GET') {
+        return _json(<String, dynamic>{
+          'message': 'Task was not found.',
+        }, statusCode: 404);
+      }
+      writes += 1;
+      return _json(<String, dynamic>{});
+    });
+    final service = _service(client);
+    await service.enqueue(
+      type: SyncOperationType.update,
+      task: makeTask(id: 'task-a', title: 'Edited offline'),
+      baseUpdatedAt: DateTime(2026, 1, 1),
+    );
+    await service.flush();
+
+    final result = await service.resolveConflict(
+      service.conflicts.single,
+      ConflictResolution.keepRemote,
+    );
+
+    expect(result.success, isTrue);
+    expect(result.deleteLocal, isTrue);
+    expect(writes, 0);
+    expect(service.conflicts, isEmpty);
+  });
 }

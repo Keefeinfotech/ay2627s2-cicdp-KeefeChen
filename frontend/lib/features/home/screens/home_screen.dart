@@ -317,9 +317,7 @@ class _HomeScreenState extends State<HomeScreen> {
         bottom: false,
         child: Center(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(
-              maxWidth: AppSizes.maxContentWidth,
-            ),
+            constraints: const BoxConstraints(maxWidth: 1120),
             child: _buildBody(context),
           ),
         ),
@@ -342,7 +340,7 @@ class _HomeScreenState extends State<HomeScreen> {
         AppSpacing.lg,
         AppSpacing.lg,
         AppSpacing.lg,
-        120,
+        AppSpacing.xxl,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -356,7 +354,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           const SizedBox(height: AppSpacing.lg),
           _toolbar(context),
-          if (_store.pageCount > 1) ...<Widget>[
+          if (_store.pageCount > 1) ...[
             const SizedBox(height: AppSpacing.md),
             _pagination(context),
           ],
@@ -369,14 +367,14 @@ class _HomeScreenState extends State<HomeScreen> {
             title: 'Your tasks',
             subtitle: '${_store.filteredCount} shown',
           ),
-          if (_store.isLoading && _store.hasLoaded) ...<Widget>[
+          if (_store.isLoading && _store.hasLoaded) ...[
             const SizedBox(height: AppSpacing.md),
             ClipRRect(
               borderRadius: BorderRadius.circular(2),
               child: const LinearProgressIndicator(minHeight: 3),
             ),
           ],
-          if (_store.error != null) ...<Widget>[
+          if (_store.error != null) ...[
             const SizedBox(height: AppSpacing.md),
             AppErrorBanner(
               message: _store.error!,
@@ -425,7 +423,7 @@ class _HomeScreenState extends State<HomeScreen> {
         AppCard(
           padding: const EdgeInsets.all(AppSpacing.lg),
           child: AppEmptyState(
-            icon: Icons.checklist_rtl_rounded,
+            icon: Icons.checklist_rounded,
             title: 'No tasks yet',
             message:
                 'Create your first task to start tracking progress and '

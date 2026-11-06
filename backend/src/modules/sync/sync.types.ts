@@ -10,6 +10,10 @@ export interface TaskChange {
   title: string;
   description: string | null;
   course: string;
+  tags: string[];
+  groupId: string | null;
+  assigneeId: string | null;
+  assigneeName: string | null;
   reminderAt: Date | null;
   status: string;
   priority: string;

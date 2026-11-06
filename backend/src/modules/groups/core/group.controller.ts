@@ -1,202 +1,117 @@
 /**
  * File Name: group.controller.ts
- * Description: Handles HTTP requests for group operations.
+ * Description: Controller layer handling HTTP requests for group endpoints.
  * Author: Keefe Chen
  */
 
-import type {
-  Request,
-  Response,
-  NextFunction,
-} from "express";
-
-import { GroupService } from "./group.services.js";
-
-const groupService = new GroupService();
-
-/**
- * Extracts the authenticated user's ID.
- */
-function getAuthenticatedUserId(req: Request): string {
-  const userId = req.userId;
-
-  if (!userId) {
-    throw new Error("Authentication required.");
-  }
-
-  return userId;
-}
-
-/**
- * Extracts and validates the group ID from route parameters.
- */
-function getGroupId(req: Request): string {
-  const groupId = req.params.groupId;
-
-  if (typeof groupId !== "string") {
-    throw new Error("Invalid group ID.");
-  }
-
-  return groupId;
-}
+import { Response, NextFunction } from "express";
+import { GroupService } from "./group.services";
+import { AuthenticatedRequest, GroupListQuery } from "./group.types.js";
 
 export class GroupController {
-  /**
-   * POST /groups
-   *
-   * Creates a new group for the authenticated user.
-   */
-  static create = async (
-    req: Request,
+  constructor(private readonly groupService: GroupService) {}
+
+  public create = async (
+    req: AuthenticatedRequest,
     res: Response,
     next: NextFunction,
-  ) => {
+  ): Promise<void> => {
     try {
-      const userId = getAuthenticatedUserId(req);
+      const userId = req.user?.id;
+      if (!userId) {
+        res.status(401).json({ success: false, error: "Unauthorized" });
+        return;
+      }
 
-      const group = await groupService.create(
-        userId,
-        req.body,
-      );
-
-      return res.status(201).json({
-        message: "Group created successfully.",
-        data: group,
-      });
+      const group = await this.groupService.create(userId, req.body);
+      res.status(201).json({ success: true, data: group });
     } catch (error) {
-      return next(error);
+      next(error);
     }
   };
 
-  /**
-   * GET /groups
-   *
-   * Retrieves groups belonging to the authenticated user.
-   */
-  static list = async (
-    req: Request,
+  public list = async (
+    req: AuthenticatedRequest,
     res: Response,
     next: NextFunction,
-  ) => {
+  ): Promise<void> => {
     try {
-      const userId = getAuthenticatedUserId(req);
+      const userId = req.user?.id;
+      if (!userId) {
+        res.status(401).json({ success: false, error: "Unauthorized" });
+        return;
+      }
 
-      // Convert and validate pagination values.
-      const requestedPage = Number(req.query.page);
-      const requestedLimit = Number(req.query.limit);
+      const query: GroupListQuery = {
+        page: req.query.page ? Number.parseInt(req.query.page as string, 10) : 1,
+        limit: req.query.limit ? Number.parseInt(req.query.limit as string, 10) : 10,
+        search: req.query.search ? (req.query.search as string) : undefined,
+      };
 
-      const page =
-        Number.isInteger(requestedPage) && requestedPage > 0
-          ? requestedPage
-          : 1;
-
-      const limit =
-        Number.isInteger(requestedLimit) && requestedLimit > 0
-          ? Math.min(requestedLimit, 100)
-          : 10;
-
-      // Only accept a single search string.
-      const search =
-        typeof req.query.search === "string"
-          ? req.query.search.trim()
-          : undefined;
-
-      const result = await groupService.list(userId, {
-        page,
-        limit,
-        search,
-      });
-
-      return res.status(200).json({
-        message: "Groups retrieved successfully.",
-        data: result,
-      });
+      const result = await this.groupService.list(userId, query);
+      res.status(200).json({ success: true, data: result });
     } catch (error) {
-      return next(error);
+      next(error);
     }
   };
 
-  /**
-   * GET /groups/:groupId
-   *
-   * Retrieves a specific group.
-   */
-  static get = async (
-    req: Request,
+  public get = async (
+    req: AuthenticatedRequest,
     res: Response,
     next: NextFunction,
-  ) => {
+  ): Promise<void> => {
     try {
-      const userId = getAuthenticatedUserId(req);
-      const groupId = getGroupId(req);
+      const userId = req.user?.id;
+      if (!userId) {
+        res.status(401).json({ success: false, error: "Unauthorized" });
+        return;
+      }
 
-      const group = await groupService.get(
-        groupId,
-        userId,
-      );
-
-      return res.status(200).json({
-        message: "Group retrieved successfully.",
-        data: group,
-      });
+      const groupId = req.params.groupId as string;
+      const group = await this.groupService.get(groupId, userId);
+      res.status(200).json({ success: true, data: group });
     } catch (error) {
-      return next(error);
+      next(error);
     }
   };
 
-  /**
-   * PATCH /groups/:groupId
-   *
-   * Updates an existing group.
-   */
-  static update = async (
-    req: Request,
+  public update = async (
+    req: AuthenticatedRequest,
     res: Response,
     next: NextFunction,
-  ) => {
+  ): Promise<void> => {
     try {
-      const userId = getAuthenticatedUserId(req);
-      const groupId = getGroupId(req);
+      const userId = req.user?.id;
+      if (!userId) {
+        res.status(401).json({ success: false, error: "Unauthorized" });
+        return;
+      }
 
-      const updatedGroup = await groupService.update(
-        groupId,
-        userId,
-        req.body,
-      );
-
-      return res.status(200).json({
-        message: "Group updated successfully.",
-        data: updatedGroup,
-      });
+      const groupId = req.params.groupId as string;
+      const group = await this.groupService.update(groupId, userId, req.body);
+      res.status(200).json({ success: true, data: group });
     } catch (error) {
-      return next(error);
+      next(error);
     }
   };
 
-  /**
-   * DELETE /groups/:groupId
-   *
-   * Archives a group instead of permanently deleting it.
-   */
-  static archive = async (
-    req: Request,
+  public archive = async (
+    req: AuthenticatedRequest,
     res: Response,
     next: NextFunction,
-  ) => {
+  ): Promise<void> => {
     try {
-      const userId = getAuthenticatedUserId(req);
-      const groupId = getGroupId(req);
+      const userId = req.user?.id;
+      if (!userId) {
+        res.status(401).json({ success: false, error: "Unauthorized" });
+        return;
+      }
 
-      await groupService.archive(
-        groupId,
-        userId,
-      );
-
-      return res.status(200).json({
-        message: "Group archived successfully.",
-      });
+      const groupId = req.params.groupId as string;
+      const group = await this.groupService.archive(groupId, userId);
+      res.status(200).json({ success: true, data: group });
     } catch (error) {
-      return next(error);
+      next(error);
     }
   };
 }

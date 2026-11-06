@@ -1,37 +1,40 @@
-/**
- * File Name: member.types.ts
- * Description: Domain types for group memberships.
- * Author: Keefe Chen
- */
+import { Request } from "express";
+import { ClientSession, Document, Types } from "mongoose";
 
-export type MemberStatusName = "ACTIVE" | "LEFT" | "REMOVED";
+import { GroupRole, MemberStatus } from "../core/group.types.js";
 
-export interface MemberView {
-  groupId: string;
-  userId: string;
-  role: string;
-  status: MemberStatusName;
-  createdAt: Date;
-  updatedAt: Date;
+export { GroupRole, MemberStatus };
+
+export interface IMember {
+  _id?: Types.ObjectId;
+  groupId: Types.ObjectId | string;
+  userId: Types.ObjectId | string;
+  role: GroupRole;
+  status: MemberStatus;
+  joinedAt?: Date;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
-export interface AddMembersInput {
-  memberIds: string[];
-  role?: string;
+export interface IMemberDocument extends Document, Omit<IMember, "_id"> {}
+
+export interface CreateMemberInput {
+  groupId: string;
+  userId: string;
+  role?: GroupRole;
+  status?: MemberStatus;
 }
 
 export interface UpdateMemberRoleInput {
-  role: string;
+  role: GroupRole;
 }
 
-export interface MembersPage {
-  items: MemberView[];
-  pagination: {
-    page: number;
-    limit: number;
-    totalItems: number;
-    totalPages: number;
-    hasNextPage: boolean;
-    hasPreviousPage: boolean;
-  };
+export interface AuthenticatedUser {
+  id: string;
+  email?: string;
+  [key: string]: unknown;
+}
+
+export interface AuthenticatedRequest extends Request {
+  user?: AuthenticatedUser;
 }

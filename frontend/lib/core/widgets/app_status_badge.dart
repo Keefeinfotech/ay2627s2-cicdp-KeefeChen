@@ -47,7 +47,7 @@ class PriorityBadge extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-            if (icon != null) ...<Widget>[
+            if (icon != null) ...[
               Icon(icon, size: 12, color: foreground),
               const SizedBox(width: 4),
             ],
@@ -102,7 +102,7 @@ class StatusBadge extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          if (icon != null) ...<Widget>[
+          if (icon != null) ...[
             Icon(icon, size: 12, color: foreground),
             const SizedBox(width: 4),
           ],

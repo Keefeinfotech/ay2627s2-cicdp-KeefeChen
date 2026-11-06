@@ -78,8 +78,8 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Welcome back'), findsOneWidget);
-    expect(find.text('Sam'), findsOneWidget);
+    expect(find.text('Auxilia'), findsOneWidget);
+    expect(find.byTooltip('Profile and settings'), findsOneWidget);
     expect(find.text('No tasks yet'), findsOneWidget);
   });
 }

@@ -202,7 +202,7 @@ class BrandLockup extends StatelessWidget {
                     letterSpacing: -0.3,
                   ),
                 ),
-                if (showTagline) ...<Widget>[
+                if (showTagline) ...[
                   const SizedBox(height: AppSpacing.xxs),
                   Text(
                     AppConstants.tagline,

@@ -269,37 +269,47 @@ class _InviteMemberDialogState extends State<_InviteMemberDialog> {
   }
 }
 
-/// Shows the one-time invitation token with a copy action.
+/// Shows the delivery result for a newly created invitation.
 Future<void> showInvitationTokenDialog(
   BuildContext context,
   GroupInvitation invitation,
 ) async {
+  final delivered = invitation.wasDeliveredByEmail;
   await showDialog<void>(
     context: context,
     builder: (dialogContext) => AlertDialog(
-      icon: const Icon(Icons.mark_email_read_outlined, size: 28),
-      title: const Text('Invitation created'),
+      icon: Icon(
+        delivered ? Icons.mark_email_read_outlined : Icons.key_outlined,
+        size: 28,
+      ),
+      title: Text(delivered ? 'Invitation sent' : 'Invitation created'),
       content: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 460),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
-            Text('Send this code to ${invitation.email}:'),
-            const SizedBox(height: AppSpacing.md),
-            Container(
-              padding: const EdgeInsets.all(AppSpacing.md),
-              decoration: BoxDecoration(
-                color: Theme.of(
-                  dialogContext,
-                ).colorScheme.surfaceContainerHighest,
-                borderRadius: BorderRadius.circular(AppRadius.sm),
-              ),
-              child: SelectableText(
-                invitation.token,
-                style: const TextStyle(fontFamily: 'monospace', fontSize: 13),
-              ),
+            Text(
+              delivered
+                  ? 'We emailed an invitation to ${invitation.email}.'
+                  : 'Send this code to ${invitation.email}:',
             ),
+            if (!delivered) ...<Widget>[
+              const SizedBox(height: AppSpacing.md),
+              Container(
+                padding: const EdgeInsets.all(AppSpacing.md),
+                decoration: BoxDecoration(
+                  color: Theme.of(
+                    dialogContext,
+                  ).colorScheme.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                ),
+                child: SelectableText(
+                  invitation.token ?? '',
+                  style: const TextStyle(fontFamily: 'monospace', fontSize: 13),
+                ),
+              ),
+            ],
             const SizedBox(height: AppSpacing.sm),
             Text(
               'Expires ${_formatDate(invitation.expiresAt)}. The recipient '
@@ -312,16 +322,19 @@ Future<void> showInvitationTokenDialog(
         ),
       ),
       actions: <Widget>[
-        TextButton.icon(
-          onPressed: () async {
-            await Clipboard.setData(ClipboardData(text: invitation.token));
-            if (dialogContext.mounted) {
-              AppSnackBar.success(dialogContext, 'Invitation code copied.');
-            }
-          },
-          icon: const Icon(Icons.copy_rounded, size: 18),
-          label: const Text('Copy code'),
-        ),
+        if (!delivered)
+          TextButton.icon(
+            onPressed: () async {
+              final token = invitation.token;
+              if (token == null) return;
+              await Clipboard.setData(ClipboardData(text: token));
+              if (dialogContext.mounted) {
+                AppSnackBar.success(dialogContext, 'Invitation code copied.');
+              }
+            },
+            icon: const Icon(Icons.copy_rounded, size: 18),
+            label: const Text('Copy code'),
+          ),
         FilledButton(
           onPressed: () => Navigator.of(dialogContext).pop(),
           child: const Text('Done'),

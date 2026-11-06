@@ -1,38 +1,29 @@
 /**
  * File Name: member.repository.ts
- * Description: Handles database operations for group memberships.
+ * Description: Data access layer for group membership operations.
  * Author: Keefe Chen
  */
 
-import mongoose from "mongoose";
-
-import { Member } from "./member.model";
-
-import type { GroupRole } from "../core/group.types.js";
-
-interface CreateMemberInput {
-  groupId: string;
-  userId: string;
-  role: GroupRole;
-  status: "ACTIVE" | "LEFT" | "REMOVED";
-}
+import mongoose, { ClientSession } from "mongoose";
+import { Member, MemberStatus, type MemberRecord } from "./member.model.js";
+import { GroupRole } from "../core/group.types.js";
+import { CreateMemberInput } from "./member.types.js";
 
 export class MemberRepository {
   /**
-   * Creates a new group membership.
-   * An optional MongoDB session allows this operation
-   * to participate in a transaction.
+   * Creates a new member record.
    */
   async create(
-    input: CreateMemberInput,
-    session?: mongoose.ClientSession,
-  ) {
-    const [member] = await Member.create(
-      [input],
-      { session },
-    );
-
-    return member;
+    input: {
+      groupId: string;
+      userId: string;
+      role: GroupRole;
+      status?: MemberStatus;
+    },
+    session?: ClientSession,
+  ): Promise<MemberRecord> {
+    const docs = await Member.create([input], { session });
+    return docs[0];
   }
 
   /**
@@ -72,12 +63,12 @@ export class MemberRepository {
   async findActiveByGroupAndUser(
     groupId: string,
     userId: string,
-  ) {
+  ): Promise<MemberRecord | null> {
     return Member.findOne({
       groupId,
       userId,
-      status: "ACTIVE",
-    }).lean();
+      status: MemberStatus.ACTIVE,
+    });
   }
 
   /**
@@ -102,27 +93,28 @@ export class MemberRepository {
   }
 
   /**
-   * Retrieves all active group IDs belonging to a user.
+   * Retrieves the IDs of all groups the user actively belongs to.
    */
   async findActiveGroupIdsByUser(userId: string): Promise<string[]> {
     const memberships = await Member.find({
       userId,
-      status: "ACTIVE",
+      status: MemberStatus.ACTIVE,
     })
-      .select("groupId -_id")
-      .lean();
+      .select("groupId")
+      .lean()
+      .exec();
 
     return memberships.map((membership) => membership.groupId);
   }
 
   /**
-   * Retrieves all active members belonging to a group.
+   * Retrieves all active group IDs belonging to a user.
    */
-  async findActiveByGroup(groupId: string) {
+  async findByGroup(groupId: string): Promise<MemberRecord[]> {
     return Member.find({
       groupId,
-      status: "ACTIVE",
-    }).lean();
+      status: MemberStatus.ACTIVE,
+    }).exec();
   }
 
   /**
@@ -158,72 +150,33 @@ export class MemberRepository {
     groupId: string,
     userId: string,
     role: GroupRole,
-  ) {
+  ): Promise<MemberRecord | null> {
     return Member.findOneAndUpdate(
       {
         groupId,
         userId,
-        status: "ACTIVE",
+        status: MemberStatus.ACTIVE,
       },
-      {
-        $set: { role },
-      },
-      {
-        new: true,
-        runValidators: true,
-      },
-    ).lean();
+      { role },
+      { new: true },
+    );
   }
 
   /**
-   * Marks a member as having left a group.
+   * Soft-deletes a member by marking status as LEFT.
    */
-  async leaveGroup(groupId: string, userId: string) {
+  async remove(
+    groupId: string,
+    userId: string,
+  ): Promise<MemberRecord | null> {
     return Member.findOneAndUpdate(
       {
         groupId,
         userId,
-        status: "ACTIVE",
-        role: { $ne: "OWNER" },
+        status: MemberStatus.ACTIVE,
       },
-      {
-        $set: { status: "LEFT" },
-      },
-      {
-        new: true,
-        runValidators: true,
-      },
-    ).lean();
-  }
-
-  /**
-   * Removes a member from a group.
-   */
-  async removeMember(groupId: string, userId: string) {
-    return Member.findOneAndUpdate(
-      {
-        groupId,
-        userId,
-        status: "ACTIVE",
-        role: { $ne: "OWNER" },
-      },
-      {
-        $set: { status: "REMOVED" },
-      },
-      {
-        new: true,
-        runValidators: true,
-      },
-    ).lean();
-  }
-
-  /**
-   * Counts active members in a group.
-   */
-  async countActiveMembers(groupId: string): Promise<number> {
-    return Member.countDocuments({
-      groupId,
-      status: "ACTIVE",
-    });
+      { status: MemberStatus.LEFT },
+      { new: true },
+    );
   }
 }
