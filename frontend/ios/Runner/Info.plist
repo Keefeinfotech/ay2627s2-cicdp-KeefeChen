@@ -24,6 +24,10 @@
 	<string>????</string>
 	<key>CFBundleVersion</key>
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Auxilia uses the microphone to turn your spoken task request into text.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>Auxilia uses speech recognition to transcribe task requests into the chat composer.</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>UIApplicationSceneManifest</key>

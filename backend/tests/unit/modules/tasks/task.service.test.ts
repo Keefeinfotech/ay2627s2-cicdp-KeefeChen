@@ -45,6 +45,34 @@ describe("task service", () => {
     expect(result).toBe(task);
   });
 
+  it("returns an existing owned task for a repeated idempotent create", async () => {
+    const existing = { _id: "task-1", title: "Original title" };
+    vi.mocked(taskRepository.findByIdForUser).mockResolvedValue(existing as any);
+
+    const result = await taskService.createTask("user-1", {
+      id: "task-1",
+      title: "Retry with changed payload",
+    });
+
+    expect(result).toBe(existing);
+    expect(taskRepository.findByIdForUser).toHaveBeenCalledWith("task-1", "user-1");
+    expect(taskRepository.create).not.toHaveBeenCalled();
+  });
+
+  it("recovers a concurrent idempotent create race from the unique task ID", async () => {
+    const existing = { _id: "task-1", title: "Original title" };
+    vi.mocked(taskRepository.findByIdForUser)
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce(existing as any);
+    vi.mocked(taskRepository.create).mockRejectedValue({ code: 11000 });
+
+    await expect(taskService.createTask("user-1", {
+      id: "task-1",
+      title: "Original title",
+    })).resolves.toBe(existing);
+    expect(taskRepository.findByIdForUser).toHaveBeenCalledTimes(2);
+  });
+
   it("rejects task creation without an authenticated user", async () => {
     await expect(
       taskService.createTask("", { title: "Ship it" })

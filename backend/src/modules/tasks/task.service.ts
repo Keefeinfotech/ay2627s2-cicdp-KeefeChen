@@ -81,7 +81,24 @@ export const taskService = {
 
     await assertValidAssignment(userId, input.groupId, input.assigneeId);
 
-    return taskRepository.create(userId, input);
+    // The client supplies a stable task UUID when replaying its offline sync
+    // queue. Treat a repeated create for that owner as the same operation.
+    if (input.id) {
+      const existing = await taskRepository.findByIdForUser(input.id, userId);
+      if (existing) return existing;
+    }
+
+    try {
+      return await taskRepository.create(userId, input);
+    } catch (error) {
+      // Two retries can pass the preflight lookup at the same time. The task
+      // UUID's unique index is the final idempotency guard for that race.
+      if (input.id && typeof error === "object" && error !== null && "code" in error && error.code === 11000) {
+        const existing = await taskRepository.findByIdForUser(input.id, userId);
+        if (existing) return existing;
+      }
+      throw error;
+    }
   },
 
   /**

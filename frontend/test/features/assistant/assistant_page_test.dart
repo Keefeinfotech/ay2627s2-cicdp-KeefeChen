@@ -45,6 +45,7 @@ void main() {
     await _pumpAssistant(tester);
 
     expect(find.text('How can I help?'), findsOneWidget);
+    expect(find.byTooltip('Start voice input'), findsOneWidget);
     for (final prompt in <String>[
       'What should I work on today?',
       'Create a task',
@@ -103,6 +104,31 @@ void main() {
     expect(find.text('Cancelled. Nothing was changed.'), findsOneWidget);
     expect(find.text('No changes were made.'), findsOneWidget);
     expect(find.text('Confirm'), findsNothing);
+  });
+
+  testWidgets('lets the user edit a draft before confirming it', (
+    tester,
+  ) async {
+    final store = await _pumpAssistant(tester);
+    await _send(tester, 'Create a task to buy milk');
+
+    await tester.tap(find.text('Edit draft'));
+    await tester.pumpAndSettle();
+    final titleField = find
+        .descendant(
+          of: find.byType(AlertDialog),
+          matching: find.byType(TextField),
+        )
+        .first;
+    await tester.enterText(titleField, 'Buy oat milk');
+    await tester.tap(find.text('Save draft'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Buy oat milk'), findsOneWidget);
+    expect(store.tasks, isEmpty);
+    await tester.tap(find.text('Confirm'));
+    await tester.pumpAndSettle();
+    expect(store.tasks.single.title, 'Buy oat milk');
   });
 
   testWidgets('updates a matched task only after confirmation', (tester) async {
