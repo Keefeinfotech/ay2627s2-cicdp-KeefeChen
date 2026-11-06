@@ -77,7 +77,7 @@ flutter:
 
   # Bundled assets. Keep paths aligned with the files committed under assets/.
   assets:
-    - assets/video/auth_bg.mp4
+    - assets/videos/auth_bg.mp4
 
   fonts:
     - family: Inter

@@ -11,14 +11,8 @@ import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/app_app_bar.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_empty_state.dart';
-import '../../../../core/widgets/app_error_state.dart';
-import '../../../../core/widgets/app_loading.dart';
 import '../../../../core/widgets/app_status_badge.dart';
 import '../../../../core/widgets/responsive_page_layout.dart';
-import 'package:frontend/features/home/data/api_task_repository.dart';
-import '../../../home/data/task_store.dart';
-import '../../data/models/report_snapshot.dart';
-import '../controllers/reports_controller.dart';
 import '../widgets/report_charts.dart';
 
 /// Progress reporting surface built from live task data.
