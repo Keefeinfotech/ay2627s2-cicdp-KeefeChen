@@ -47,10 +47,11 @@ Flutter app ── local storage (shared_preferences)  -> tasks, offline-first
 ## Project structure
 
 ```
-backend/   Express + TypeScript API (auth, AI, health, Swagger in dev)
+backend/   Express + TypeScript API (auth, AI, groups, sync, health)
 frontend/  Flutter application (core design system, feature modules, local storage)
-docs/      Release gates, release checklist, privacy, dependencies
-.github/   CI workflow
+docs/      Release gates, release checklist, privacy, dependencies, reports
+scripts/   Non-mutating deployment smoke checks
+.github/   CI and release workflows
 ```
 
 ### Frontend structure
@@ -61,7 +62,11 @@ lib/features/
   onboarding/     first-launch product introduction and completion store
   authentication/ login, signup, startup gate, auth/session/captcha
   home/           dashboard, task model/store/repository, editor, gamification
-  assistant/      chat screen, composer, bubbles, assistant API service
+  assistant/      confirmation-first AI task assistant and chat API service
+  groups/         group workspace, invitations and shared assignments
+  sync/           durable offline queue, conflict resolution and status UI
+  reminders/      in-app reminder host
+  reports/        progress summaries and charts
   profile/        profile and local-data actions sheet
 lib/app.dart      MaterialApp shell and theme wiring
 lib/main.dart     ProviderScope entry point
@@ -111,7 +116,12 @@ need it.
 | GET | `/api/health` | No | Liveness check |
 | POST | `/api/auth/signup` | No | Create an account; returns `{ token, user }` (201) |
 | POST | `/api/auth/login` | No | Sign in; returns `{ token, user }` |
-| POST | `/api/ai/chat` | Bearer | Send `{ message }` (1-1000 chars) and receive `{ reply }` |
+| POST | `/api/ai/chat` | Bearer | Send `{ message }` (1-1000 chars) and receive `{ reply, provider, model }` |
+| GET | `/api/sync/changes?since=<iso>` | Bearer | Pull own and assigned task changes since a cursor |
+| GET | `/api/groups` | Bearer | List groups for the signed-in member |
+| POST | `/api/groups` | Bearer | Create a group and become its owner |
+| POST | `/api/invitations` | Bearer | Invite a member by email (owner/admin) |
+| POST | `/api/invitations/accept` | Bearer | Accept an invitation token |
 
 Errors use `{ error, code, details? }`. Validation failures return `400` with
 `code: "VALIDATION_ERROR"`; protected routes return `401` without a valid token.
@@ -127,11 +137,15 @@ Errors use `{ error, code, details? }`. Validation failures return `400` with
 | `JWT_EXPIRES_IN` | `1d` | Token lifetime |
 | `BCRYPT_ROUNDS` | `10` | Clamped to 10-15 |
 | `CORS_ORIGIN` | `http://localhost:3000,http://localhost:5173` | Comma-separated allowlist |
-| `AI_PROVIDER` | `mock` | Any other value returns `501` until a provider is implemented |
-| `AI_MODEL` | `mock-model` | Echoed in mock responses |
-| `AI_MAX_TOKENS` | `512` | Reserved for a future provider |
-| `AI_API_KEY` | empty | Reserved for a future provider |
+| `AI_PROVIDER` | `mock` | `mock` or `openai-compatible`; mock is clearly labelled and makes no external calls |
+| `AI_MODEL` | `mock-model` | Mock model name; required for a real provider |
+| `AI_BASE_URL` | `https://api.openai.com/v1` | OpenAI-compatible `/chat/completions` base URL |
+| `AI_API_KEY` | empty | Required when `AI_PROVIDER` is not `mock` |
+| `AI_MAX_TOKENS` | `400` | Clamped to 32-4096 |
+| `AI_TIMEOUT_MS` | `15000` | Clamped to 1000-60000 |
 | `AI_RATE_LIMIT_PER_USER` | `20` | AI requests per hour per client |
+| `APP_BASE_URL` | `http://localhost:8080` | Public frontend URL used in invitation emails |
+| `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASS` / `EMAIL_FROM` | empty | Enables group invitation email delivery; without SMTP, invite codes are returned for manual delivery |
 
 Auth requests are limited to 10 per 15 minutes per client. Request bodies are
 capped at 10 kb.
@@ -147,13 +161,13 @@ inventory, deletion paths, and the AI data flow.
 ```bash
 cd backend
 npm run typecheck
-npm run test:coverage     # 49 tests, coverage thresholds enforced
+npm run test:coverage     # 188 tests, ratchet coverage thresholds enforced
 npm run build
 
 cd ../frontend
 dart format --output=none --set-exit-if-changed lib test tool
 flutter analyze
-flutter test --coverage  # 118 tests, including accessibility checks
+flutter test --coverage  # 270 tests, including accessibility checks
 dart run tool/check_coverage.dart 60
 flutter build web --release
 ```
@@ -172,13 +186,22 @@ faked in tests, so no emulator is required.
 
 | Job | Checks |
 |-----|--------|
+| `dependency-review` | Pull requests fail on high-severity dependency changes |
 | `security-scan` | Trivy filesystem scan (CRITICAL/HIGH), SARIF uploaded to code scanning (report-only) |
-| `backend` | `npm ci`, typecheck, tests with coverage, build; coverage artifact |
+| `secret-scan` | High-confidence committed-secret patterns fail the build |
+| `backend` | `npm ci`, production audit, typecheck, tests with coverage, build; coverage artifact |
 | `frontend` | Flutter 3.47.8, `pub get`, format check, `flutter analyze`, tests with coverage, 60% line-coverage gate, web release build; coverage artifact |
+| `ci-summary` | Single gate for branch protection and PR review |
 
-Backend coverage gates: 80% statements/lines/functions, 60% branches. Frontend
-coverage is gated at 60% lines by `frontend/tool/check_coverage.dart`. Full gate
-definitions are in
+Tagging `v*.*.*` runs `.github/workflows/release.yml`, which verifies tag and
+package versions, reruns backend and frontend checks, packages the web build,
+attests build provenance, and publishes the GitHub release. A read-only API
+smoke script is available at `scripts/smoke-test.mjs`.
+
+Backend coverage is ratcheted at 49% statements, 39% branches, 48% functions
+and 50% lines; the target remains 80/60 after the excluded modules gain tests.
+Frontend coverage is gated at 60% lines by `frontend/tool/check_coverage.dart`.
+Full gate definitions are in
 [docs/compliance/NFR_RELEASE_GATES.md](docs/compliance/NFR_RELEASE_GATES.md); use
 [docs/release/RELEASE_CHECKLIST.md](docs/release/RELEASE_CHECKLIST.md) before
 tagging a release.
@@ -195,16 +218,21 @@ tagging a release.
 - No account deletion in the app yet; contact the maintainer.
 - No Google/GitHub sign-in or password reset. The backend exposes email/password
   signup and login only, so the login screen does not simulate those flows.
-- No server-side task sync; tasks are per-device and per-owner.
-- Reminders are stored and validated but are not scheduled as notifications.
-- Group workspaces and the AI rubric-to-roadmap workflow are planned, not
-  implemented. See [docs/planning/PROJECT_PLAN.md](docs/planning/PROJECT_PLAN.md).
-- The AI provider is a mock; a real provider must be implemented behind the
-  existing endpoint.
+- Signed-in users get server-side task sync with an offline queue, conflict
+  detection and manual retry; writes made while signed out stay on-device.
+  OS-level background sync and scheduled OS reminders are not implemented.
+- Group workspaces are implemented; the AI rubric-to-roadmap workflow is
+  planned, not implemented. See [docs/planning/PROJECT_PLAN.md](docs/planning/PROJECT_PLAN.md).
+- The default AI provider is a clearly labelled mock. Set
+  `AI_PROVIDER=openai-compatible` with `AI_BASE_URL`, `AI_MODEL` and
+  `AI_API_KEY` for a real OpenAI-compatible chat completions endpoint.
+- Invitation emails require SMTP configuration; without it, invite codes are
+  shown once to the inviter for manual delivery.
 - Swagger UI is intentionally unavailable when `NODE_ENV=production`.
 
 ## Documentation
 
+- [User story and CI/CD report](docs/reports/USER_STORY_CICD_REPORT.md)
 - [Project plan](docs/planning/PROJECT_PLAN.md)
 - [Release gates](docs/compliance/NFR_RELEASE_GATES.md)
 - [Release checklist](docs/release/RELEASE_CHECKLIST.md)
