@@ -191,7 +191,15 @@ faked in tests, so no emulator is required.
 | `secret-scan` | High-confidence committed-secret patterns fail the build |
 | `backend` | `npm ci`, production audit, typecheck, tests with coverage, build; coverage artifact |
 | `frontend` | Flutter 3.47.8, `pub get`, format check, `flutter analyze`, tests with coverage, 60% line-coverage gate, web release build; coverage artifact |
+| `sonarqube` / `sonarqube-automatic` | SonarCloud quality gate, using CI-based analysis or Automatic Analysis |
 | `ci-summary` | Single gate for branch protection and PR review |
+
+SonarCloud analysis mode is controlled by the repository variable
+`SONAR_ANALYSIS_MODE`. It defaults to Automatic Analysis and the pipeline checks
+the SonarCloud status for the commit. Set it to `ci` only after switching the
+SonarCloud project to CI-based analysis; the CI scanner imports backend
+coverage and waits for its quality gate. SonarCloud does not support running
+Automatic Analysis and the CI scanner together.
 
 Tagging `v*.*.*` runs `.github/workflows/release.yml`, which verifies tag and
 package versions, reruns backend and frontend checks, packages the web build,
