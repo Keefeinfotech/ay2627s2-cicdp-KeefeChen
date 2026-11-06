@@ -7,6 +7,12 @@ export class EnvError extends Error {
 
 const MIN_JWT_SECRET_LENGTH = 16;
 
+const stripTrailingSlashes = (value: string): string => {
+  let end = value.length;
+  while (end > 0 && value.charCodeAt(end - 1) === 47) end -= 1;
+  return value.slice(0, end);
+};
+
 export const isProduction = (): boolean =>
   process.env.NODE_ENV === "production";
 
@@ -51,9 +57,8 @@ export const getCorsOrigins = (): string[] =>
     .filter(Boolean);
 
 export const getAppBaseUrl = (): string =>
-  (process.env.APP_BASE_URL?.trim() || "http://localhost:8080").replace(
-    /\/+$/,
-    "",
+  stripTrailingSlashes(
+    process.env.APP_BASE_URL?.trim() || "http://localhost:8080",
   );
 
 export const isSmtpConfigured = (): boolean =>
@@ -82,9 +87,8 @@ export const getAiModel = (): string =>
   (getAiProvider() === "mock" ? "mock-model" : "gpt-4o-mini");
 
 export const getAiBaseUrl = (): string =>
-  (process.env.AI_BASE_URL?.trim() || "https://api.openai.com/v1").replace(
-    /\/+$/,
-    "",
+  stripTrailingSlashes(
+    process.env.AI_BASE_URL?.trim() || "https://api.openai.com/v1",
   );
 
 export const getAiApiKey = (): string | null =>

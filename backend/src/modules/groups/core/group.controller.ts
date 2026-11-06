@@ -43,8 +43,8 @@ export class GroupController {
       }
 
       const query: GroupListQuery = {
-        page: req.query.page ? parseInt(req.query.page as string, 10) : 1,
-        limit: req.query.limit ? parseInt(req.query.limit as string, 10) : 10,
+        page: req.query.page ? Number.parseInt(req.query.page as string, 10) : 1,
+        limit: req.query.limit ? Number.parseInt(req.query.limit as string, 10) : 10,
         search: req.query.search ? (req.query.search as string) : undefined,
       };
 

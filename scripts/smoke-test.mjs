@@ -10,9 +10,15 @@
  * signup/login and task CRUD because those require a dedicated smoke account.
  */
 
-const baseUrl = (process.argv[2] ?? process.env.SMOKE_BASE_URL ?? '')
-  .trim()
-  .replace(/\/+$/, '');
+const stripTrailingSlashes = (value) => {
+  let end = value.length;
+  while (end > 0 && value.charCodeAt(end - 1) === 47) end -= 1;
+  return value.slice(0, end);
+};
+
+const baseUrl = stripTrailingSlashes(
+  (process.argv[2] ?? process.env.SMOKE_BASE_URL ?? '').trim(),
+);
 
 if (!baseUrl) {
   console.error('Usage: node scripts/smoke-test.mjs <base-url>');
