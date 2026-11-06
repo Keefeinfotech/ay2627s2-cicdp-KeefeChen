@@ -14,6 +14,20 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  dependency-review:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Review dependency changes
+        uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: high
+
   security-scan:
     runs-on: ubuntu-latest
     permissions:
@@ -156,7 +170,7 @@ jobs:
 
   ci-summary:
     runs-on: ubuntu-latest
-    needs: [security-scan, secret-scan, backend, frontend]
+    needs: [dependency-review, security-scan, secret-scan, backend, frontend]
     if: always()
     permissions:
       contents: read
@@ -167,6 +181,7 @@ jobs:
           {
             echo '## CI summary'
             echo ''
+            echo "- dependency-review: ${{ needs.dependency-review.result }}"
             echo "- security-scan: ${{ needs.security-scan.result }}"
             echo "- secret-scan: ${{ needs.secret-scan.result }}"
             echo "- backend: ${{ needs.backend.result }}"
