@@ -32,7 +32,6 @@ import feedbackRoutes from "./modules/feedback/feedback.routes.js";
 import sessionRoutes from "./modules/sessions/session.routes.js";
 import progressRoutes from "./modules/progress/progress.routes.js";
 import calendarRoutes from "./modules/calendar/calendar.routes.js";
-import mfaRoutes from "./modules/auth/mfa/mfa.routes.js";
 import syncRoutes from "./modules/sync/index.js";
 import reminderRoutes from "./modules/reminders/reminder.routes.js";
 
@@ -67,7 +66,7 @@ app.use(
     res.setHeader("Cache-Control", "no-store");
     next();
   },
-  authRoutes
+  authRoutes,
 );
 app.use("/api/ai", aiRoutes);
 

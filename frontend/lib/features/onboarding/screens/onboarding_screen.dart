@@ -8,11 +8,8 @@ import 'package:frontend/core/widgets/app_avatar.dart';
 import 'package:frontend/core/widgets/app_button.dart';
 import '../data/onboarding_store.dart';
 
-/// A short, product-led introduction shown once before authentication.
-///
-/// The four pages describe capabilities that exist in the application today:
-/// task planning, scheduling, the assistant, and progress tracking. Completion
-/// and skipping are both persisted so the flow does not reappear on launch.
+/// A short, product-led introduction shown once before entering the app.
+/// Completion and skipping are persisted independently of authentication.
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key, this.store, this.onComplete});
 
@@ -31,8 +28,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   late final PageController _controller = PageController();
   int _index = 0;
   bool _finishing = false;
+  String? _finishError;
 
-  static const int _pageCount = 4;
+  static const int _pageCount = 3;
 
   @override
   void dispose() {
@@ -42,12 +40,21 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   Future<void> _finish() async {
     if (_finishing) return;
-    setState(() => _finishing = true);
+    setState(() {
+      _finishing = true;
+      _finishError = null;
+    });
 
     try {
       await _store.complete();
     } catch (_) {
-      // Navigation should not be blocked if local preferences are unavailable.
+      if (!mounted) return;
+      setState(() {
+        _finishing = false;
+        _finishError =
+            'Could not save your progress. Check your device storage and try again.';
+      });
+      return;
     }
 
     if (!mounted) return;
@@ -86,36 +93,28 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     final bool isLast = _index == _pageCount - 1;
     final List<_OnboardingPageData> pages = <_OnboardingPageData>[
       const _OnboardingPageData(
-        eyebrow: 'Stay organised',
-        title: 'Your responsibilities, organised.',
+        eyebrow: 'Organise your work',
+        title: 'Everything you need, in one place.',
         body:
-            'Manage tasks, organise schedules and keep track of your '
-            'responsibilities with one personal assistant.',
+            'Organise tasks, deadlines and priorities in one view, so your '
+            'next step is always clear.',
         preview: _TaskPreview(),
       ),
       const _OnboardingPageData(
-        eyebrow: 'Plan your time',
-        title: 'Make every deadline feel manageable.',
+        eyebrow: 'Stay ahead of deadlines',
+        title: 'Keep important dates in view.',
         body:
-            'Add due dates and reminders, then focus on what needs your '
-            'attention today.',
+            'Set reminders, follow task progress and see what needs attention '
+            'before a deadline arrives.',
         preview: _SchedulePreview(),
       ),
       const _OnboardingPageData(
-        eyebrow: 'Work smarter',
-        title: 'Get help when you need it.',
+        eyebrow: 'Your personal assistant',
+        title: 'Turn ideas into clear next steps.',
         body:
-            'Use the assistant to break down assignments, plan revision and '
-            'think through problems in plain language.',
+            'Ask the AI assistant to shape ideas into actionable tasks and '
+            'plans, wherever you are.',
         preview: _AssistantPreview(),
-      ),
-      const _OnboardingPageData(
-        eyebrow: 'Build momentum',
-        title: 'See your progress add up.',
-        body:
-            'Track completed work, XP and achievements as you move through '
-            'the week.',
-        preview: _ProgressPreview(),
       ),
     ];
 
@@ -159,11 +158,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       ],
                     ),
                   ),
-                  if (!isLast)
-                    TextButton(
-                      onPressed: _finishing ? null : _finish,
-                      child: const Text('Skip'),
-                    ),
+                  TextButton(
+                    onPressed: _finishing ? null : _finish,
+                    child: const Text('Skip'),
+                  ),
                 ],
               ),
             ),
@@ -182,6 +180,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               currentIndex: _index,
               isLast: isLast,
               finishing: _finishing,
+              errorMessage: _finishError,
               onPrevious: _index == 0 ? null : _previous,
               onNext: _next,
             ),
@@ -262,6 +261,7 @@ class _OnboardingControls extends StatelessWidget {
     required this.currentIndex,
     required this.isLast,
     required this.finishing,
+    required this.errorMessage,
     required this.onPrevious,
     required this.onNext,
   });
@@ -270,6 +270,7 @@ class _OnboardingControls extends StatelessWidget {
   final int currentIndex;
   final bool isLast;
   final bool finishing;
+  final String? errorMessage;
   final VoidCallback? onPrevious;
   final VoidCallback onNext;
 
@@ -293,8 +294,24 @@ class _OnboardingControls extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
+          if (errorMessage != null) ...<Widget>[
+            Semantics(
+              liveRegion: true,
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                child: Text(
+                  errorMessage!,
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.error,
+                  ),
+                ),
+              ),
+            ),
+          ],
           Semantics(
-            label: 'Page ${currentIndex + 1} of $pageCount',
+            label: 'Onboarding step ${currentIndex + 1} of $pageCount',
+            liveRegion: true,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
@@ -321,7 +338,7 @@ class _OnboardingControls extends StatelessWidget {
               if (onPrevious != null) ...[
                 Expanded(
                   child: AppButton(
-                    label: 'Previous',
+                    label: 'Back',
                     onPressed: finishing ? null : onPrevious,
                     variant: AppButtonVariant.outline,
                     size: AppButtonSize.large,
@@ -333,7 +350,7 @@ class _OnboardingControls extends StatelessWidget {
               Expanded(
                 flex: onPrevious == null ? 1 : 2,
                 child: AppButton(
-                  label: isLast ? 'Get Started' : 'Continue',
+                  label: isLast ? 'Get Started' : 'Next',
                   onPressed: finishing ? null : onNext,
                   size: AppButtonSize.large,
                   expand: true,
@@ -587,6 +604,34 @@ class _SchedulePreview extends StatelessWidget {
             title: 'Revision block',
             color: AppColors.warningAmber,
           ),
+          const SizedBox(height: AppSpacing.md),
+          Row(
+            children: <Widget>[
+              Expanded(
+                child: Text(
+                  'Task progress',
+                  style: theme.textTheme.labelSmall?.copyWith(color: muted),
+                ),
+              ),
+              Text(
+                '3 of 5 complete',
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: theme.colorScheme.onSurface,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(AppRadius.pill),
+            child: const LinearProgressIndicator(
+              value: 0.6,
+              minHeight: 5,
+              backgroundColor: AppColors.softGrey,
+              color: AppColors.teal,
+            ),
+          ),
         ],
       ),
     );
@@ -749,103 +794,6 @@ class _AssistantPreview extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-}
-
-class _ProgressPreview extends StatelessWidget {
-  const _ProgressPreview();
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return _PreviewShell(
-      label: 'Progress',
-      meta: 'This week',
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: <Widget>[
-          Row(
-            children: <Widget>[
-              Text(
-                'Level 3',
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurface,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const Spacer(),
-              Text(
-                '180 / 300 XP',
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(3),
-            child: const LinearProgressIndicator(
-              value: 0.6,
-              minHeight: 6,
-              color: AppColors.teal,
-              backgroundColor: AppColors.borderGrey,
-            ),
-          ),
-          const SizedBox(height: AppSpacing.md),
-          const _ProgressRow(
-            icon: Icons.check_circle_outline_rounded,
-            title: 'First step',
-            meta: 'Unlocked',
-            color: AppColors.teal,
-          ),
-          Divider(height: 20, color: theme.colorScheme.outlineVariant),
-          const _ProgressRow(
-            icon: Icons.emoji_events_outlined,
-            title: 'Week warrior',
-            meta: '3 of 5',
-            color: AppColors.warningAmber,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ProgressRow extends StatelessWidget {
-  const _ProgressRow({
-    required this.icon,
-    required this.title,
-    required this.meta,
-    required this.color,
-  });
-
-  final IconData icon;
-  final String title;
-  final String meta;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Row(
-      children: <Widget>[
-        Icon(icon, size: 18, color: color),
-        const SizedBox(width: AppSpacing.sm),
-        Expanded(
-          child: Text(
-            title,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurface,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ),
-        Text(meta, style: theme.textTheme.labelSmall?.copyWith(color: color)),
-      ],
     );
   }
 }

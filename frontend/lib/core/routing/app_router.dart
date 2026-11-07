@@ -40,6 +40,13 @@ class AssistantArgs {
   final Session session;
 }
 
+class OnboardingArgs {
+  const OnboardingArgs({this.returnToPrevious = false});
+
+  /// Pop back to the existing screen when onboarding is opened from Settings.
+  final bool returnToPrevious;
+}
+
 /// Central route table for the whole application.
 ///
 /// The startup route restores a secure session before choosing onboarding,
@@ -56,9 +63,14 @@ class AppRouter {
           builder: (_) => const StartupGate(),
         );
       case AppRoutes.onboarding:
+        final args = settings.arguments;
         return MaterialPageRoute<void>(
           settings: settings,
-          builder: (_) => const OnboardingScreen(),
+          builder: (context) => OnboardingScreen(
+            onComplete: args is OnboardingArgs && args.returnToPrevious
+                ? () => Navigator.of(context).pop()
+                : null,
+          ),
         );
       case AppRoutes.welcome:
         return MaterialPageRoute<void>(

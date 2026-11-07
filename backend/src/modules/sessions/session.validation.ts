@@ -8,8 +8,6 @@ import { z } from "zod";
 
 import { SESSION_STATUSES } from "./session.types.js";
 
-const nullableDate = z.union([z.coerce.date(), z.null()]);
-
 /**
  * POST /api/groups/:groupId/sessions
  */
@@ -22,23 +20,13 @@ export const createSessionSchema = z.object({
         .min(1, "Session title is required.")
         .max(150, "Session titles cannot exceed 150 characters."),
 
-      description: z
-        .string()
-        .trim()
-        .max(2000)
-        .nullable()
-        .optional(),
+      description: z.string().trim().max(2000).nullable().optional(),
 
       startsAt: z.coerce.date(),
 
       endsAt: z.coerce.date(),
 
-      location: z
-        .string()
-        .trim()
-        .max(200)
-        .nullable()
-        .optional(),
+      location: z.string().trim().max(200).nullable().optional(),
 
       maxAttendees: z.coerce
         .number()
@@ -94,23 +82,13 @@ export const updateSessionSchema = z.object({
     .object({
       title: z.string().trim().min(1).max(150).optional(),
 
-      description: z
-        .string()
-        .trim()
-        .max(2000)
-        .nullable()
-        .optional(),
+      description: z.string().trim().max(2000).nullable().optional(),
 
       startsAt: z.coerce.date().optional(),
 
       endsAt: z.coerce.date().optional(),
 
-      location: z
-        .string()
-        .trim()
-        .max(200)
-        .nullable()
-        .optional(),
+      location: z.string().trim().max(200).nullable().optional(),
     })
     .strict()
     .refine((body) => Object.keys(body).length > 0, {

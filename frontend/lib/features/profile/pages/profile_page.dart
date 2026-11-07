@@ -256,6 +256,26 @@ class ProfilePage extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: AppSpacing.xl),
+                    _sectionLabel(context, 'ABOUT AUXILIA'),
+                    const SizedBox(height: AppSpacing.sm),
+                    _actionGroup(
+                      context,
+                      children: <Widget>[
+                        _ProfileActionTile(
+                          icon: Icons.info_outline_rounded,
+                          title: 'Introduction',
+                          subtitle: 'Revisit the Auxilia overview',
+                          onTap: () => Navigator.pushNamed(
+                            context,
+                            AppRoutes.onboarding,
+                            arguments: const OnboardingArgs(
+                              returnToPrevious: true,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: AppSpacing.xl),
                     Text(
                       'Tasks stay on this device. The AI assistant sends '
                       'messages to the Auxilia server only when you use it.',

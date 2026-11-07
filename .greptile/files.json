@@ -1,0 +1,28 @@
+{
+  "files": [
+    {
+      "path": "docs/compliance/NFR_RELEASE_GATES.md",
+      "description": "Cross-cutting reliability, security, privacy, and release constraints."
+    },
+    {
+      "path": "docs/architecture/ENTERPRISE_AUTH.md",
+      "description": "Authentication and authorization design.",
+      "scope": ["backend/src/modules/auth/**", "backend/src/middleware/**"]
+    },
+    {
+      "path": "backend/src/config/swagger.ts",
+      "description": "Current API contract and endpoint documentation.",
+      "scope": ["backend/src/**"]
+    },
+    {
+      "path": "frontend/lib/core/routing/app_router.dart",
+      "description": "Typed named route registry and navigation contracts.",
+      "scope": ["frontend/lib/**", "frontend/test/**"]
+    },
+    {
+      "path": "docs/release/RELEASE_CHECKLIST.md",
+      "description": "Release and post-deployment validation requirements.",
+      "scope": [".github/**", "backend/**", "frontend/**", "scripts/**"]
+    }
+  ]
+}

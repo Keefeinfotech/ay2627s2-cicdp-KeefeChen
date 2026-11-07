@@ -1,5 +1,5 @@
 import { Request } from "express";
-import { ClientSession, Document, Types } from "mongoose";
+import { Document, Types } from "mongoose";
 
 import { GroupRole, MemberStatus } from "../core/group.types.js";
 

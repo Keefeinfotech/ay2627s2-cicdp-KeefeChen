@@ -22,6 +22,9 @@ class OnboardingStore {
 
   Future<void> complete() async {
     final prefs = await _prefs;
-    await prefs.setBool(storageKey, true);
+    final saved = await prefs.setBool(storageKey, true);
+    if (!saved) {
+      throw StateError('Onboarding completion could not be persisted.');
+    }
   }
 }

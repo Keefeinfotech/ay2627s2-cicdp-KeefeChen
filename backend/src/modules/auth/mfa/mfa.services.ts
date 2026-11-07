@@ -12,7 +12,6 @@ import {
   generateRecoveryCodes,
   generateTotpQrCode,
   generateTotpSecret,
-  generateTotpUri,
   hashRecoveryCode,
   verifyTotpCode,
 } from "../../../shared/utils/totp.util.js";
@@ -23,7 +22,6 @@ import {
   findUserByIdWithMfaSecrets,
   saveUser,
 } from "../auth.repository.js";
-
 
 import type {
   MfaSetupResult,
@@ -215,4 +213,3 @@ export const mfaService = {
     await saveUser(user);
   },
 };
-

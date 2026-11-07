@@ -15,13 +15,14 @@ Describe the user-visible change and the problem it solves.
 
 ## Verification
 
-Paste the commands and results that prove the change works.
+Paste the commands and results that prove this change works.
 
 ```text
 flutter analyze
 flutter test --coverage
 dart run tool/check_coverage.dart 60
-npm run typecheck
+npm run format:check
+npm run lint
 npm run test:coverage
 npm run build
 ```
@@ -29,6 +30,7 @@ npm run build
 - [ ] Tests added or updated for new behaviour
 - [ ] Accessibility checked (semantics, 200% text scale) when UI changed
 - [ ] No secrets, `.env` files, or local build output committed
+- [ ] PR title follows Conventional Commits
 
 ## Risk and rollback
 

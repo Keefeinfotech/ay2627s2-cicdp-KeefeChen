@@ -1,6 +1,6 @@
-import { FeedbackModel, IFeedback, FeedbackStatus } from './feedback.model';
-import { CreateFeedbackDTO, UpdateFeedbackDTO, FeedbackAnalytics } from './feedback.types';
-import { Types } from 'mongoose';
+import { FeedbackModel, IFeedback, FeedbackStatus } from "./feedback.model";
+import { CreateFeedbackDTO, FeedbackAnalytics } from "./feedback.types";
+import { Types } from "mongoose";
 
 export class FeedbackRepository {
   async create(userId: string, data: CreateFeedbackDTO): Promise<IFeedback> {
@@ -13,8 +13,8 @@ export class FeedbackRepository {
 
   async findById(id: string): Promise<IFeedback | null> {
     return await FeedbackModel.findById(id)
-      .populate('userId', 'name email')
-      .populate('adminResponse.respondedBy', 'name email')
+      .populate("userId", "name email")
+      .populate("adminResponse.respondedBy", "name email")
       .exec();
   }
 
@@ -26,23 +26,26 @@ export class FeedbackRepository {
 
   async findAll(): Promise<IFeedback[]> {
     return await FeedbackModel.find()
-      .populate('userId', 'name email')
+      .populate("userId", "name email")
       .sort({ createdAt: -1 })
       .exec();
   }
 
-  async update(id: string, data: Partial<IFeedback>): Promise<IFeedback | null> {
+  async update(
+    id: string,
+    data: Partial<IFeedback>,
+  ): Promise<IFeedback | null> {
     return await FeedbackModel.findByIdAndUpdate(
       id,
       { $set: data },
-      { new: true, runValidators: true }
+      { new: true, runValidators: true },
     ).exec();
   }
 
   async addAdminResponse(
     id: string,
     adminId: string,
-    message: string
+    message: string,
   ): Promise<IFeedback | null> {
     return await FeedbackModel.findByIdAndUpdate(
       id,
@@ -56,7 +59,7 @@ export class FeedbackRepository {
           status: FeedbackStatus.IN_REVIEW,
         },
       },
-      { new: true }
+      { new: true },
     ).exec();
   }
 
@@ -71,15 +74,18 @@ export class FeedbackRepository {
 
   async getAnalytics(): Promise<FeedbackAnalytics> {
     const totalCount = await FeedbackModel.countDocuments();
-    
+
     const statusAggregation = await FeedbackModel.aggregate([
-      { $group: { _id: '$status', count: { $sum: 1 } } },
+      { $group: { _id: "$status", count: { $sum: 1 } } },
     ]);
 
-    const statusBreakdown = Object.values(FeedbackStatus).reduce((acc, status) => {
-      acc[status] = 0;
-      return acc;
-    }, {} as Record<FeedbackStatus, number>);
+    const statusBreakdown = Object.values(FeedbackStatus).reduce(
+      (acc, status) => {
+        acc[status] = 0;
+        return acc;
+      },
+      {} as Record<FeedbackStatus, number>,
+    );
 
     statusAggregation.forEach((item) => {
       if (item._id in statusBreakdown) {
@@ -89,13 +95,14 @@ export class FeedbackRepository {
 
     const ratingAvg = await FeedbackModel.aggregate([
       { $match: { rating: { $exists: true, $ne: null } } },
-      { $group: { _id: null, avgRating: { $avg: '$rating' } } },
+      { $group: { _id: null, avgRating: { $avg: "$rating" } } },
     ]);
 
     return {
       totalCount,
       statusBreakdown,
-      averageRating: ratingAvg.length > 0 ? Math.round(ratingAvg[0].avgRating * 10) / 10 : 0,
+      averageRating:
+        ratingAvg.length > 0 ? Math.round(ratingAvg[0].avgRating * 10) / 10 : 0,
     };
   }
 }

@@ -12,9 +12,8 @@ void main() {
     await tester.pumpWidget(const AuxiliaApp());
     await tester.pumpAndSettle();
 
-    expect(find.text('Your responsibilities, organised.'), findsOneWidget);
-    expect(find.text('Help Anywhere, Learn Together'), findsOneWidget);
-    expect(find.text('Continue'), findsOneWidget);
+    expect(find.text('Everything you need, in one place.'), findsOneWidget);
+    expect(find.text('Next'), findsOneWidget);
     expect(find.text('Skip'), findsOneWidget);
   });
 

@@ -4,19 +4,11 @@
  * Author: Keefe Chen
  */
 
-import type {
-  NextFunction,
-  Request,
-  Response,
-} from "express";
+import type { NextFunction, Request, Response } from "express";
 
-import { AppError } from "../../../shared/utils/AppError.js";
 import { mfaService } from "./mfa.services.js";
 
-import {
-  disableMfaSchema,
-  verifyMfaSchema,
-} from "./mfa.validation.js";
+import { disableMfaSchema, verifyMfaSchema } from "./mfa.validation.js";
 
 function requireUserId(req: Request, res: Response): string | null {
   if (!req.userId) {
@@ -35,11 +27,7 @@ export const mfaController = {
   /**
    * GET /api/auth/mfa/status
    */
-  async status(
-    req: Request,
-    res: Response,
-    next: NextFunction,
-  ): Promise<void> {
+  async status(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const userId = requireUserId(req, res);
       if (!userId) return;
@@ -58,11 +46,7 @@ export const mfaController = {
   /**
    * POST /api/auth/mfa/setup
    */
-  async setup(
-    req: Request,
-    res: Response,
-    next: NextFunction,
-  ): Promise<void> {
+  async setup(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const userId = requireUserId(req, res);
       if (!userId) return;
@@ -81,11 +65,7 @@ export const mfaController = {
   /**
    * POST /api/auth/mfa/verify
    */
-  async verify(
-    req: Request,
-    res: Response,
-    next: NextFunction,
-  ): Promise<void> {
+  async verify(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const userId = requireUserId(req, res);
       if (!userId) return;
@@ -127,4 +107,3 @@ export const mfaController = {
     }
   },
 };
-

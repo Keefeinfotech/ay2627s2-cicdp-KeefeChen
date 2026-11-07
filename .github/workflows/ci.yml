@@ -47,6 +47,23 @@ jobs:
         with:
           fail-on-severity: high
 
+  pr-conventions:
+    name: Source Control - PR Conventions
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+
+      - name: Check Conventional Commit title
+        run: node .github/scripts/check-pr-title.mjs
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+
   # ==========================================
   # STAGE 1: SECURITY VALIDATION
   # ==========================================
@@ -73,19 +90,40 @@ jobs:
           scan-ref: .
           ignore-unfixed: true
           format: sarif
-          output: trivy-results.sarif
+          output: trivy-filesystem-results.sarif
           severity: CRITICAL,HIGH
           exit-code: "1"
 
-      - name: Upload Trivy results
+      - name: Build backend container for scanning
+        run: docker build --tag auxilia-backend:ci ./backend
+
+      - name: Scan backend container image
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          scan-type: image
+          image-ref: auxilia-backend:ci
+          ignore-unfixed: true
+          format: sarif
+          output: trivy-image-results.sarif
+          severity: CRITICAL,HIGH
+          exit-code: "1"
+
+      - name: Upload Trivy filesystem results
         uses: github/codeql-action/upload-sarif@9418214df1f2c4b8128c770156c409013b07d6b9 # v3.39.3
         if: always()
         continue-on-error: true
         with:
-          sarif_file: trivy-results.sarif
+          sarif_file: trivy-filesystem-results.sarif
+
+      - name: Upload Trivy image results
+        uses: github/codeql-action/upload-sarif@9418214df1f2c4b8128c770156c409013b07d6b9 # v3.39.3
+        if: always()
+        continue-on-error: true
+        with:
+          sarif_file: trivy-image-results.sarif
 
   secret-scan:
-    name: Security - Secret Detection
+    name: Security - Gitleaks
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
@@ -95,34 +133,45 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Detect committed secrets
+      - name: Scan tracked files with Gitleaks
         shell: bash
         run: |
           set -euo pipefail
+          docker run --rm --pull=always --network none \
+            --mount "type=bind,source=${GITHUB_WORKSPACE},target=/repo,readonly" \
+            --workdir /repo \
+            ghcr.io/gitleaks/gitleaks@sha256:c00b6bd0aeb3071cbcb79009cb16a60dd9e0a7c60e2be9ab65d25e6bc8abbb7f \
+            dir --redact --no-banner --exit-code 1 .
 
-          patterns=(
-            'AKIA[0-9A-Z]{16}'
-            '-----BEGIN (RSA |EC |OPENSSH |PGP |)PRIVATE KEY-----'
-            'ghp_[A-Za-z0-9]{36}'
-            'gho_[A-Za-z0-9]{36}'
-            'xox[baprs]-[A-Za-z0-9-]{10,}'
-            'AIza[0-9A-Za-z_-]{35}'
-          )
+  codeql:
+    name: Security - CodeQL
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
 
-          failed=0
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
 
-          for pattern in "${patterns[@]}"; do
-            if git grep -n -E -e "$pattern" -- . ':!.github/workflows'; then
-              failed=1
-            fi
-          done
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
 
-          if [[ "$failed" -ne 0 ]]; then
-            echo "::error::Potential secrets detected."
-            exit 1
-          fi
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@9418214df1f2c4b8128c770156c409013b07d6b9 # v3.39.3
+        with:
+          languages: javascript-typescript
+          queries: security-extended
 
-          echo "No configured secret patterns detected."
+      - name: Analyze with CodeQL
+        uses: github/codeql-action/analyze@9418214df1f2c4b8128c770156c409013b07d6b9 # v3.39.3
+        with:
+          category: "/language:javascript-typescript"
+          # Fork pull requests have read-only GITHUB_TOKEN permissions. Keep
+          # the analysis job green there, but only upload SARIF when allowed.
+          upload: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository && 'never' || 'always' }}
 
   # ==========================================
   # STAGE 2: BACKEND VALIDATION
@@ -142,6 +191,7 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           persist-credentials: false
+          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
@@ -153,11 +203,17 @@ jobs:
       - name: Install dependencies
         run: npm ci --ignore-scripts
 
-      - name: Audit production dependencies
-        run: npm audit --omit=dev --audit-level=high
+      - name: Verify Prettier formatting
+        run: npm run format:check
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
 
-      - name: Type check
-        run: npm run typecheck
+      - name: Audit dependencies
+        run: npm audit --audit-level=high
+
+      - name: ESLint and TypeScript checks
+        run: npm run lint
 
       - name: Run tests with coverage
         run: npm run test:coverage
@@ -333,8 +389,10 @@ jobs:
 
     needs:
       - dependency-review
+      - pr-conventions
       - security-scan
       - secret-scan
+      - codeql
       - backend
       - frontend
       - sonarqube
@@ -347,8 +405,10 @@ jobs:
         shell: bash
         env:
           DEPENDENCY_REVIEW: ${{ needs.dependency-review.result }}
+          PR_CONVENTIONS: ${{ needs.pr-conventions.result }}
           SECURITY: ${{ needs.security-scan.result }}
           SECRETS: ${{ needs.secret-scan.result }}
+          CODEQL: ${{ needs.codeql.result }}
           BACKEND: ${{ needs.backend.result }}
           FRONTEND: ${{ needs.frontend.result }}
           SONAR_CI: ${{ needs.sonarqube.result }}
@@ -361,8 +421,10 @@ jobs:
             echo "| Quality Gate | Result |"
             echo "|---|---|"
             echo "| Dependency Review | $DEPENDENCY_REVIEW |"
+            echo "| PR Conventions | $PR_CONVENTIONS |"
             echo "| Security Scan | $SECURITY |"
-            echo "| Secret Detection | $SECRETS |"
+            echo "| Gitleaks | $SECRETS |"
+            echo "| CodeQL | $CODEQL |"
             echo "| Backend | $BACKEND |"
             echo "| Frontend | $FRONTEND |"
             echo "| SonarQube CI Analysis | $SONAR_CI |"
@@ -373,8 +435,10 @@ jobs:
 
           for result in \
             "$DEPENDENCY_REVIEW" \
+            "$PR_CONVENTIONS" \
             "$SECURITY" \
             "$SECRETS" \
+            "$CODEQL" \
             "$BACKEND" \
             "$FRONTEND" \
             "$SONAR_CI" \
