@@ -32,6 +32,17 @@ const List<String> _quickPrompts = <String>[
   'Break down a project',
 ];
 
+/// Human friendly due-date label used by assistant previews and the edit
+/// dialog (for example "Today" or "Tomorrow").
+String _dueLabel(DateTime dueDate) {
+  final today = DateTime.now();
+  final date = DateTime(dueDate.year, dueDate.month, dueDate.day);
+  final todayDate = DateTime(today.year, today.month, today.day);
+  if (date == todayDate) return 'Today';
+  if (date == todayDate.add(const Duration(days: 1))) return 'Tomorrow';
+  return formatDateOnly(dueDate);
+}
+
 /// Conversational assistant surface used inside the responsive application
 /// shell. It keeps the existing `{message}` -> `{reply}` API contract while
 /// adding local, confirmation-first task actions.
@@ -383,15 +394,6 @@ class _AssistantPageState extends State<AssistantPage> {
         .toList(growable: false);
   }
 
-  String _dueLabel(DateTime dueDate) {
-    final today = DateTime.now();
-    final date = DateTime(dueDate.year, dueDate.month, dueDate.day);
-    final todayDate = DateTime(today.year, today.month, today.day);
-    if (date == todayDate) return 'Today';
-    if (date == todayDate.add(const Duration(days: 1))) return 'Tomorrow';
-    return formatDateOnly(dueDate);
-  }
-
   Future<void> _usePrompt(String prompt) async {
     if (_typing) return;
     _controller.text = prompt;
@@ -582,6 +584,9 @@ class _AssistantPageState extends State<AssistantPage> {
     return '${value[0].toUpperCase()}${value.substring(1)}';
   }
 
+  /// Formats a due date into a short display label for task previews.
+  String _dueLabel(DateTime dueDate) => formatDateOnly(dueDate);
+
   void _showAction(_AssistantAction action) {
     final String message = switch (action.kind) {
       _ActionKind.create =>
@@ -603,129 +608,10 @@ class _AssistantPageState extends State<AssistantPage> {
   }
 
   Future<void> _editAction(_AssistantAction action) async {
-    final old = action.preview;
-    final title = TextEditingController(text: old.title);
-    final notes = TextEditingController(text: old.notes);
-    final course = TextEditingController(text: old.project ?? '');
-    final due = TextEditingController(
-      text: old.dueDate == null ? '' : formatDateOnly(old.dueDate!),
-    );
-    var priority = old.priority;
-    String? editError;
     final edited = await showDialog<TaskQuickAddData>(
       context: context,
-      builder: (dialogContext) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          title: const Text('Edit task draft'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: <Widget>[
-                TextField(
-                  controller: title,
-                  decoration: const InputDecoration(labelText: 'Title'),
-                ),
-                TextField(
-                  controller: notes,
-                  maxLines: 3,
-                  decoration: const InputDecoration(labelText: 'Description'),
-                ),
-                TextField(
-                  controller: course,
-                  decoration: const InputDecoration(
-                    labelText: 'Course or project',
-                  ),
-                ),
-                TextField(
-                  controller: due,
-                  decoration: const InputDecoration(
-                    labelText: 'Due date (YYYY-MM-DD)',
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.sm),
-                DropdownButtonFormField<TaskPriority>(
-                  initialValue: priority,
-                  decoration: const InputDecoration(labelText: 'Priority'),
-                  items: TaskPriority.values
-                      .map(
-                        (value) => DropdownMenuItem(
-                          value: value,
-                          child: Text(value.label),
-                        ),
-                      )
-                      .toList(growable: false),
-                  onChanged: (value) {
-                    if (value != null) setDialogState(() => priority = value);
-                  },
-                ),
-                if (editError != null) ...[
-                  const SizedBox(height: AppSpacing.xs),
-                  Text(
-                    editError!,
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.error,
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
-          actions: <Widget>[
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext),
-              child: const Text('Cancel'),
-            ),
-            FilledButton(
-              onPressed: () {
-                final rawDue = due.text.trim();
-                final parsedDue = rawDue.isEmpty
-                    ? null
-                    : DateTime.tryParse(rawDue);
-                if (title.text.trim().isEmpty ||
-                    (rawDue.isNotEmpty && parsedDue == null)) {
-                  setDialogState(() {
-                    editError = title.text.trim().isEmpty
-                        ? 'Enter a task title.'
-                        : 'Use a date in YYYY-MM-DD format.';
-                  });
-                  return;
-                }
-                final dueDate = parsedDue == null
-                    ? null
-                    : DateTime(
-                        parsedDue.year,
-                        parsedDue.month,
-                        parsedDue.day,
-                        23,
-                        59,
-                      );
-                Navigator.pop(
-                  dialogContext,
-                  TaskQuickAddData(
-                    title: title.text.trim(),
-                    notes: notes.text.trim(),
-                    priority: priority,
-                    priorityExplicit: true,
-                    dueDate: dueDate,
-                    project: course.text.trim().isEmpty
-                        ? null
-                        : course.text.trim(),
-                    dueLabel: dueDate == null
-                        ? 'No due date'
-                        : _dueLabel(dueDate),
-                  ),
-                );
-              },
-              child: const Text('Save draft'),
-            ),
-          ],
-        ),
-      ),
+      builder: (_) => _EditTaskDialog(initial: action.preview),
     );
-    title.dispose();
-    notes.dispose();
-    course.dispose();
-    due.dispose();
     if (edited != null && mounted) setState(() => action.preview = edited);
   }
 
@@ -1605,4 +1491,141 @@ class TaskQuickAddData {
   final DateTime? dueDate;
   final String? project;
   final String dueLabel;
+}
+
+/// Edit form for a prepared task draft.
+///
+/// The dialog owns and disposes its own controllers in [dispose] so they are
+/// released together with the dialog route instead of being torn down while the
+/// route's exit animation is still rebuilding the tree.
+class _EditTaskDialog extends StatefulWidget {
+  const _EditTaskDialog({required this.initial});
+
+  final TaskQuickAddData initial;
+
+  @override
+  State<_EditTaskDialog> createState() => _EditTaskDialogState();
+}
+
+class _EditTaskDialogState extends State<_EditTaskDialog> {
+  late final TextEditingController _title;
+  late final TextEditingController _notes;
+  late final TextEditingController _course;
+  late final TextEditingController _due;
+  late TaskPriority _priority;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    final old = widget.initial;
+    _title = TextEditingController(text: old.title);
+    _notes = TextEditingController(text: old.notes);
+    _course = TextEditingController(text: old.project ?? '');
+    _due = TextEditingController(
+      text: old.dueDate == null ? '' : formatDateOnly(old.dueDate!),
+    );
+    _priority = old.priority;
+  }
+
+  @override
+  void dispose() {
+    _title.dispose();
+    _notes.dispose();
+    _course.dispose();
+    _due.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Edit task draft'),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            TextField(
+              controller: _title,
+              decoration: const InputDecoration(labelText: 'Title'),
+            ),
+            TextField(
+              controller: _notes,
+              maxLines: 3,
+              decoration: const InputDecoration(labelText: 'Description'),
+            ),
+            TextField(
+              controller: _course,
+              decoration: const InputDecoration(labelText: 'Course or project'),
+            ),
+            TextField(
+              controller: _due,
+              decoration: const InputDecoration(
+                labelText: 'Due date (YYYY-MM-DD)',
+              ),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            DropdownButtonFormField<TaskPriority>(
+              initialValue: _priority,
+              decoration: const InputDecoration(labelText: 'Priority'),
+              items: TaskPriority.values
+                  .map(
+                    (value) => DropdownMenuItem(
+                      value: value,
+                      child: Text(value.label),
+                    ),
+                  )
+                  .toList(growable: false),
+              onChanged: (value) {
+                if (value != null) setState(() => _priority = value);
+              },
+            ),
+            if (_error != null) ...[
+              const SizedBox(height: AppSpacing.xs),
+              Text(
+                _error!,
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
+              ),
+            ],
+          ],
+        ),
+      ),
+      actions: <Widget>[
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(onPressed: _save, child: const Text('Save draft')),
+      ],
+    );
+  }
+
+  void _save() {
+    final rawDue = _due.text.trim();
+    final parsedDue = rawDue.isEmpty ? null : DateTime.tryParse(rawDue);
+    if (_title.text.trim().isEmpty ||
+        (rawDue.isNotEmpty && parsedDue == null)) {
+      setState(() {
+        _error = _title.text.trim().isEmpty
+            ? 'Enter a task title.'
+            : 'Use a date in YYYY-MM-DD format.';
+      });
+      return;
+    }
+    final dueDate = parsedDue == null
+        ? null
+        : DateTime(parsedDue.year, parsedDue.month, parsedDue.day, 23, 59);
+    Navigator.pop(
+      context,
+      TaskQuickAddData(
+        title: _title.text.trim(),
+        notes: _notes.text.trim(),
+        priority: _priority,
+        priorityExplicit: true,
+        dueDate: dueDate,
+        project: _course.text.trim().isEmpty ? null : _course.text.trim(),
+        dueLabel: dueDate == null ? 'No due date' : _dueLabel(dueDate),
+      ),
+    );
+  }
 }
