@@ -186,6 +186,18 @@ export const swaggerDocument: OpenAPIV3.Document = {
                 required: ["message"],
                 properties: {
                   message: { type: "string", maxLength: 1000 },
+                  context: {
+                    type: "array",
+                    maxItems: 10,
+                    items: {
+                      type: "object",
+                      required: ["role", "content"],
+                      properties: {
+                        role: { type: "string", enum: ["user", "assistant"] },
+                        content: { type: "string", maxLength: 1000 },
+                      },
+                    },
+                  },
                 },
               },
             },
@@ -194,6 +206,62 @@ export const swaggerDocument: OpenAPIV3.Document = {
         responses: {
           "200": { description: "Assistant reply" },
           "401": { description: "Authentication required" },
+        },
+      },
+    },
+    "/api/ai/draft": {
+      post: {
+        summary: "Prepare a task draft for user review",
+        description: "Returns a Zod-validated suggestion and never writes a task. The caller must confirm through the task API.",
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["message"],
+                properties: {
+                  message: { type: "string", minLength: 1, maxLength: 1000 },
+                  context: { type: "array", maxItems: 10, items: { type: "object" } },
+                  currentDate: { type: "string", format: "date" },
+                  utcOffsetMinutes: { type: "integer", minimum: -840, maximum: 840 },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "200": {
+            description: "Task suggestion or clarification request",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  required: ["reply", "draft", "clarification"],
+                  properties: {
+                    reply: { type: "string" },
+                    draft: {
+                      type: "object",
+                      nullable: true,
+                      properties: {
+                        title: { type: "string", maxLength: 150 },
+                        description: { type: "string", nullable: true },
+                        course: { type: "string", nullable: true },
+                        dueDate: { type: "string", format: "date", nullable: true },
+                        priority: { type: "string", enum: ["low", "medium", "high"], nullable: true },
+                      },
+                    },
+                    clarification: { type: "string", nullable: true },
+                  },
+                },
+              },
+            },
+          },
+          "400": { description: "Invalid request or AI response" },
+          "401": { description: "Authentication required" },
+          "429": { description: "AI request rate limit exceeded" },
+          "502": { description: "AI provider unavailable or returned an invalid result" },
         },
       },
     },

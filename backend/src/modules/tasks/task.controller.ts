@@ -12,6 +12,7 @@ import type {
 } from "express";
 
 import { taskService } from "./task.service.js";
+import logger from "../../config/logger.js";
 
 import {
   createTaskSchema,
@@ -68,6 +69,12 @@ export const taskController = {
         userId,
         body
       );
+
+      logger.info("task.create.confirmed", {
+        userId,
+        taskId: task._id,
+        requestId: req.requestId,
+      });
 
       res.status(201).json({
         message: "Task created successfully.",

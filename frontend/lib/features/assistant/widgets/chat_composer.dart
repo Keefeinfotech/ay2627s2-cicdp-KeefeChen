@@ -12,6 +12,8 @@ class ChatComposer extends StatelessWidget {
     this.focusNode,
     this.enabled = true,
     this.isSending = false,
+    this.onVoice,
+    this.isListening = false,
     this.hintText = 'Type a message...',
   });
 
@@ -20,6 +22,8 @@ class ChatComposer extends StatelessWidget {
   final FocusNode? focusNode;
   final bool enabled;
   final bool isSending;
+  final VoidCallback? onVoice;
+  final bool isListening;
   final String hintText;
 
   @override
@@ -63,6 +67,34 @@ class ChatComposer extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: AppSpacing.sm),
+                  if (onVoice != null)
+                    SizedBox(
+                      width: AppSizes.touchTarget,
+                      height: AppSizes.touchTarget,
+                      child: IconButton(
+                        tooltip: isListening
+                            ? 'Stop voice input'
+                            : 'Start voice input',
+                        onPressed: canSend ? onVoice : null,
+                        style: IconButton.styleFrom(
+                          backgroundColor: isListening
+                              ? scheme.errorContainer
+                              : scheme.surfaceContainerHighest,
+                          foregroundColor: isListening
+                              ? scheme.onErrorContainer
+                              : scheme.onSurface,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(AppRadius.md),
+                          ),
+                        ),
+                        icon: Icon(
+                          isListening
+                              ? Icons.stop_rounded
+                              : Icons.mic_none_rounded,
+                        ),
+                      ),
+                    ),
+                  if (onVoice != null) const SizedBox(width: AppSpacing.xs),
                   SizedBox(
                     width: AppSizes.touchTarget,
                     height: AppSizes.touchTarget,
