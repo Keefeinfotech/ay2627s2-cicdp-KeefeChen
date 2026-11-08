@@ -26,55 +26,39 @@ const daysFromNow = (days: number): Date => {
 const oneTimeId = (): string => randomUUID();
 
 // ---------------------------------------------------------------------------
+// User factory
+// ---------------------------------------------------------------------------
+
+type UserRole = "admin" | "user";
+type UserStatus = "active" | "pending" | "disabled";
+
+const makeUser = (
+  name: string,
+  email: string,
+  password: string,
+  role: UserRole,
+  status: UserStatus,
+  emailVerifiedAt: Date | null = now(),
+) => ({
+  _id: oneTimeId(),
+  name,
+  email,
+  password, // NOSONAR - dummy seed password for development only
+  role: role as const,
+  status: status as const,
+  emailVerifiedAt,
+});
+
+// ---------------------------------------------------------------------------
 // Users
 // ---------------------------------------------------------------------------
 
 export const seedUsers = [
-  {
-    _id: oneTimeId(),
-    name: "Admin User",
-    email: "admin@auxilia.test",
-    password: "Admin$ecure2026", // NOSONAR - dummy seed password for development only
-    role: "admin" as const,
-    status: "active" as const,
-    emailVerifiedAt: now(),
-  },
-  {
-    _id: oneTimeId(),
-    name: "Alice Chen",
-    email: "alice@example.com",
-    password: "Alice$ecure2026", // NOSONAR - dummy seed password for development only
-    role: "user" as const,
-    status: "active" as const,
-    emailVerifiedAt: now(),
-  },
-  {
-    _id: oneTimeId(),
-    name: "Bob Smith",
-    email: "bob@example.com",
-    password: "Bob$ecure2026", // NOSONAR - dummy seed password for development only
-    role: "user" as const,
-    status: "active" as const,
-    emailVerifiedAt: now(),
-  },
-  {
-    _id: oneTimeId(),
-    name: "Carol Davis",
-    email: "carol@example.com",
-    password: "Carol$ecure2026", // NOSONAR - dummy seed password for development only
-    role: "user" as const,
-    status: "active" as const,
-    emailVerifiedAt: now(),
-  },
-  {
-    _id: oneTimeId(),
-    name: "David Wilson",
-    email: "david@example.com",
-    password: "David$ecure2026", // NOSONAR - dummy seed password for development only
-    role: "user" as const,
-    status: "pending" as const,
-    emailVerifiedAt: null,
-  },
+  makeUser("Admin User", "admin@auxilia.test", "Admin$ecure2026", "admin", "active"),
+  makeUser("Alice Chen", "alice@example.com", "Alice$ecure2026", "user", "active"),
+  makeUser("Bob Smith", "bob@example.com", "Bob$ecure2026", "user", "active"),
+  makeUser("Carol Davis", "carol@example.com", "Carol$ecure2026", "user", "active"),
+  makeUser("David Wilson", "david@example.com", "David$ecure2026", "user", "pending", null),
 ];
 
 export const seedGroups = [
@@ -89,8 +73,7 @@ export const seedGroups = [
   {
     groupId: oneTimeId(),
     name: "Project Alpha",
-    description:
-      "Capstone project collaboration for the software engineering course.",
+    description: "Capstone project collaboration for the software engineering course.",
     visibility: "PRIVATE" as const,
     status: "ACTIVE" as const,
     ownerId: seedUsers[2]._id, // Bob
@@ -98,8 +81,7 @@ export const seedGroups = [
   {
     groupId: oneTimeId(),
     name: "Weekend Planning",
-    description:
-      "Personal task coordination for weekend activities and errands.",
+    description: "Personal task coordination for weekend activities and errands.",
     visibility: "PUBLIC" as const,
     status: "ACTIVE" as const,
     ownerId: seedUsers[3]._id, // Carol
@@ -108,57 +90,57 @@ export const seedGroups = [
 
 export const seedMemberships = [
   // CS101 Study Group
-  {
-    groupId: seedGroups[0].groupId,
-    userId: seedUsers[1]._id,
-    role: "OWNER" as const,
-    status: "ACTIVE" as const,
-  }, // Alice
-  {
-    groupId: seedGroups[0].groupId,
-    userId: seedUsers[2]._id,
-    role: "MEMBER" as const,
-    status: "ACTIVE" as const,
-  }, // Bob
-  {
-    groupId: seedGroups[0].groupId,
-    userId: seedUsers[3]._id,
-    role: "MEMBER" as const,
-    status: "ACTIVE" as const,
-  }, // Carol
+  { groupId: seedGroups[0].groupId, userId: seedUsers[1]._id, role: "OWNER" as const, status: "ACTIVE" as const }, // Alice
+  { groupId: seedGroups[0].groupId, userId: seedUsers[2]._id, role: "MEMBER" as const, status: "ACTIVE" as const }, // Bob
+  { groupId: seedGroups[0].groupId, userId: seedUsers[3]._id, role: "MEMBER" as const, status: "ACTIVE" as const }, // Carol
   // Project Alpha
-  {
-    groupId: seedGroups[1].groupId,
-    userId: seedUsers[2]._id,
-    role: "OWNER" as const,
-    status: "ACTIVE" as const,
-  }, // Bob
-  {
-    groupId: seedGroups[1].groupId,
-    userId: seedUsers[1]._id,
-    role: "ADMIN" as const,
-    status: "ACTIVE" as const,
-  }, // Alice
-  {
-    groupId: seedGroups[1].groupId,
-    userId: seedUsers[4]._id,
-    role: "MEMBER" as const,
-    status: "ACTIVE" as const,
-  }, // David
+  { groupId: seedGroups[1].groupId, userId: seedUsers[2]._id, role: "OWNER" as const, status: "ACTIVE" as const }, // Bob
+  { groupId: seedGroups[1].groupId, userId: seedUsers[1]._id, role: "ADMIN" as const, status: "ACTIVE" as const }, // Alice
+  { groupId: seedGroups[1].groupId, userId: seedUsers[4]._id, role: "MEMBER" as const, status: "ACTIVE" as const }, // David
   // Weekend Planning
-  {
-    groupId: seedGroups[2].groupId,
-    userId: seedUsers[3]._id,
-    role: "OWNER" as const,
-    status: "ACTIVE" as const,
-  }, // Carol
-  {
-    groupId: seedGroups[2].groupId,
-    userId: seedUsers[2]._id,
-    role: "MEMBER" as const,
-    status: "ACTIVE" as const,
-  }, // Bob
+  { groupId: seedGroups[2].groupId, userId: seedUsers[3]._id, role: "OWNER" as const, status: "ACTIVE" as const }, // Carol
+  { groupId: seedGroups[2].groupId, userId: seedUsers[2]._id, role: "MEMBER" as const, status: "ACTIVE" as const }, // Bob
 ];
+
+// ---------------------------------------------------------------------------
+// Task factory
+// ---------------------------------------------------------------------------
+
+type TaskStatus = "todo" | "in_progress" | "completed" | "archived";
+type TaskPriority = "low" | "medium" | "high" | "urgent";
+
+const makeTask = (
+  userId: string,
+  title: string,
+  opts: {
+    description?: string;
+    course?: string;
+    tags?: string[];
+    groupId?: string | null;
+    assigneeId?: string | null;
+    assigneeName?: string | null;
+    status?: TaskStatus;
+    priority?: TaskPriority;
+    dueDate?: Date | null;
+    completedAt?: Date | null;
+  } = {},
+) => ({
+  _id: oneTimeId(),
+  userId,
+  title,
+  description: opts.description ?? null,
+  course: opts.course ?? "",
+  tags: opts.tags ?? [],
+  groupId: opts.groupId ?? null,
+  assigneeId: opts.assigneeId ?? null,
+  assigneeName: opts.assigneeName ?? null,
+  status: opts.status ?? "todo",
+  priority: opts.priority ?? "medium",
+  dueDate: opts.dueDate ?? null,
+  completedAt: opts.completedAt ?? null,
+  reminderAt: null,
+  deletedAt: null,
+});
 
 // ---------------------------------------------------------------------------
 // Tasks (covers all required test scenarios)
@@ -166,293 +148,193 @@ export const seedMemberships = [
 
 export const seedTasks = [
   // --- Alice (alice@example.com) ---
-  {
-    _id: oneTimeId(),
-    userId: seedUsers[1]._id,
-    title: "Finish research summary",
-    description:
-      "Compile findings from the literature review into a 5-page summary.",
+  makeTask(seedUsers[1]._id, "Finish research summary", {
     course: "CS101",
     tags: ["research", "writing"],
     groupId: seedGroups[0].groupId,
     assigneeId: seedUsers[1]._id,
     assigneeName: "Alice Chen",
-    status: "todo" as const,
-    priority: "high" as const,
+    priority: "high",
     dueDate: daysFromNow(0), // due today
-    reminderAt: daysFromNow(0),
-  },
-  {
-    _id: oneTimeId(),
-    userId: seedUsers[1]._id,
-    title: "Read chapter 4",
-    description: "Read and annotate chapter 4 of the textbook.",
+  }),
+  makeTask(seedUsers[1]._id, "Read chapter 4", {
     course: "CS101",
     tags: ["reading"],
-    status: "in_progress" as const,
-    priority: "medium" as const,
+    status: "in_progress",
+    priority: "medium",
     dueDate: daysFromNow(2), // due within 7 days
-    reminderAt: daysFromNow(1),
-  },
-  {
-    _id: oneTimeId(),
-    userId: seedUsers[1]._id,
-    title: "Submit lab report",
-    description: "Finalize and upload the Week 3 lab report.",
+  }),
+  makeTask(seedUsers[1]._id, "Submit lab report", {
     course: "CS101",
     tags: ["lab", "submission"],
     groupId: seedGroups[0].groupId,
     assigneeId: seedUsers[1]._id,
     assigneeName: "Alice Chen",
-    status: "completed" as const,
-    priority: "high" as const,
+    status: "completed",
+    priority: "high",
     dueDate: daysFromNow(-3), // completed, was due 3 days ago
     completedAt: daysFromNow(-1),
-  },
-  {
-    _id: oneTimeId(),
-    userId: seedUsers[1]._id,
-    title: "Midterm exam preparation",
-    description: "Review lecture notes and practice problems for the midterm.",
+  }),
+  makeTask(seedUsers[1]._id, "Midterm exam preparation", {
     course: "CS101",
     tags: ["exam", "study"],
-    status: "todo" as const,
-    priority: "urgent" as const,
+    status: "todo",
+    priority: "urgent",
     dueDate: daysFromNow(-1), // overdue
-  },
-  {
-    _id: oneTimeId(),
-    userId: seedUsers[1]._id,
-    title: "Buy groceries",
-    description: "Milk, eggs, bread, and vegetables for the week.",
+  }),
+  makeTask(seedUsers[1]._id, "Buy groceries", {
     course: "",
     tags: ["personal", "errands"],
     groupId: seedGroups[2].groupId,
     assigneeId: seedUsers[3]._id,
     assigneeName: "Carol Davis",
-    status: "todo" as const,
-    priority: "low" as const,
+    priority: "low",
     dueDate: null, // no deadline
-  },
-  {
-    _id: oneTimeId(),
-    userId: seedUsers[1]._id,
-    title: "Group project milestone 1",
-    description: "Complete the requirements specification document.",
+  }),
+  makeTask(seedUsers[1]._id, "Group project milestone 1", {
     course: "SE301",
     tags: ["group", "documentation"],
     groupId: seedGroups[1].groupId,
     assigneeId: seedUsers[2]._id,
     assigneeName: "Bob Smith",
-    status: "in_progress" as const,
-    priority: "high" as const,
+    status: "in_progress",
+    priority: "high",
     dueDate: daysFromNow(5), // due within 7 days
-  },
-  {
-    _id: oneTimeId(),
-    userId: seedUsers[1]._id,
-    title: "Update CV",
-    description: "Add recent internship experience and projects.",
+  }),
+  makeTask(seedUsers[1]._id, "Update CV", {
     course: "",
     tags: ["career", "personal"],
-    status: "todo" as const,
-    priority: "medium" as const,
+    priority: "medium",
     dueDate: null, // no deadline
-  },
-  {
-    _id: oneTimeId(),
-    userId: seedUsers[1]._id,
-    title: "Attend office hours",
-    description: "Clarify assignment questions with the professor.",
+  }),
+  makeTask(seedUsers[1]._id, "Attend office hours", {
     course: "CS101",
     tags: ["academic"],
-    status: "completed" as const,
-    priority: "low" as const,
+    status: "completed",
+    priority: "low",
     dueDate: daysFromNow(-5),
     completedAt: daysFromNow(-5),
-  },
+  }),
 
   // --- Bob (bob@example.com) ---
-  {
-    _id: oneTimeId(),
-    userId: seedUsers[2]._id,
-    title: "Capstone prototype demo",
-    description: "Prepare the working prototype for the capstone review.",
+  makeTask(seedUsers[2]._id, "Capstone prototype demo", {
     course: "SE401",
     tags: ["capstone", "demo"],
     groupId: seedGroups[1].groupId,
     assigneeId: seedUsers[2]._id,
     assigneeName: "Bob Smith",
-    status: "in_progress" as const,
-    priority: "urgent" as const,
+    status: "in_progress",
+    priority: "urgent",
     dueDate: daysFromNow(1), // due tomorrow
-  },
-  {
-    _id: oneTimeId(),
-    userId: seedUsers[2]._id,
-    title: "Database schema review",
-    description: "Review the ER diagram with the team.",
+  }),
+  makeTask(seedUsers[2]._id, "Database schema review", {
     course: "SE301",
     tags: ["database", "design"],
-    status: "todo" as const,
-    priority: "medium" as const,
+    status: "todo",
+    priority: "medium",
     dueDate: daysFromNow(3), // due within 7 days
-  },
-  {
-    _id: oneTimeId(),
-    userId: seedUsers[2]._id,
-    title: "Weekly timesheet",
-    description: "Submit hours for the part-time research assistantship.",
+  }),
+  makeTask(seedUsers[2]._id, "Weekly timesheet", {
     course: "",
     tags: ["admin", "recurring"],
-    status: "completed" as const,
-    priority: "low" as const,
+    status: "completed",
+    priority: "low",
     dueDate: daysFromNow(-2),
     completedAt: daysFromNow(-2),
-  },
-  {
-    _id: oneTimeId(),
-    userId: seedUsers[2]._id,
-    title: "Fix login bug",
-    description: "Investigate and resolve the OAuth redirect issue.",
+  }),
+  makeTask(seedUsers[2]._id, "Fix login bug", {
     course: "",
     tags: ["bug", "frontend"],
     groupId: seedGroups[1].groupId,
     assigneeId: seedUsers[2]._id,
     assigneeName: "Bob Smith",
-    status: "todo" as const,
-    priority: "high" as const,
+    priority: "high",
     dueDate: daysFromNow(-2), // overdue
-  },
-  {
-    _id: oneTimeId(),
-    userId: seedUsers[2]._id,
-    title: "Buy textbooks",
-    description: "Order SE301 and CS101 textbooks from the bookstore.",
+  }),
+  makeTask(seedUsers[2]._id, "Buy textbooks", {
     course: "",
     tags: ["personal", "errands"],
-    status: "todo" as const,
-    priority: "low" as const,
+    priority: "low",
     dueDate: null, // no deadline
-  },
-  {
-    _id: oneTimeId(),
-    userId: seedUsers[2]._id,
-    title: "Team standup",
-    description: "Weekly sync with Project Alpha team.",
+  }),
+  makeTask(seedUsers[2]._id, "Team standup", {
     course: "SE401",
     tags: ["meeting"],
     groupId: seedGroups[1].groupId,
     assigneeId: seedUsers[2]._id,
     assigneeName: "Bob Smith",
-    status: "completed" as const,
-    priority: "medium" as const,
+    status: "completed",
+    priority: "medium",
     dueDate: daysFromNow(-1),
     completedAt: daysFromNow(-1),
-  },
+  }),
 
   // --- Carol (carol@example.com) ---
-  {
-    _id: oneTimeId(),
-    userId: seedUsers[3]._id,
-    title: "Essay draft",
-    description: "Write the first draft of the English literature essay.",
+  makeTask(seedUsers[3]._id, "Essay draft", {
     course: "ENG202",
     tags: ["writing", "essay"],
-    status: "todo" as const,
-    priority: "medium" as const,
+    priority: "medium",
     dueDate: daysFromNow(4), // due within 7 days
-  },
-  {
-    _id: oneTimeId(),
-    userId: seedUsers[3]._id,
-    title: "Art history quiz",
-    description: "Prepare for the Renaissance art quiz on Friday.",
+  }),
+  makeTask(seedUsers[3]._id, "Art history quiz", {
     course: "ART101",
     tags: ["quiz", "study"],
-    status: "in_progress" as const,
-    priority: "high" as const,
+    status: "in_progress",
+    priority: "high",
     dueDate: daysFromNow(1), // due tomorrow
-  },
-  {
-    _id: oneTimeId(),
-    userId: seedUsers[3]._id,
-    title: "Submit portfolio",
-    description: "Upload the design portfolio to the course portal.",
+  }),
+  makeTask(seedUsers[3]._id, "Submit portfolio", {
     course: "DES101",
     tags: ["submission", "design"],
     groupId: seedGroups[2].groupId,
     assigneeId: seedUsers[3]._id,
     assigneeName: "Carol Davis",
-    status: "completed" as const,
-    priority: "high" as const,
+    status: "completed",
+    priority: "high",
     dueDate: daysFromNow(-4),
     completedAt: daysFromNow(-4),
-  },
-  {
-    _id: oneTimeId(),
-    userId: seedUsers[3]._id,
-    title: "Plan weekend trip",
-    description: "Research destinations and book accommodation.",
+  }),
+  makeTask(seedUsers[3]._id, "Plan weekend trip", {
     course: "",
     tags: ["personal", "travel"],
     groupId: seedGroups[2].groupId,
     assigneeId: seedUsers[3]._id,
     assigneeName: "Carol Davis",
-    status: "todo" as const,
-    priority: "low" as const,
+    priority: "low",
     dueDate: null, // no deadline
-  },
-  {
-    _id: oneTimeId(),
-    userId: seedUsers[3]._id,
-    title: "Language practice",
-    description: "Complete the weekly Spanish conversation exercise.",
+  }),
+  makeTask(seedUsers[3]._id, "Language practice", {
     course: "SPAN101",
     tags: ["language"],
-    status: "todo" as const,
-    priority: "medium" as const,
+    priority: "medium",
     dueDate: daysFromNow(6), // due within 7 days
-  },
+  }),
 
   // --- David (david@example.com) ---
-  {
-    _id: oneTimeId(),
-    userId: seedUsers[4]._id,
-    title: "Orientation session",
-    description: "Attend the new student orientation.",
+  makeTask(seedUsers[4]._id, "Orientation session", {
     course: "ORI100",
     tags: ["orientation"],
     groupId: seedGroups[1].groupId,
     assigneeId: seedUsers[4]._id,
     assigneeName: "David Wilson",
-    status: "completed" as const,
-    priority: "medium" as const,
+    status: "completed",
+    priority: "medium",
     dueDate: daysFromNow(-7),
     completedAt: daysFromNow(-7),
-  },
-  {
-    _id: oneTimeId(),
-    userId: seedUsers[4]._id,
-    title: "Set up development environment",
-    description: "Install Node.js, MongoDB, and configure IDE.",
+  }),
+  makeTask(seedUsers[4]._id, "Set up development environment", {
     course: "",
     tags: ["setup", "technical"],
-    status: "in_progress" as const,
-    priority: "high" as const,
+    status: "in_progress",
+    priority: "high",
     dueDate: daysFromNow(2), // due within 7 days
-  },
-  {
-    _id: oneTimeId(),
-    userId: seedUsers[4]._id,
-    title: "Read student handbook",
-    description: "Review policies and procedures.",
+  }),
+  makeTask(seedUsers[4]._id, "Read student handbook", {
     course: "",
     tags: ["reading"],
-    status: "todo" as const,
-    priority: "low" as const,
+    priority: "low",
     dueDate: null, // no deadline
-  },
+  }),
 ];
 
 // ---------------------------------------------------------------------------
@@ -464,8 +346,7 @@ export const seedRoadmaps = [
     _id: oneTimeId(),
     groupId: seedGroups[0].groupId,
     title: "CS101 Course Roadmap",
-    description:
-      "Week-by-week plan for mastering Introduction to Computer Science.",
+    description: "Week-by-week plan for mastering Introduction to Computer Science.",
     source: "manual" as const,
     status: "approved" as const,
     createdBy: seedUsers[1]._id, // Alice
@@ -527,8 +408,7 @@ export const seedRoadmaps = [
     _id: oneTimeId(),
     groupId: seedGroups[1].groupId,
     title: "Project Alpha Milestones",
-    description:
-      "Key deliverables for the capstone software engineering project.",
+    description: "Key deliverables for the capstone software engineering project.",
     source: "manual" as const,
     status: "draft" as const,
     createdBy: seedUsers[2]._id, // Bob
@@ -636,8 +516,7 @@ export const seedFeedback = [
     userId: seedUsers[1]._id,
     category: "FEATURE_REQUEST" as const,
     title: "Add dark mode toggle",
-    description:
-      "It would be great to have a dark mode for late-night studying.",
+    description: "It would be great to have a dark mode for late-night studying.",
     rating: 4,
     status: "PENDING" as const,
   },
@@ -645,8 +524,7 @@ export const seedFeedback = [
     userId: seedUsers[2]._id,
     category: "BUG" as const,
     title: "Task due date not saving",
-    description:
-      "When I set a due date on a task, it reverts to null after refresh.",
+    description: "When I set a due date on a task, it reverts to null after refresh.",
     rating: 2,
     status: "IN_REVIEW" as const,
   },
