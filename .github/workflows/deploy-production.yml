@@ -41,7 +41,7 @@ jobs:
           # binary, but fetching it directly avoids running third-party
           # install scripts during the deploy (githubactions:S6505).
           archive="$(mktemp -d)"
-          curl -fsSL --retry 3 \
+          curl --proto "=https" -fsSL --retry 3 \
             -o "$archive/railway.tar.gz" \
             "https://github.com/railwayapp/cli/releases/download/v5.71.0/railway-v5.71.0-x86_64-unknown-linux-musl.tar.gz"
           echo "2e682fd2ddf8d6fdf9e46d9d99d99646ff0022a6abb0c2bca93011348a269fb9  $archive/railway.tar.gz" | sha256sum -c -
