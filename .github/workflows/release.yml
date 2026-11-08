@@ -25,7 +25,7 @@ jobs:
           node -e 'const fs=require("fs"); const tag=process.env.GITHUB_REF_NAME.replace(/^v/, ""); const backend=JSON.parse(fs.readFileSync("backend/package.json", "utf8")).version; const pubspec=fs.readFileSync("frontend/pubspec.yaml", "utf8"); const match=pubspec.match(/^version:\s*([0-9]+\.[0-9]+\.[0-9]+)\+/m); const frontend=match && match[1]; if (backend !== tag || frontend !== tag) { console.error(`Tag v${tag} does not match backend ${backend} and frontend ${frontend ?? "unknown"}`); process.exit(1); } console.log(`Release versions match: v${tag}`);'
 
       - name: Setup Node
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: '22'
           cache: 'npm'
