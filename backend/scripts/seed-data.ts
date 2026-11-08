@@ -34,7 +34,7 @@ export const seedUsers = [
     _id: oneTimeId(),
     name: "Admin User",
     email: "admin@auxilia.test",
-    password: "Admin$ecure2026", // nosec - dummy seed password for development only
+    password: "Admin$ecure2026", // NOSONAR - dummy seed password for development only
     role: "admin" as const,
     status: "active" as const,
     emailVerifiedAt: now(),
@@ -43,7 +43,7 @@ export const seedUsers = [
     _id: oneTimeId(),
     name: "Alice Chen",
     email: "alice@example.com",
-    password: "Alice$ecure2026", // nosec - dummy seed password for development only
+    password: "Alice$ecure2026", // NOSONAR - dummy seed password for development only
     role: "user" as const,
     status: "active" as const,
     emailVerifiedAt: now(),
@@ -52,7 +52,7 @@ export const seedUsers = [
     _id: oneTimeId(),
     name: "Bob Smith",
     email: "bob@example.com",
-    password: "Bob$ecure2026", // nosec - dummy seed password for development only
+    password: "Bob$ecure2026", // NOSONAR - dummy seed password for development only
     role: "user" as const,
     status: "active" as const,
     emailVerifiedAt: now(),
@@ -61,7 +61,7 @@ export const seedUsers = [
     _id: oneTimeId(),
     name: "Carol Davis",
     email: "carol@example.com",
-    password: "Carol$ecure2026", // nosec - dummy seed password for development only
+    password: "Carol$ecure2026", // NOSONAR - dummy seed password for development only
     role: "user" as const,
     status: "active" as const,
     emailVerifiedAt: now(),
@@ -70,7 +70,7 @@ export const seedUsers = [
     _id: oneTimeId(),
     name: "David Wilson",
     email: "david@example.com",
-    password: "David$ecure2026", // nosec - dummy seed password for development only
+    password: "David$ecure2026", // NOSONAR - dummy seed password for development only
     role: "user" as const,
     status: "pending" as const,
     emailVerifiedAt: null,
