@@ -32,8 +32,12 @@ ENV NODE_ENV=production
 # Copy dependency manifests
 COPY package*.json ./
 
-# Install production dependencies only
-RUN npm ci --omit=dev --ignore-scripts && npm cache clean --force
+# Install production dependencies only, then remove npm/npx from the runtime
+# image. Nothing at runtime needs them (the container executes `node`
+# directly), and npm ships bundled libraries with known CVEs that Trivy
+# flags during the image scan.
+RUN npm ci --omit=dev --ignore-scripts && npm cache clean --force \
+    && rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx
 
 # Copy compiled JavaScript
 COPY --from=build /app/dist ./dist
@@ -41,5 +45,5 @@ COPY --from=build /app/dist ./dist
 # Expose application port
 EXPOSE 3000
 
-# Start application
-CMD ["npm", "start"]
+# Start application (same entry point as `npm start`, without npm in the image)
+CMD ["node", "dist/server.js"]
