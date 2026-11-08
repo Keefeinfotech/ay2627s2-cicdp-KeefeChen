@@ -30,7 +30,7 @@ const authenticate = (): string => {
       role: "user",
       activeSessionId: sessionId,
       activeSessionExpiresAt: new Date(Date.now() + 60 * 60 * 1000),
-    })
+    }),
   );
   return token;
 };
@@ -82,7 +82,9 @@ describe("POST /api/ai/chat", () => {
 
 describe("POST /api/ai/draft", () => {
   it("requires authentication", async () => {
-    const res = await request(app).post("/api/ai/draft").send({ message: "Create a task to revise biology" });
+    const res = await request(app)
+      .post("/api/ai/draft")
+      .send({ message: "Create a task to revise biology" });
     expect(res.status).toBe(401);
   });
 
@@ -91,7 +93,9 @@ describe("POST /api/ai/draft", () => {
     const res = await request(app)
       .post("/api/ai/draft")
       .set("Authorization", `Bearer ${token}`)
-      .send({ message: "Create a task to revise biology tomorrow high priority" });
+      .send({
+        message: "Create a task to revise biology tomorrow high priority",
+      });
 
     expect(res.status).toBe(200);
     expect(res.body.draft.title).toBe("Revise biology");
@@ -120,7 +124,10 @@ describe("POST /api/ai/draft", () => {
       .send({
         message: "March 4",
         context: [
-          { role: "user", content: "Create a task to revise biology due 03/04" },
+          {
+            role: "user",
+            content: "Create a task to revise biology due 03/04",
+          },
           { role: "assistant", content: "Please clarify the deadline." },
         ],
       });

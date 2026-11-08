@@ -12,7 +12,19 @@ router.use((_req, res, next) => {
   next();
 });
 
-router.post("/chat", authenticate, aiRateLimiter, validateRequest(chatSchema), chat);
-router.post("/draft", authenticate, aiRateLimiter, validateRequest(taskDraftRequestSchema), taskDraft);
+router.post(
+  "/chat",
+  authenticate,
+  aiRateLimiter,
+  validateRequest(chatSchema),
+  chat,
+);
+router.post(
+  "/draft",
+  authenticate,
+  aiRateLimiter,
+  validateRequest(taskDraftRequestSchema),
+  taskDraft,
+);
 
 export default router;

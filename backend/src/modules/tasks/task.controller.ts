@@ -1,15 +1,10 @@
-
 /**
  * File Name: task.controller.ts
  * Description: Handles HTTP requests and responses for task operations.
  * Author: Keefe Chen
  */
 
-import type {
-  Request,
-  Response,
-  NextFunction,
-} from "express";
+import type { Request, Response, NextFunction } from "express";
 
 import { taskService } from "./task.service.js";
 import logger from "../../config/logger.js";
@@ -21,19 +16,13 @@ import {
   taskIdParamSchema,
 } from "./task.validation.js";
 
-import type {
-  CreateTaskBody,
-  UpdateTaskBody,
-} from "./task.validation.js";
+import type { CreateTaskBody, UpdateTaskBody } from "./task.validation.js";
 import type { OffsetPaginationInput } from "./task.types.js";
 
 /**
  * Ensures the request has an authenticated user ID.
  */
-function requireUserId(
-  req: Request,
-  res: Response
-): string | null {
+function requireUserId(req: Request, res: Response): string | null {
   if (!req.userId) {
     res.status(401).json({
       code: "UNAUTHENTICATED",
@@ -51,24 +40,17 @@ export const taskController = {
    * POST /api/tasks
    * Creates a new task for the authenticated user.
    */
-  async create(
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> {
+  async create(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const userId = requireUserId(req, res);
 
       if (!userId) return;
 
       const body = createTaskSchema.shape.body.parse(
-        req.body
+        req.body,
       ) as CreateTaskBody;
 
-      const task = await taskService.createTask(
-        userId,
-        body
-      );
+      const task = await taskService.createTask(userId, body);
 
       logger.info("task.create.confirmed", {
         userId,
@@ -89,11 +71,7 @@ export const taskController = {
    * GET /api/tasks
    * Retrieves the authenticated user's tasks.
    */
-  async list(
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> {
+  async list(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const userId = requireUserId(req, res);
 
@@ -101,7 +79,7 @@ export const taskController = {
 
       // Parse query parameters and apply Zod defaults.
       const query = listTasksSchema.shape.query.parse(
-        req.query
+        req.query,
       ) as OffsetPaginationInput;
 
       const result = await taskService.listTasks(userId, query);
@@ -123,21 +101,16 @@ export const taskController = {
   async getById(
     req: Request,
     res: Response,
-    next: NextFunction
+    next: NextFunction,
   ): Promise<void> {
     try {
       const userId = requireUserId(req, res);
 
       if (!userId) return;
 
-      const { taskId } = taskIdParamSchema.shape.params.parse(
-        req.params
-      );
+      const { taskId } = taskIdParamSchema.shape.params.parse(req.params);
 
-      const task = await taskService.getTask(
-        userId,
-        taskId
-      );
+      const task = await taskService.getTask(userId, taskId);
 
       res.status(200).json({
         message: "Task retrieved successfully.",
@@ -152,29 +125,19 @@ export const taskController = {
    * PATCH /api/tasks/:taskId
    * Updates a specific task belonging to the authenticated user.
    */
-  async update(
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> {
+  async update(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const userId = requireUserId(req, res);
 
       if (!userId) return;
 
-      const { taskId } = taskIdParamSchema.shape.params.parse(
-        req.params
-      );
+      const { taskId } = taskIdParamSchema.shape.params.parse(req.params);
 
       const body = updateTaskSchema.shape.body.parse(
-        req.body
+        req.body,
       ) as UpdateTaskBody;
 
-      const task = await taskService.updateTask(
-        userId,
-        taskId,
-        body
-      );
+      const task = await taskService.updateTask(userId, taskId, body);
 
       res.status(200).json({
         message: "Task updated successfully.",
@@ -189,24 +152,15 @@ export const taskController = {
    * DELETE /api/tasks/:taskId
    * Soft-deletes a specific task belonging to the authenticated user.
    */
-  async remove(
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> {
+  async remove(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const userId = requireUserId(req, res);
 
       if (!userId) return;
 
-      const { taskId } = taskIdParamSchema.shape.params.parse(
-        req.params
-      );
+      const { taskId } = taskIdParamSchema.shape.params.parse(req.params);
 
-      await taskService.deleteTask(
-        userId,
-        taskId
-      );
+      await taskService.deleteTask(userId, taskId);
 
       res.status(204).send();
     } catch (error) {

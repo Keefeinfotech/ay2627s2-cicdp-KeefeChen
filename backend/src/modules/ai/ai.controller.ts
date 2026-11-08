@@ -1,11 +1,15 @@
 import type { NextFunction, Request, Response } from "express";
-import { createChatReply, createTaskDraft, type ConversationTurn } from "./ai.service.js";
+import {
+  createChatReply,
+  createTaskDraft,
+  type ConversationTurn,
+} from "./ai.service.js";
 import { taskDraftResponseSchema } from "./ai.validation.js";
 
 export const chat = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): Promise<void> => {
   try {
     const { message, context } = req.body as {
@@ -21,7 +25,7 @@ export const chat = async (
 export const taskDraft = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): Promise<void> => {
   try {
     const { message, context, currentDate, utcOffsetMinutes } = req.body as {

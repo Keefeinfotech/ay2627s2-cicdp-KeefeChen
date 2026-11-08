@@ -69,14 +69,10 @@ export const taskService = {
    */
   async createTask(
     userId: string,
-    input: CreateTaskInput
+    input: CreateTaskInput,
   ): Promise<TaskRecord> {
     if (!userId) {
-      throw new AppError(
-        401,
-        "UNAUTHENTICATED",
-        "Authentication is required."
-      );
+      throw new AppError(401, "UNAUTHENTICATED", "Authentication is required.");
     }
 
     await assertValidAssignment(userId, input.groupId, input.assigneeId);
@@ -93,7 +89,13 @@ export const taskService = {
     } catch (error) {
       // Two retries can pass the preflight lookup at the same time. The task
       // UUID's unique index is the final idempotency guard for that race.
-      if (input.id && typeof error === "object" && error !== null && "code" in error && error.code === 11000) {
+      if (
+        input.id &&
+        typeof error === "object" &&
+        error !== null &&
+        "code" in error &&
+        error.code === 11000
+      ) {
         const existing = await taskRepository.findByIdForUser(input.id, userId);
         if (existing) return existing;
       }
@@ -104,21 +106,11 @@ export const taskService = {
   /**
    * Retrieves a single task.
    */
-  async getTask(
-    userId: string,
-    taskId: string
-  ): Promise<TaskRecord> {
-    const task = await taskRepository.findByIdForUser(
-      taskId,
-      userId
-    );
+  async getTask(userId: string, taskId: string): Promise<TaskRecord> {
+    const task = await taskRepository.findByIdForUser(taskId, userId);
 
     if (!task) {
-      throw new AppError(
-        404,
-        "TASK_NOT_FOUND",
-        "Task was not found."
-      );
+      throw new AppError(404, "TASK_NOT_FOUND", "Task was not found.");
     }
 
     return task;
@@ -129,17 +121,13 @@ export const taskService = {
    */
   async listTasks(
     userId: string,
-    input: OffsetPaginationInput
+    input: OffsetPaginationInput,
   ): Promise<OffsetPaginatedTasks> {
-    if (
-      input.dueAfter &&
-      input.dueBefore &&
-      input.dueAfter > input.dueBefore
-    ) {
+    if (input.dueAfter && input.dueBefore && input.dueAfter > input.dueBefore) {
       throw new AppError(
         400,
         "INVALID_DATE_RANGE",
-        "dueAfter must be earlier than or equal to dueBefore."
+        "dueAfter must be earlier than or equal to dueBefore.",
       );
     }
 
@@ -152,39 +140,25 @@ export const taskService = {
   async updateTask(
     userId: string,
     taskId: string,
-    input: UpdateTaskInput
+    input: UpdateTaskInput,
   ): Promise<TaskRecord> {
     const current = await taskRepository.findByIdForUser(taskId, userId);
 
     if (!current) {
-      throw new AppError(
-        404,
-        "TASK_NOT_FOUND",
-        "Task was not found."
-      );
+      throw new AppError(404, "TASK_NOT_FOUND", "Task was not found.");
     }
 
-    const effectiveGroupId = input.groupId === undefined
-      ? current.groupId
-      : input.groupId;
-    const effectiveAssigneeId = input.assigneeId === undefined
-      ? current.assigneeId
-      : input.assigneeId;
+    const effectiveGroupId =
+      input.groupId === undefined ? current.groupId : input.groupId;
+    const effectiveAssigneeId =
+      input.assigneeId === undefined ? current.assigneeId : input.assigneeId;
 
     await assertValidAssignment(userId, effectiveGroupId, effectiveAssigneeId);
 
-    const task = await taskRepository.updateForUser(
-      taskId,
-      userId,
-      input
-    );
+    const task = await taskRepository.updateForUser(taskId, userId, input);
 
     if (!task) {
-      throw new AppError(
-        404,
-        "TASK_NOT_FOUND",
-        "Task was not found."
-      );
+      throw new AppError(404, "TASK_NOT_FOUND", "Task was not found.");
     }
 
     return task;
@@ -193,21 +167,11 @@ export const taskService = {
   /**
    * Soft-deletes an existing task.
    */
-  async deleteTask(
-    userId: string,
-    taskId: string
-  ): Promise<void> {
-    const deleted = await taskRepository.softDeleteForUser(
-      taskId,
-      userId
-    );
+  async deleteTask(userId: string, taskId: string): Promise<void> {
+    const deleted = await taskRepository.softDeleteForUser(taskId, userId);
 
     if (!deleted) {
-      throw new AppError(
-        404,
-        "TASK_NOT_FOUND",
-        "Task was not found."
-      );
+      throw new AppError(404, "TASK_NOT_FOUND", "Task was not found.");
     }
   },
 };

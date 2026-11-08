@@ -212,7 +212,8 @@ export const swaggerDocument: OpenAPIV3.Document = {
     "/api/ai/draft": {
       post: {
         summary: "Prepare a task draft for user review",
-        description: "Returns a Zod-validated suggestion and never writes a task. The caller must confirm through the task API.",
+        description:
+          "Returns a Zod-validated suggestion and never writes a task. The caller must confirm through the task API.",
         security: [{ bearerAuth: [] }],
         requestBody: {
           required: true,
@@ -223,9 +224,17 @@ export const swaggerDocument: OpenAPIV3.Document = {
                 required: ["message"],
                 properties: {
                   message: { type: "string", minLength: 1, maxLength: 1000 },
-                  context: { type: "array", maxItems: 10, items: { type: "object" } },
+                  context: {
+                    type: "array",
+                    maxItems: 10,
+                    items: { type: "object" },
+                  },
                   currentDate: { type: "string", format: "date" },
-                  utcOffsetMinutes: { type: "integer", minimum: -840, maximum: 840 },
+                  utcOffsetMinutes: {
+                    type: "integer",
+                    minimum: -840,
+                    maximum: 840,
+                  },
                 },
               },
             },
@@ -248,8 +257,16 @@ export const swaggerDocument: OpenAPIV3.Document = {
                         title: { type: "string", maxLength: 150 },
                         description: { type: "string", nullable: true },
                         course: { type: "string", nullable: true },
-                        dueDate: { type: "string", format: "date", nullable: true },
-                        priority: { type: "string", enum: ["low", "medium", "high"], nullable: true },
+                        dueDate: {
+                          type: "string",
+                          format: "date",
+                          nullable: true,
+                        },
+                        priority: {
+                          type: "string",
+                          enum: ["low", "medium", "high"],
+                          nullable: true,
+                        },
                       },
                     },
                     clarification: { type: "string", nullable: true },
@@ -261,7 +278,10 @@ export const swaggerDocument: OpenAPIV3.Document = {
           "400": { description: "Invalid request or AI response" },
           "401": { description: "Authentication required" },
           "429": { description: "AI request rate limit exceeded" },
-          "502": { description: "AI provider unavailable or returned an invalid result" },
+          "502": {
+            description:
+              "AI provider unavailable or returned an invalid result",
+          },
         },
       },
     },

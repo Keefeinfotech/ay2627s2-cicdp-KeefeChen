@@ -1,4 +1,4 @@
-const title = process.env.PR_TITLE?.trim() ?? '';
+const title = process.env.PR_TITLE?.trim() ?? "";
 const conventionalCommitTitle =
   /^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\([a-zA-Z0-9][a-zA-Z0-9._/-]*\))?!?: \S.*$/;
 
