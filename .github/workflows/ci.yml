@@ -15,6 +15,18 @@ on:
       - main
       - develop
       - "release/**"
+    paths-ignore:
+      - 'README.md'
+      - 'LICENSE'
+      - 'CONTRIBUTING.md'
+      - 'docs/**'
+
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: 'Branch, tag, or SHA to run against'
+        required: false
+        default: ''
 
 permissions:
   contents: read

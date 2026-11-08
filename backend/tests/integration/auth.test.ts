@@ -29,8 +29,9 @@ const queryResult = (value: unknown) => ({
   exec: vi.fn().mockResolvedValue(value),
 });
 
-// Shared test password and its hash.
-const password = "password123";
+// Shared test password and its hash. Meets the 12-character minimum and
+// complexity rules (uppercase + number + special character).
+const password = "Auxilia$ecure2026";
 const passwordHashPromise = bcrypt.hash(password, 10);
 
 // Reset mock call history before each test.
@@ -159,6 +160,101 @@ describe("POST /api/auth/signup", () => {
 
     expect(res.status).toBe(400);
     expect(res.body.code).toBe("INVALID_JSON");
+  });
+});
+
+// ==========================================
+// PASSWORD STRENGTH TESTS
+// ==========================================
+
+describe("POST /api/auth/signup — password strength", () => {
+  const baseSignup = {
+    email: "strength@example.com",
+    password: "StrongPass1!", // 12 chars, upper, lower, number, special
+  };
+
+  it("rejects a password shorter than 12 characters", async () => {
+    const res = await request(app)
+      .post("/api/auth/signup")
+      .send({ ...baseSignup, password: "Short1!" });
+
+    expect(res.status).toBe(400);
+    expect(res.body.code).toBe("VALIDATION_ERROR");
+    expect(JSON.stringify(res.body.details)).toContain("at least 12 characters");
+  });
+
+  it("rejects a password without an uppercase letter", async () => {
+    const res = await request(app)
+      .post("/api/auth/signup")
+      .send({ ...baseSignup, password: "nouppercase1!" });
+
+    expect(res.status).toBe(400);
+    expect(res.body.code).toBe("VALIDATION_ERROR");
+    expect(JSON.stringify(res.body.details)).toContain("uppercase");
+  });
+
+  it("rejects a password without a lowercase letter", async () => {
+    const res = await request(app)
+      .post("/api/auth/signup")
+      .send({ ...baseSignup, password: "NOLOWERCASE1!" });
+
+    expect(res.status).toBe(400);
+    expect(res.body.code).toBe("VALIDATION_ERROR");
+    expect(JSON.stringify(res.body.details)).toContain("lowercase");
+  });
+
+  it("rejects a password without a number", async () => {
+    const res = await request(app)
+      .post("/api/auth/signup")
+      .send({ ...baseSignup, password: "NoNumberHere!" });
+
+    expect(res.status).toBe(400);
+    expect(res.body.code).toBe("VALIDATION_ERROR");
+    expect(JSON.stringify(res.body.details)).toContain("number");
+  });
+
+  it("rejects a password without a special character", async () => {
+    const res = await request(app)
+      .post("/api/auth/signup")
+      .send({ ...baseSignup, password: "NoSpecial123" });
+
+    expect(res.status).toBe(400);
+    expect(res.body.code).toBe("VALIDATION_ERROR");
+    expect(JSON.stringify(res.body.details)).toContain("special character");
+  });
+
+  it("rejects a common password even when complex", async () => {
+    userModel.findOne.mockImplementation(() => queryResult(null));
+
+    const res = await request(app)
+      .post("/api/auth/signup")
+      .send({
+        email: "common-password@example.com",
+        password: "Password123!",
+      });
+
+    expect(res.status).toBe(400);
+    expect(res.body.code).toBe("VALIDATION_ERROR");
+    expect(JSON.stringify(res.body.details)).toContain("common");
+  });
+
+  it("accepts a strong password that meets all rules", async () => {
+    userModel.findOne.mockImplementation(() => queryResult(null));
+    userModel.create.mockImplementation(() =>
+      Promise.resolve({
+        _id: "user-1",
+        name: "Ada",
+        email: "strength@example.com",
+        role: "user",
+        save: vi.fn().mockResolvedValue(undefined),
+      })
+    );
+
+    const res = await request(app)
+      .post("/api/auth/signup")
+      .send({ ...baseSignup, password: "Auxilia$ecure2026" });
+
+    expect(res.status).toBe(201);
   });
 });
 

@@ -1,0 +1,24 @@
+# CODEOWNERS
+# This file defines who is responsible for reviewing changes to different
+# parts of the repository. GitHub will automatically request reviews from
+# the listed teams/individuals when a pull request touches those files.
+
+# Default owners for the whole repository
+* @Keefeinfotech/auxilia-maintainers
+
+# Backend (Node.js/Express/TypeScript/MongoDB)
+/backend/ @Keefeinfotech/backend-team
+
+# Frontend (Flutter/Dart)
+/frontend/ @Keefeinfotech/frontend-team
+
+# CI/CD pipelines and workflows
+/.github/workflows/ @Keefeinfotech/devops-team
+/.github/scripts/ @Keefeinfotech/devops-team
+
+# Documentation
+/docs/ @Keefeinfotech/docs-team
+
+# Security-related files
+/backend/src/middleware/ @Keefeinfotech/security-team
+/backend/src/modules/auth/ @Keefeinfotech/security-team

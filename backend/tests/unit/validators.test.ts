@@ -8,7 +8,7 @@ describe("signup validation", () => {
       body: {
         name: "  Ada  ",
         email: "  ADA@Example.COM ",
-        password: "password123",
+        password: "Auxilia$ecure2026",
       },
     });
 
@@ -18,7 +18,7 @@ describe("signup validation", () => {
 
   it("rejects an invalid email", () => {
     const result = signupSchema.safeParse({
-      body: { email: "not-an-email", password: "password123" },
+      body: { email: "not-an-email", password: "Auxilia$ecure2026" },
     });
     expect(result.success).toBe(false);
   });
@@ -35,7 +35,7 @@ describe("signup validation", () => {
       body: {
         name: "x".repeat(81),
         email: "ada@example.com",
-        password: "password123",
+        password: "Auxilia$ecure2026",
       },
     });
     expect(result.success).toBe(false);

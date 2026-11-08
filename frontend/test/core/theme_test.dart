@@ -18,11 +18,11 @@ void main() {
     expect(AppColors.warningAmber, const Color(0xFFD97706));
   });
 
-  test('builds a flat light theme with Roboto typography', () {
+  test('builds a flat light theme with Inter typography', () {
     final theme = AppTheme.light();
 
-    expect(AppTypography.fontFamily, 'Roboto');
-    expect(theme.textTheme.bodyMedium?.fontFamily, 'Roboto');
+    expect(AppTypography.fontFamily, 'Inter');
+    expect(theme.textTheme.bodyMedium?.fontFamily, 'Inter');
     expect(theme.colorScheme.primary, AppColors.clearBlue);
     expect(theme.colorScheme.secondary, AppColors.deepNavy);
     expect(theme.scaffoldBackgroundColor, AppColors.softGrey);
