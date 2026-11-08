@@ -26,11 +26,10 @@
 
     * Scripts stay same-origin except for the Google-hosted Flutter CanvasKit
       runtime, loaded via <script src> and dynamic import from
-      https://www.gstatic.com / https://*.gstatic.com.
+      https://www.gstatic.com.
     * CanvasKit/WASM needs 'wasm-unsafe-eval'. Release builds do not require
-      'unsafe-eval'; keep it out so injected strings cannot be evaluated.
-    * The Flutter engine bootstrap may inject inline scripts; a static
-      index.html cannot attach a nonce, so script-src allows 'unsafe-inline'.
+      'unsafe-eval'; keep it out so injected strings cannot be evaluated. The
+      engine bootstrap's inline script is allow-listed with its SHA-256 hash.
     * Turnstile (Cloudflare bot protection) script is hosted on
       https://challenges.cloudflare.com.
     * Flutter renders through inline styles, so style-src needs
@@ -44,7 +43,7 @@
       X-Content-Type-Options: nosniff
       Referrer-Policy: strict-origin-when-cross-origin
   -->
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; script-src 'self' 'wasm-unsafe-eval' 'unsafe-inline' https://challenges.cloudflare.com https://www.gstatic.com https://*.gstatic.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://challenges.cloudflare.com; worker-src 'self' blob:;">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; script-src 'self' 'wasm-unsafe-eval' 'sha256-MndvH2xoJITJx1vAmJTo0n71uGBofeMZfQTpl28Jz7s= https://challenges.cloudflare.com https://www.gstatic.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://challenges.cloudflare.com; worker-src 'self' blob:;">
 
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
