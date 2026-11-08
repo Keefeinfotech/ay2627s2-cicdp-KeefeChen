@@ -22,7 +22,7 @@ export const getJwtSecret = (): string => {
   const secret = process.env.JWT_SECRET?.trim();
   if (!secret || secret.length < MIN_JWT_SECRET_LENGTH) {
     throw new EnvError(
-      `JWT_SECRET must be set to at least ${MIN_JWT_SECRET_LENGTH} characters`
+      `JWT_SECRET must be set to at least ${MIN_JWT_SECRET_LENGTH} characters`,
     );
   }
   return secret;
@@ -64,9 +64,9 @@ export const getAppBaseUrl = (): string =>
 export const isSmtpConfigured = (): boolean =>
   Boolean(
     process.env.SMTP_HOST?.trim() &&
-      process.env.SMTP_USER?.trim() &&
-      process.env.SMTP_PASS?.trim() &&
-      process.env.EMAIL_FROM?.trim(),
+    process.env.SMTP_USER?.trim() &&
+    process.env.SMTP_PASS?.trim() &&
+    process.env.EMAIL_FROM?.trim(),
   );
 
 export const getAuthRateLimitMax = (): number => {
@@ -77,6 +77,11 @@ export const getAuthRateLimitMax = (): number => {
 export const getAiRateLimitPerUser = (): number => {
   const parsed = Number(process.env.AI_RATE_LIMIT_PER_USER);
   return Number.isInteger(parsed) && parsed > 0 ? parsed : 20;
+};
+
+export const getApiRateLimitMax = (): number => {
+  const parsed = Number(process.env.API_RATE_LIMIT_MAX);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : 300;
 };
 
 export const getAiProvider = (): string =>
@@ -122,7 +127,7 @@ export const assertRuntimeEnv = (): void => {
     !process.env.TURNSTILE_SECRET_KEY?.trim()
   ) {
     throw new EnvError(
-      "CAPTCHA_ENABLED=true requires TURNSTILE_SECRET_KEY to be set"
+      "CAPTCHA_ENABLED=true requires TURNSTILE_SECRET_KEY to be set",
     );
   }
 

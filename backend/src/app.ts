@@ -18,6 +18,7 @@ import {
 import { errorHandler } from "./middleware/errorHandler.js";
 import { notFound } from "./middleware/notFound.js";
 import { requestId } from "./middleware/requestId.js";
+import { apiRateLimiter } from "./middleware/rateLimiter.js";
 import authRoutes from "./modules/auth/auth.routes.js";
 import aiRoutes from "./modules/ai/ai.routes.js";
 import healthRoutes from "./modules/health/health.routes.js";
@@ -54,6 +55,7 @@ app.use(helmetMiddleware);
 app.use(cors(corsOptions));
 app.use(express.json(jsonBodyOptions));
 app.use(express.urlencoded(urlEncodedBodyOptions));
+app.use("/api", apiRateLimiter);
 
 if (!isProduction()) {
   app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));

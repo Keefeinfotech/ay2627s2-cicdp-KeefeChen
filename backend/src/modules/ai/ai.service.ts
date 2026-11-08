@@ -44,6 +44,48 @@ const SYSTEM_PROMPT =
   "work for the student. If you are unsure, say so and suggest a small next " +
   "step.";
 
+const stripTrailing = (value: string, chars: string): string => {
+  let end = value.length;
+  while (end > 0 && chars.includes(value.charAt(end - 1))) end -= 1;
+  return value.slice(0, end);
+};
+
+// Deterministic, single-pass course extraction. The phrase "for the course X"
+// (or "for class X"/"for course X") is anchored at the end of the title, so a
+// lastIndexOf search is sufficient and avoids backtracking on untrusted text.
+const extractCourse = (
+  title: string,
+): { cleanedTitle: string; course: string | null } => {
+  const lower = title.toLowerCase();
+  const prefixes = [
+    " for the course ",
+    " for course ",
+    " for the class ",
+    " for class ",
+  ];
+  for (const prefix of prefixes) {
+    const start = lower.lastIndexOf(prefix);
+    if (start === -1) continue;
+    const course = title.slice(start + prefix.length).trim();
+    const cleanedTitle = title.slice(0, start).trim();
+    if (!course) continue;
+    return { cleanedTitle, course };
+  }
+  const leadingPrefixes = [
+    "for the course ",
+    "for course ",
+    "for the class ",
+    "for class ",
+  ];
+  for (const prefix of leadingPrefixes) {
+    if (lower.startsWith(prefix)) {
+      const course = title.slice(prefix.length).trim();
+      return { cleanedTitle: "", course: course || null };
+    }
+  }
+  return { cleanedTitle: title, course: null };
+};
+
 const mockReply = (
   message: string,
   provider: string,
@@ -96,7 +138,7 @@ function createMockTaskDraft(
     };
   }
 
-  let title = message.trim().replace(/[.!?]+$/, "");
+  let title = stripTrailing(message.trim(), ".!?");
   title = title.replace(/^(?:(?:please|could you|can you)\s+)+/i, "");
   title = title.replace(/^(?:i need to|i have to|remember to)\s+/i, "");
   title = title.replace(
@@ -104,11 +146,9 @@ function createMockTaskDraft(
     "",
   );
   title = title.replace(/^remind me to\s+/i, "");
-  const course =
-    title.match(/\bfor (?:the )?(?:course|class)\s+([^,;]+)$/i)?.[1]?.trim() ??
-    null;
-  if (course)
-    title = title.replace(/\s+for (?:the )?(?:course|class)\s+[^,;]+$/i, "");
+  const courseExtraction = extractCourse(title);
+  const course = courseExtraction.course;
+  title = courseExtraction.cleanedTitle;
 
   const priorityMatch = title.match(
     /\b(low|medium|high)\s+priority\b|\bpriority\s+(low|medium|high)\b/i,
@@ -120,10 +160,7 @@ function createMockTaskDraft(
   if (priorityMatch) title = title.replace(priorityMatch[0], "");
   if (dueMatch) title = title.replace(dueMatch[0], "");
   title = title.replace(/\b(?:due|by|on)\s*$/i, "");
-  title = title
-    .replace(/\s+/g, " ")
-    .replace(/[,:;\-]+$/, "")
-    .trim();
+  title = stripTrailing(title.replace(/\s+/g, " "), ",:;-").trim();
   if (!title || /^(?:a task|task|something|it)$/i.test(title)) {
     return {
       reply:
