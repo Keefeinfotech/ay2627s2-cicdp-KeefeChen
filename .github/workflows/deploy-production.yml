@@ -33,7 +33,22 @@ jobs:
           node-version: "22"
 
       - name: Install pinned Railway CLI
-        run: npm install --global @railway/cli@5.71.0
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Install the pinned release binary directly instead of the npm
+          # package: the package's lifecycle script downloads this same
+          # binary, but fetching it directly avoids running third-party
+          # install scripts during the deploy (githubactions:S6505).
+          archive="$(mktemp -d)"
+          curl -fsSL --retry 3 \
+            -o "$archive/railway.tar.gz" \
+            "https://github.com/railwayapp/cli/releases/download/v5.71.0/railway-v5.71.0-x86_64-unknown-linux-musl.tar.gz"
+          echo "2e682fd2ddf8d6fdf9e46d9d99d99646ff0022a6abb0c2bca93011348a269fb9  $archive/railway.tar.gz" | sha256sum -c -
+          tar -xzf "$archive/railway.tar.gz" -C "$archive"
+          sudo install -m 0755 "$archive/railway" /usr/local/bin/railway
+          rm -rf "$archive"
+          railway --version
 
       - name: Deploy backend from merged main
         shell: bash

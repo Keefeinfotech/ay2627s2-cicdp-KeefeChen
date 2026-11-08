@@ -8,17 +8,26 @@ const headSha = process.env.HEAD_SHA;
 const zeroSha = /^0+$/;
 const gitArgs = ["diff", "--name-only", "--diff-filter=ACMR"];
 
+// Resolve git from a fixed absolute path instead of relying on PATH, which
+// may contain writable entries that could shadow the real binary (S4036).
+// Set GIT_BINARY to override the default on unusual installations.
+const gitBinary =
+  process.env.GIT_BINARY ||
+  (process.platform === "win32"
+    ? "C:\\Program Files\\Git\\cmd\\git.exe"
+    : "/usr/bin/git");
+
 if (baseSha && headSha && !zeroSha.test(baseSha)) {
   gitArgs.push(`${baseSha}...${headSha}`);
 } else {
   gitArgs.push("HEAD");
 }
 
-const repoRoot = execFileSync("git", ["rev-parse", "--show-toplevel"], {
+const repoRoot = execFileSync(gitBinary, ["rev-parse", "--show-toplevel"], {
   encoding: "utf8",
 }).trim();
 
-const changedFiles = execFileSync("git", gitArgs, {
+const changedFiles = execFileSync(gitBinary, gitArgs, {
   cwd: repoRoot,
   encoding: "utf8",
 })
