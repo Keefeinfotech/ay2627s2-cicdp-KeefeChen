@@ -38,6 +38,8 @@ changed after code review and merge.
 | CI run #89 (dfe1137) Trivy/CodeQL/gitleaks/backend | Pass; SonarCloud quality gate still failing |
 | CI run #93 (0f82a91) Trivy/CodeQL/gitleaks/backend/frontend | Pass; SonarCloud quality gate still failing (`Security Rating on New Code < A`) |
 | CI run #94 (17a60c7, push) SonarCloud quality gate | Pass; backend/gitleaks pass; Trivy/Frontend/CodeQL in progress at last check |
+| CI run #95 (17a60c7, pull_request) Trivy/CodeQL/deps/gitleaks/backend | Pass; SonarCloud quality gate pass; Final Quality Gate pending on the aggregate |
+| CI run #100/#101 (d5c8ca5, push + pull_request) CodeQL/rate-limit/regex fixes | In progress at last check; backend lint/typecheck/tests/coverage green locally (212 tests, 52.45% statements) |
 
 ## Story-by-story status
 
@@ -148,9 +150,18 @@ Runs on PR #12 failed on the branch-protection checks. What was done for each:
   - The PR-scoped SonarCloud analysis now reports the gate green (run #94,
     commit `17a60c7`).
 - **CodeQL / Dependency Review / Gitleaks / PR conventions** — pass throughout.
+- **CodeQL / new code — fixed.** `ai.service.ts` had four polynomial
+  regular expressions on user-controlled input (`[.!?]+$`, `\bfor ...$`,
+  `\s+for ...$`, `[,:;\-]+$`); they were replaced with deterministic,
+  non-regex helpers (`stripTrailing`, `extractCourse`). All authenticated
+  API route handlers were unguarded by a baseline limiter, so a global
+  `apiRateLimiter` (300 requests per 15 min per user/IP, configurable via
+  `API_RATE_LIMIT_MAX`, skipped under `NODE_ENV=test`) is now mounted on
+  `/api` ahead of the routers. The AI route limiters and `authRateLimiter`
+  remain in place on top of the baseline.
 - Known residual Sonar findings (new code, not merge-blocking but should be
-  triaged): four `tssecurity:S8786` regular-expression backtracking warnings in
-  `backend/src/modules/ai/ai.service.ts`.
+  triaged): the four regex sites were the same lines CodeQL flagged
+  (`tssecurity:S8786`) and are now resolved; no S8786 references remain.
 
 The same remediation was pushed to both `fix/frontend-assistant-compile-errors`
 (PR #13) and `feature/natural-language-task-assistant` (PR #12).
