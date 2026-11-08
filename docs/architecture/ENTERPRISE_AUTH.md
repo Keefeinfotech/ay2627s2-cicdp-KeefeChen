@@ -13,7 +13,7 @@ This documents the login/signup hardening added on `feature/enterprise-auth`.
 | CORS allow-list | Explicit origins, methods, headers and preflight cache. Unknown origins get `403 CORS_FORBIDDEN`. | `backend/src/app.ts`, `backend/src/config/security.ts`, `backend/src/middleware/errorHandler.ts` |
 | Rate limiting | Auth endpoints are limited per IP; AI endpoints per authenticated user. | `backend/src/middleware/rateLimiter.ts`, `backend/src/modules/auth/auth.routes.ts`, `backend/src/modules/ai/ai.routes.ts` |
 | Secure headers | `helmet` + `x-powered-by` disabled. | `backend/src/app.ts`, `backend/src/config/security.ts` |
-| Proxy awareness | `TRUST_PROXY=true` so real client IPs are used behind Railway/Cloudflare. | `backend/src/app.ts` |
+| Proxy awareness | `TRUST_PROXY=true` so real client IPs are used behind Render/Cloudflare. | `backend/src/app.ts` |
 | Startup validation | Production refuses to boot without CAPTCHA or CORS config. | `backend/src/config/environment.ts` |
 
 ## Configuration

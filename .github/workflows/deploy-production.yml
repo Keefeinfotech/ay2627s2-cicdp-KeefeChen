@@ -9,17 +9,17 @@ permissions:
   contents: read
 
 concurrency:
-  group: railway-production-backend
+  group: render-production-backend
   cancel-in-progress: false
 
 jobs:
   deploy-backend:
-    name: Deploy - Railway Production
+    name: Deploy - Render Production
     runs-on: ubuntu-latest
     timeout-minutes: 30
     environment:
       name: production
-      url: ${{ vars.RAILWAY_API_BASE_URL }}
+      url: ${{ vars.RENDER_API_BASE_URL }}
 
     steps:
       - name: Checkout merged source
@@ -32,57 +32,52 @@ jobs:
         with:
           node-version: "22"
 
-      - name: Install pinned Railway CLI
-        shell: bash
-        run: |
-          set -euo pipefail
-          # Install the pinned release binary directly instead of the npm
-          # package: the package's lifecycle script downloads this same
-          # binary, but fetching it directly avoids running third-party
-          # install scripts during the deploy (githubactions:S6505).
-          archive="$(mktemp -d)"
-          curl --proto "=https" -fsSL --retry 3 \
-            -o "$archive/railway.tar.gz" \
-            "https://github.com/railwayapp/cli/releases/download/v5.71.0/railway-v5.71.0-x86_64-unknown-linux-musl.tar.gz"
-          echo "2e682fd2ddf8d6fdf9e46d9d99d99646ff0022a6abb0c2bca93011348a269fb9  $archive/railway.tar.gz" | sha256sum -c -
-          tar -xzf "$archive/railway.tar.gz" -C "$archive"
-          sudo install -m 0755 "$archive/railway" /usr/local/bin/railway
-          rm -rf "$archive"
-          railway --version
-
-      - name: Deploy backend from merged main
+      - name: Trigger Render deploy
         shell: bash
         env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-          RAILWAY_PROJECT_ID: ${{ vars.RAILWAY_PROJECT_ID }}
-          RAILWAY_ENVIRONMENT_NAME: ${{ vars.RAILWAY_ENVIRONMENT_NAME }}
-          RAILWAY_SERVICE_NAME: ${{ vars.RAILWAY_SERVICE_NAME }}
+          RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
         run: |
           set -euo pipefail
-          if [[ -z "$RAILWAY_TOKEN" || -z "$RAILWAY_PROJECT_ID" || \
-                -z "$RAILWAY_ENVIRONMENT_NAME" || -z "$RAILWAY_SERVICE_NAME" ]]; then
-            echo "::error::Configure the Railway project token, project, environment, and service before deployment."
-            exit 1
+          # Render deploys automatically on push to main when the service is
+          # connected to this repository (see render.yaml). If a deploy hook
+          # secret is configured, trigger it explicitly so the deploy is
+          # certain; otherwise fall through and rely on the Blueprint.
+          if [[ -n "$RENDER_DEPLOY_HOOK_URL" ]]; then
+            curl --proto "=https" -fsSL -X POST "$RENDER_DEPLOY_HOOK_URL"
+            echo "Render deploy hook triggered."
+          else
+            echo "::notice::RENDER_DEPLOY_HOOK_URL is not set; relying on the Render service's auto-deploy from this push to main."
           fi
 
-          railway up ./backend \
-            --path-as-root \
-            --project "$RAILWAY_PROJECT_ID" \
-            --environment "$RAILWAY_ENVIRONMENT_NAME" \
-            --service "$RAILWAY_SERVICE_NAME" \
-            --message "GitHub commit ${GITHUB_SHA}" \
-            --ci
+      - name: Wait for the backend to become healthy
+        shell: bash
+        env:
+          SMOKE_BASE_URL: ${{ vars.RENDER_API_BASE_URL }}
+        run: |
+          set -euo pipefail
+          if [[ -z "$SMOKE_BASE_URL" ]]; then
+            echo "::error::Set the production RENDER_API_BASE_URL variable before deploying (e.g. https://auxilia-backend.onrender.com)."
+            exit 1
+          fi
+          # Poll up to 10 minutes (60 x 10s) for a healthy deploy.
+          for attempt in $(seq 1 60); do
+            code="$(curl --proto "=https" -s -o /dev/null -w '%{http_code}' "$SMOKE_BASE_URL/api/health" || true)"
+            echo "health probe ${attempt}/60 -> HTTP ${code:-000}"
+            if [[ "$code" == "200" ]]; then
+              echo "Service healthy after ${attempt} probe(s)."
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "::error::$SMOKE_BASE_URL/api/health did not return 200 within 10 minutes of the deploy."
+          exit 1
 
       - name: Run post-deployment smoke checks
         shell: bash
         env:
-          SMOKE_BASE_URL: ${{ vars.RAILWAY_API_BASE_URL }}
+          SMOKE_BASE_URL: ${{ vars.RENDER_API_BASE_URL }}
         run: |
           set -euo pipefail
-          if [[ -z "$SMOKE_BASE_URL" ]]; then
-            echo "::error::Set the production RAILWAY_API_BASE_URL variable before deploying."
-            exit 1
-          fi
           node scripts/smoke-test.mjs "$SMOKE_BASE_URL"
 
       - name: Record deployment trace
@@ -92,7 +87,7 @@ jobs:
           DEPLOYED_COMMIT: ${{ github.sha }}
         run: |
           {
-            echo "## Railway Production Deployment"
+            echo "## Render Production Deployment"
             echo ""
             echo "- Result: $DEPLOYMENT_RESULT"
             echo "- Source commit: $DEPLOYED_COMMIT"
@@ -104,5 +99,5 @@ jobs:
         run: |
           {
             echo ""
-            echo "Smoke validation or deployment failed. Review Railway deployment logs, then use the Railway service Deployments page to roll back to the previous successful deployment if the new version became active."
+            echo "Smoke validation or deployment failed. Review the Render deploy logs for this service, then roll back to the previous successful deploy from Render's Deploys page (or revert the offending commit on main) before retrying."
           } >> "$GITHUB_STEP_SUMMARY"

@@ -1,0 +1,37 @@
+# Render Blueprint for the Auxilia production backend.
+#
+# Render deploys this service automatically on every push to `main`. The
+# GitHub Actions workflow in .github/workflows/deploy-production.yml triggers
+# the same deploy hook and then waits for /api/health before smoke-checking;
+# this keeps a single deploy path instead of two competing pipelines.
+#
+# If a service already exists in the Render dashboard, align `name` (or point
+# the dashboard at this file as a Blueprint) so Render manages the same
+# service rather than creating a duplicate.
+#
+# Sensitive values (JWT_SECRET, MONGODB_URI, TURNSTILE_SECRET_KEY, SMTP_*,
+# AI_API_KEY, ...) must be set in the Render dashboard, never here.
+
+services:
+  - type: web
+    name: auxilia-backend
+    runtime: docker
+    dockerfilePath: backend/Dockerfile
+    dockerContext: backend
+    plan: free
+    region: singapore
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: TRUST_PROXY
+        value: "true"
+      # Set in the Render dashboard (not committed):
+      # - MONGODB_URI
+      # - JWT_SECRET
+      # - CORS_ORIGIN  (only the deployed web origin, e.g. https://auxilia-web.onrender.com)
+      # - TURNSTILE_SECRET_KEY and TURNSTILE_SITE_KEY
+      # - SMTP_HOST, SMTP_USER, SMTP_PASS, EMAIL_FROM
+      # - AI_PROVIDER, AI_API_KEY, AI_BASE_URL, AI_MODEL
+      # - API_BASE_URL only for the frontend build (see frontend/web)

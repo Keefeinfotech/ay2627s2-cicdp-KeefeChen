@@ -143,9 +143,11 @@ Runs on PR #12 failed on the branch-protection checks. What was done for each:
     `https:` was removed from `connect-src`; `http://localhost:*` was pinned to
     the default dev backend port (`localhost:3000`). No wildcard or
     `unsafe-inline` sources remain.
-  - `.github/workflows/deploy-production.yml`: enforce HTTPS with
-    `curl --proto "=https"` so the pinned Railway CLI install cannot fall back
-    to HTTP.
+  - `.github/workflows/deploy-production.yml`: production deploy moved from
+    the Railway CLI to Render (see `render.yaml`). The deploy hook is called
+    with HTTPS only (`curl --proto "=https" -X POST`), the workflow polls
+    `/api/health` until the service answers 200, then runs the same
+    non-mutating smoke checks.
   - `backend/Dockerfile`: runtime now runs as the unprivileged `node` user.
   - The PR-scoped SonarCloud analysis now reports the gate green (run #94,
     commit `17a60c7`).
