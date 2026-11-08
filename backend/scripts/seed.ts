@@ -313,7 +313,9 @@ const main = async (): Promise<void> => {
     await printSummary();
     success("Seeding complete.");
   } catch (err) {
-    error(`Seeding failed: ${err instanceof Error ? err.message : String(err)}`);
+    error(
+      `Seeding failed: ${err instanceof Error ? err.message : String(err)}`,
+    );
     process.exit(1);
   } finally {
     await disconnectDatabase();

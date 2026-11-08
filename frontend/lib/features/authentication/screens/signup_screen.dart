@@ -12,13 +12,7 @@ import '../data/session_store.dart';
 import '../widgets/auth_shell.dart';
 
 /// Password strength levels, from weakest to strongest.
-enum _PasswordStrength {
-  veryWeak,
-  weak,
-  moderate,
-  strong,
-  veryStrong,
-}
+enum _PasswordStrength { veryWeak, weak, moderate, strong, veryStrong }
 
 /// Evaluates password strength using length, character variety and common
 /// password patterns — mirroring the backend rules so the client can give
@@ -59,9 +53,12 @@ class _PasswordStrengthChecker {
     final bool hasLower = RegExp(r'[a-z]').hasMatch(password);
     final bool hasDigit = RegExp(r'\d').hasMatch(password);
     final bool hasSpecial = RegExp(r'[^A-Za-z\d]').hasMatch(password);
-    final int variety = [hasUpper, hasLower, hasDigit, hasSpecial]
-        .where((b) => b)
-        .length;
+    final int variety = [
+      hasUpper,
+      hasLower,
+      hasDigit,
+      hasSpecial,
+    ].where((b) => b).length;
 
     final bool isCommon = _commonPasswords.contains(password.toLowerCase());
 
@@ -100,10 +97,7 @@ class _PasswordStrengthChecker {
 
 /// Password requirements that are checked in real time.
 class _PasswordRequirement {
-  const _PasswordRequirement({
-    required this.label,
-    required this.check,
-  });
+  const _PasswordRequirement({required this.label, required this.check});
 
   final String label;
   final bool Function(String) check;
@@ -132,33 +126,35 @@ class _SignupScreenState extends State<SignupScreen> {
   final bool _obscureConfirm = true;
   _PasswordStrength _strength = _PasswordStrength.veryWeak;
 
-  static final List<_PasswordRequirement> _requirements = <_PasswordRequirement>[
-    _PasswordRequirement(
-      label: 'At least 12 characters',
-      check: (pw) => pw.length >= 12,
-    ),
-    _PasswordRequirement(
-      label: 'At least one uppercase letter',
-      check: (pw) => RegExp(r'[A-Z]').hasMatch(pw),
-    ),
-    _PasswordRequirement(
-      label: 'At least one lowercase letter',
-      check: (pw) => RegExp(r'[a-z]').hasMatch(pw),
-    ),
-    _PasswordRequirement(
-      label: 'At least one number',
-      check: (pw) => RegExp(r'\d').hasMatch(pw),
-    ),
-    _PasswordRequirement(
-      label: 'At least one special character',
-      check: (pw) => RegExp(r'[^A-Za-z\d]').hasMatch(pw),
-    ),
-    _PasswordRequirement(
-      label: 'Not a commonly used password',
-      check: (pw) =>
-          !_PasswordStrengthChecker._commonPasswords.contains(pw.toLowerCase()),
-    ),
-  ];
+  static final List<_PasswordRequirement> _requirements =
+      <_PasswordRequirement>[
+        _PasswordRequirement(
+          label: 'At least 12 characters',
+          check: (pw) => pw.length >= 12,
+        ),
+        _PasswordRequirement(
+          label: 'At least one uppercase letter',
+          check: (pw) => RegExp(r'[A-Z]').hasMatch(pw),
+        ),
+        _PasswordRequirement(
+          label: 'At least one lowercase letter',
+          check: (pw) => RegExp(r'[a-z]').hasMatch(pw),
+        ),
+        _PasswordRequirement(
+          label: 'At least one number',
+          check: (pw) => RegExp(r'\d').hasMatch(pw),
+        ),
+        _PasswordRequirement(
+          label: 'At least one special character',
+          check: (pw) => RegExp(r'[^A-Za-z\d]').hasMatch(pw),
+        ),
+        _PasswordRequirement(
+          label: 'Not a commonly used password',
+          check: (pw) => !_PasswordStrengthChecker._commonPasswords.contains(
+            pw.toLowerCase(),
+          ),
+        ),
+      ];
 
   @override
   void initState() {
@@ -196,8 +192,7 @@ class _SignupScreenState extends State<SignupScreen> {
         _strength.index >= _PasswordStrength.strong.index &&
         _passwordsMatch &&
         _email.text.trim().isNotEmpty &&
-        RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
-            .hasMatch(_email.text.trim());
+        RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(_email.text.trim());
   }
 
   Future<void> _signup() async {
@@ -379,8 +374,8 @@ class _SignupScreenState extends State<SignupScreen> {
                     final email = (value ?? '').trim();
                     if (email.isEmpty) return 'Enter your email address';
                     if (!RegExp(
-                          r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
-                        ).hasMatch(email)) {
+                      r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
+                    ).hasMatch(email)) {
                       return 'Enter a valid email address';
                     }
                     return null;
@@ -503,5 +498,3 @@ class _SignupScreenState extends State<SignupScreen> {
     );
   }
 }
-
-
