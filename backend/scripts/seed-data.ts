@@ -210,9 +210,9 @@ const makeTask = (
 // Tasks (covers all required test scenarios)
 // ---------------------------------------------------------------------------
 
-export const seedTasks = [
+const taskData = [
   // --- Alice (alice@example.com) ---
-  makeTask(
+  [
     seedUsers[1]._id,
     "Finish research summary",
     "CS101",
@@ -224,8 +224,8 @@ export const seedTasks = [
     daysFromNow(0),
     null,
     "todo",
-  ),
-  makeTask(
+  ],
+  [
     seedUsers[1]._id,
     "Read chapter 4",
     "CS101",
@@ -237,8 +237,8 @@ export const seedTasks = [
     "medium",
     daysFromNow(2),
     null,
-  ),
-  makeTask(
+  ],
+  [
     seedUsers[1]._id,
     "Submit lab report",
     "CS101",
@@ -250,8 +250,8 @@ export const seedTasks = [
     "high",
     daysFromNow(-3),
     daysFromNow(-1),
-  ),
-  makeTask(
+  ],
+  [
     seedUsers[1]._id,
     "Midterm exam preparation",
     "CS101",
@@ -263,8 +263,8 @@ export const seedTasks = [
     "urgent",
     daysFromNow(-1),
     null,
-  ),
-  makeTask(
+  ],
+  [
     seedUsers[1]._id,
     "Group project milestone 1",
     "SE301",
@@ -276,8 +276,8 @@ export const seedTasks = [
     "high",
     daysFromNow(5),
     null,
-  ),
-  makeTask(
+  ],
+  [
     seedUsers[1]._id,
     "Attend office hours",
     "CS101",
@@ -289,10 +289,10 @@ export const seedTasks = [
     "low",
     daysFromNow(-5),
     daysFromNow(-5),
-  ),
+  ],
 
   // --- Bob (bob@example.com) ---
-  makeTask(
+  [
     seedUsers[2]._id,
     "Capstone prototype demo",
     "SE401",
@@ -304,8 +304,8 @@ export const seedTasks = [
     "urgent",
     daysFromNow(1),
     null,
-  ),
-  makeTask(
+  ],
+  [
     seedUsers[2]._id,
     "Database schema review",
     "SE301",
@@ -317,8 +317,8 @@ export const seedTasks = [
     "medium",
     daysFromNow(3),
     null,
-  ),
-  makeTask(
+  ],
+  [
     seedUsers[2]._id,
     "Weekly timesheet",
     "",
@@ -330,8 +330,8 @@ export const seedTasks = [
     "low",
     daysFromNow(-2),
     daysFromNow(-2),
-  ),
-  makeTask(
+  ],
+  [
     seedUsers[2]._id,
     "Fix login bug",
     "",
@@ -343,8 +343,8 @@ export const seedTasks = [
     "high",
     daysFromNow(-2),
     null,
-  ),
-  makeTask(
+  ],
+  [
     seedUsers[2]._id,
     "Team standup",
     "SE401",
@@ -356,10 +356,10 @@ export const seedTasks = [
     "medium",
     daysFromNow(-1),
     daysFromNow(-1),
-  ),
+  ],
 
   // --- Carol (carol@example.com) ---
-  makeTask(
+  [
     seedUsers[3]._id,
     "Essay draft",
     "ENG202",
@@ -371,8 +371,8 @@ export const seedTasks = [
     "medium",
     daysFromNow(4),
     null,
-  ),
-  makeTask(
+  ],
+  [
     seedUsers[3]._id,
     "Art history quiz",
     "ART101",
@@ -384,8 +384,8 @@ export const seedTasks = [
     "high",
     daysFromNow(1),
     null,
-  ),
-  makeTask(
+  ],
+  [
     seedUsers[3]._id,
     "Submit portfolio",
     "DES101",
@@ -397,10 +397,10 @@ export const seedTasks = [
     "high",
     daysFromNow(-4),
     daysFromNow(-4),
-  ),
+  ],
 
   // --- David (david@example.com) ---
-  makeTask(
+  [
     seedUsers[4]._id,
     "Orientation session",
     "ORI100",
@@ -412,8 +412,37 @@ export const seedTasks = [
     "medium",
     daysFromNow(-7),
     daysFromNow(-7),
-  ),
+  ],
 ];
+
+export const seedTasks = taskData.map(
+  ([
+    userId,
+    title,
+    course,
+    tags,
+    groupId,
+    assigneeId,
+    assigneeName,
+    priority,
+    dueDate,
+    completedAt,
+    status,
+  ]) =>
+    makeTask(
+      userId,
+      title,
+      course,
+      tags,
+      groupId,
+      assigneeId,
+      assigneeName,
+      priority,
+      dueDate,
+      completedAt,
+      status,
+    ),
+);
 
 // ---------------------------------------------------------------------------
 // Roadmaps
