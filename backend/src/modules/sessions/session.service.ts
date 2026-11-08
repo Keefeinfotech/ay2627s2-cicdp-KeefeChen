@@ -17,12 +17,8 @@ import type { StudySessionDocument } from "./session.model.js";
 import type {
   CreateSessionInput,
   ListSessionsQuery,
-  SessionStatus,
   UpdateSessionInput,
 } from "./session.types.js";
-
-const canManage = (userId: string, session: StudySessionDocument): boolean =>
-  userId === (session.createdBy as string | undefined);
 
 export const sessionService = {
   /**
@@ -33,7 +29,7 @@ export const sessionService = {
     userId: string,
     input: CreateSessionInput,
   ): Promise<StudySessionDocument> {
-    const membership = await requireGroupMembership(groupId, userId);
+    await requireGroupMembership(groupId, userId);
 
     if (input.endsAt.getTime() <= input.startsAt.getTime()) {
       throw new AppError(
@@ -64,18 +60,13 @@ export const sessionService = {
       metadata: { startsAt: input.startsAt },
     });
 
-
     return session;
   },
 
   /**
    * Lists sessions for the group with optional filters.
    */
-  async list(
-    groupId: string,
-    userId: string,
-    query: ListSessionsQuery,
-  ) {
+  async list(groupId: string, userId: string, query: ListSessionsQuery) {
     await requireGroupMembership(groupId, userId);
 
     const page = query.page ?? 1;
@@ -296,11 +287,7 @@ export const sessionService = {
     );
 
     if (!joined) {
-      throw new AppError(
-        409,
-        "SESSION_FULL",
-        "This session is already full.",
-      );
+      throw new AppError(409, "SESSION_FULL", "This session is already full.");
     }
 
     await auditService.record({
@@ -379,5 +366,3 @@ export const sessionService = {
     }
   },
 };
-
-

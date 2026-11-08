@@ -4,7 +4,7 @@
  * Author: Keefe Chen
  */
 
-import mongoose, { Schema, type Model } from "mongoose";
+import mongoose, { Schema } from "mongoose";
 
 const reminderSchema = new Schema(
   {
@@ -37,7 +37,7 @@ const reminderSchema = new Schema(
   {
     timestamps: true,
     versionKey: false,
-  }
+  },
 );
 
 /** Mongoose indexes */

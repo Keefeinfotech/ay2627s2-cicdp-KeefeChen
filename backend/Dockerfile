@@ -2,7 +2,7 @@
 # ==========================================
 # Stage 1: Build
 # ==========================================
-FROM node:22-alpine AS build
+FROM node:22-alpine@sha256:0e1754758c2df4cfa3e68d59e2e1b7374bb7fd9ea6328eaaacf15cc934af8202 AS build
 
 WORKDIR /app
 
@@ -23,7 +23,7 @@ RUN npm run build
 # ==========================================
 # Stage 2: Production Runtime
 # ==========================================
-FROM node:22-alpine AS runtime
+FROM node:22-alpine@sha256:0e1754758c2df4cfa3e68d59e2e1b7374bb7fd9ea6328eaaacf15cc934af8202 AS runtime
 
 WORKDIR /app
 
@@ -32,14 +32,29 @@ ENV NODE_ENV=production
 # Copy dependency manifests
 COPY package*.json ./
 
-# Install production dependencies only
-RUN npm ci --omit=dev --ignore-scripts && npm cache clean --force
+# Install production dependencies only, then remove npm/npx from the runtime
+# image. Nothing at runtime needs them (the container executes `node`
+# directly), and npm ships bundled libraries with known CVEs that Trivy
+# flags during the image scan.
+RUN npm ci --omit=dev --ignore-scripts && npm cache clean --force \
+    && rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx
+
+# Patch Alpine packages so Trivy no longer reports known HIGH/CRITICAL
+# vulnerabilities in the base image layer.
+RUN apk upgrade --no-cache
 
 # Copy compiled JavaScript
 COPY --from=build /app/dist ./dist
 
+# Runtime writes application logs to ./logs, so hand ownership to the
+# unprivileged runtime user before dropping privileges.
+RUN mkdir -p /app/logs && chown -R node:node /app
+
 # Expose application port
 EXPOSE 3000
 
-# Start application
-CMD ["npm", "start"]
+# Run the compiled server as the unprivileged node user instead of root.
+USER node
+
+# Start application (same entry point as `npm start`, without npm in the image)
+CMD ["node", "dist/server.js"]

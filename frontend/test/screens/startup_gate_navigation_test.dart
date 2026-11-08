@@ -33,10 +33,10 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Your responsibilities, organised.'), findsOneWidget);
+    expect(find.text('Everything you need, in one place.'), findsOneWidget);
   });
 
-  testWidgets('returning unauthenticated user goes straight to login', (
+  testWidgets('returning user after logout bypasses onboarding', (
     tester,
   ) async {
     SharedPreferences.setMockInitialValues(<String, Object>{
@@ -55,7 +55,12 @@ void main() {
     expect(find.text('Your responsibilities, organised.'), findsNothing);
   });
 
-  testWidgets('authenticated launch restores the dashboard', (tester) async {
+  testWidgets('authenticated returning user restores the dashboard', (
+    tester,
+  ) async {
+    SharedPreferences.setMockInitialValues(<String, Object>{
+      OnboardingStore.storageKey: true,
+    });
     final store = TaskStore(
       repository: InMemoryTaskRepository(),
       ownerId: 'student@example.com',
@@ -81,5 +86,41 @@ void main() {
     expect(find.text('Auxilia'), findsOneWidget);
     expect(find.byTooltip('Profile and settings'), findsOneWidget);
     expect(find.text('No tasks yet'), findsOneWidget);
+  });
+
+  testWidgets('authenticated first launch completes onboarding before home', (
+    tester,
+  ) async {
+    final store = TaskStore(
+      repository: InMemoryTaskRepository(),
+      ownerId: 'student@example.com',
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AuxiliaTheme.light(),
+        home: StartupGate(
+          auth: _FakeAuth(
+            const Session(
+              token: 'token-123',
+              email: 'student@example.com',
+              name: 'Sam',
+            ),
+          ),
+          store: store,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Everything you need, in one place.'), findsOneWidget);
+    expect(find.text('No tasks yet'), findsNothing);
+
+    await tester.tap(find.text('Skip'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('No tasks yet'), findsOneWidget);
+    final prefs = await SharedPreferences.getInstance();
+    expect(prefs.getBool(OnboardingStore.storageKey), isTrue);
   });
 }

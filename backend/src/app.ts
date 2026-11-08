@@ -18,6 +18,7 @@ import {
 import { errorHandler } from "./middleware/errorHandler.js";
 import { notFound } from "./middleware/notFound.js";
 import { requestId } from "./middleware/requestId.js";
+import { apiRateLimiter } from "./middleware/rateLimiter.js";
 import authRoutes from "./modules/auth/auth.routes.js";
 import aiRoutes from "./modules/ai/ai.routes.js";
 import healthRoutes from "./modules/health/health.routes.js";
@@ -32,7 +33,6 @@ import feedbackRoutes from "./modules/feedback/feedback.routes.js";
 import sessionRoutes from "./modules/sessions/session.routes.js";
 import progressRoutes from "./modules/progress/progress.routes.js";
 import calendarRoutes from "./modules/calendar/calendar.routes.js";
-import mfaRoutes from "./modules/auth/mfa/mfa.routes.js";
 import syncRoutes from "./modules/sync/index.js";
 import reminderRoutes from "./modules/reminders/reminder.routes.js";
 
@@ -55,6 +55,7 @@ app.use(helmetMiddleware);
 app.use(cors(corsOptions));
 app.use(express.json(jsonBodyOptions));
 app.use(express.urlencoded(urlEncodedBodyOptions));
+app.use("/api", apiRateLimiter);
 
 if (!isProduction()) {
   app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
@@ -67,7 +68,7 @@ app.use(
     res.setHeader("Cache-Control", "no-store");
     next();
   },
-  authRoutes
+  authRoutes,
 );
 app.use("/api/ai", aiRoutes);
 

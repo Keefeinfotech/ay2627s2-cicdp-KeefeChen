@@ -14,8 +14,8 @@ import 'login_screen.dart';
 
 /// Decides what the application should show after a secure session restore.
 ///
-/// Authenticated users go straight to the dashboard. Everyone else sees the
-/// introduction once, then the sign-in screen on subsequent launches.
+/// The introduction is checked before choosing an authenticated or guest entry
+/// point so its completion state stays independent of the current session.
 class StartupGate extends StatefulWidget {
   const StartupGate({super.key, this.auth, this.store, this.onboarding});
 
@@ -54,16 +54,14 @@ class _StartupGateState extends State<StartupGate> {
       session = null;
     }
 
-    bool onboardingComplete = true;
-    if (session == null) {
-      try {
-        onboardingComplete = await _onboarding.isComplete().timeout(
-          const Duration(seconds: 2),
-          onTimeout: () => false,
-        );
-      } catch (_) {
-        onboardingComplete = false;
-      }
+    bool onboardingComplete = false;
+    try {
+      onboardingComplete = await _onboarding.isComplete().timeout(
+        const Duration(seconds: 2),
+        onTimeout: () => false,
+      );
+    } catch (_) {
+      onboardingComplete = false;
     }
 
     if (!mounted) return;
@@ -78,6 +76,15 @@ class _StartupGateState extends State<StartupGate> {
   Widget build(BuildContext context) {
     if (!_restored) return const _SplashView();
 
+    if (!_onboardingComplete) {
+      return OnboardingScreen(
+        onComplete: () {
+          if (!mounted) return;
+          setState(() => _onboardingComplete = true);
+        },
+      );
+    }
+
     final session = _session;
     if (session != null) {
       return AppShell(
@@ -87,8 +94,6 @@ class _StartupGateState extends State<StartupGate> {
         store: widget.store,
       );
     }
-
-    if (!_onboardingComplete) return const OnboardingScreen();
 
     return const LoginScreen();
   }

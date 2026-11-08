@@ -6,6 +6,7 @@ abstract final class ApiEndpoints {
   static const String authSignup = '/api/auth/signup';
   static const String authLogin = '/api/auth/login';
   static const String aiChat = '/api/ai/chat';
+  static const String aiDraft = '/api/ai/draft';
   static const String tasks = '/api/tasks';
   static String task(String id) => '/api/tasks/$id';
   static const String groups = '/api/groups';

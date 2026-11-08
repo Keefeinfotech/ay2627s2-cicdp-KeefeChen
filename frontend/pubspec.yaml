@@ -37,6 +37,7 @@ dependencies:
   # State management.
   flutter_riverpod: ^3.4.3
   connectivity_plus: ^7.3.2
+  speech_to_text: ^7.5.0
 
 # Development dependencies.
 dev_dependencies:

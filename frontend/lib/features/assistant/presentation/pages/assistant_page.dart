@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:speech_to_text/speech_to_text.dart';
 
 import '../../../../core/network/api_client.dart';
 import '../../../../core/routing/app_router.dart';
@@ -29,6 +32,17 @@ const List<String> _quickPrompts = <String>[
   'Break down a project',
 ];
 
+/// Human friendly due-date label used by assistant previews and the edit
+/// dialog (for example "Today" or "Tomorrow").
+String _dueLabel(DateTime dueDate) {
+  final today = DateTime.now();
+  final date = DateTime(dueDate.year, dueDate.month, dueDate.day);
+  final todayDate = DateTime(today.year, today.month, today.day);
+  if (date == todayDate) return 'Today';
+  if (date == todayDate.add(const Duration(days: 1))) return 'Tomorrow';
+  return formatDateOnly(dueDate);
+}
+
 /// Conversational assistant surface used inside the responsive application
 /// shell. It keeps the existing `{message}` -> `{reply}` API contract while
 /// adding local, confirmation-first task actions.
@@ -54,6 +68,7 @@ class _AssistantPageState extends State<AssistantPage> {
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scroll = ScrollController();
   final FocusNode _composerFocus = FocusNode();
+  final SpeechToText _speech = SpeechToText();
   final List<Object> _entries = <Object>[];
   late final AssistantService _service = AssistantService(api: widget.api);
   late final TaskStore _store;
@@ -61,6 +76,9 @@ class _AssistantPageState extends State<AssistantPage> {
   final ParseQuickAdd _parser = const ParseQuickAdd();
   bool _typing = false;
   bool _awaitingTaskDescription = false;
+  bool _awaitingDraftClarification = false;
+  bool _listening = false;
+  String _voicePrefix = '';
 
   @override
   void initState() {
@@ -77,6 +95,7 @@ class _AssistantPageState extends State<AssistantPage> {
     _controller.dispose();
     _scroll.dispose();
     _composerFocus.dispose();
+    unawaited(_speech.stop());
     if (_ownsStore) _store.dispose();
     super.dispose();
   }
@@ -128,6 +147,69 @@ class _AssistantPageState extends State<AssistantPage> {
     }
   }
 
+  Future<void> _toggleVoiceInput() async {
+    if (_listening) {
+      await _speech.stop();
+      if (mounted) setState(() => _listening = false);
+      return;
+    }
+    try {
+      final available = await _speech.initialize(
+        onStatus: (status) {
+          if (!mounted) return;
+          if (status == 'done' || status == 'notListening') {
+            setState(() => _listening = false);
+          }
+        },
+        onError: (error) {
+          if (!mounted) return;
+          setState(() => _listening = false);
+          _addAssistantMessage(
+            'Voice input is unavailable: ${error.errorMsg}',
+            isError: true,
+          );
+        },
+      );
+      if (!mounted) return;
+      if (!available) {
+        _addAssistantMessage(
+          'Voice recognition is not available on this device or browser.',
+          isError: true,
+        );
+        return;
+      }
+      _voicePrefix = _controller.text.trim();
+      setState(() => _listening = true);
+      await _speech.listen(
+        listenOptions: SpeechListenOptions(
+          listenMode: ListenMode.dictation,
+          partialResults: true,
+          cancelOnError: true,
+          pauseFor: const Duration(seconds: 3),
+          listenFor: const Duration(seconds: 30),
+        ),
+        onResult: (result) {
+          if (!mounted || result.recognizedWords.trim().isEmpty) return;
+          final transcript = result.recognizedWords.trim();
+          final text = _voicePrefix.isEmpty
+              ? transcript
+              : '$_voicePrefix $transcript';
+          _controller.value = TextEditingValue(
+            text: text,
+            selection: TextSelection.collapsed(offset: text.length),
+          );
+        },
+      );
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _listening = false);
+      _addAssistantMessage(
+        'Voice input could not start. Check microphone permission and try again.',
+        isError: true,
+      );
+    }
+  }
+
   Future<void> _respondTo(String text) async {
     final normalized = text.trim().toLowerCase().replaceAll(
       RegExp(r'[.!?]+$'),
@@ -135,6 +217,7 @@ class _AssistantPageState extends State<AssistantPage> {
     );
 
     if (normalized == 'create a task' || normalized == 'create task') {
+      _awaitingDraftClarification = false;
       _awaitingTaskDescription = true;
       _addAssistantMessage(
         'Tell me what the task is. Include a due date, priority or project '
@@ -161,6 +244,10 @@ class _AssistantPageState extends State<AssistantPage> {
 
     if (_awaitingTaskDescription) {
       _awaitingTaskDescription = false;
+      if (widget.session != null) {
+        await _prepareTaskDraft(text);
+        return;
+      }
       _showAction(
         _AssistantAction(kind: _ActionKind.create, preview: _parse(text)),
       );
@@ -169,7 +256,17 @@ class _AssistantPageState extends State<AssistantPage> {
 
     final action = _detectAction(text);
     if (action != null) {
+      if (action.kind == _ActionKind.create && widget.session != null) {
+        await _prepareTaskDraft(text);
+        return;
+      }
       _showAction(action);
+      return;
+    }
+
+    if (_awaitingDraftClarification && widget.session != null) {
+      _awaitingDraftClarification = false;
+      await _prepareTaskDraft(text);
       return;
     }
 
@@ -204,6 +301,7 @@ class _AssistantPageState extends State<AssistantPage> {
       final reply = await _service.sendMessage(
         token: session.token,
         message: text,
+        context: _conversationContext(),
       );
       if (!mounted) return;
       _addAssistantMessage(reply);
@@ -225,6 +323,77 @@ class _AssistantPageState extends State<AssistantPage> {
     }
   }
 
+  Future<void> _prepareTaskDraft(String message) async {
+    final session = widget.session;
+    if (session == null) return;
+    final context = _conversationContext();
+    try {
+      final result = await _service.prepareTaskDraft(
+        token: session.token,
+        message: message,
+        context: context,
+      );
+      if (!mounted) return;
+      if (result.draft == null) {
+        _awaitingDraftClarification = result.clarification != null;
+        _addAssistantMessage(result.clarification ?? result.reply);
+        return;
+      }
+      final suggested = result.draft!;
+      final priority = switch (suggested.priority) {
+        'low' => TaskPriority.low,
+        'high' => TaskPriority.high,
+        _ => TaskPriority.medium,
+      };
+      _showAction(
+        _AssistantAction(
+          kind: _ActionKind.create,
+          preview: TaskQuickAddData(
+            title: suggested.title,
+            notes: suggested.description ?? '',
+            priority: priority,
+            priorityExplicit: suggested.priority != null,
+            dueDate: suggested.dueDate,
+            project: suggested.course,
+            dueLabel: suggested.dueDate == null
+                ? 'No due date'
+                : _dueLabel(suggested.dueDate!),
+          ),
+        ),
+      );
+    } on ApiException catch (error) {
+      if (!mounted) return;
+      _addAssistantMessage(
+        error.isUnauthorized
+            ? 'Your session has expired. Please sign in again.'
+            : error.message,
+        isError: true,
+      );
+    } catch (_) {
+      if (!mounted) return;
+      _addAssistantMessage(
+        'I could not prepare a task draft. Your tasks were not changed. Please try again.',
+        isError: true,
+      );
+    }
+  }
+
+  List<Map<String, String>> _conversationContext() {
+    final messages = _entries.whereType<_MessageEntry>().toList();
+    if (messages.isNotEmpty) messages.removeLast();
+    return messages.reversed
+        .take(10)
+        .toList(growable: false)
+        .reversed
+        .map(
+          (entry) => <String, String>{
+            'role': entry.message.isUser ? 'user' : 'assistant',
+            'content': entry.message.text,
+          },
+        )
+        .toList(growable: false);
+  }
+
   Future<void> _usePrompt(String prompt) async {
     if (_typing) return;
     _controller.text = prompt;
@@ -238,11 +407,20 @@ class _AssistantPageState extends State<AssistantPage> {
 
     if (_startsWithAny(lower, <String>[
       'create a task',
+      'please create a task',
+      'please create task',
+      'could you create a task',
       'create task',
       'add a task',
+      'please add a task',
       'add task',
+      'make a task',
       'new task',
       'remind me to',
+      'i need to ',
+      'i have to ',
+      'remember to ',
+      'schedule ',
     ])) {
       return _AssistantAction(kind: _ActionKind.create, preview: _parse(text));
     }
@@ -386,7 +564,12 @@ class _AssistantPageState extends State<AssistantPage> {
     final preview = _parser(text, projects: projects);
     return TaskQuickAddData(
       title: _capitalise(preview.title),
+      notes: '',
       priority: preview.priority,
+      priorityExplicit: RegExp(
+        r'\b(low|medium|high|urgent|critical)\s+priority\b|\bpriority\s+(low|medium|high|urgent|critical)\b|\b(asap|urgent|critical)\b',
+        caseSensitive: false,
+      ).hasMatch(text),
       dueDate: preview.dueDate,
       project: preview.project,
       dueLabel: preview.dueLabel,
@@ -400,6 +583,9 @@ class _AssistantPageState extends State<AssistantPage> {
     if (value.isEmpty) return value;
     return '${value[0].toUpperCase()}${value.substring(1)}';
   }
+
+  /// Formats a due date into a short display label for task previews.
+  String _dueLabel(DateTime dueDate) => formatDateOnly(dueDate);
 
   void _showAction(_AssistantAction action) {
     final String message = switch (action.kind) {
@@ -421,6 +607,14 @@ class _AssistantPageState extends State<AssistantPage> {
     _scrollToBottom();
   }
 
+  Future<void> _editAction(_AssistantAction action) async {
+    final edited = await showDialog<TaskQuickAddData>(
+      context: context,
+      builder: (_) => _EditTaskDialog(initial: action.preview),
+    );
+    if (edited != null && mounted) setState(() => action.preview = edited);
+  }
+
   Future<void> _confirmAction(_AssistantAction action) async {
     if (action.status != _ActionStatus.pending) return;
     setState(() => action.status = _ActionStatus.working);
@@ -433,6 +627,7 @@ class _AssistantPageState extends State<AssistantPage> {
           saved = await _store.addTask(
             TaskDraft(
               title: action.preview.title,
+              notes: action.preview.notes,
               priority: action.preview.priority,
               dueDate: action.preview.dueDate,
               course: action.preview.project ?? '',
@@ -450,7 +645,9 @@ class _AssistantPageState extends State<AssistantPage> {
                   : action.preview.title,
               notes: task.notes,
               course: action.preview.project ?? task.course,
-              priority: action.preview.priority,
+              priority: action.preview.priorityExplicit
+                  ? action.preview.priority
+                  : task.priority,
               dueDate: action.preview.dueDate ?? task.dueDate,
               reminderAt: task.reminderAt,
             ),
@@ -738,6 +935,7 @@ class _AssistantPageState extends State<AssistantPage> {
                             if (entry is _ActionEntry) {
                               return _ActionCard(
                                 action: entry.action,
+                                onEdit: () => _editAction(entry.action),
                                 onConfirm: () => _confirmAction(entry.action),
                                 onCancel: () => _cancelAction(entry.action),
                               );
@@ -762,6 +960,8 @@ class _AssistantPageState extends State<AssistantPage> {
                     focusNode: _composerFocus,
                     onSend: _send,
                     isSending: _typing,
+                    isListening: _listening,
+                    onVoice: _toggleVoiceInput,
                     hintText: 'Ask Auxilia to plan, create or change a task...',
                   ),
                 ),
@@ -1010,11 +1210,13 @@ class _TypingIndicator extends StatelessWidget {
 class _ActionCard extends StatelessWidget {
   const _ActionCard({
     required this.action,
+    required this.onEdit,
     required this.onConfirm,
     required this.onCancel,
   });
 
   final _AssistantAction action;
+  final VoidCallback onEdit;
   final Future<void> Function() onConfirm;
   final VoidCallback onCancel;
 
@@ -1106,6 +1308,15 @@ class _ActionCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: AppSpacing.md),
+            if (action.kind == _ActionKind.create && pending)
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton.icon(
+                  onPressed: onEdit,
+                  icon: const Icon(Icons.edit_outlined),
+                  label: const Text('Edit draft'),
+                ),
+              ),
             if (action.kind == _ActionKind.delete && action.task != null)
               Text(
                 action.task!.title,
@@ -1122,13 +1333,19 @@ class _ActionCard extends StatelessWidget {
                 ),
               ),
             const SizedBox(height: AppSpacing.sm),
+            if (action.preview.notes.trim().isNotEmpty) ...[
+              Text(action.preview.notes, style: theme.textTheme.bodyMedium),
+              const SizedBox(height: AppSpacing.sm),
+            ],
             Wrap(
               spacing: AppSpacing.xs,
               runSpacing: AppSpacing.xs,
               crossAxisAlignment: WrapCrossAlignment.center,
               children: <Widget>[
                 PriorityBadge(
-                  label: '${action.preview.priority.label} priority',
+                  label: action.preview.priorityExplicit
+                      ? '${action.preview.priority.label} priority'
+                      : 'Default · ${action.preview.priority.label}',
                   color: switch (action.preview.priority) {
                     TaskPriority.high => scheme.error,
                     TaskPriority.medium => AppColors.warningAmber,
@@ -1246,7 +1463,7 @@ class _AssistantAction {
   _AssistantAction({required this.kind, required this.preview, this.task});
 
   final _ActionKind kind;
-  final TaskQuickAddData preview;
+  TaskQuickAddData preview;
   final Task? task;
   _ActionStatus status = _ActionStatus.pending;
 }
@@ -1259,15 +1476,156 @@ enum _ActionStatus { pending, working, done, cancelled }
 class TaskQuickAddData {
   const TaskQuickAddData({
     required this.title,
+    this.notes = '',
     required this.priority,
+    this.priorityExplicit = true,
     required this.dueDate,
     required this.project,
     required this.dueLabel,
   });
 
   final String title;
+  final String notes;
   final TaskPriority priority;
+  final bool priorityExplicit;
   final DateTime? dueDate;
   final String? project;
   final String dueLabel;
+}
+
+/// Edit form for a prepared task draft.
+///
+/// The dialog owns and disposes its own controllers in [dispose] so they are
+/// released together with the dialog route instead of being torn down while the
+/// route's exit animation is still rebuilding the tree.
+class _EditTaskDialog extends StatefulWidget {
+  const _EditTaskDialog({required this.initial});
+
+  final TaskQuickAddData initial;
+
+  @override
+  State<_EditTaskDialog> createState() => _EditTaskDialogState();
+}
+
+class _EditTaskDialogState extends State<_EditTaskDialog> {
+  late final TextEditingController _title;
+  late final TextEditingController _notes;
+  late final TextEditingController _course;
+  late final TextEditingController _due;
+  late TaskPriority _priority;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    final old = widget.initial;
+    _title = TextEditingController(text: old.title);
+    _notes = TextEditingController(text: old.notes);
+    _course = TextEditingController(text: old.project ?? '');
+    _due = TextEditingController(
+      text: old.dueDate == null ? '' : formatDateOnly(old.dueDate!),
+    );
+    _priority = old.priority;
+  }
+
+  @override
+  void dispose() {
+    _title.dispose();
+    _notes.dispose();
+    _course.dispose();
+    _due.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Edit task draft'),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            TextField(
+              controller: _title,
+              decoration: const InputDecoration(labelText: 'Title'),
+            ),
+            TextField(
+              controller: _notes,
+              maxLines: 3,
+              decoration: const InputDecoration(labelText: 'Description'),
+            ),
+            TextField(
+              controller: _course,
+              decoration: const InputDecoration(labelText: 'Course or project'),
+            ),
+            TextField(
+              controller: _due,
+              decoration: const InputDecoration(
+                labelText: 'Due date (YYYY-MM-DD)',
+              ),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            DropdownButtonFormField<TaskPriority>(
+              initialValue: _priority,
+              decoration: const InputDecoration(labelText: 'Priority'),
+              items: TaskPriority.values
+                  .map(
+                    (value) => DropdownMenuItem(
+                      value: value,
+                      child: Text(value.label),
+                    ),
+                  )
+                  .toList(growable: false),
+              onChanged: (value) {
+                if (value != null) setState(() => _priority = value);
+              },
+            ),
+            if (_error != null) ...[
+              const SizedBox(height: AppSpacing.xs),
+              Text(
+                _error!,
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
+              ),
+            ],
+          ],
+        ),
+      ),
+      actions: <Widget>[
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(onPressed: _save, child: const Text('Save draft')),
+      ],
+    );
+  }
+
+  void _save() {
+    final rawDue = _due.text.trim();
+    final parsedDue = rawDue.isEmpty ? null : DateTime.tryParse(rawDue);
+    if (_title.text.trim().isEmpty ||
+        (rawDue.isNotEmpty && parsedDue == null)) {
+      setState(() {
+        _error = _title.text.trim().isEmpty
+            ? 'Enter a task title.'
+            : 'Use a date in YYYY-MM-DD format.';
+      });
+      return;
+    }
+    final dueDate = parsedDue == null
+        ? null
+        : DateTime(parsedDue.year, parsedDue.month, parsedDue.day, 23, 59);
+    Navigator.pop(
+      context,
+      TaskQuickAddData(
+        title: _title.text.trim(),
+        notes: _notes.text.trim(),
+        priority: _priority,
+        priorityExplicit: true,
+        dueDate: dueDate,
+        project: _course.text.trim().isEmpty ? null : _course.text.trim(),
+        dueLabel: dueDate == null ? 'No due date' : _dueLabel(dueDate),
+      ),
+    );
+  }
 }

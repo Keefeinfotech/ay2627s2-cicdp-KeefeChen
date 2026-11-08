@@ -1,0 +1,11 @@
+{
+  "strictness": 2,
+  "commentTypes": ["syntax", "logic", "style"],
+  "autoReview": ["open", "push", "rebase"],
+  "statusCheck": true,
+  "autoApprove": {
+    "enabled": false
+  },
+  "ignorePatterns": "**/*.g.dart\n**/*.freezed.dart\n**/build/**\n**/dist/**\n**/node_modules/**\n**/coverage/**",
+  "instructions": "Auxilia is a Flutter/Dart frontend and a TypeScript Express/Mongoose backend. Review changes in their repository context and follow existing patterns. Verify cross-file behavior, routing, persistence, auth boundaries, and tests. Report only actionable findings with a concrete failure mode and the smallest useful fix. Treat this review as advisory: do not approve pull requests or imply that CI, security scans, or human review can be skipped."
+}

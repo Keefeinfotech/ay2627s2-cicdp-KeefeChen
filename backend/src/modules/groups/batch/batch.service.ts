@@ -4,12 +4,7 @@
  * Author: Keefe Chen
  */
 
-import mongoose from "mongoose";
-
-import {
-  GROUP_MANAGER_ROLES,
-  requireGroupRole,
-} from "../shared/membership.js";
+import { GROUP_MANAGER_ROLES, requireGroupRole } from "../shared/membership.js";
 import { auditService } from "../../audit/audit.service.js";
 import { AUDIT_ACTIONS } from "../../audit/audit.types.js";
 import { BatchRepository } from "./batch.repository.js";
@@ -41,11 +36,7 @@ export const batchService = {
         job: BatchJobRecord;
       }
   > {
-    await requireGroupRole(
-      groupId,
-      requesterId,
-      GROUP_MANAGER_ROLES,
-    );
+    await requireGroupRole(groupId, requesterId, GROUP_MANAGER_ROLES);
 
     const memberIds = Array.from(new Set(input.memberIds)) as string[];
 
@@ -102,10 +93,7 @@ export const batchService = {
       }
     }
 
-    const result = await BatchRepository.addMembersPartial(
-      groupId,
-      memberIds,
-    );
+    const result = await BatchRepository.addMembersPartial(groupId, memberIds);
 
     const job = await BatchRepository.recordJob({
       groupId,

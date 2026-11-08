@@ -1,0 +1,108 @@
+name: Production Deployment
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: railway-production-backend
+  cancel-in-progress: false
+
+jobs:
+  deploy-backend:
+    name: Deploy - Railway Production
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment:
+      name: production
+      url: ${{ vars.RAILWAY_API_BASE_URL }}
+
+    steps:
+      - name: Checkout merged source
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: "22"
+
+      - name: Install pinned Railway CLI
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Install the pinned release binary directly instead of the npm
+          # package: the package's lifecycle script downloads this same
+          # binary, but fetching it directly avoids running third-party
+          # install scripts during the deploy (githubactions:S6505).
+          archive="$(mktemp -d)"
+          curl --proto "=https" -fsSL --retry 3 \
+            -o "$archive/railway.tar.gz" \
+            "https://github.com/railwayapp/cli/releases/download/v5.71.0/railway-v5.71.0-x86_64-unknown-linux-musl.tar.gz"
+          echo "2e682fd2ddf8d6fdf9e46d9d99d99646ff0022a6abb0c2bca93011348a269fb9  $archive/railway.tar.gz" | sha256sum -c -
+          tar -xzf "$archive/railway.tar.gz" -C "$archive"
+          sudo install -m 0755 "$archive/railway" /usr/local/bin/railway
+          rm -rf "$archive"
+          railway --version
+
+      - name: Deploy backend from merged main
+        shell: bash
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          RAILWAY_PROJECT_ID: ${{ vars.RAILWAY_PROJECT_ID }}
+          RAILWAY_ENVIRONMENT_NAME: ${{ vars.RAILWAY_ENVIRONMENT_NAME }}
+          RAILWAY_SERVICE_NAME: ${{ vars.RAILWAY_SERVICE_NAME }}
+        run: |
+          set -euo pipefail
+          if [[ -z "$RAILWAY_TOKEN" || -z "$RAILWAY_PROJECT_ID" || \
+                -z "$RAILWAY_ENVIRONMENT_NAME" || -z "$RAILWAY_SERVICE_NAME" ]]; then
+            echo "::error::Configure the Railway project token, project, environment, and service before deployment."
+            exit 1
+          fi
+
+          railway up ./backend \
+            --path-as-root \
+            --project "$RAILWAY_PROJECT_ID" \
+            --environment "$RAILWAY_ENVIRONMENT_NAME" \
+            --service "$RAILWAY_SERVICE_NAME" \
+            --message "GitHub commit ${GITHUB_SHA}" \
+            --ci
+
+      - name: Run post-deployment smoke checks
+        shell: bash
+        env:
+          SMOKE_BASE_URL: ${{ vars.RAILWAY_API_BASE_URL }}
+        run: |
+          set -euo pipefail
+          if [[ -z "$SMOKE_BASE_URL" ]]; then
+            echo "::error::Set the production RAILWAY_API_BASE_URL variable before deploying."
+            exit 1
+          fi
+          node scripts/smoke-test.mjs "$SMOKE_BASE_URL"
+
+      - name: Record deployment trace
+        if: always()
+        env:
+          DEPLOYMENT_RESULT: ${{ job.status }}
+          DEPLOYED_COMMIT: ${{ github.sha }}
+        run: |
+          {
+            echo "## Railway Production Deployment"
+            echo ""
+            echo "- Result: $DEPLOYMENT_RESULT"
+            echo "- Source commit: $DEPLOYED_COMMIT"
+            echo "- Workflow: $GITHUB_WORKFLOW"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Record rollback instructions on failure
+        if: failure()
+        run: |
+          {
+            echo ""
+            echo "Smoke validation or deployment failed. Review Railway deployment logs, then use the Railway service Deployments page to roll back to the previous successful deployment if the new version became active."
+          } >> "$GITHUB_STEP_SUMMARY"

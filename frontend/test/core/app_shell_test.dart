@@ -3,11 +3,13 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:frontend/core/layout/app_shell.dart';
+import 'package:frontend/core/routing/app_router.dart';
 import 'package:frontend/core/theme/app_theme.dart';
 import 'package:frontend/core/widgets/app_navigation.dart';
 import 'package:frontend/features/home/data/task_repository.dart';
 import 'package:frontend/features/home/data/task_store.dart';
 import 'package:frontend/features/home/models/task.dart';
+import 'package:frontend/features/onboarding/data/onboarding_store.dart';
 
 import '../helpers.dart';
 
@@ -29,6 +31,7 @@ void _setSize(WidgetTester tester, Size size) {
 Widget _app(TaskStore store, {double textScale = 1}) {
   return MaterialApp(
     theme: AuxiliaTheme.light(),
+    onGenerateRoute: AppRouter.onGenerateRoute,
     builder: textScale == 1
         ? null
         : (context, child) {
@@ -141,6 +144,37 @@ void main() {
     await tester.tap(find.text('Profile'));
     await tester.pumpAndSettle();
     expect(find.text('Account, progress and local data'), findsOneWidget);
+  });
+
+  testWidgets('Introduction can be revisited from About Auxilia', (
+    tester,
+  ) async {
+    SharedPreferences.setMockInitialValues(<String, Object>{
+      OnboardingStore.storageKey: true,
+    });
+    _setSize(tester, const Size(390, 1600));
+    final store = _store();
+
+    await tester.pumpWidget(_app(store));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Profile'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('ABOUT AUXILIA'), findsOneWidget);
+    await tester.tap(find.text('Introduction'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Everything you need, in one place.'), findsOneWidget);
+    await tester.tap(find.text('Next'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Next'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Skip'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('ABOUT AUXILIA'), findsOneWidget);
+    final prefs = await SharedPreferences.getInstance();
+    expect(prefs.getBool(OnboardingStore.storageKey), isTrue);
   });
 
   testWidgets('shell survives 200% text scaling at 360 px', (tester) async {

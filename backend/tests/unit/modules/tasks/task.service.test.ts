@@ -45,9 +45,44 @@ describe("task service", () => {
     expect(result).toBe(task);
   });
 
+  it("returns an existing owned task for a repeated idempotent create", async () => {
+    const existing = { _id: "task-1", title: "Original title" };
+    vi.mocked(taskRepository.findByIdForUser).mockResolvedValue(
+      existing as any,
+    );
+
+    const result = await taskService.createTask("user-1", {
+      id: "task-1",
+      title: "Retry with changed payload",
+    });
+
+    expect(result).toBe(existing);
+    expect(taskRepository.findByIdForUser).toHaveBeenCalledWith(
+      "task-1",
+      "user-1",
+    );
+    expect(taskRepository.create).not.toHaveBeenCalled();
+  });
+
+  it("recovers a concurrent idempotent create race from the unique task ID", async () => {
+    const existing = { _id: "task-1", title: "Original title" };
+    vi.mocked(taskRepository.findByIdForUser)
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce(existing as any);
+    vi.mocked(taskRepository.create).mockRejectedValue({ code: 11000 });
+
+    await expect(
+      taskService.createTask("user-1", {
+        id: "task-1",
+        title: "Original title",
+      }),
+    ).resolves.toBe(existing);
+    expect(taskRepository.findByIdForUser).toHaveBeenCalledTimes(2);
+  });
+
   it("rejects task creation without an authenticated user", async () => {
     await expect(
-      taskService.createTask("", { title: "Ship it" })
+      taskService.createTask("", { title: "Ship it" }),
     ).rejects.toBeInstanceOf(AppError);
 
     expect(taskRepository.create).not.toHaveBeenCalled();
@@ -67,7 +102,7 @@ describe("task service", () => {
       {
         status: 404,
         code: "TASK_NOT_FOUND",
-      }
+      },
     );
   });
 
@@ -103,7 +138,7 @@ describe("task service", () => {
       taskService.listTasks("user-1", {
         dueAfter: new Date("2026-02-01"),
         dueBefore: new Date("2026-01-01"),
-      })
+      }),
     ).rejects.toMatchObject({ status: 400, code: "INVALID_DATE_RANGE" });
   });
 
@@ -112,7 +147,7 @@ describe("task service", () => {
       taskService.createTask("user-1", {
         title: "Assigned",
         assigneeId: "user-2",
-      } as any)
+      } as any),
     ).rejects.toMatchObject({ status: 422, code: "ASSIGNEE_REQUIRES_GROUP" });
 
     expect(taskRepository.create).not.toHaveBeenCalled();
@@ -157,7 +192,7 @@ describe("task service", () => {
         title: "Group task",
         groupId: "group-1",
         assigneeId: "user-2",
-      } as any)
+      } as any),
     ).rejects.toMatchObject({ status: 422, code: "ASSIGNEE_NOT_IN_GROUP" });
 
     expect(taskRepository.create).not.toHaveBeenCalled();
@@ -169,7 +204,7 @@ describe("task service", () => {
     vi.mocked(taskRepository.updateForUser).mockResolvedValue(task as any);
 
     await expect(
-      taskService.updateTask("user-1", "task-1", { status: "COMPLETED" })
+      taskService.updateTask("user-1", "task-1", { status: "COMPLETED" }),
     ).resolves.toBe(task);
   });
 
@@ -177,11 +212,11 @@ describe("task service", () => {
     vi.mocked(taskRepository.softDeleteForUser).mockResolvedValue(true);
 
     await expect(taskService.deleteTask("user-1", "task-1")).resolves.toBe(
-      undefined
+      undefined,
     );
     expect(taskRepository.softDeleteForUser).toHaveBeenCalledWith(
       "task-1",
-      "user-1"
+      "user-1",
     );
   });
 });

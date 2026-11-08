@@ -1,5 +1,4 @@
-import { Types } from 'mongoose';
-import { EventPriority, EventStatus } from './calendar.model';
+import { EventPriority, EventStatus } from "./calendar.model";
 
 export interface CreateEventDTO {
   title: string;
