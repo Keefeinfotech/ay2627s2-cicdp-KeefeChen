@@ -1,86 +1,502 @@
 {
   "users": [
-    {"name": "Admin User", "email": "admin@auxilia.test", "password": "Admin$ecure2026", "role": "admin", "status": "active", "emailVerifiedAt": null},
-    {"name": "Alice Chen", "email": "alice@example.com", "password": "Alice$ecure2026", "role": "user", "status": "active", "emailVerifiedAt": null},
-    {"name": "Bob Smith", "email": "bob@example.com", "password": "Bob$ecure2026", "role": "user", "status": "active", "emailVerifiedAt": null},
-    {"name": "Carol Davis", "email": "carol@example.com", "password": "Carol$ecure2026", "role": "user", "status": "active", "emailVerifiedAt": null},
-    {"name": "David Wilson", "email": "david@example.com", "password": "David$ecure2026", "role": "user", "status": "pending", "emailVerifiedAt": null}
+    {
+      "name": "Admin User",
+      "email": "admin@auxilia.test",
+      "password": "Admin$ecure2026",
+      "role": "admin",
+      "status": "active",
+      "emailVerifiedAt": null
+    },
+    {
+      "name": "Alice Chen",
+      "email": "alice@example.com",
+      "password": "Alice$ecure2026",
+      "role": "user",
+      "status": "active",
+      "emailVerifiedAt": null
+    },
+    {
+      "name": "Bob Smith",
+      "email": "bob@example.com",
+      "password": "Bob$ecure2026",
+      "role": "user",
+      "status": "active",
+      "emailVerifiedAt": null
+    },
+    {
+      "name": "Carol Davis",
+      "email": "carol@example.com",
+      "password": "Carol$ecure2026",
+      "role": "user",
+      "status": "active",
+      "emailVerifiedAt": null
+    },
+    {
+      "name": "David Wilson",
+      "email": "david@example.com",
+      "password": "David$ecure2026",
+      "role": "user",
+      "status": "pending",
+      "emailVerifiedAt": null
+    }
   ],
   "groups": [
-    {"name": "CS101 Study Group", "description": "Weekly study sessions for Introduction to Computer Science.", "visibility": "PRIVATE", "status": "ACTIVE", "ownerIndex": 1},
-    {"name": "Project Alpha", "description": "Capstone project collaboration for the software engineering course.", "visibility": "PRIVATE", "status": "ACTIVE", "ownerIndex": 2},
-    {"name": "Weekend Planning", "description": "Personal task coordination for weekend activities and errands.", "visibility": "PUBLIC", "status": "ACTIVE", "ownerIndex": 3}
+    {
+      "name": "CS101 Study Group",
+      "description": "Weekly study sessions for Introduction to Computer Science.",
+      "visibility": "PRIVATE",
+      "status": "ACTIVE",
+      "ownerIndex": 1
+    },
+    {
+      "name": "Project Alpha",
+      "description": "Capstone project collaboration for the software engineering course.",
+      "visibility": "PRIVATE",
+      "status": "ACTIVE",
+      "ownerIndex": 2
+    },
+    {
+      "name": "Weekend Planning",
+      "description": "Personal task coordination for weekend activities and errands.",
+      "visibility": "PUBLIC",
+      "status": "ACTIVE",
+      "ownerIndex": 3
+    }
   ],
   "memberships": [
-    {"groupIndex": 0, "userIndex": 1, "role": "OWNER", "status": "ACTIVE"},
-    {"groupIndex": 0, "userIndex": 2, "role": "MEMBER", "status": "ACTIVE"},
-    {"groupIndex": 0, "userIndex": 3, "role": "MEMBER", "status": "ACTIVE"},
-    {"groupIndex": 1, "userIndex": 2, "role": "OWNER", "status": "ACTIVE"},
-    {"groupIndex": 1, "userIndex": 1, "role": "ADMIN", "status": "ACTIVE"},
-    {"groupIndex": 1, "userIndex": 4, "role": "MEMBER", "status": "ACTIVE"},
-    {"groupIndex": 2, "userIndex": 3, "role": "OWNER", "status": "ACTIVE"},
-    {"groupIndex": 2, "userIndex": 2, "role": "MEMBER", "status": "ACTIVE"}
+    { "groupIndex": 0, "userIndex": 1, "role": "OWNER", "status": "ACTIVE" },
+    { "groupIndex": 0, "userIndex": 2, "role": "MEMBER", "status": "ACTIVE" },
+    { "groupIndex": 0, "userIndex": 3, "role": "MEMBER", "status": "ACTIVE" },
+    { "groupIndex": 1, "userIndex": 2, "role": "OWNER", "status": "ACTIVE" },
+    { "groupIndex": 1, "userIndex": 1, "role": "ADMIN", "status": "ACTIVE" },
+    { "groupIndex": 1, "userIndex": 4, "role": "MEMBER", "status": "ACTIVE" },
+    { "groupIndex": 2, "userIndex": 3, "role": "OWNER", "status": "ACTIVE" },
+    { "groupIndex": 2, "userIndex": 2, "role": "MEMBER", "status": "ACTIVE" }
   ],
   "tasks": [
-    [1, "Finish research summary", "CS101", ["research", "writing"], 0, 1, "Alice Chen", "high", 0, null, "todo"],
-    [1, "Read chapter 4", "CS101", ["reading"], null, null, null, "in_progress", "medium", 2, null],
-    [1, "Submit lab report", "CS101", ["lab", "submission"], 0, 1, "Alice Chen", "completed", "high", -3, -1],
-    [1, "Group project milestone 1", "SE301", ["group", "documentation"], 1, 2, "Bob Smith", "in_progress", "high", 5, null],
-    [2, "Database schema review", "SE301", ["database", "design"], null, null, null, "todo", "medium", 3, null],
-    [2, "Fix login bug", "", ["bug", "frontend"], 1, 2, "Bob Smith", "todo", "high", -2, null],
-    [2, "Team standup", "SE401", ["meeting"], 1, 2, "Bob Smith", "completed", "medium", -1, -1],
-    [3, "Essay draft", "ENG202", ["writing", "essay"], null, null, null, "todo", "medium", 4, null],
-    [3, "Art history quiz", "ART101", ["quiz", "study"], null, null, null, "in_progress", "high", 1, null],
-    [3, "Submit portfolio", "DES101", ["submission", "design"], 2, 3, "Carol Davis", "completed", "high", -4, -4],
-    [4, "Orientation session", "ORI100", ["orientation"], 1, 4, "David Wilson", "completed", "medium", -7, -7]
+    [
+      1,
+      "Finish research summary",
+      "CS101",
+      ["research", "writing"],
+      0,
+      1,
+      "Alice Chen",
+      "high",
+      0,
+      null,
+      "todo"
+    ],
+    [
+      1,
+      "Read chapter 4",
+      "CS101",
+      ["reading"],
+      null,
+      null,
+      null,
+      "in_progress",
+      "medium",
+      2,
+      null
+    ],
+    [
+      1,
+      "Submit lab report",
+      "CS101",
+      ["lab", "submission"],
+      0,
+      1,
+      "Alice Chen",
+      "completed",
+      "high",
+      -3,
+      -1
+    ],
+    [
+      1,
+      "Group project milestone 1",
+      "SE301",
+      ["group", "documentation"],
+      1,
+      2,
+      "Bob Smith",
+      "in_progress",
+      "high",
+      5,
+      null
+    ],
+    [
+      2,
+      "Database schema review",
+      "SE301",
+      ["database", "design"],
+      null,
+      null,
+      null,
+      "todo",
+      "medium",
+      3,
+      null
+    ],
+    [
+      2,
+      "Fix login bug",
+      "",
+      ["bug", "frontend"],
+      1,
+      2,
+      "Bob Smith",
+      "todo",
+      "high",
+      -2,
+      null
+    ],
+    [
+      2,
+      "Team standup",
+      "SE401",
+      ["meeting"],
+      1,
+      2,
+      "Bob Smith",
+      "completed",
+      "medium",
+      -1,
+      -1
+    ],
+    [
+      3,
+      "Essay draft",
+      "ENG202",
+      ["writing", "essay"],
+      null,
+      null,
+      null,
+      "todo",
+      "medium",
+      4,
+      null
+    ],
+    [
+      3,
+      "Art history quiz",
+      "ART101",
+      ["quiz", "study"],
+      null,
+      null,
+      null,
+      "in_progress",
+      "high",
+      1,
+      null
+    ],
+    [
+      3,
+      "Submit portfolio",
+      "DES101",
+      ["submission", "design"],
+      2,
+      3,
+      "Carol Davis",
+      "completed",
+      "high",
+      -4,
+      -4
+    ],
+    [
+      4,
+      "Orientation session",
+      "ORI100",
+      ["orientation"],
+      1,
+      4,
+      "David Wilson",
+      "completed",
+      "medium",
+      -7,
+      -7
+    ]
   ],
   "roadmaps": [
-    {"groupIndex": 0, "title": "CS101 Course Roadmap", "description": "Week-by-week plan for mastering Introduction to Computer Science.", "source": "manual", "status": "approved", "createdByIndex": 1, "approvedDaysAgo": 10,
-     "items": [
-       {"title": "Variables and data types", "description": "Understand primitives, objects, and references.", "criterion": "Fundamentals", "weight": 15, "estimateHours": 4, "status": "done", "order": 1},
-       {"title": "Control structures", "description": "Loops, conditionals, and flow control.", "criterion": "Fundamentals", "weight": 20, "estimateHours": 6, "status": "done", "order": 2},
-       {"title": "Functions and modules", "description": "Write reusable code with functions and ES modules.", "criterion": "Modularity", "weight": 25, "estimateHours": 8, "status": "in_progress", "order": 3},
-       {"title": "Object-oriented programming", "description": "Classes, inheritance, and polymorphism.", "criterion": "OOP", "weight": 25, "estimateHours": 10, "status": "pending", "order": 4},
-       {"title": "Final project", "description": "Build a capstone application integrating all topics.", "criterion": "Capstone", "weight": 15, "estimateHours": 20, "status": "pending", "order": 5}
-     ]
+    {
+      "groupIndex": 0,
+      "title": "CS101 Course Roadmap",
+      "description": "Week-by-week plan for mastering Introduction to Computer Science.",
+      "source": "manual",
+      "status": "approved",
+      "createdByIndex": 1,
+      "approvedDaysAgo": 10,
+      "items": [
+        {
+          "title": "Variables and data types",
+          "description": "Understand primitives, objects, and references.",
+          "criterion": "Fundamentals",
+          "weight": 15,
+          "estimateHours": 4,
+          "status": "done",
+          "order": 1
+        },
+        {
+          "title": "Control structures",
+          "description": "Loops, conditionals, and flow control.",
+          "criterion": "Fundamentals",
+          "weight": 20,
+          "estimateHours": 6,
+          "status": "done",
+          "order": 2
+        },
+        {
+          "title": "Functions and modules",
+          "description": "Write reusable code with functions and ES modules.",
+          "criterion": "Modularity",
+          "weight": 25,
+          "estimateHours": 8,
+          "status": "in_progress",
+          "order": 3
+        },
+        {
+          "title": "Object-oriented programming",
+          "description": "Classes, inheritance, and polymorphism.",
+          "criterion": "OOP",
+          "weight": 25,
+          "estimateHours": 10,
+          "status": "pending",
+          "order": 4
+        },
+        {
+          "title": "Final project",
+          "description": "Build a capstone application integrating all topics.",
+          "criterion": "Capstone",
+          "weight": 15,
+          "estimateHours": 20,
+          "status": "pending",
+          "order": 5
+        }
+      ]
     },
-    {"groupIndex": 1, "title": "Project Alpha Milestones", "description": "Key deliverables for the capstone software engineering project.", "source": "manual", "status": "draft", "createdByIndex": 2, "approvedDaysAgo": null,
-     "items": [
-       {"title": "Requirements specification", "description": "Document functional and non-functional requirements.", "criterion": null, "weight": null, "estimateHours": 12, "status": "done", "order": 1},
-       {"title": "System architecture", "description": "Design the high-level architecture and tech stack.", "criterion": null, "weight": null, "estimateHours": 16, "status": "in_progress", "order": 2},
-       {"title": "Prototype", "description": "Build a working prototype of core features.", "criterion": null, "weight": null, "estimateHours": 24, "status": "pending", "order": 3},
-       {"title": "User testing", "description": "Conduct usability testing with target users.", "criterion": null, "weight": null, "estimateHours": 8, "status": "pending", "order": 4},
-       {"title": "Final release", "description": "Deploy the production-ready application.", "criterion": null, "weight": null, "estimateHours": 10, "status": "pending", "order": 5}
-     ]
+    {
+      "groupIndex": 1,
+      "title": "Project Alpha Milestones",
+      "description": "Key deliverables for the capstone software engineering project.",
+      "source": "manual",
+      "status": "draft",
+      "createdByIndex": 2,
+      "approvedDaysAgo": null,
+      "items": [
+        {
+          "title": "Requirements specification",
+          "description": "Document functional and non-functional requirements.",
+          "criterion": null,
+          "weight": null,
+          "estimateHours": 12,
+          "status": "done",
+          "order": 1
+        },
+        {
+          "title": "System architecture",
+          "description": "Design the high-level architecture and tech stack.",
+          "criterion": null,
+          "weight": null,
+          "estimateHours": 16,
+          "status": "in_progress",
+          "order": 2
+        },
+        {
+          "title": "Prototype",
+          "description": "Build a working prototype of core features.",
+          "criterion": null,
+          "weight": null,
+          "estimateHours": 24,
+          "status": "pending",
+          "order": 3
+        },
+        {
+          "title": "User testing",
+          "description": "Conduct usability testing with target users.",
+          "criterion": null,
+          "weight": null,
+          "estimateHours": 8,
+          "status": "pending",
+          "order": 4
+        },
+        {
+          "title": "Final release",
+          "description": "Deploy the production-ready application.",
+          "criterion": null,
+          "weight": null,
+          "estimateHours": 10,
+          "status": "pending",
+          "order": 5
+        }
+      ]
     }
   ],
   "rubrics": [
-    {"groupIndex": 0, "title": "Essay Grading Rubric", "sourceText": "Criteria: Thesis (25%), Evidence (35%), Organization (20%), Mechanics (20%).", "checksum": "placeholder-checksum-00000000000000000000000000000001", "version": 1,
-     "criteria": [
-       {"name": "Thesis Statement", "description": "Clear, arguable central claim.", "weight": 25},
-       {"name": "Evidence", "description": "Relevant and well-integrated supporting evidence.", "weight": 35},
-       {"name": "Organization", "description": "Logical structure and transitions.", "weight": 20},
-       {"name": "Mechanics", "description": "Grammar, spelling, and citation format.", "weight": 20}
-     ],
-     "createdByIndex": 1
+    {
+      "groupIndex": 0,
+      "title": "Essay Grading Rubric",
+      "sourceText": "Criteria: Thesis (25%), Evidence (35%), Organization (20%), Mechanics (20%).",
+      "checksum": "placeholder-checksum-00000000000000000000000000000001",
+      "version": 1,
+      "criteria": [
+        {
+          "name": "Thesis Statement",
+          "description": "Clear, arguable central claim.",
+          "weight": 25
+        },
+        {
+          "name": "Evidence",
+          "description": "Relevant and well-integrated supporting evidence.",
+          "weight": 35
+        },
+        {
+          "name": "Organization",
+          "description": "Logical structure and transitions.",
+          "weight": 20
+        },
+        {
+          "name": "Mechanics",
+          "description": "Grammar, spelling, and citation format.",
+          "weight": 20
+        }
+      ],
+      "createdByIndex": 1
     }
   ],
   "feedback": [
-    {"userIndex": 1, "category": "FEATURE_REQUEST", "title": "Add dark mode toggle", "description": "It would be great to have a dark mode for late-night studying.", "rating": 4, "status": "PENDING"},
-    {"userIndex": 2, "category": "BUG", "title": "Task due date not saving", "description": "When I set a due date on a task, it reverts to null after refresh.", "rating": 2, "status": "IN_REVIEW"},
-    {"userIndex": 3, "category": "GENERAL", "title": "Great app so far", "description": "Really enjoying the group collaboration features.", "rating": 5, "status": "RESOLVED"},
-    {"userIndex": 4, "category": "UI_UX", "title": "Navigation is confusing", "description": "The sidebar could use clearer labels and icons.", "rating": 3, "status": "PENDING"}
+    {
+      "userIndex": 1,
+      "category": "FEATURE_REQUEST",
+      "title": "Add dark mode toggle",
+      "description": "It would be great to have a dark mode for late-night studying.",
+      "rating": 4,
+      "status": "PENDING"
+    },
+    {
+      "userIndex": 2,
+      "category": "BUG",
+      "title": "Task due date not saving",
+      "description": "When I set a due date on a task, it reverts to null after refresh.",
+      "rating": 2,
+      "status": "IN_REVIEW"
+    },
+    {
+      "userIndex": 3,
+      "category": "GENERAL",
+      "title": "Great app so far",
+      "description": "Really enjoying the group collaboration features.",
+      "rating": 5,
+      "status": "RESOLVED"
+    },
+    {
+      "userIndex": 4,
+      "category": "UI_UX",
+      "title": "Navigation is confusing",
+      "description": "The sidebar could use clearer labels and icons.",
+      "rating": 3,
+      "status": "PENDING"
+    }
   ],
   "calendarEvents": [
-    {"userIndex": 1, "title": "CS101 Lecture", "description": "Introduction to Computer Science lecture.", "startDays": 0, "endDays": 0, "isAllDay": false, "priority": "MEDIUM", "status": "SCHEDULED", "location": "Building A, Room 101", "groupIndex": 0},
-    {"userIndex": 1, "title": "Study Group Meeting", "description": "Weekly CS101 study group session.", "startDays": 2, "endDays": 2, "isAllDay": false, "priority": "HIGH", "status": "SCHEDULED", "location": "Library, Room 2B", "groupIndex": 0},
-    {"userIndex": 2, "title": "Capstone Review", "description": "Mid-point review with project advisor.", "startDays": 1, "endDays": 1, "isAllDay": false, "priority": "URGENT", "status": "SCHEDULED", "location": "Engineering Building, Room 305", "groupIndex": 1},
-    {"userIndex": 2, "title": "Past Project Meeting", "description": "Initial kickoff meeting (already held).", "startDays": -14, "endDays": -14, "isAllDay": false, "priority": "LOW", "status": "COMPLETED", "location": "Online", "groupIndex": 1},
-    {"userIndex": 3, "title": "Weekend Trip Planning", "description": "Plan the weekend getaway with friends.", "startDays": 5, "endDays": 5, "isAllDay": true, "priority": "LOW", "status": "SCHEDULED", "location": null, "groupIndex": 2},
-    {"userIndex": 3, "title": "Cancelled Event", "description": "This event was cancelled.", "startDays": -3, "endDays": -3, "isAllDay": false, "priority": "LOW", "status": "CANCELLED", "location": null, "groupIndex": null}
+    {
+      "userIndex": 1,
+      "title": "CS101 Lecture",
+      "description": "Introduction to Computer Science lecture.",
+      "startDays": 0,
+      "endDays": 0,
+      "isAllDay": false,
+      "priority": "MEDIUM",
+      "status": "SCHEDULED",
+      "location": "Building A, Room 101",
+      "groupIndex": 0
+    },
+    {
+      "userIndex": 1,
+      "title": "Study Group Meeting",
+      "description": "Weekly CS101 study group session.",
+      "startDays": 2,
+      "endDays": 2,
+      "isAllDay": false,
+      "priority": "HIGH",
+      "status": "SCHEDULED",
+      "location": "Library, Room 2B",
+      "groupIndex": 0
+    },
+    {
+      "userIndex": 2,
+      "title": "Capstone Review",
+      "description": "Mid-point review with project advisor.",
+      "startDays": 1,
+      "endDays": 1,
+      "isAllDay": false,
+      "priority": "URGENT",
+      "status": "SCHEDULED",
+      "location": "Engineering Building, Room 305",
+      "groupIndex": 1
+    },
+    {
+      "userIndex": 2,
+      "title": "Past Project Meeting",
+      "description": "Initial kickoff meeting (already held).",
+      "startDays": -14,
+      "endDays": -14,
+      "isAllDay": false,
+      "priority": "LOW",
+      "status": "COMPLETED",
+      "location": "Online",
+      "groupIndex": 1
+    },
+    {
+      "userIndex": 3,
+      "title": "Weekend Trip Planning",
+      "description": "Plan the weekend getaway with friends.",
+      "startDays": 5,
+      "endDays": 5,
+      "isAllDay": true,
+      "priority": "LOW",
+      "status": "SCHEDULED",
+      "location": null,
+      "groupIndex": 2
+    },
+    {
+      "userIndex": 3,
+      "title": "Cancelled Event",
+      "description": "This event was cancelled.",
+      "startDays": -3,
+      "endDays": -3,
+      "isAllDay": false,
+      "priority": "LOW",
+      "status": "CANCELLED",
+      "location": null,
+      "groupIndex": null
+    }
   ],
   "studySessions": [
-    {"groupIndex": 0, "title": "CS101 Midterm Review", "description": "Group review session for the upcoming midterm exam.", "startDays": 3, "endDays": 3, "location": "Library, Study Room 4", "maxAttendees": 10, "attendeeIndices": [1, 2, 3], "createdByIndex": 1, "status": "scheduled"},
-    {"groupIndex": 1, "title": "Capstone Architecture Workshop", "description": "Workshop to finalise the system architecture.", "startDays": 7, "endDays": 7, "location": "Engineering Lab", "maxAttendees": 8, "attendeeIndices": [2, 1, 4], "createdByIndex": 2, "status": "scheduled"}
+    {
+      "groupIndex": 0,
+      "title": "CS101 Midterm Review",
+      "description": "Group review session for the upcoming midterm exam.",
+      "startDays": 3,
+      "endDays": 3,
+      "location": "Library, Study Room 4",
+      "maxAttendees": 10,
+      "attendeeIndices": [1, 2, 3],
+      "createdByIndex": 1,
+      "status": "scheduled"
+    },
+    {
+      "groupIndex": 1,
+      "title": "Capstone Architecture Workshop",
+      "description": "Workshop to finalise the system architecture.",
+      "startDays": 7,
+      "endDays": 7,
+      "location": "Engineering Lab",
+      "maxAttendees": 8,
+      "attendeeIndices": [2, 1, 4],
+      "createdByIndex": 2,
+      "status": "scheduled"
+    }
   ]
 }
