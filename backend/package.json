@@ -31,7 +31,7 @@
     "helmet": "^8.3.0",
     "hpp": "^0.2.3",
     "jsonwebtoken": "^9.0.3",
-    "mongoose": "^9.11.4",
+    "mongoose": "^9.12.0",
     "morgan": "^1.12.1",
     "nodemailer": "^10.3.1",
     "openapi-types": "^12.1.3",
