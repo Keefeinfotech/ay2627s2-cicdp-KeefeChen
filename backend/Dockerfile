@@ -39,6 +39,10 @@ COPY package*.json ./
 RUN npm ci --omit=dev --ignore-scripts && npm cache clean --force \
     && rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx
 
+# Patch Alpine packages so Trivy no longer reports known HIGH/CRITICAL
+# vulnerabilities in the base image layer.
+RUN apk upgrade --no-cache
+
 # Copy compiled JavaScript
 COPY --from=build /app/dist ./dist
 
