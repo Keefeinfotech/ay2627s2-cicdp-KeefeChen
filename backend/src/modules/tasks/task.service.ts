@@ -4,7 +4,7 @@
  * Author: Keefe Chen
  */
 
-import { AppError } from "../../../src/shared/utils/AppError";
+import { AppError } from "../../shared/utils/AppError.js";
 
 import { taskRepository } from "./task.repository.js";
 import { requireGroupMembership } from "../groups/shared/membership.js";
