@@ -303,12 +303,6 @@ export const seedTasks = [
     priority: "high",
     dueDate: daysFromNow(-2), // overdue
   }),
-  makeTask(seedUsers[2]._id, "Buy textbooks", {
-    course: "",
-    tags: ["personal", "errands"],
-    priority: "low",
-    dueDate: null, // no deadline
-  }),
   makeTask(seedUsers[2]._id, "Team standup", {
     course: "SE401",
     tags: ["meeting"],
@@ -345,21 +339,6 @@ export const seedTasks = [
     priority: "high",
     dueDate: daysFromNow(-4),
     completedAt: daysFromNow(-4),
-  }),
-  makeTask(seedUsers[3]._id, "Plan weekend trip", {
-    course: "",
-    tags: ["personal", "travel"],
-    groupId: seedGroups[2].groupId,
-    assigneeId: seedUsers[3]._id,
-    assigneeName: "Carol Davis",
-    priority: "low",
-    dueDate: null, // no deadline
-  }),
-  makeTask(seedUsers[3]._id, "Language practice", {
-    course: "SPAN101",
-    tags: ["language"],
-    priority: "medium",
-    dueDate: daysFromNow(6), // due within 7 days
   }),
 
   // --- David (david@example.com) ---
