@@ -58,13 +58,11 @@ describe("POST /api/auth/signup", () => {
 
     userModel.create.mockResolvedValue(created);
 
-    const res = await request(app)
-      .post("/api/auth/signup")
-      .send({
-        name: "  Ada  ",
-        email: "  ADA@Example.COM ",
-        password,
-      });
+    const res = await request(app).post("/api/auth/signup").send({
+      name: "  Ada  ",
+      email: "  ADA@Example.COM ",
+      password,
+    });
 
     // Verify successful account creation.
     expect(res.status).toBe(201);
@@ -79,7 +77,7 @@ describe("POST /api/auth/signup", () => {
       expect.objectContaining({
         email: "ada@example.com",
         name: "Ada",
-      })
+      }),
     );
 
     // Verify the access token.
@@ -136,20 +134,16 @@ describe("POST /api/auth/signup", () => {
   });
 
   it("rejects invalid input without echoing values", async () => {
-    const res = await request(app)
-      .post("/api/auth/signup")
-      .send({
-        email: "not-an-email",
-        password: "secret-should-not-appear",
-      });
+    const res = await request(app).post("/api/auth/signup").send({
+      email: "not-an-email",
+      password: "secret-should-not-appear",
+    });
 
     expect(res.status).toBe(400);
     expect(res.body.code).toBe("VALIDATION_ERROR");
 
     // Ensure sensitive input is not returned in the response.
-    expect(JSON.stringify(res.body)).not.toContain(
-      "secret-should-not-appear"
-    );
+    expect(JSON.stringify(res.body)).not.toContain("secret-should-not-appear");
   });
 
   it("rejects malformed JSON bodies", async () => {
@@ -180,7 +174,9 @@ describe("POST /api/auth/signup — password strength", () => {
 
     expect(res.status).toBe(400);
     expect(res.body.code).toBe("VALIDATION_ERROR");
-    expect(JSON.stringify(res.body.details)).toContain("at least 12 characters");
+    expect(JSON.stringify(res.body.details)).toContain(
+      "at least 12 characters",
+    );
   });
 
   it("rejects a password without an uppercase letter", async () => {
@@ -226,12 +222,10 @@ describe("POST /api/auth/signup — password strength", () => {
   it("rejects a common password even when complex", async () => {
     userModel.findOne.mockImplementation(() => queryResult(null));
 
-    const res = await request(app)
-      .post("/api/auth/signup")
-      .send({
-        email: "common-password@example.com",
-        password: "Password123!",
-      });
+    const res = await request(app).post("/api/auth/signup").send({
+      email: "common-password@example.com",
+      password: "Password123!",
+    });
 
     expect(res.status).toBe(400);
     expect(res.body.code).toBe("VALIDATION_ERROR");
@@ -247,7 +241,7 @@ describe("POST /api/auth/signup — password strength", () => {
         email: "strength@example.com",
         role: "user",
         save: vi.fn().mockResolvedValue(undefined),
-      })
+      }),
     );
 
     const res = await request(app)
@@ -279,20 +273,16 @@ describe("POST /api/auth/login", () => {
 
     userModel.findOne.mockReturnValue(queryResult(user));
 
-    const res = await request(app)
-      .post("/api/auth/login")
-      .send({
-        email: "ADA@example.com",
-        password,
-      });
+    const res = await request(app).post("/api/auth/login").send({
+      email: "ADA@example.com",
+      password,
+    });
 
     expect(res.status).toBe(200);
     expect(res.body.user.email).toBe("ada@example.com");
 
     // Verify the returned access token.
-    expect(verifyAccessToken(res.body.token)?.email).toBe(
-      "ada@example.com"
-    );
+    expect(verifyAccessToken(res.body.token)?.email).toBe("ada@example.com");
 
     // Verify that the login timestamp was updated.
     expect(save).toHaveBeenCalledTimes(1);
@@ -300,20 +290,20 @@ describe("POST /api/auth/login", () => {
   });
 
   it("rejects a wrong password", async () => {
-    userModel.findOne.mockReturnValue(queryResult({
-      _id: "user-1",
-      email: "ada@example.com",
-      role: "user",
-      passwordHash: await passwordHashPromise,
-      save: vi.fn(),
-    }));
-
-    const res = await request(app)
-      .post("/api/auth/login")
-      .send({
+    userModel.findOne.mockReturnValue(
+      queryResult({
+        _id: "user-1",
         email: "ada@example.com",
-        password: "wrong-password",
-      });
+        role: "user",
+        passwordHash: await passwordHashPromise,
+        save: vi.fn(),
+      }),
+    );
+
+    const res = await request(app).post("/api/auth/login").send({
+      email: "ada@example.com",
+      password: "wrong-password",
+    });
 
     expect(res.status).toBe(401);
     expect(res.body.code).toBe("UNAUTHORIZED");
@@ -322,12 +312,10 @@ describe("POST /api/auth/login", () => {
   it("rejects an unknown account with the same message", async () => {
     userModel.findOne.mockReturnValue(queryResult(null));
 
-    const res = await request(app)
-      .post("/api/auth/login")
-      .send({
-        email: "nobody@example.com",
-        password,
-      });
+    const res = await request(app).post("/api/auth/login").send({
+      email: "nobody@example.com",
+      password,
+    });
 
     expect(res.status).toBe(401);
     expect(res.body.error).toBe("Invalid email or password");

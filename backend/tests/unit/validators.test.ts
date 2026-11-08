@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { chatSchema } from "../../src/modules/ai/ai.validation";
-import { loginSchema, signupSchema } from "../../src/modules/auth/auth.validation";
+import {
+  loginSchema,
+  signupSchema,
+} from "../../src/modules/auth/auth.validation";
 
 describe("signup validation", () => {
   it("normalises email casing and whitespace", () => {
@@ -59,10 +62,10 @@ describe("chat validation", () => {
 
   it("rejects blank and oversized messages", () => {
     expect(chatSchema.safeParse({ body: { message: "   " } }).success).toBe(
-      false
+      false,
     );
     expect(
-      chatSchema.safeParse({ body: { message: "x".repeat(1001) } }).success
+      chatSchema.safeParse({ body: { message: "x".repeat(1001) } }).success,
     ).toBe(false);
   });
 });

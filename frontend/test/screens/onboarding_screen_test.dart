@@ -52,7 +52,10 @@ void main() {
     expect(find.text('Get Started'), findsOneWidget);
     expect(find.text('Skip'), findsOneWidget);
     expect(find.text('COLLABORATE WITH OTHERS'), findsOneWidget);
-    expect(find.text('Stay in sync with the people who matter.'), findsOneWidget);
+    expect(
+      find.text('Stay in sync with the people who matter.'),
+      findsOneWidget,
+    );
 
     await tester.tap(find.text('Get Started'));
     await tester.pump();

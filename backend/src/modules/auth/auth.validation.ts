@@ -37,27 +37,27 @@ const MIN_PASSWORD_LENGTH = 12;
 
 const password = z
   .string()
-  .min(MIN_PASSWORD_LENGTH, `Password must be at least ${MIN_PASSWORD_LENGTH} characters`)
+  .min(
+    MIN_PASSWORD_LENGTH,
+    `Password must be at least ${MIN_PASSWORD_LENGTH} characters`,
+  )
   .max(128, "Password must be at most 128 characters")
   .refine(
     (val) => /[A-Z]/.test(val),
-    "Password must contain at least one uppercase letter"
+    "Password must contain at least one uppercase letter",
   )
   .refine(
     (val) => /[a-z]/.test(val),
-    "Password must contain at least one lowercase letter"
+    "Password must contain at least one lowercase letter",
   )
-  .refine(
-    (val) => /\d/.test(val),
-    "Password must contain at least one number"
-  )
+  .refine((val) => /\d/.test(val), "Password must contain at least one number")
   .refine(
     (val) => /[^A-Za-z\d]/.test(val),
-    "Password must contain at least one special character"
+    "Password must contain at least one special character",
   )
   .refine(
     (val) => !COMMON_PASSWORDS.has(val.toLowerCase()),
-    "Password is too common — please choose a harder-to-guess password"
+    "Password is too common — please choose a harder-to-guess password",
   );
 
 const name = z.string().trim().max(80, "Name must be at most 80 characters");
