@@ -281,19 +281,6 @@ const taskData = [
   // --- Bob (bob@example.com) ---
   [
     seedUsers[2]._id,
-    "Capstone prototype demo",
-    "SE401",
-    ["capstone", "demo"],
-    seedGroups[1].groupId,
-    seedUsers[2]._id,
-    "Bob Smith",
-    "in_progress",
-    "urgent",
-    daysFromNow(1),
-    null,
-  ],
-  [
-    seedUsers[2]._id,
     "Database schema review",
     "SE301",
     ["database", "design"],
