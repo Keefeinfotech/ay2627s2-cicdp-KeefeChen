@@ -353,13 +353,6 @@ export const seedTasks = [
     dueDate: daysFromNow(-7),
     completedAt: daysFromNow(-7),
   }),
-  makeTask(seedUsers[4]._id, "Set up development environment", {
-    course: "",
-    tags: ["setup", "technical"],
-    status: "in_progress",
-    priority: "high",
-    dueDate: daysFromNow(2), // due within 7 days
-  }),
 ];
 
 // ---------------------------------------------------------------------------
