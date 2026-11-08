@@ -249,15 +249,6 @@ export const seedTasks = [
     priority: "urgent",
     dueDate: daysFromNow(-1), // overdue
   }),
-  makeTask(seedUsers[1]._id, "Buy groceries", {
-    course: "",
-    tags: ["personal", "errands"],
-    groupId: seedGroups[2].groupId,
-    assigneeId: seedUsers[3]._id,
-    assigneeName: "Carol Davis",
-    priority: "low",
-    dueDate: null, // no deadline
-  }),
   makeTask(seedUsers[1]._id, "Group project milestone 1", {
     course: "SE301",
     tags: ["group", "documentation"],
@@ -267,12 +258,6 @@ export const seedTasks = [
     status: "in_progress",
     priority: "high",
     dueDate: daysFromNow(5), // due within 7 days
-  }),
-  makeTask(seedUsers[1]._id, "Update CV", {
-    course: "",
-    tags: ["career", "personal"],
-    priority: "medium",
-    dueDate: null, // no deadline
   }),
   makeTask(seedUsers[1]._id, "Attend office hours", {
     course: "CS101",
@@ -395,12 +380,6 @@ export const seedTasks = [
     status: "in_progress",
     priority: "high",
     dueDate: daysFromNow(2), // due within 7 days
-  }),
-  makeTask(seedUsers[4]._id, "Read student handbook", {
-    course: "",
-    tags: ["reading"],
-    priority: "low",
-    dueDate: null, // no deadline
   }),
 ];
 
