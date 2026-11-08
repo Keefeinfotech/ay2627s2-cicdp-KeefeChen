@@ -54,11 +54,36 @@ const makeUser = (
 // ---------------------------------------------------------------------------
 
 export const seedUsers = [
-  makeUser("Admin User", "admin@auxilia.test", "Admin$ecure2026", "admin", "active"),
-  makeUser("Alice Chen", "alice@example.com", "Alice$ecure2026", "user", "active"),
+  makeUser(
+    "Admin User",
+    "admin@auxilia.test",
+    "Admin$ecure2026",
+    "admin",
+    "active",
+  ),
+  makeUser(
+    "Alice Chen",
+    "alice@example.com",
+    "Alice$ecure2026",
+    "user",
+    "active",
+  ),
   makeUser("Bob Smith", "bob@example.com", "Bob$ecure2026", "user", "active"),
-  makeUser("Carol Davis", "carol@example.com", "Carol$ecure2026", "user", "active"),
-  makeUser("David Wilson", "david@example.com", "David$ecure2026", "user", "pending", null),
+  makeUser(
+    "Carol Davis",
+    "carol@example.com",
+    "Carol$ecure2026",
+    "user",
+    "active",
+  ),
+  makeUser(
+    "David Wilson",
+    "david@example.com",
+    "David$ecure2026",
+    "user",
+    "pending",
+    null,
+  ),
 ];
 
 export const seedGroups = [
@@ -73,7 +98,8 @@ export const seedGroups = [
   {
     groupId: oneTimeId(),
     name: "Project Alpha",
-    description: "Capstone project collaboration for the software engineering course.",
+    description:
+      "Capstone project collaboration for the software engineering course.",
     visibility: "PRIVATE" as const,
     status: "ACTIVE" as const,
     ownerId: seedUsers[2]._id, // Bob
@@ -81,7 +107,8 @@ export const seedGroups = [
   {
     groupId: oneTimeId(),
     name: "Weekend Planning",
-    description: "Personal task coordination for weekend activities and errands.",
+    description:
+      "Personal task coordination for weekend activities and errands.",
     visibility: "PUBLIC" as const,
     status: "ACTIVE" as const,
     ownerId: seedUsers[3]._id, // Carol
@@ -90,16 +117,56 @@ export const seedGroups = [
 
 export const seedMemberships = [
   // CS101 Study Group
-  { groupId: seedGroups[0].groupId, userId: seedUsers[1]._id, role: "OWNER" as const, status: "ACTIVE" as const }, // Alice
-  { groupId: seedGroups[0].groupId, userId: seedUsers[2]._id, role: "MEMBER" as const, status: "ACTIVE" as const }, // Bob
-  { groupId: seedGroups[0].groupId, userId: seedUsers[3]._id, role: "MEMBER" as const, status: "ACTIVE" as const }, // Carol
+  {
+    groupId: seedGroups[0].groupId,
+    userId: seedUsers[1]._id,
+    role: "OWNER" as const,
+    status: "ACTIVE" as const,
+  }, // Alice
+  {
+    groupId: seedGroups[0].groupId,
+    userId: seedUsers[2]._id,
+    role: "MEMBER" as const,
+    status: "ACTIVE" as const,
+  }, // Bob
+  {
+    groupId: seedGroups[0].groupId,
+    userId: seedUsers[3]._id,
+    role: "MEMBER" as const,
+    status: "ACTIVE" as const,
+  }, // Carol
   // Project Alpha
-  { groupId: seedGroups[1].groupId, userId: seedUsers[2]._id, role: "OWNER" as const, status: "ACTIVE" as const }, // Bob
-  { groupId: seedGroups[1].groupId, userId: seedUsers[1]._id, role: "ADMIN" as const, status: "ACTIVE" as const }, // Alice
-  { groupId: seedGroups[1].groupId, userId: seedUsers[4]._id, role: "MEMBER" as const, status: "ACTIVE" as const }, // David
+  {
+    groupId: seedGroups[1].groupId,
+    userId: seedUsers[2]._id,
+    role: "OWNER" as const,
+    status: "ACTIVE" as const,
+  }, // Bob
+  {
+    groupId: seedGroups[1].groupId,
+    userId: seedUsers[1]._id,
+    role: "ADMIN" as const,
+    status: "ACTIVE" as const,
+  }, // Alice
+  {
+    groupId: seedGroups[1].groupId,
+    userId: seedUsers[4]._id,
+    role: "MEMBER" as const,
+    status: "ACTIVE" as const,
+  }, // David
   // Weekend Planning
-  { groupId: seedGroups[2].groupId, userId: seedUsers[3]._id, role: "OWNER" as const, status: "ACTIVE" as const }, // Carol
-  { groupId: seedGroups[2].groupId, userId: seedUsers[2]._id, role: "MEMBER" as const, status: "ACTIVE" as const }, // Bob
+  {
+    groupId: seedGroups[2].groupId,
+    userId: seedUsers[3]._id,
+    role: "OWNER" as const,
+    status: "ACTIVE" as const,
+  }, // Carol
+  {
+    groupId: seedGroups[2].groupId,
+    userId: seedUsers[2]._id,
+    role: "MEMBER" as const,
+    status: "ACTIVE" as const,
+  }, // Bob
 ];
 
 // ---------------------------------------------------------------------------
@@ -346,7 +413,8 @@ export const seedRoadmaps = [
     _id: oneTimeId(),
     groupId: seedGroups[0].groupId,
     title: "CS101 Course Roadmap",
-    description: "Week-by-week plan for mastering Introduction to Computer Science.",
+    description:
+      "Week-by-week plan for mastering Introduction to Computer Science.",
     source: "manual" as const,
     status: "approved" as const,
     createdBy: seedUsers[1]._id, // Alice
@@ -408,7 +476,8 @@ export const seedRoadmaps = [
     _id: oneTimeId(),
     groupId: seedGroups[1].groupId,
     title: "Project Alpha Milestones",
-    description: "Key deliverables for the capstone software engineering project.",
+    description:
+      "Key deliverables for the capstone software engineering project.",
     source: "manual" as const,
     status: "draft" as const,
     createdBy: seedUsers[2]._id, // Bob
@@ -516,7 +585,8 @@ export const seedFeedback = [
     userId: seedUsers[1]._id,
     category: "FEATURE_REQUEST" as const,
     title: "Add dark mode toggle",
-    description: "It would be great to have a dark mode for late-night studying.",
+    description:
+      "It would be great to have a dark mode for late-night studying.",
     rating: 4,
     status: "PENDING" as const,
   },
@@ -524,7 +594,8 @@ export const seedFeedback = [
     userId: seedUsers[2]._id,
     category: "BUG" as const,
     title: "Task due date not saving",
-    description: "When I set a due date on a task, it reverts to null after refresh.",
+    description:
+      "When I set a due date on a task, it reverts to null after refresh.",
     rating: 2,
     status: "IN_REVIEW" as const,
   },
