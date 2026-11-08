@@ -8,12 +8,12 @@
  *   npm run seed:reset    # Clear all data then seed fresh
  *   npm run seed:dry-run  # Show current record counts without writing
  *
- * Data is loaded from seed-data.json to avoid CodeQL/ESLint duplication issues
- * in TypeScript source files.
+ * Data is loaded from seed-data.json.
  */
 
 import { connectDatabase, disconnectDatabase } from "../src/config/database.js";
 import { getBcryptRounds } from "../src/config/environment.js";
+import { randomUUID } from "node:crypto";
 
 import seedData from "./seed-data.json";
 
@@ -52,8 +52,6 @@ const now = () => new Date();
 
 const oneTimeId = (): string => randomUUID();
 
-import { randomUUID } from "node:crypto";
-
 /**
  * Reset all collections. Order matters: delete referencing documents first.
  */
@@ -73,15 +71,9 @@ const resetDatabase = async (): Promise<void> => {
   success("All collections cleared.");
 };
 
-interface SeedUser {
-  name: string;
-  email: string;
-  password: string;
-  role: string;
-  status: string;
-  emailVerifiedAt: string | null;
-}
-
+/**
+ * Upsert users. Keyed on email to avoid duplicates.
+ */
 const seedUsersData = async (): Promise<Map<string, string>> => {
   log("Seeding users...");
   const userIdMap = new Map<string, string>();
@@ -139,45 +131,10 @@ const seedGroupsData = async (): Promise<Map<string, string>> => {
       ownerId: userIdMap.get(seedData.users[groupData.ownerIndex].email)!,
     });
     success(`Created group: ${groupData.name}`);
-    groupIdMap.set(
-      groupData.name,
-      (await Group.findOne({ name: groupData.name }))!.groupId,
-    );
+    groupIdMap.set(groupData.name, groupIdMap.get(groupData.name)!);
   }
 
   return groupIdMap;
-};
-
-/**
- * Upsert memberships. Keyed on groupId + userId unique index.
- */
-const seedMembershipsData = async (
-  userIdMap: Map<string, string>,
-  groupIdMap: Map<string, string>,
-): Promise<void> => {
-  log("Seeding memberships...");
-  for (const membership of seedData.memberships) {
-    const existing = await Member.findOne({
-      groupId: groupIdMap.get(seedData.groups[membership.groupIndex].name)!,
-      userId: userIdMap.get(seedData.users[membership.userIndex].email)!,
-    }).exec();
-    if (existing) {
-      log(
-        `Membership already exists: ${membership.userIndex} in ${membership.groupIndex} (skipping)`,
-      );
-      continue;
-    }
-
-    await Member.create({
-      groupId: groupIdMap.get(seedData.groups[membership.groupIndex].name)!,
-      userId: userIdMap.get(seedData.users[membership.userIndex].email)!,
-      role: membership.role,
-      status: membership.status,
-    });
-    success(
-      `Created membership: ${membership.userIndex} in ${membership.groupIndex}`,
-    );
-  }
 };
 
 /**
@@ -188,7 +145,9 @@ const seedTasksData = async (
   groupIdMap: Map<string, string>,
 ): Promise<void> => {
   log("Seeding tasks...");
-  for (const taskData of seedData.tasks) {
+  const taskData = seedData.tasks as any[][];
+
+  for (const task of taskData) {
     const [
       userIdx,
       title,
@@ -201,7 +160,7 @@ const seedTasksData = async (
       priority,
       dueDays,
       completedDays,
-    ] = taskData as unknown as [
+    ] = task as unknown as [
       number,
       string,
       string,
@@ -215,7 +174,7 @@ const seedTasksData = async (
       number | null,
     ];
 
-    const existing = await Task.findOne({ _id: oneTimeId() }).exec();
+    const existing = await Task.findOne({ title }).exec();
     if (existing) {
       log(`Task already exists: ${title} (skipping)`);
       continue;
@@ -292,9 +251,6 @@ const seedRoadmapsData = async (
   }
 };
 
-/**
- * Upsert rubrics. Keyed on _id.
- */
 const seedRubricsData = async (
   userIdMap: Map<string, string>,
 ): Promise<void> => {
@@ -322,9 +278,6 @@ const seedRubricsData = async (
   }
 };
 
-/**
- * Upsert feedback. Keyed on userId + title.
- */
 const seedFeedbackData = async (
   userIdMap: Map<string, string>,
 ): Promise<void> => {
@@ -351,9 +304,6 @@ const seedFeedbackData = async (
   }
 };
 
-/**
- * Upsert calendar events. Keyed on userId + title + startTime.
- */
 const seedCalendarEventsData = async (
   userIdMap: Map<string, string>,
   groupIdMap: Map<string, string>,
@@ -390,9 +340,6 @@ const seedCalendarEventsData = async (
   }
 };
 
-/**
- * Upsert study sessions. Keyed on _id.
- */
 const seedStudySessionsData = async (
   userIdMap: Map<string, string>,
   groupIdMap: Map<string, string>,
