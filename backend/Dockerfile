@@ -46,8 +46,15 @@ RUN apk upgrade --no-cache
 # Copy compiled JavaScript
 COPY --from=build /app/dist ./dist
 
+# Runtime writes application logs to ./logs, so hand ownership to the
+# unprivileged runtime user before dropping privileges.
+RUN mkdir -p /app/logs && chown -R node:node /app
+
 # Expose application port
 EXPOSE 3000
+
+# Run the compiled server as the unprivileged node user instead of root.
+USER node
 
 # Start application (same entry point as `npm start`, without npm in the image)
 CMD ["node", "dist/server.js"]
