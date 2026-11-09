@@ -148,6 +148,20 @@ export const taskService = {
       throw new AppError(404, "TASK_NOT_FOUND", "Task was not found.");
     }
 
+    // Optimistic concurrency: reject the update if the row changed since the
+    // caller captured it (compare-and-swap). The same precondition is applied
+    // atomically in the repository so a racing writer still cannot win.
+    if (
+      input.expectedUpdatedAt &&
+      current.updatedAt.getTime() !== input.expectedUpdatedAt.getTime()
+    ) {
+      throw new AppError(
+        409,
+        "TASK_CONFLICT",
+        "This task was changed on another device. Reload it and try again.",
+      );
+    }
+
     const effectiveGroupId =
       input.groupId === undefined ? current.groupId : input.groupId;
     const effectiveAssigneeId =
@@ -158,6 +172,14 @@ export const taskService = {
     const task = await taskRepository.updateForUser(taskId, userId, input);
 
     if (!task) {
+      if (input.expectedUpdatedAt) {
+        // Lost the compare-and-swap against a racing writer.
+        throw new AppError(
+          409,
+          "TASK_CONFLICT",
+          "This task was changed on another device. Reload it and try again.",
+        );
+      }
       throw new AppError(404, "TASK_NOT_FOUND", "Task was not found.");
     }
 

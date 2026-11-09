@@ -1,4 +1,3 @@
-
 /**
  * File Name: task.types.ts
  * Description: Defines task domain types, filtering parameters, and paginated response contracts.
@@ -18,12 +17,7 @@ export const TASK_STATUSES = [
 
 export type TaskStatus = (typeof TASK_STATUSES)[number];
 
-export const TASK_PRIORITIES = [
-  "low",
-  "medium",
-  "high",
-  "urgent",
-] as const;
+export const TASK_PRIORITIES = ["low", "medium", "high", "urgent"] as const;
 
 export type TaskPriority = (typeof TASK_PRIORITIES)[number];
 
@@ -89,6 +83,10 @@ export interface CreateTaskInput {
 
 /**
  * Payload data accepted when updating an existing task.
+ *
+ * `expectedUpdatedAt` is the optimistic-concurrency precondition: the update
+ * is only applied when the persisted `updatedAt` matches it. A mismatch yields
+ * 409 `TASK_CONFLICT` instead of a silent lost update.
  */
 export interface UpdateTaskInput {
   title?: string;
@@ -102,6 +100,7 @@ export interface UpdateTaskInput {
   priority?: TaskPriority;
   status?: TaskStatus;
   dueDate?: Date | null;
+  expectedUpdatedAt?: Date;
 }
 
 // ============================================================================
@@ -131,8 +130,7 @@ export interface ListTasksFilterOptions {
  *
  * Suitable for numbered pages and Previous/Next navigation.
  */
-export interface OffsetPaginationInput
-  extends ListTasksFilterOptions {
+export interface OffsetPaginationInput extends ListTasksFilterOptions {
   paginationType?: "offset";
   page?: number;
   limit?: number;
@@ -145,8 +143,7 @@ export interface OffsetPaginationInput
  *
  * Suitable for infinite scrolling and large datasets.
  */
-export interface CursorPaginationInput
-  extends ListTasksFilterOptions {
+export interface CursorPaginationInput extends ListTasksFilterOptions {
   paginationType: "cursor";
   cursor?: string;
   limit?: number;
@@ -157,9 +154,7 @@ export interface CursorPaginationInput
 /**
  * Supported task listing pagination strategies.
  */
-export type ListTasksInput =
-  | OffsetPaginationInput
-  | CursorPaginationInput;
+export type ListTasksInput = OffsetPaginationInput | CursorPaginationInput;
 
 // ============================================================================
 // PAGINATION RESPONSE CONTRACTS
@@ -209,6 +204,4 @@ export interface CursorPaginatedTasks {
 /**
  * Consolidated paginated task response.
  */
-export type PaginatedTasks =
-  | OffsetPaginatedTasks
-  | CursorPaginatedTasks;
+export type PaginatedTasks = OffsetPaginatedTasks | CursorPaginatedTasks;

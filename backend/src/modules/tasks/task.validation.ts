@@ -6,18 +6,12 @@
 
 import { z } from "zod";
 
-import {
-  TASK_PRIORITIES,
-  TASK_STATUSES,
-} from "./task.types.js";
+import { TASK_PRIORITIES, TASK_STATUSES } from "./task.types.js";
 
 /**
  * Accepts either a valid date or null.
  */
-const nullableDate = z.union([
-  z.coerce.date(),
-  z.null(),
-]);
+const nullableDate = z.union([z.coerce.date(), z.null()]);
 
 /**
  * Accepts either a UUID or null, used for optional group/member references.
@@ -37,7 +31,7 @@ const taskTagsSchema = z
       .string()
       .trim()
       .min(1, "Tags cannot be empty.")
-      .max(24, "A tag cannot exceed 24 characters.")
+      .max(24, "A tag cannot exceed 24 characters."),
   )
   .max(8, "A task cannot have more than 8 tags.")
   .transform((tags) => {
@@ -96,9 +90,7 @@ export const createTaskSchema = z.object({
 
       reminderAt: nullableDate.optional(),
 
-      priority: z
-        .enum(TASK_PRIORITIES)
-        .optional(),
+      priority: z.enum(TASK_PRIORITIES).optional(),
 
       dueDate: nullableDate.optional(),
     })
@@ -115,25 +107,11 @@ export const updateTaskSchema = z.object({
 
   body: z
     .object({
-      title: z
-        .string()
-        .trim()
-        .min(1)
-        .max(150)
-        .optional(),
+      title: z.string().trim().min(1).max(150).optional(),
 
-      description: z
-        .string()
-        .trim()
-        .max(5000)
-        .nullable()
-        .optional(),
+      description: z.string().trim().max(5000).nullable().optional(),
 
-      course: z
-        .string()
-        .trim()
-        .max(120)
-        .optional(),
+      course: z.string().trim().max(120).optional(),
 
       tags: taskTagsSchema.optional(),
 
@@ -141,32 +119,22 @@ export const updateTaskSchema = z.object({
 
       assigneeId: nullableUuid.optional(),
 
-      assigneeName: z
-        .string()
-        .trim()
-        .max(120)
-        .nullable()
-        .optional(),
+      assigneeName: z.string().trim().max(120).nullable().optional(),
 
       reminderAt: nullableDate.optional(),
 
-      priority: z
-        .enum(TASK_PRIORITIES)
-        .optional(),
+      priority: z.enum(TASK_PRIORITIES).optional(),
 
-      status: z
-        .enum(TASK_STATUSES)
-        .optional(),
+      status: z.enum(TASK_STATUSES).optional(),
 
       dueDate: nullableDate.optional(),
+
+      expectedUpdatedAt: z.coerce.date().optional(),
     })
     .strict()
-    .refine(
-      (body) => Object.keys(body).length > 0,
-      {
-        message: "At least one field must be provided.",
-      }
-    ),
+    .refine((body) => Object.keys(body).length > 0, {
+      message: "At least one field must be provided.",
+    }),
 });
 
 /**
@@ -193,30 +161,15 @@ export const listTasksSchema = z.object({
 
       dueAfter: z.coerce.date().optional(),
 
-      page: z.coerce
-        .number()
-        .int()
-        .min(1)
-        .default(1),
+      page: z.coerce.number().int().min(1).default(1),
 
-      limit: z.coerce
-        .number()
-        .int()
-        .min(1)
-        .max(100)
-        .default(20),
+      limit: z.coerce.number().int().min(1).max(100).default(20),
     })
     .strict(),
 });
 
-export type CreateTaskBody = z.infer<
-  typeof createTaskSchema
->["body"];
+export type CreateTaskBody = z.infer<typeof createTaskSchema>["body"];
 
-export type UpdateTaskBody = z.infer<
-  typeof updateTaskSchema
->["body"];
+export type UpdateTaskBody = z.infer<typeof updateTaskSchema>["body"];
 
-export type ListTasksQuery = z.infer<
-  typeof listTasksSchema
->["query"];
+export type ListTasksQuery = z.infer<typeof listTasksSchema>["query"];
