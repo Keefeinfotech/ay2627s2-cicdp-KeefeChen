@@ -28,8 +28,8 @@
       CanvasKit from gstatic.com and Cloudflare Turnstile.
     * CanvasKit/WASM needs 'wasm-unsafe-eval'. Release builds do not require
       'unsafe-eval'; keep it out so injected strings cannot be evaluated.
-    * Flutter renders through inline styles, so style-src needs
-      'unsafe-inline'. Styles carry no secrets.
+    * Flutter renders through inline styles via JavaScript (element.style),
+      which CSP style-src does not restrict. No 'unsafe-inline' needed.
     * API calls are limited to the backend origin (localhost in dev) plus
       gstatic.com for CanvasKit and challenges.cloudflare.com for Turnstile.
       Do not use 'https:' wildcard as it allows connections to any HTTPS
@@ -42,7 +42,7 @@
       X-Content-Type-Options: nosniff
       Referrer-Policy: strict-origin-when-cross-origin
   -->
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; script-src 'self' 'wasm-unsafe-eval' https://challenges.cloudflare.com https://www.gstatic.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' blob:; connect-src 'self' http://localhost:3000 http://127.0.0.1:3000 https://www.gstatic.com https://challenges.cloudflare.com; frame-src https://challenges.cloudflare.com; worker-src 'self' blob:;">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; script-src 'self' 'wasm-unsafe-eval' https://challenges.cloudflare.com https://www.gstatic.com; style-src 'self'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' blob:; connect-src 'self' http://localhost:3000 http://127.0.0.1:3000 https://www.gstatic.com https://challenges.cloudflare.com; frame-src https://challenges.cloudflare.com; worker-src 'self' blob:;">
 
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
