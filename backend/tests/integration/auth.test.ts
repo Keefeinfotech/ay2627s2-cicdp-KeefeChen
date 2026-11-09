@@ -183,11 +183,7 @@ describe("POST /api/auth/signup — password strength", () => {
       "NOLOWERCASE1!",
       "lowercase",
     ],
-    [
-      "rejects a password without a number",
-      "NoNumberHere!",
-      "number",
-    ],
+    ["rejects a password without a number", "NoNumberHere!", "number"],
     [
       "rejects a password without a special character",
       "NoSpecial123",
