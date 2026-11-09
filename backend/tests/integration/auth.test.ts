@@ -167,56 +167,40 @@ describe("POST /api/auth/signup — password strength", () => {
     password: "StrongPass1!", // 12 chars, upper, lower, number, special
   };
 
-  it("rejects a password shorter than 12 characters", async () => {
-    const res = await request(app)
-      .post("/api/auth/signup")
-      .send({ ...baseSignup, password: "Short1!" });
-
-    expect(res.status).toBe(400);
-    expect(res.body.code).toBe("VALIDATION_ERROR");
-    expect(JSON.stringify(res.body.details)).toContain(
+  it.each([
+    [
+      "rejects a password shorter than 12 characters",
+      "Short1!",
       "at least 12 characters",
-    );
-  });
-
-  it("rejects a password without an uppercase letter", async () => {
+    ],
+    [
+      "rejects a password without an uppercase letter",
+      "nouppercase1!",
+      "uppercase",
+    ],
+    [
+      "rejects a password without a lowercase letter",
+      "NOLOWERCASE1!",
+      "lowercase",
+    ],
+    [
+      "rejects a password without a number",
+      "NoNumberHere!",
+      "number",
+    ],
+    [
+      "rejects a password without a special character",
+      "NoSpecial123",
+      "special character",
+    ],
+  ])("%s", async (_testName, invalidPassword, expectedKeyword) => {
     const res = await request(app)
       .post("/api/auth/signup")
-      .send({ ...baseSignup, password: "nouppercase1!" });
+      .send({ ...baseSignup, password: invalidPassword });
 
     expect(res.status).toBe(400);
     expect(res.body.code).toBe("VALIDATION_ERROR");
-    expect(JSON.stringify(res.body.details)).toContain("uppercase");
-  });
-
-  it("rejects a password without a lowercase letter", async () => {
-    const res = await request(app)
-      .post("/api/auth/signup")
-      .send({ ...baseSignup, password: "NOLOWERCASE1!" });
-
-    expect(res.status).toBe(400);
-    expect(res.body.code).toBe("VALIDATION_ERROR");
-    expect(JSON.stringify(res.body.details)).toContain("lowercase");
-  });
-
-  it("rejects a password without a number", async () => {
-    const res = await request(app)
-      .post("/api/auth/signup")
-      .send({ ...baseSignup, password: "NoNumberHere!" });
-
-    expect(res.status).toBe(400);
-    expect(res.body.code).toBe("VALIDATION_ERROR");
-    expect(JSON.stringify(res.body.details)).toContain("number");
-  });
-
-  it("rejects a password without a special character", async () => {
-    const res = await request(app)
-      .post("/api/auth/signup")
-      .send({ ...baseSignup, password: "NoSpecial123" });
-
-    expect(res.status).toBe(400);
-    expect(res.body.code).toBe("VALIDATION_ERROR");
-    expect(JSON.stringify(res.body.details)).toContain("special character");
+    expect(JSON.stringify(res.body.details)).toContain(expectedKeyword);
   });
 
   it("rejects a common password even when complex", async () => {
