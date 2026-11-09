@@ -1,0 +1,29 @@
+# Dependency and build outputs
+node_modules/
+dist/
+coverage/
+logs/
+pacts/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+
+# OS
+.DS_Store
+*.swp
+
+# Tests and configs
+tests/
+.eslintrc.*
+.prettierrc.*
+.jest.config.*
+vitest.config.*
+tsconfig.json
+
+# Misc
+npm-debug.log*
+.env

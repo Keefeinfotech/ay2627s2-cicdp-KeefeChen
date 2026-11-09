@@ -100,6 +100,17 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@9901337eb8b5051e1c5003c1bbb99977a0478331 # v3.8.0
+
+      - name: Cache Docker layers
+        uses: actions/cache@70440fc78c051221a29c804041a477b2e69180f3 # v4.2.3
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
+
       - name: Scan filesystem vulnerabilities
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
@@ -112,7 +123,18 @@ jobs:
           exit-code: "1"
 
       - name: Build backend container for scanning
-        run: docker build --tag auxilia-backend:ci ./backend
+        uses: docker/build-push-action@6487a14c80689ceb5756735b0c372eb0210fb03f # v6.8.0
+        with:
+          context: ./backend
+          tag: auxilia-backend:ci
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache-new
+          load: true
+
+      - name: Move Docker cache
+        run: |
+          rm -rf /tmp/.buildx-cache
+          mv /tmp/.buildx-cache-new /tmp/.buildx-cache
 
       - name: Scan backend container image
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0

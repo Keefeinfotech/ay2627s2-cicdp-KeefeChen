@@ -1,0 +1,94 @@
+# Auxilia - Local Development Environment
+#
+# Spins up MongoDB, the Express backend, and the Flutter web frontend together
+# so the full stack runs locally with `docker compose up`.
+#
+# Usage:
+#   cp backend/.env.example backend/.env   # configure values
+#   docker compose up --build
+#
+# Services:
+#   mongodb   - Database (persisted in mongodb_data volume)
+#   backend   - Express API (http://localhost:3000)
+#   frontend  - Flutter web app served by Nginx (http://localhost:8080)
+
+services:
+  # ------------------------------------------------------------------
+  # Database
+  # ------------------------------------------------------------------
+  mongodb:
+    image: mongo:7.0.14-jammy
+    container_name: auxilia-mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.runCommand({ping:1})"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # ------------------------------------------------------------------
+  # Backend API
+  # ------------------------------------------------------------------
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      cache_from:
+        - auxilia-backend:cache
+    container_name: auxilia-backend
+    restart: unless-stopped
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: development
+      PORT: 3000
+      MONGODB_URI: mongodb://mongodb:27017/auxilia
+      JWT_SECRET: ${JWT_SECRET:-dev-secret-change-me-min-16-chars}
+      JWT_EXPIRES_IN: 1d
+      BCRYPT_ROUNDS: 10
+      CORS_ORIGIN: http://localhost:8080,http://localhost:3000
+      TRUST_PROXY: "true"
+      CAPTCHA_ENABLED: "false"
+      AI_PROVIDER: mock
+      AI_MODEL: mock-model
+      AI_BASE_URL: https://api.openai.com/v1
+      AI_MAX_TOKENS: 400
+      AI_TIMEOUT_MS: 15000
+      AI_RATE_LIMIT_PER_USER: 20
+      API_RATE_LIMIT_MAX: 300
+      APP_BASE_URL: http://localhost:8080
+      BACKEND_URL: http://localhost:3000
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000/api/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+  # ------------------------------------------------------------------
+  # Frontend (Flutter web, served by Nginx)
+  # ------------------------------------------------------------------
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        - API_BASE_URL=http://localhost:3000
+    container_name: auxilia-frontend
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "8080:80"
+
+volumes:
+  mongodb_data:
