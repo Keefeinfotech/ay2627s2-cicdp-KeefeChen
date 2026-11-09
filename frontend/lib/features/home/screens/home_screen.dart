@@ -78,7 +78,9 @@ class _HomeScreenState extends State<HomeScreen> {
           ownerId: widget.ownerId,
         );
     _store.addListener(_handleStoreChanged);
-    _store.load();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _store.load();
+    });
   }
 
   @override

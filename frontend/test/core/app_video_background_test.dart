@@ -10,7 +10,7 @@ Widget _app({bool reduceMotion = true}) {
     home: MediaQuery(
       data: MediaQueryData(disableAnimations: reduceMotion),
       child: const AppVideoBackground(
-        assetPath: 'assets/video/auth_bg.mp4',
+        assetPath: 'assets/videos/auth_bg.mp4',
         child: Scaffold(body: Center(child: Text('Sign in form'))),
       ),
     ),
