@@ -15,8 +15,7 @@ export const helmetMiddleware = helmet({
 const isLocalDevOrigin = (origin: string): boolean => {
   if (isProduction()) return false;
   return (
-    origin === "http://localhost:3000" ||
-    origin === "http://127.0.0.1:3000"
+    origin === "http://localhost:3000" || origin === "http://127.0.0.1:3000"
   );
 };
 
