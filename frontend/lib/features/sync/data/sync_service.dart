@@ -405,9 +405,12 @@ class SyncService {
       return _ApplyOutcome.conflict;
     }
 
+    // Compare-and-swap against the server row we just fetched: if it changed
+    // between the fetch and this write, the server rejects with
+    // TASK_CONFLICT instead of overwriting the concurrent edit.
     await _api.patchJson(
       ApiEndpoints.task(operation.taskId),
-      TaskApiMapper.toUpdateJson(task),
+      TaskApiMapper.toUpdateJson(task, expectedUpdatedAt: remote.updatedAt),
       token: token,
     );
     return _ApplyOutcome.applied;

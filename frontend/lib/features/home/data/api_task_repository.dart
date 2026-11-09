@@ -275,13 +275,35 @@ class ApiTaskRepository implements SyncAwareTaskRepository {
     return result;
   }
 
+  /// Fetches every remote task the user owns.
+  ///
+  /// The offline cache is a full snapshot, so the client cannot stop at the
+  /// first page: it pages through the backend (`limit=100`) until the server
+  /// reports no next page or a safety cap is reached. Without this, any task
+  /// beyond the first 100 would silently disappear from the list.
   Future<List<Task>> _fetchAll(String token) async {
-    final data = await _api.getJson(
-      ApiEndpoints.tasks,
-      token: token,
-      query: const <String, String>{'page': '1', 'limit': '100'},
-    );
-    return TaskApiMapper.listFromApi(data['data']);
+    const pageSize = 100;
+    const maxPages = 25; // 2,500 tasks is well past any realistic account size
+    final tasks = <Task>[];
+
+    for (var page = 1; page <= maxPages; page++) {
+      final data = await _api.getJson(
+        ApiEndpoints.tasks,
+        token: token,
+        query: <String, String>{'page': '$page', 'limit': '$pageSize'},
+      );
+      final pageItems = TaskApiMapper.listFromApi(data['data']);
+      tasks.addAll(pageItems);
+
+      final pagination = data['pagination'];
+      final hasNextPage =
+          pagination is Map && pagination['hasNextPage'] == true;
+      if (!hasNextPage || pageItems.isEmpty) {
+        break;
+      }
+    }
+
+    return tasks;
   }
 
   bool _sameVersion(Task a, Task b) {

@@ -32,7 +32,16 @@ abstract final class TaskApiMapper {
     'dueDate': task.dueDate?.toUtc().toIso8601String(),
   };
 
-  static Map<String, dynamic> toUpdateJson(Task task) => <String, dynamic>{
+  /// Converts a local task into the backend update payload.
+  ///
+  /// [expectedUpdatedAt] is the optimistic-concurrency precondition the
+  /// backend enforces with a compare-and-swap; a stale value yields
+  /// `TASK_CONFLICT` instead of a silent lost update. Callers must pass the
+  /// `updatedAt` of the server row they based their edit on.
+  static Map<String, dynamic> toUpdateJson(
+    Task task, {
+    DateTime? expectedUpdatedAt,
+  }) => <String, dynamic>{
     'title': task.title,
     'description': task.notes.isEmpty ? null : task.notes,
     'course': task.course,
@@ -44,6 +53,8 @@ abstract final class TaskApiMapper {
     'priority': priorityName(task.priority),
     'status': task.isCompleted ? 'completed' : 'todo',
     'dueDate': task.dueDate?.toUtc().toIso8601String(),
+    if (expectedUpdatedAt != null)
+      'expectedUpdatedAt': expectedUpdatedAt.toUtc().toIso8601String(),
   };
 
   static String priorityName(TaskPriority priority) => switch (priority) {
