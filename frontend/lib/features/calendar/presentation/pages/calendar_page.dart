@@ -292,9 +292,10 @@ class _CalendarPageState extends State<CalendarPage> {
               }
 
               return Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: <Widget>[
                   Expanded(child: heading),
-                  nav,
+                  Flexible(flex: 1, fit: FlexFit.loose, child: nav),
                   const SizedBox(width: AppSpacing.sm),
                   _ProjectFilter(controller: _controller),
                 ],
