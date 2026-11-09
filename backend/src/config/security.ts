@@ -14,15 +14,7 @@ export const helmetMiddleware = helmet({
 
 const isLocalDevOrigin = (origin: string): boolean => {
   if (isProduction()) return false;
-  try {
-    const { protocol, hostname } = new URL(origin);
-    return (
-      (protocol === "http:" || protocol === "https:") &&
-      (hostname === "localhost" || hostname === "127.0.0.1")
-    );
-  } catch {
-    return false;
-  }
+  return origin === 'http://localhost:3000' || origin === 'http://127.0.0.1:3000';
 };
 
 export const corsOptions: CorsOptions = {
