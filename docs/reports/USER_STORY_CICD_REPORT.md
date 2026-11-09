@@ -206,6 +206,27 @@ Current branching compliance: `feature/natural-language-task-assistant` (PR
 `fix/` prefix and should be renamed or closed (it is a duplicate of PR #12);
 its title also does not follow Conventional Commits.
 
+## Scaling notes (2026-11-08)
+
+**Pagination.** The REST API already pages `/api/tasks` with offset pagination
+(`page`, `limit` capped at 100 by Zod). The offline-first client cache built
+for this app keeps a full local snapshot, so its `_fetchAll(token)` previously
+read only page 1 (`limit=100`); every task past the 100th silently vanished.
+It now walks pages `1..N` until the server reports `hasNextPage: false`
+(or a 2,500-task safety cap) and caches the complete list. UI-side
+pagination is client-side with the existing Previous/Next controls; all
+reads are served from the local snapshot, so UI pagination order is stable.
+
+**Concurrency.** Updates previously performed a last-write-wins
+`findOneAndUpdate`. Update operations now use compare-and-swap semantics: the
+client sends `expectedUpdatedAt` (the `updatedAt` of the row it based its
+edit on), the service rejects with `409 TASK_CONFLICT` when the row changed
+since then, and the repository applies the same filter atomically so a racing
+writer cannot win either. Create is already idempotent server-side via the
+unique task UUID index. The sync queue automatically converts a 409 into a
+user-facing conflict resolution (nearest-task options, keep-mine/keep-server)
+instead of silently overwriting.
+
 ## Security and privacy notes
 
 - Invitation tokens are stored as SHA-256 hashes and are bound to the invitee's

@@ -1,4 +1,3 @@
-
 /**
  * File Name: task.repository.ts
  * Description: Encapsulates MongoDB persistence operations for tasks.
@@ -20,10 +19,7 @@ export const taskRepository = {
   /**
    * Creates a task belonging to the specified user.
    */
-  async create(
-    userId: string,
-    input: CreateTaskInput
-  ): Promise<TaskRecord> {
+  async create(userId: string, input: CreateTaskInput): Promise<TaskRecord> {
     const task = await Task.create({
       ...(input.id ? { _id: input.id } : {}),
       userId,
@@ -47,7 +43,7 @@ export const taskRepository = {
    */
   async findByIdForUser(
     taskId: string,
-    userId: string
+    userId: string,
   ): Promise<TaskRecord | null> {
     return Task.findOne({
       _id: taskId,
@@ -63,7 +59,7 @@ export const taskRepository = {
    */
   async listForUser(
     userId: string,
-    input: OffsetPaginationInput
+    input: OffsetPaginationInput,
   ): Promise<OffsetPaginatedTasks> {
     // Apply pagination defaults.
     const page = input.page ?? 1;
@@ -174,25 +170,37 @@ export const taskRepository = {
   /**
    * Updates a task only if it belongs to the specified user.
    * Completion timestamps are maintained by the model lifecycle hook.
+   *
+   * When the caller passes `expectedUpdatedAt`, the update is applied only
+   * when the persisted `updatedAt` still matches it (compare-and-swap). A
+   * mismatch returns null so the service can answer 409 `TASK_CONFLICT`
+   * instead of silently overwriting a concurrent change.
    */
   async updateForUser(
     taskId: string,
     userId: string,
-    input: UpdateTaskInput
+    input: UpdateTaskInput,
   ): Promise<TaskRecord | null> {
+    const { expectedUpdatedAt, ...fields } = input;
+    const filter: Record<string, unknown> = {
+      _id: taskId,
+      userId,
+      deletedAt: null,
+    };
+
+    if (expectedUpdatedAt) {
+      filter.updatedAt = expectedUpdatedAt;
+    }
+
     return Task.findOneAndUpdate(
+      filter,
       {
-        _id: taskId,
-        userId,
-        deletedAt: null,
-      },
-      {
-        $set: input,
+        $set: fields,
       },
       {
         new: true,
         runValidators: true,
-      }
+      },
     )
       .lean<TaskRecord>()
       .exec();
@@ -201,10 +209,7 @@ export const taskRepository = {
   /**
    * Soft-deletes a task instead of permanently removing it.
    */
-  async softDeleteForUser(
-    taskId: string,
-    userId: string
-  ): Promise<boolean> {
+  async softDeleteForUser(taskId: string, userId: string): Promise<boolean> {
     const result = await Task.updateOne(
       {
         _id: taskId,
@@ -216,7 +221,7 @@ export const taskRepository = {
           deletedAt: new Date(),
           status: "archived",
         },
-      }
+      },
     ).exec();
 
     return result.modifiedCount === 1;

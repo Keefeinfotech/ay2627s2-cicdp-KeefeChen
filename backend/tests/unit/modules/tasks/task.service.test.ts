@@ -208,6 +208,42 @@ describe("task service", () => {
     ).resolves.toBe(task);
   });
 
+  it("rejects an update whose expectedUpdatedAt is stale (409 TASK_CONFLICT)", async () => {
+    const current = {
+      _id: "task-1",
+      title: "Original",
+      updatedAt: new Date("2026-03-01T00:00:00.000Z"),
+    };
+    vi.mocked(taskRepository.findByIdForUser).mockResolvedValue(current as any);
+
+    await expect(
+      taskService.updateTask("user-1", "task-1", {
+        title: "Changed",
+        expectedUpdatedAt: new Date("2026-02-01T00:00:00.000Z"),
+      }),
+    ).rejects.toMatchObject({ status: 409, code: "TASK_CONFLICT" });
+    expect(taskRepository.updateForUser).not.toHaveBeenCalled();
+  });
+
+  it("treats an atomic compare-and-swap failure as 409 TASK_CONFLICT", async () => {
+    const current = {
+      _id: "task-1",
+      title: "Original",
+      updatedAt: new Date("2026-03-01T00:00:00.000Z"),
+    };
+    vi.mocked(taskRepository.findByIdForUser).mockResolvedValue(current as any);
+    // The repository's conditional write returned null because another writer
+    // won the race after our precheck.
+    vi.mocked(taskRepository.updateForUser).mockResolvedValue(null);
+
+    await expect(
+      taskService.updateTask("user-1", "task-1", {
+        title: "Changed",
+        expectedUpdatedAt: current.updatedAt,
+      }),
+    ).rejects.toMatchObject({ status: 409, code: "TASK_CONFLICT" });
+  });
+
   it("soft deletes a task", async () => {
     vi.mocked(taskRepository.softDeleteForUser).mockResolvedValue(true);
 
