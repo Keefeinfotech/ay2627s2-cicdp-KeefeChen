@@ -3,11 +3,14 @@
 const branch = process.env.BRANCH_NAME?.trim() ?? "";
 
 if (branch === "main" || branch === "develop") {
-  console.error(`Branch "${branch}" is protected and cannot be a PR head branch.`);
+  console.error(
+    `Branch "${branch}" is protected and cannot be a PR head branch.`,
+  );
   process.exit(1);
 }
 
-const allowed = /^(feature|bugfix|hotfix|refactor|release|dependabot|renovate)\/[a-z0-9][a-z0-9._/-]*$/;
+const allowed =
+  /^(feature|bugfix|hotfix|refactor|release|dependabot|renovate)\/[a-z0-9][a-z0-9._/-]*$/;
 
 if (!allowed.test(branch)) {
   console.error(
