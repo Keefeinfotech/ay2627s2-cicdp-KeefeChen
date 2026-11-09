@@ -165,8 +165,46 @@ Runs on PR #12 failed on the branch-protection checks. What was done for each:
   triaged): the four regex sites were the same lines CodeQL flagged
   (`tssecurity:S8786`) and are now resolved; no S8786 references remain.
 
-The same remediation was pushed to both `fix/frontend-assistant-compile-errors`
-(PR #13) and `feature/natural-language-task-assistant` (PR #12).
+The same remediation was pushed to both `bugfix/frontend-assistant-compile-errors`
+(PR #13) and `feature/natural-language-task-assistant` (PR #12). The local
+`fix/frontend-assistant-compile-errors` branch was re-cut as
+`bugfix/frontend-assistant-compile-errors` to satisfy the naming standard;
+PR #13 still tracks the legacy remote branch and can now fail the
+`Source Control - PR Conventions` branch-name check until it is renamed.
+
+## Branch naming strategy (2026-11-08)
+
+The team adopted a four-prefix standard (see `docs/release/BRANCHING.md`):
+
+| Prefix | Usage | Example |
+|---|---|---|
+| `feature/` | New functionality or UI components | `feature/participant-pagination` |
+| `bugfix/` | Non-critical bug fixes | `bugfix/fix-null-pointer-edit` |
+| `hotfix/` | Emergency production fixes directly off `main` | `hotfix/db-connection-leak` |
+| `refactor/` | Code maintenance without functional changes | `refactor/cleanup-jdbc-scriptlet` |
+
+Why this improves branching strategy:
+
+- **Traceability without opening the PR**: the prefix tells reviewers whether
+  behaviour changed (`feature/`, `bugfix/`) or none was expected (`refactor/`),
+  so review effort lands on the risky diffs.
+- **One visible emergency lane**: `hotfix/` branches are the only path that
+  bypasses the normal release train, making incident work auditable in a
+  single grep.
+- **Machine-checkable**: the `Source Control - PR Conventions` gate now
+  rejects heads that are not `feature/|bugfix/|hotfix/|refactor/` or allowed
+  automation prefixes (`release/`, `dependabot/`, `renovate/`), so the
+  convention does not depend on memory.
+- **Clean triage**: mixing `bugfix/` and `refactor/` in one PR hides what
+  changed; the standard forbids it.
+- **Faster rollbacks**: `refactor/` branches are the least likely to carry a
+  functional change and are the first candidates to revert when bisecting.
+
+Current branching compliance: `feature/natural-language-task-assistant` (PR
+#12) uses `feature/`; the fix branch was re-cut to
+`bugfix/frontend-assistant-compile-errors`. PR #13 was cut from the pre-standard
+`fix/` prefix and should be renamed or closed (it is a duplicate of PR #12);
+its title also does not follow Conventional Commits.
 
 ## Security and privacy notes
 

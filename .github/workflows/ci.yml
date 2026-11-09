@@ -76,6 +76,11 @@ jobs:
         env:
           PR_TITLE: ${{ github.event.pull_request.title }}
 
+      - name: Check branch name convention
+        run: node .github/scripts/check-branch-name.mjs
+        env:
+          BRANCH_NAME: ${{ github.head_ref }}
+
   # ==========================================
   # STAGE 1: SECURITY VALIDATION
   # ==========================================

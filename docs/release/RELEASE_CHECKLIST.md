@@ -6,7 +6,8 @@ the completed checklist with the release notes.
 ## 1. Prepare
 
 - [ ] Create a `release/x.y.z` branch from `develop` (or `main` if there is no
-      develop branch).
+      develop branch). Name all branches per `docs/release/BRANCHING.md`
+      (`feature/`, `bugfix/`, `hotfix/`, `refactor/`, or `release/`).
 - [ ] Confirm the working tree is clean and CI on the source branch is green.
 - [ ] Update the version in `frontend/pubspec.yaml`
       (`version: x.y.z+build`) and `backend/package.json`.
