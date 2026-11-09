@@ -25,17 +25,15 @@
     Content Security Policy for the Flutter web build.
 
     * Scripts stay same-origin except for the Google-hosted Flutter CanvasKit
-      runtime, loaded via <script src> and dynamic import from
-      https://www.gstatic.com.
-    * CanvasKit/WASM needs 'wasm-unsafe-eval'. Release builds do not require
-      'unsafe-eval'; keep it out so injected strings cannot be evaluated. The
-      engine bootstrap's inline script is allow-listed with its SHA-256 hash.
-    * Turnstile (Cloudflare bot protection) script is hosted on
-      https://challenges.cloudflare.com and also needs connect-src access.
-    * Flutter renders on canvas/CSSOM; it does not inject <style> elements, so
-      style-src stays 'self'. No wildcards are used anywhere in this policy.
-    * API calls are same-origin (the backend proxies AI provider traffic);
-      localhost on the default backend port is allowed for local development.
+      runtime and Cloudflare Turnstile. 'wasm-unsafe-eval' is required for
+      CanvasKit/WASM; 'unsafe-inline' is allowed for Flutter's bootstrap/debug
+      tooling (release builds previously used a hash, but debug/DDC and engine
+      updates frequently change inline scripts).
+    * 'unsafe-eval' remains disallowed so injected strings cannot be evaluated.
+    * Flutter web sets inline styles at runtime (e.g. platform views, overlays),
+      so style-src allows 'unsafe-inline'.
+    * CanvasKit assets are fetched from https://www.gstatic.com; debug runs use
+      a local WebSocket debug service on an ephemeral port.
 
     Serve these headers from the production host as well (meta tags cannot set
     frame-ancestors or HSTS):
@@ -44,7 +42,7 @@
       X-Content-Type-Options: nosniff
       Referrer-Policy: strict-origin-when-cross-origin
   -->
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; script-src 'self' 'wasm-unsafe-eval' 'sha256-MndvH2xoJITJx1vAmJTo0n71uGBofeMZfQTpl28Jz7s= https://challenges.cloudflare.com https://www.gstatic.com; style-src 'self'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' blob:; connect-src 'self' http://localhost:3000 http://127.0.0.1:3000 https://challenges.cloudflare.com; frame-src https://challenges.cloudflare.com; worker-src 'self' blob:;">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; script-src 'self' 'wasm-unsafe-eval' 'unsafe-inline' https://challenges.cloudflare.com https://www.gstatic.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data: https://fonts.gstatic.com; media-src 'self' blob:; connect-src 'self' http://localhost:3000 http://127.0.0.1:3000 ws://localhost:* ws://127.0.0.1:* https://www.gstatic.com https://fonts.gstatic.com https://challenges.cloudflare.com; frame-src https://challenges.cloudflare.com; worker-src 'self' blob:;">
 
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">

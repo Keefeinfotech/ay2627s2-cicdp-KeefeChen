@@ -382,7 +382,7 @@ class TaskStore extends ChangeNotifier {
     _loading = true;
     _error = null;
 
-    notifyListeners();
+    Future<void>.microtask(notifyListeners);
 
     try {
       final loaded = await repository.load(ownerId);

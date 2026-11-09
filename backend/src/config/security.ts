@@ -12,13 +12,25 @@ export const helmetMiddleware = helmet({
     : false,
 });
 
+const isLocalDevOrigin = (origin: string): boolean => {
+  if (isProduction()) return false;
+  try {
+    const { protocol, hostname } = new URL(origin);
+    return (
+      (protocol === "http:" || protocol === "https:") &&
+      (hostname === "localhost" || hostname === "127.0.0.1")
+    );
+  } catch {
+    return false;
+  }
+};
+
 export const corsOptions: CorsOptions = {
   origin: (origin, callback) => {
     if (!origin) return callback(null, true);
     if (getCorsOrigins().includes(origin)) return callback(null, true);
-    return callback(
-      new AppError(403, "CORS_FORBIDDEN", "Origin not allowed")
-    );
+    if (isLocalDevOrigin(origin)) return callback(null, true);
+    return callback(new AppError(403, "CORS_FORBIDDEN", "Origin not allowed"));
   },
   credentials: true,
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
