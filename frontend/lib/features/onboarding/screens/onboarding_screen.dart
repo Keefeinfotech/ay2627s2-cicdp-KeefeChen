@@ -30,7 +30,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   bool _finishing = false;
   String? _finishError;
 
-  static const int _pageCount = 3;
+  static const int _pageCount = 4;
 
   @override
   void dispose() {
@@ -115,6 +115,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             'Ask the AI assistant to shape ideas into actionable tasks and '
             'plans, wherever you are.',
         preview: _AssistantPreview(),
+      ),
+      const _OnboardingPageData(
+        eyebrow: 'Collaborate with others',
+        title: 'Stay in sync with the people who matter.',
+        body:
+            'Create groups, share tasks and track progress together so '
+            'nothing falls through the cracks.',
+        preview: _CollaborationPreview(),
       ),
     ];
 
@@ -790,6 +798,71 @@ class _AssistantPreview extends StatelessWidget {
                   color: AppColors.clearBlue,
                 ),
               ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CollaborationPreview extends StatelessWidget {
+  const _CollaborationPreview();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final Color muted = theme.colorScheme.onSurfaceVariant;
+
+    return _PreviewShell(
+      label: 'Shared group',
+      meta: '2 members · 5 tasks',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          const _PreviewTaskRow(
+            title: 'Submit assignment draft',
+            meta: 'Assigned to Maya',
+            accent: AppColors.clearBlue,
+          ),
+          Divider(height: 20, color: theme.colorScheme.outlineVariant),
+          const _PreviewTaskRow(
+            title: 'Review project plan',
+            meta: 'Due Friday',
+            accent: AppColors.successGreen,
+          ),
+          Divider(height: 20, color: theme.colorScheme.outlineVariant),
+          const _PreviewTaskRow(
+            title: 'Prepare presentation',
+            meta: 'In progress',
+            accent: AppColors.warningAmber,
+          ),
+          const SizedBox(height: AppSpacing.md),
+          Row(
+            children: <Widget>[
+              Expanded(
+                child: Text(
+                  'Group progress',
+                  style: theme.textTheme.labelSmall?.copyWith(color: muted),
+                ),
+              ),
+              Text(
+                '60% complete',
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: theme.colorScheme.onSurface,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(AppRadius.pill),
+            child: const LinearProgressIndicator(
+              value: 0.6,
+              minHeight: 5,
+              backgroundColor: AppColors.softGrey,
+              color: AppColors.clearBlue,
             ),
           ),
         ],
