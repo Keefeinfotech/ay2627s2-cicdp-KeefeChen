@@ -77,8 +77,8 @@ class TaskFilterBar extends StatelessWidget {
                     color: store.tagFilter?.toLowerCase() == tag.toLowerCase()
                         ? Theme.of(context).colorScheme.onPrimary
                         : Theme.of(context).colorScheme.onSurfaceVariant,
-                    fontWeight: store.tagFilter?.toLowerCase() ==
-                            tag.toLowerCase()
+                    fontWeight:
+                        store.tagFilter?.toLowerCase() == tag.toLowerCase()
                         ? FontWeight.w600
                         : FontWeight.w500,
                   ),

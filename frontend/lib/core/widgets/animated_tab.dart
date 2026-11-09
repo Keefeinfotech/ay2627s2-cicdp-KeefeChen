@@ -42,12 +42,14 @@ class _AnimatedTabState extends State<AnimatedTab>
       duration: const Duration(milliseconds: 450),
       vsync: this,
     );
-    _scale = Tween<double>(begin: 1.0, end: 1.06).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeOutBack),
-    );
-    _glow = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
+    _scale = Tween<double>(
+      begin: 1.0,
+      end: 1.06,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutBack));
+    _glow = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
     if (widget.isSelected) {
       _controller.value = 1.0;
     }
@@ -164,8 +166,9 @@ class _AnimatedTabState extends State<AnimatedTab>
 
 /// Weather-inspired accent colours for each dashboard tab.
 abstract class TabWeather {
-  static const Color all = AppColors.pacific;        // teal — ocean
-  static const Color pending = AppColors.moss;        // earthy green — forest
-  static const Color overdue = AppColors.persimmon;   // warm orange-red — sunset
-  static const Color completed = AppColors.malachite; // vivid green — new growth
+  static const Color all = AppColors.pacific; // teal — ocean
+  static const Color pending = AppColors.moss; // earthy green — forest
+  static const Color overdue = AppColors.persimmon; // warm orange-red — sunset
+  static const Color completed =
+      AppColors.malachite; // vivid green — new growth
 }

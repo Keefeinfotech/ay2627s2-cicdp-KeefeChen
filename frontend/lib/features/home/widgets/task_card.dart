@@ -66,8 +66,8 @@ class TaskCard extends StatelessWidget {
             color: overdue
                 ? AppColors.persimmon.withValues(alpha: 0.4)
                 : completed
-                    ? scheme.outlineVariant.withValues(alpha: 0.4)
-                    : scheme.outlineVariant,
+                ? scheme.outlineVariant.withValues(alpha: 0.4)
+                : scheme.outlineVariant,
           ),
           boxShadow: [
             if (!completed)
@@ -218,8 +218,8 @@ class TaskCard extends StatelessWidget {
                                   color: task.isCompleted
                                       ? AppColors.malachite
                                       : overdue
-                                          ? AppColors.persimmon
-                                          : muted,
+                                      ? AppColors.persimmon
+                                      : muted,
                                 ),
                               ),
                             ],

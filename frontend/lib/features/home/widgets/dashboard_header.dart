@@ -180,9 +180,7 @@ class _DashboardStatCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: scheme.surface,
           borderRadius: BorderRadius.circular(AppRadius.lg),
-          border: Border.all(
-            color: accent.withValues(alpha: 0.35),
-          ),
+          border: Border.all(color: accent.withValues(alpha: 0.35)),
           boxShadow: [
             BoxShadow(
               color: accent.withValues(alpha: 0.08),
@@ -203,11 +201,7 @@ class _DashboardStatCard extends StatelessWidget {
                   color: accent.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(AppRadius.sm),
                 ),
-                child: Icon(
-                  icon,
-                  size: 18,
-                  color: accent,
-                ),
+                child: Icon(icon, size: 18, color: accent),
               ),
             ),
             const SizedBox(height: AppSpacing.md),
@@ -339,8 +333,9 @@ class BrandMark extends StatelessWidget {
 
 /// Weather accent colours for dashboard tabs and stats.
 class TabWeather {
-  static const Color all = AppColors.pacific;        // teal — ocean
-  static const Color pending = AppColors.moss;        // earthy green — forest
-  static const Color overdue = AppColors.persimmon;   // warm orange-red — sunset
-  static const Color completed = AppColors.malachite; // vivid green — new growth
+  static const Color all = AppColors.pacific; // teal — ocean
+  static const Color pending = AppColors.moss; // earthy green — forest
+  static const Color overdue = AppColors.persimmon; // warm orange-red — sunset
+  static const Color completed =
+      AppColors.malachite; // vivid green — new growth
 }
