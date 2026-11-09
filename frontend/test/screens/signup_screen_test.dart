@@ -12,7 +12,7 @@ import 'package:frontend/features/authentication/screens/signup_screen.dart';
 /// A controllable AuthService that records signup calls.
 class FakeAuthService extends AuthService {
   FakeAuthService({this.shouldFail = false, this.session})
-      : super(api: ApiClient(), sessions: SessionStore());
+    : super(api: ApiClient(), sessions: SessionStore());
 
   final bool shouldFail;
   final Session? session;
@@ -42,9 +42,9 @@ class FakeAuthService extends AuthService {
 }
 
 Widget pumpSignup({FakeAuthService? auth}) => MaterialApp(
-      theme: AuxiliaTheme.light(),
-      home: SignupScreen(auth: auth),
-    );
+  theme: AuxiliaTheme.light(),
+  home: SignupScreen(auth: auth),
+);
 
 // Field order in the form: name(0), email(1), password(2), confirm(3).
 const int kName = 0;
@@ -85,10 +85,7 @@ void main() {
     );
 
     // A weak password keeps the button disabled.
-    await tester.enterText(
-      find.byType(TextFormField).at(kPassword),
-      'weak',
-    );
+    await tester.enterText(find.byType(TextFormField).at(kPassword), 'weak');
     await tester.pumpAndSettle();
     expect(
       tester.widget<FilledButton>(find.byType(FilledButton)).onPressed,
@@ -123,10 +120,7 @@ void main() {
     await tester.pumpWidget(pumpSignup());
     await tester.pumpAndSettle();
 
-    await tester.enterText(
-      find.byType(TextFormField).at(kPassword),
-      'weak',
-    );
+    await tester.enterText(find.byType(TextFormField).at(kPassword), 'weak');
     await tester.pumpAndSettle();
 
     expect(find.text('Too short'), findsOneWidget);
@@ -189,10 +183,7 @@ void main() {
     );
 
     // Overflow the name field, then submit: validation rejects it.
-    await tester.enterText(
-      find.byType(TextFormField).at(kName),
-      'A' * 81,
-    );
+    await tester.enterText(find.byType(TextFormField).at(kName), 'A' * 81);
     await tester.tap(find.text('Create Account'));
     await tester.pumpAndSettle();
 
@@ -208,10 +199,7 @@ void main() {
     await tester.pumpWidget(pumpSignup(auth: auth));
     await tester.pumpAndSettle();
 
-    await tester.enterText(
-      find.byType(TextFormField).at(kName),
-      'A' * 80,
-    );
+    await tester.enterText(find.byType(TextFormField).at(kName), 'A' * 80);
     await tester.enterText(
       find.byType(TextFormField).at(kEmail),
       'alice@example.com',
@@ -275,10 +263,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.enterText(
-      find.byType(TextFormField).at(kName),
-      'Alice Chen',
-    );
+    await tester.enterText(find.byType(TextFormField).at(kName), 'Alice Chen');
     await tester.enterText(
       find.byType(TextFormField).at(kEmail),
       'alice@example.com',
