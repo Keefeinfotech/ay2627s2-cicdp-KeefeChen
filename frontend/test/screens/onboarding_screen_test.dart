@@ -46,11 +46,16 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Next'));
     await tester.pumpAndSettle();
+    await tester.tap(find.text('Next'));
+    await tester.pumpAndSettle();
 
     expect(find.text('Get Started'), findsOneWidget);
     expect(find.text('Skip'), findsOneWidget);
-    expect(find.text('YOUR PERSONAL ASSISTANT'), findsOneWidget);
-    expect(find.text('Turn ideas into clear next steps.'), findsOneWidget);
+    expect(find.text('COLLABORATE WITH OTHERS'), findsOneWidget);
+    expect(
+      find.text('Stay in sync with the people who matter.'),
+      findsOneWidget,
+    );
 
     await tester.tap(find.text('Get Started'));
     await tester.pump();

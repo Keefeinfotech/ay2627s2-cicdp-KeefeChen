@@ -9,9 +9,9 @@ import 'package:flutter/material.dart';
 abstract final class AppTypography {
   const AppTypography._();
 
-  static const String fontFamily = 'Roboto';
+  static const String fontFamily = 'Inter';
 
-  /// Native fallbacks used if Roboto cannot be loaded.
+  /// Native fallbacks used if Inter cannot be loaded.
   static const List<String> fontFamilyFallback = <String>[
     'Segoe UI',
     'SF Pro Text',

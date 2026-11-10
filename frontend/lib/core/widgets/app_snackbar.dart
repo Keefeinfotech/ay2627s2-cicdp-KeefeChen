@@ -27,6 +27,7 @@ abstract final class AppSnackBar {
         content: Text(message),
         action: action,
         backgroundColor: background,
+        behavior: SnackBarBehavior.fixed,
         duration:
             duration ??
             (action == null
