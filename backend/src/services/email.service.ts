@@ -29,13 +29,62 @@ const escapeHtml = (value: string): string =>
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#39;");
 
+/**
+ * Delivers a password reset link. Returns false when SMTP is not configured
+ * so callers can fall back to manual delivery without failing the request.
+ */
+export async function sendPasswordResetEmail(
+  recipient: string,
+  resetUrl: string,
+): Promise<boolean> {
+  if (!isSmtpConfigured()) {
+    return false;
+  }
+
+  const safeUrl = escapeHtml(resetUrl);
+  await getTransporter().sendMail({
+    from: process.env.EMAIL_FROM,
+    to: recipient,
+    subject: "Reset your Auxilia password",
+
+    text: [
+      "You requested a password reset for your Auxilia account.",
+      "",
+      "Click the link below to choose a new password:",
+      resetUrl,
+      "",
+      "This link expires in 30 minutes.",
+      "If you did not request this, you can ignore this email — your password will stay unchanged.",
+    ].join("\n"),
+
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 520px;">
+        <h2>Reset your password</h2>
+        <p>You requested a password reset for your Auxilia account.</p>
+        <p>
+          <a href="${safeUrl}"
+             style="display:inline-block;padding:12px 20px;
+                    background:#2563eb;color:#fff;
+                    text-decoration:none;border-radius:6px;">
+            Choose a new password
+          </a>
+        </p>
+        <p>This link expires in 30 minutes.</p>
+        <p>If you did not request this, you can ignore this email — your password will stay unchanged.</p>
+      </div>
+    `,
+  });
+
+  return true;
+}
+
 export async function verifyEmailTransport(): Promise<void> {
   await getTransporter().verify();
 }
 
 export async function sendVerificationEmail(
   recipient: string,
-  verificationUrl: string
+  verificationUrl: string,
 ): Promise<void> {
   const safeUrl = escapeHtml(verificationUrl);
   await getTransporter().sendMail({

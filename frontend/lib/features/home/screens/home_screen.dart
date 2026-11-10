@@ -11,6 +11,8 @@ import '../../../core/widgets/app_loading.dart';
 import '../../../core/widgets/app_section_header.dart';
 import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/widgets/app_text_field.dart';
+import '../../../core/widgets/level_up_toast.dart';
+import '../../../core/widgets/toast_box.dart';
 import '../../authentication/data/auth_service.dart';
 import '../../authentication/data/session_store.dart';
 import '../../profile/data/avatar_store.dart';
@@ -78,7 +80,9 @@ class _HomeScreenState extends State<HomeScreen> {
           ownerId: widget.ownerId,
         );
     _store.addListener(_handleStoreChanged);
-    _store.load();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _store.load();
+    });
   }
 
   @override
@@ -157,6 +161,11 @@ class _HomeScreenState extends State<HomeScreen> {
         : 0;
     final wasCompleted = task.isCompleted;
 
+    // Capture state before toggle so we can detect newly unlocked achievements
+    // and level-ups after the store updates.
+    final oldLevel = _store.levelProgress.level;
+    final oldAchievements = _store.achievements.toSet();
+
     final saved = await _store.toggleCompletion(task.id);
     if (!mounted) return;
 
@@ -169,26 +178,52 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     if (wasCompleted) {
-      _showSnack('Task reopened. Earned XP is kept.');
-    } else {
-      _showSnack(
-        xpGain > 0 ? 'Task completed · +$xpGain XP' : 'Task completed.',
-        type: AppSnackType.success,
-        action: SnackBarAction(
-          label: 'Undo',
-          onPressed: () async {
-            final restored = await _store.toggleCompletion(task.id);
-            if (!mounted) return;
-            _showSnack(
-              restored
-                  ? 'Completion undone. Earned XP is kept.'
-                  : _store.error ?? 'Could not undo the change.',
-              type: restored ? AppSnackType.info : AppSnackType.error,
-            );
-          },
-        ),
+      _showSnack('Task reopened. Earned XP is kept.', type: AppSnackType.info);
+      return;
+    }
+
+    // Task completed — detect newly unlocked achievements and level ups.
+    final newLevel = Gamification.levelForXp(
+      Gamification.totalXp(_store.tasks),
+    );
+    final newAchievements = _store.achievements.toSet();
+    final newUnlocked = newAchievements.difference(oldAchievements);
+    final leveledUp = newLevel > oldLevel;
+
+    // Celebrate level up first (most prominent animation).
+    if (leveledUp) {
+      LevelUpToast.show(context, level: newLevel);
+    }
+
+    // Toast each newly unlocked achievement.
+    for (final achievement in newUnlocked) {
+      ToastBox.success(
+        context,
+        message: 'Achievement unlocked: ${achievement.title}',
+        duration: const Duration(seconds: 5),
       );
     }
+
+    // Show an actionable confirmation with an undo affordance. Celebration
+    // toasts are transient and cannot host actions, so the completion receipt
+    // stays on the snackbar.
+    _showSnack(
+      xpGain > 0 ? 'Task completed · +$xpGain XP' : 'Task completed.',
+      type: AppSnackType.success,
+      action: SnackBarAction(
+        label: 'Undo',
+        onPressed: () async {
+          final restored = await _store.toggleCompletion(task.id);
+          if (!mounted) return;
+          _showSnack(
+            restored
+                ? 'Completion undone. Earned XP is kept.'
+                : _store.error ?? 'Could not undo the change.',
+            type: restored ? AppSnackType.info : AppSnackType.error,
+          );
+        },
+      ),
+    );
   }
 
   Future<void> _deleteTask(Task task) async {

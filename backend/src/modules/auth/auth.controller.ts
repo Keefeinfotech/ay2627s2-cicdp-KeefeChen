@@ -15,7 +15,7 @@ const logAuthFailure = (req: Request, event: string): void => {
 export const signup = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): Promise<void> => {
   try {
     const { name, email, password } = req.body as {
@@ -36,7 +36,7 @@ export const signup = async (
 export const login = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): Promise<void> => {
   try {
     const { email, password } = req.body as {
@@ -56,7 +56,7 @@ export const login = async (
 export const logout = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): Promise<void> => {
   try {
     await authService.logout(requireUserId(req));
@@ -66,10 +66,51 @@ export const logout = async (
   }
 };
 
+export const forgotPassword = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const { email } = req.body as { email: string };
+    const result = await authService.requestPasswordReset({ email });
+    logSecurityEvent("password_reset_requested", {
+      requestId: req.requestId,
+      ip: req.ip,
+      path: req.path,
+    });
+    res.status(200).json(result);
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const resetPassword = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const { token, password } = req.body as {
+      token: string;
+      password: string;
+    };
+    const result = await authService.resetPassword({ token, password });
+    logSecurityEvent("password_reset_completed", {
+      requestId: req.requestId,
+      ip: req.ip,
+      path: req.path,
+    });
+    res.status(200).json(result);
+  } catch (err) {
+    next(err);
+  }
+};
+
 export const me = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): Promise<void> => {
   try {
     const user = await authService.getCurrentUser(requireUserId(req));

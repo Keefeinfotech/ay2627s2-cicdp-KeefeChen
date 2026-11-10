@@ -25,7 +25,7 @@ jobs:
           node -e 'const fs=require("fs"); const tag=process.env.GITHUB_REF_NAME.replace(/^v/, ""); const backend=JSON.parse(fs.readFileSync("backend/package.json", "utf8")).version; const pubspec=fs.readFileSync("frontend/pubspec.yaml", "utf8"); const match=pubspec.match(/^version:\s*([0-9]+\.[0-9]+\.[0-9]+)\+/m); const frontend=match && match[1]; if (backend !== tag || frontend !== tag) { console.error(`Tag v${tag} does not match backend ${backend} and frontend ${frontend ?? "unknown"}`); process.exit(1); } console.log(`Release versions match: v${tag}`);'
 
       - name: Setup Node
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: '22'
           cache: 'npm'
@@ -40,7 +40,7 @@ jobs:
           npm run build
 
       - name: Setup Flutter
-        uses: subosito/flutter-action@395322a6cded4e9ed503aebd4cc1965625f8e59a # v2.20.0
+        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
         with:
           channel: 'stable'
           flutter-version: '3.47.8'
@@ -80,7 +80,7 @@ jobs:
       attestations: write
     steps:
       - name: Download web release artifact
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: auxilia-web-${{ github.ref_name }}
 

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
@@ -14,21 +15,37 @@ class LevelUpToast extends StatefulWidget {
     super.key,
     required this.level,
     this.duration = const Duration(seconds: 5),
+    this.onDismiss,
   });
 
   final int level;
   final Duration duration;
+  final VoidCallback? onDismiss;
 
   /// Show a level-up toast.
-  static void show(BuildContext context, {required int level, Duration? duration}) {
+  static void show(
+    BuildContext context, {
+    required int level,
+    Duration? duration,
+  }) {
     final overlay = Overlay.of(context);
-    final entry = OverlayEntry(
-      builder: (context) => LevelUpToast(level: level, duration: duration ?? const Duration(seconds: 5)),
+    late final OverlayEntry entry;
+    var removed = false;
+
+    void remove() {
+      if (removed) return;
+      removed = true;
+      entry.remove();
+    }
+
+    entry = OverlayEntry(
+      builder: (context) => LevelUpToast(
+        level: level,
+        duration: duration ?? const Duration(seconds: 5),
+        onDismiss: remove,
+      ),
     );
     overlay.insert(entry);
-    Future.delayed(duration ?? const Duration(seconds: 5), () {
-      if (entry.mounted) entry.remove();
-    });
   }
 
   @override
@@ -41,6 +58,8 @@ class _LevelUpToastState extends State<LevelUpToast>
   late final Animation<double> _scale;
   late final Animation<double> _rotate;
   late final Animation<double> _fade;
+  Timer? _dismissTimer;
+  bool _dismissing = false;
 
   @override
   void initState() {
@@ -49,19 +68,39 @@ class _LevelUpToastState extends State<LevelUpToast>
       vsync: this,
       duration: const Duration(milliseconds: 700),
     );
-    _scale = CurvedAnimation(parent: _controller, curve: Curves.elasticOut)
-        .drive(Tween<double>(begin: 0.5, end: 1.0));
-    _rotate = CurvedAnimation(parent: _controller, curve: Curves.easeInOut)
-        .drive(Tween<double>(begin: -0.4, end: 0.4));
-    _fade = CurvedAnimation(parent: _controller, curve: Curves.easeInOut)
-        .drive(Tween<double>(begin: 0.0, end: 1.0));
+    _scale = CurvedAnimation(
+      parent: _controller,
+      curve: Curves.elasticOut,
+    ).drive(Tween<double>(begin: 0.5, end: 1.0));
+    _rotate = CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeInOut,
+    ).drive(Tween<double>(begin: -0.4, end: 0.4));
+    _fade = CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeInOut,
+    ).drive(Tween<double>(begin: 0.0, end: 1.0));
     _controller.forward();
+    // Own the dismissal timer so the overlay is removed predictably and no
+    // pending timer survives disposal (important for widget tests).
+    _dismissTimer = Timer(widget.duration, _dismiss);
   }
 
   @override
   void dispose() {
+    _dismissTimer?.cancel();
     _controller.dispose();
     super.dispose();
+  }
+
+  void _dismiss() {
+    if (_dismissing) return;
+    _dismissing = true;
+    _dismissTimer?.cancel();
+    _controller.reverse().whenComplete(() {
+      if (!mounted) return;
+      widget.onDismiss?.call();
+    });
   }
 
   @override
@@ -81,7 +120,10 @@ class _LevelUpToastState extends State<LevelUpToast>
               color: Colors.transparent,
               child: Container(
                 constraints: const BoxConstraints(maxWidth: 520),
-                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.xl),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.lg,
+                  vertical: AppSpacing.xl,
+                ),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: <Color>[
@@ -114,9 +156,15 @@ class _LevelUpToastState extends State<LevelUpToast>
                             height: 56,
                             decoration: BoxDecoration(
                               color: Colors.white.withValues(alpha: 0.2),
-                              borderRadius: BorderRadius.circular(AppRadius.pill),
+                              borderRadius: BorderRadius.circular(
+                                AppRadius.pill,
+                              ),
                             ),
-                            child: const Icon(Icons.emoji_events_rounded, color: Colors.white, size: 32),
+                            child: const Icon(
+                              Icons.emoji_events_rounded,
+                              color: Colors.white,
+                              size: 32,
+                            ),
                           ),
                         );
                       },
@@ -175,7 +223,10 @@ class _ConfettiParticles extends StatelessWidget {
           final angle = (i / 8) * 2 * pi;
           final distance = animation.value;
           return Transform.translate(
-            offset: Offset(cos(angle) * distance * 40, sin(angle) * distance * 20),
+            offset: Offset(
+              cos(angle) * distance * 40,
+              sin(angle) * distance * 20,
+            ),
             child: Opacity(
               opacity: animation.value,
               child: Container(

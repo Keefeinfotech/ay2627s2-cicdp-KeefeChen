@@ -17,11 +17,11 @@ void main() {
     expect(AppColors.cocoCream, const Color(0xFFFDF5E6));
   });
 
-  test('builds a light theme with Roboto typography', () {
+  test('builds a light theme with Inter typography and vivid palette', () {
     final theme = AppTheme.light();
 
-    expect(AppTypography.fontFamily, 'Roboto');
-    expect(theme.textTheme.bodyMedium?.fontFamily, 'Roboto');
+    expect(AppTypography.fontFamily, 'Inter');
+    expect(theme.textTheme.bodyMedium?.fontFamily, 'Inter');
     expect(theme.colorScheme.primary, AppColors.saffron);
     expect(theme.colorScheme.secondary, AppColors.pacific);
     expect(theme.scaffoldBackgroundColor, AppColors.cocoCream);

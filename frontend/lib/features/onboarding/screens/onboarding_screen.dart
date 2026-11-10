@@ -40,7 +40,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
   /// Drives the click/tap animation on interactive preview elements.
   late final AnimationController _clickController;
 
-  static const int _pageCount = 3;
+  static const int _pageCount = 4;
 
   @override
   void initState() {
@@ -134,6 +134,14 @@ class _OnboardingScreenState extends State<OnboardingScreen>
         title: 'Turn ideas into clear next steps.',
         body: 'Tap the assistant to plan your week.',
         preview: _AssistantDemo(onTap: _triggerClick),
+      ),
+      const _OnboardingPageData(
+        eyebrow: 'Collaborate with others',
+        title: 'Stay in sync with the people who matter.',
+        body:
+            'Create groups, share tasks and track progress together so '
+            'nothing falls through the cracks.',
+        preview: _CollaborationPreview(),
       ),
     ];
 
@@ -1076,6 +1084,102 @@ class _PreviewShell extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// ---------------------------------------------------------------------------
+/// Page 4: Collaboration preview
+/// ---------------------------------------------------------------------------
+
+/// Interactive preview of shared group work. Tapping a task toggles it
+/// complete and advances the group progress bar.
+class _CollaborationPreview extends StatefulWidget {
+  const _CollaborationPreview();
+
+  @override
+  State<_CollaborationPreview> createState() => _CollaborationPreviewState();
+}
+
+class _CollaborationPreviewState extends State<_CollaborationPreview> {
+  final Set<int> _completed = <int>{};
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final Color muted = scheme.onSurfaceVariant;
+
+    final rows = <Map<String, dynamic>>[
+      <String, dynamic>{
+        'title': 'Submit assignment draft',
+        'meta': 'Assigned to Maya',
+        'accent': _DemoWeather.pacific,
+      },
+      <String, dynamic>{
+        'title': 'Review project plan',
+        'meta': 'Due Friday',
+        'accent': _DemoWeather.malachite,
+      },
+      <String, dynamic>{
+        'title': 'Prepare presentation',
+        'meta': 'In progress',
+        'accent': _DemoWeather.saffron,
+      },
+    ];
+    final double progress = _completed.length / rows.length;
+
+    return _PreviewShell(
+      label: 'Shared group',
+      meta: '2 members · 5 tasks',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          for (var i = 0; i < rows.length; i++) ...[
+            _DemoTaskRow(
+              title: rows[i]['title'] as String,
+              meta: rows[i]['meta'] as String,
+              accent: rows[i]['accent'] as Color,
+              checked: _completed.contains(i),
+              onTap: () => setState(() {
+                if (!_completed.add(i)) {
+                  _completed.remove(i);
+                }
+              }),
+            ),
+            if (i < rows.length - 1)
+              Divider(height: 20, color: scheme.outlineVariant),
+          ],
+          const SizedBox(height: AppSpacing.md),
+          Row(
+            children: <Widget>[
+              Expanded(
+                child: Text(
+                  'Group progress',
+                  style: theme.textTheme.labelSmall?.copyWith(color: muted),
+                ),
+              ),
+              Text(
+                '${_completed.length} of ${rows.length} complete',
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: scheme.onSurface,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(AppRadius.pill),
+            child: LinearProgressIndicator(
+              value: progress,
+              minHeight: 5,
+              backgroundColor: _DemoWeather.lichen.withValues(alpha: 0.4),
+              color: _DemoWeather.pacific,
+            ),
+          ),
+        ],
       ),
     );
   }
