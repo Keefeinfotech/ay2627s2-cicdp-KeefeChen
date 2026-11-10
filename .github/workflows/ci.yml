@@ -126,7 +126,7 @@ jobs:
         uses: docker/build-push-action@32945a339266b759abcbdc89316275140b0fc960 # v6.8.0
         with:
           context: ./backend
-          tag: auxilia-backend:ci
+          tags: auxilia-backend:ci
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache-new
           load: true
