@@ -9,11 +9,11 @@ ENV API_BASE_URL=${API_BASE_URL}
 
 WORKDIR /app
 
-# Copy dependency manifest first for layer caching.
-COPY pubspec.yaml pubspec.lock* ./
+# Copy the lockfile with the manifest so dependency resolution is reproducible.
+COPY pubspec.yaml pubspec.lock ./
 
-# Resolve and fetch dependencies.
-RUN flutter pub get
+# Resolve dependencies strictly from the committed lockfile.
+RUN flutter pub get --enforce-lockfile
 
 # Copy the application source.
 COPY . .
@@ -24,32 +24,16 @@ RUN flutter build web --release --dart-define=API_BASE_URL=${API_BASE_URL}
 # ==========================================
 # Stage 2: Nginx runtime
 # ==========================================
-FROM nginx:1.27.4-alpine AS runtime
+# The unprivileged image runs as a non-root user and listens on port 8080.
+FROM nginxinc/nginx-unprivileged:1.27.4-alpine AS runtime
 
 # Copy the compiled Flutter web assets into Nginx's html directory.
 COPY --from=build /app/build/web /usr/share/nginx/html
 
-# Default Nginx configuration serves the SPA with index.html fallback
-# for Flutter's client-side routing, and proxies /api/ to the backend.
-RUN printf '%s\n' \
-  'server {' \
-  '    listen 80;' \
-  '    server_name _;' \
-  '    root /usr/share/nginx/html;' \
-  '    index index.html;' \
-  '' \
-  '    location / {' \
-  '        try_files $uri $uri/ /index.html;' \
-  '    }' \
-  '' \
-  '    location /api/ {' \
-  '        proxy_pass http://backend:3000;' \
-  '        proxy_http_version 1.1;' \
-  '        proxy_set_header Host $host;' \
-  '        proxy_set_header X-Real-IP $remote_addr;' \
-  '    }' \
-  '}' > /etc/nginx/conf.d/default.conf
+# SPA routing and API proxy configuration.
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-EXPOSE 80
+# Run the web server as the non-root nginx user.
+USER nginx
 
-CMD ["nginx", "-g", "daemon off;"]
+EXPOSE 8080
