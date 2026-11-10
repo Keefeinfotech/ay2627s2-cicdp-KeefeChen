@@ -22,7 +22,6 @@ tests/
 .prettierrc.*
 .jest.config.*
 vitest.config.*
-tsconfig.json
 
 # Misc
 npm-debug.log*
