@@ -9,9 +9,7 @@ export const connectDatabase = async (): Promise<void> => {
       return;
     }
 
-    throw new Error(
-      "MONGODB_URI is not defined in environment variables"
-    );
+    throw new Error("MONGODB_URI is not defined in environment variables");
   }
 
   await mongoose.connect(mongoUri, {
