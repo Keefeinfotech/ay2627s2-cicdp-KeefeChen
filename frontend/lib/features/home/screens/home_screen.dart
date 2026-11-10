@@ -181,7 +181,9 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     // Task completed — detect newly unlocked achievements and level ups.
-    final newLevel = Gamification.levelForXp(Gamification.totalXp(_store.tasks));
+    final newLevel = Gamification.levelForXp(
+      Gamification.totalXp(_store.tasks),
+    );
     final newAchievements = _store.achievements.toSet();
     final newUnlocked = newAchievements.difference(oldAchievements);
     final leveledUp = newLevel > oldLevel;
@@ -200,11 +202,25 @@ class _HomeScreenState extends State<HomeScreen> {
       );
     }
 
-    // Task completion confirmation.
-    ToastBox.success(
-      context,
-      message: xpGain > 0 ? 'Task completed · +$xpGain XP' : 'Task completed.',
-      duration: const Duration(seconds: 4),
+    // Show an actionable confirmation with an undo affordance. Celebration
+    // toasts are transient and cannot host actions, so the completion receipt
+    // stays on the snackbar.
+    _showSnack(
+      xpGain > 0 ? 'Task completed · +$xpGain XP' : 'Task completed.',
+      type: AppSnackType.success,
+      action: SnackBarAction(
+        label: 'Undo',
+        onPressed: () async {
+          final restored = await _store.toggleCompletion(task.id);
+          if (!mounted) return;
+          _showSnack(
+            restored
+                ? 'Completion undone. Earned XP is kept.'
+                : _store.error ?? 'Could not undo the change.',
+            type: restored ? AppSnackType.info : AppSnackType.error,
+          );
+        },
+      ),
     );
   }
 

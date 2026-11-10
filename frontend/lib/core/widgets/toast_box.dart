@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../theme/app_colors.dart';
@@ -56,20 +58,23 @@ class ToastBox extends StatefulWidget {
   }) {
     final overlay = Overlay.of(context);
     late final OverlayEntry entry;
+    var removed = false;
+
+    void remove() {
+      if (removed) return;
+      removed = true;
+      entry.remove();
+    }
+
     entry = OverlayEntry(
       builder: (context) => ToastBox(
         message: message,
         type: type,
         duration: duration ?? const Duration(seconds: 4),
-        onDismiss: () {
-          entry.remove();
-        },
+        onDismiss: remove,
       ),
     );
     overlay.insert(entry);
-    Future.delayed(duration ?? const Duration(seconds: 4), () {
-      if (entry.mounted) entry.remove();
-    });
   }
 
   @override
@@ -81,6 +86,8 @@ class _ToastBoxState extends State<ToastBox>
   late final AnimationController _controller;
   late final Animation<double> _slide;
   late final Animation<double> _fade;
+  Timer? _dismissTimer;
+  bool _dismissing = false;
 
   @override
   void initState() {
@@ -95,18 +102,25 @@ class _ToastBoxState extends State<ToastBox>
     ).drive(Tween<double>(begin: -60, end: 0));
     _fade = CurvedAnimation(parent: _controller, curve: Curves.easeInOut);
     _controller.forward();
+    // Own the dismissal timer so widget tests and hot reload never leave a
+    // pending timer behind when the overlay entry is disposed early.
+    _dismissTimer = Timer(widget.duration, _dismiss);
   }
 
   @override
   void dispose() {
+    _dismissTimer?.cancel();
     _controller.dispose();
     super.dispose();
   }
 
   void _dismiss() {
-    widget.onDismiss?.call();
-    _controller.reverse().then((_) {
-      if (mounted) setState(() {});
+    if (_dismissing) return;
+    _dismissing = true;
+    _dismissTimer?.cancel();
+    _controller.reverse().whenComplete(() {
+      if (!mounted) return;
+      widget.onDismiss?.call();
     });
   }
 
