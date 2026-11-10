@@ -51,7 +51,7 @@ services:
       NODE_ENV: development
       PORT: 3000
       MONGODB_URI: mongodb://mongodb:27017/auxilia
-      JWT_SECRET: ${JWT_SECRET:-dev-secret-change-me-min-16-chars}
+      JWT_SECRET: ${JWT_SECRET}
       JWT_EXPIRES_IN: 1d
       BCRYPT_ROUNDS: 10
       CORS_ORIGIN: http://localhost:8080,http://localhost:3000
