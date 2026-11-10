@@ -17,6 +17,9 @@ export interface IUser extends Document {
   mfaRecoveryCodeHashes?: string[];
   mfaLastUsedStep?: number | null;
   mfaEnabledAt?: Date | null;
+  // Password reset
+  passwordResetTokenHash?: string | null;
+  passwordResetExpiresAt?: Date | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -51,8 +54,12 @@ const UserSchema = new Schema<IUser>(
     mfaRecoveryCodeHashes: { type: [String], default: [], select: false },
     mfaLastUsedStep: { type: Number, default: null, select: false },
     mfaEnabledAt: { type: Date, default: null },
+
+    // Password reset. Only the hash is stored. Never store the raw token.
+    passwordResetTokenHash: { type: String, default: null, select: false },
+    passwordResetExpiresAt: { type: Date, default: null },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 export const User = mongoose.model<IUser>("User", UserSchema);

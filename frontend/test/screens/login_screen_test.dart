@@ -61,18 +61,20 @@ void main() {
     expect(find.byTooltip('Hide password'), findsOneWidget);
   });
 
-  testWidgets('keeps the unavailable password reset action disabled', (
-    tester,
-  ) async {
+  testWidgets('opens the forgot password screen', (tester) async {
     await tester.pumpWidget(
-      MaterialApp(theme: AuxiliaTheme.light(), home: const LoginScreen()),
+      MaterialApp(
+        theme: AuxiliaTheme.light(),
+        onGenerateRoute: AppRouter.onGenerateRoute,
+        home: const LoginScreen(),
+      ),
     );
     await tester.pumpAndSettle();
 
-    final resetAction = tester.widget<TextButton>(
-      find.widgetWithText(TextButton, 'Forgot password?'),
-    );
-    expect(resetAction.onPressed, isNull);
+    await tester.tap(find.widgetWithText(TextButton, 'Forgot password?'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Reset your password'), findsOneWidget);
   });
 
   testWidgets('continuing offline keeps guest access reachable', (

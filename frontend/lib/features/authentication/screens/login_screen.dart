@@ -74,6 +74,10 @@ class _LoginScreenState extends State<LoginScreen> {
     Navigator.pushNamed(context, AppRoutes.signup);
   }
 
+  void _openForgotPassword() {
+    Navigator.pushNamed(context, AppRoutes.forgotPassword);
+  }
+
   void _continueOffline() {
     Navigator.pushReplacementNamed(
       context,
@@ -81,10 +85,6 @@ class _LoginScreenState extends State<LoginScreen> {
       arguments: const HomeArgs(ownerId: AppConstants.guestOwnerId),
     );
   }
-
-  // (Password reset dialog removed — was an unused helper.)
-
-  // ignore: unused_element
 
   @override
   Widget build(BuildContext context) {
@@ -158,7 +158,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton(
-                    onPressed: null,
+                    onPressed: _loading ? null : _openForgotPassword,
                     style: TextButton.styleFrom(
                       padding: EdgeInsets.zero,
                       minimumSize: const Size(0, 44),

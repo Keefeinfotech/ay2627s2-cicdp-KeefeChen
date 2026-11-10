@@ -84,3 +84,21 @@ export const loginSchema = z.object({
     })
     .strict(),
 });
+
+export const forgotPasswordSchema = z.object({
+  body: z
+    .object({
+      email,
+      captchaToken,
+    })
+    .strict(),
+});
+
+export const resetPasswordSchema = z.object({
+  body: z
+    .object({
+      token: z.string().trim().min(1, "Reset token is required").max(4096),
+      password,
+    })
+    .strict(),
+});

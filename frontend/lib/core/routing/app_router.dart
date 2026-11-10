@@ -3,7 +3,9 @@ import 'package:frontend/features/reminders/screens/reminders_screen.dart';
 
 import '../../features/assistant/presentation/pages/assistant_page.dart';
 import '../../features/authentication/models/session.dart';
+import '../../features/authentication/screens/forgot_password_screen.dart';
 import '../../features/authentication/screens/login_screen.dart';
+import '../../features/authentication/screens/reset_password_screen.dart';
 import '../../features/authentication/screens/signup_screen.dart';
 import '../../features/authentication/screens/startup_gate.dart';
 import '../../features/authentication/screens/welcome_screen.dart';
@@ -20,6 +22,8 @@ abstract final class AppRoutes {
   static const String welcome = '/welcome';
   static const String login = '/login';
   static const String signup = '/signup';
+  static const String forgotPassword = '/forgot-password';
+  static const String resetPassword = '/reset-password';
   static const String home = '/home';
   static const String assistant = '/assistant';
   static const String reminders = '/reminders';
@@ -45,6 +49,23 @@ class OnboardingArgs {
 
   /// Pop back to the existing screen when onboarding is opened from Settings.
   final bool returnToPrevious;
+}
+
+/// Resolves the reset token from a route argument (in-app navigation) or the
+/// `token` query parameter (an emailed link such as `/reset-password?token=…`).
+String? _resetTokenFrom(RouteSettings settings) {
+  final Object? arguments = settings.arguments;
+  if (arguments is String && arguments.trim().isNotEmpty) {
+    return arguments.trim();
+  }
+
+  final Uri uri = Uri.tryParse(settings.name ?? '') ?? Uri();
+  final String? queryToken = uri.queryParameters['token'];
+  if (queryToken != null && queryToken.trim().isNotEmpty) {
+    return queryToken.trim();
+  }
+
+  return null;
 }
 
 /// Central route table for the whole application.
@@ -86,6 +107,16 @@ class AppRouter {
         return MaterialPageRoute<void>(
           settings: settings,
           builder: (_) => const SignupScreen(),
+        );
+      case AppRoutes.forgotPassword:
+        return MaterialPageRoute<void>(
+          settings: settings,
+          builder: (_) => const ForgotPasswordScreen(),
+        );
+      case AppRoutes.resetPassword:
+        return MaterialPageRoute<void>(
+          settings: settings,
+          builder: (_) => ResetPasswordScreen(token: _resetTokenFrom(settings)),
         );
       case AppRoutes.home:
         final args = settings.arguments;

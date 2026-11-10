@@ -1,15 +1,20 @@
+import { createHash, randomBytes } from "node:crypto";
 
 import bcrypt from "bcryptjs";
 
 import {
   allowConcurrentSessions,
+  getAppBaseUrl,
   getBcryptRounds,
   getJwtExpiresIn,
 } from "../../config/environment.js";
 
+import { sendPasswordResetEmail } from "../../services/email.service.js";
+
 import { SESSION_TTL_MS } from "../../constants/security.js";
 
 import {
+  badRequest,
   conflict,
   sessionReplaced,
   unauthorized,
@@ -29,6 +34,7 @@ import {
   createUser,
   findUserByEmail,
   findUserById,
+  findUserByResetTokenHash,
   saveUser,
 } from "./auth.repository.js";
 
@@ -68,10 +74,7 @@ const sessionExpiry = (): Date => {
 };
 
 const startSession = async (user: IUser): Promise<AuthResult> => {
-  const { token, sessionId } = signAccessToken(
-    String(user._id),
-    user.email
-  );
+  const { token, sessionId } = signAccessToken(String(user._id), user.email);
 
   // Persist the session before returning the token.
   user.activeSessionId = sessionId;
@@ -95,10 +98,7 @@ const isDuplicateKeyError = (err: unknown): boolean => {
     return false;
   }
 
-  return (
-    "code" in err &&
-    (err.code === 11000 || err.code === 11001)
-  );
+  return "code" in err && (err.code === 11000 || err.code === 11001);
 };
 
 // --------------------------------------------------
@@ -120,18 +120,13 @@ export const signup = async (input: {
   }
 
   // Hash password before database storage.
-  const passwordHash = await bcrypt.hash(
-    input.password,
-    getBcryptRounds()
-  );
+  const passwordHash = await bcrypt.hash(input.password, getBcryptRounds());
 
   let user: IUser;
 
   try {
     user = await createUser({
-      ...(input.name?.trim()
-        ? { name: input.name.trim() }
-        : {}),
+      ...(input.name?.trim() ? { name: input.name.trim() } : {}),
       email,
       passwordHash,
     });
@@ -159,19 +154,86 @@ export const login = async (input: {
   const user = await findUserByEmail(email, true);
 
   // Perform password comparison even when user does not exist.
-  const passwordHash =
-    user?.passwordHash ?? DUMMY_PASSWORD_HASH;
+  const passwordHash = user?.passwordHash ?? DUMMY_PASSWORD_HASH;
 
-  const validPassword = await bcrypt.compare(
-    input.password,
-    passwordHash
-  );
+  const validPassword = await bcrypt.compare(input.password, passwordHash);
 
   if (!user || !validPassword) {
     throw unauthorized("Invalid email or password");
   }
 
   return startSession(user);
+};
+
+// --------------------------------------------------
+// PASSWORD RESET
+// --------------------------------------------------
+
+const PASSWORD_RESET_TTL_MS = 30 * 60 * 1000;
+const GENERIC_RESET_MESSAGE =
+  "If an account exists for that email, a reset link has been sent.";
+
+const hashResetToken = (rawToken: string): string =>
+  createHash("sha256").update(rawToken).digest("hex");
+
+/**
+ * Handles a forgot-password request. Always returns the same message so the
+ * endpoint cannot be used to enumerate registered email addresses.
+ */
+export const requestPasswordReset = async (input: {
+  email: string;
+}): Promise<{ message: string }> => {
+  const email = input.email.trim().toLowerCase();
+  const user = await findUserByEmail(email);
+  if (!user) {
+    return { message: GENERIC_RESET_MESSAGE };
+  }
+
+  const rawToken = randomBytes(32).toString("hex");
+  user.passwordResetTokenHash = hashResetToken(rawToken);
+  user.passwordResetExpiresAt = new Date(Date.now() + PASSWORD_RESET_TTL_MS);
+  await saveUser(user);
+
+  const resetUrl = `${getAppBaseUrl()}/reset-password?token=${encodeURIComponent(rawToken)}`;
+  try {
+    await sendPasswordResetEmail(email, resetUrl);
+  } catch {
+    // Do not leak whether the email was delivered — the reset link expires soon anyway.
+  }
+
+  return { message: GENERIC_RESET_MESSAGE };
+};
+
+/**
+ * Applies a password reset. The link is single-use and expires quickly; all
+ * active sessions are revoked so a stolen password cannot keep a session.
+ */
+export const resetPassword = async (input: {
+  token: string;
+  password: string;
+}): Promise<{ message: string }> => {
+  const tokenHash = hashResetToken(input.token.trim());
+  const user = await findUserByResetTokenHash(tokenHash);
+
+  const expired =
+    !user?.passwordResetExpiresAt ||
+    user.passwordResetExpiresAt.getTime() < Date.now();
+
+  if (!user || expired) {
+    throw badRequest("This reset link is invalid or has expired.");
+  }
+
+  const passwordHash = await bcrypt.hash(input.password, getBcryptRounds());
+
+  user.passwordHash = passwordHash;
+  user.passwordResetTokenHash = null;
+  user.passwordResetExpiresAt = null;
+  user.activeSessionId = null;
+  user.activeSessionExpiresAt = null;
+
+  await saveUser(user);
+
+  return { message: "Password updated. Sign in with your new password." };
 };
 
 // --------------------------------------------------
@@ -186,9 +248,7 @@ export const logout = async (userId: string): Promise<void> => {
 // CURRENT USER
 // --------------------------------------------------
 
-export const getCurrentUser = async (
-  userId: string
-): Promise<PublicUser> => {
+export const getCurrentUser = async (userId: string): Promise<PublicUser> => {
   const user = await findUserById(userId);
 
   if (!user) {
@@ -204,7 +264,7 @@ export const getCurrentUser = async (
 
 export const authenticateSession = async (
   userId: string,
-  sessionId: string
+  sessionId: string,
 ): Promise<AuthenticatedUser> => {
   const user = await findUserById(userId);
 
@@ -212,10 +272,7 @@ export const authenticateSession = async (
     throw unauthorized("Invalid or expired session");
   }
 
-  if (
-    !allowConcurrentSessions() &&
-    !isSessionActive(user, sessionId)
-  ) {
+  if (!allowConcurrentSessions() && !isSessionActive(user, sessionId)) {
     throw sessionReplaced();
   }
 
