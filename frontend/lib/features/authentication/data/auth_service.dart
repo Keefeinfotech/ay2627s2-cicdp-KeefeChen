@@ -64,6 +64,32 @@ class AuthService {
     return _persist(data);
   }
 
+  Future<void> forgotPassword({required String email}) async {
+    String? captchaToken;
+    if (requiresCaptcha) {
+      try {
+        captchaToken = await _captchaToken();
+      } on ApiException {
+        rethrow;
+      }
+    }
+
+    await _api.postJson(ApiEndpoints.authForgotPassword, <String, dynamic>{
+      'email': email.trim(),
+      'captchaToken': ?captchaToken,
+    });
+  }
+
+  Future<void> resetPassword({
+    required String token,
+    required String password,
+  }) async {
+    await _api.postJson(ApiEndpoints.authResetPassword, <String, dynamic>{
+      'token': token.trim(),
+      'password': password,
+    });
+  }
+
   Future<Session?> restore() => _sessions.read();
 
   Future<void> logout() => _sessions.clear();
