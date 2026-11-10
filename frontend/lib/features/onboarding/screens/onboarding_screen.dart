@@ -4,8 +4,10 @@ import '../../../core/constants/app_constants.dart';
 import '../../../core/routing/app_router.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
+
 import 'package:frontend/core/widgets/app_avatar.dart';
 import 'package:frontend/core/widgets/app_button.dart';
+
 import '../data/onboarding_store.dart';
 
 /// A dynamic, interactive onboarding tutorial that simulates mouse clicks and
@@ -71,8 +73,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
       if (!mounted) return;
       setState(() {
         _finishing = false;
-        _finishError =
-            'Could not save your progress. Check your device storage and try again.';
+        _finishError = 'Could not save your progress. Check your device storage and try again.';
       });
       return;
     }
@@ -83,9 +84,8 @@ class _OnboardingScreenState extends State<OnboardingScreen>
       return;
     }
 
-    Navigator.of(
-      context,
-    ).pushNamedAndRemoveUntil(AppRoutes.login, (route) => false);
+    Navigator.of(context)
+        .pushNamedAndRemoveUntil(AppRoutes.login, (route) => false);
   }
 
   void _next() {

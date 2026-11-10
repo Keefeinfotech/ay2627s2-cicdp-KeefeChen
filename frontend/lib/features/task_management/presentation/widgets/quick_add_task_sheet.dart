@@ -232,8 +232,7 @@ class _QuickAddTaskSheetState extends State<QuickAddTaskSheet> {
                         AppTextField(
                           controller: _input,
                           autofocus: widget.initialTitle == null,
-                          hintText:
-                              'e.g. Submit lab report tomorrow high priority for COMP 2101',
+                          hintText: 'e.g. Submit lab report tomorrow high priority for COMP 2101',
                           labelText: 'Describe the task',
                           prefixIcon: Icons.auto_awesome_outlined,
                           maxLines: 3,

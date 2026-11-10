@@ -99,9 +99,8 @@ class ProfilePage extends StatelessWidget {
       return;
     }
     if (!context.mounted) return;
-    Navigator.of(
-      context,
-    ).pushNamedAndRemoveUntil(AppRoutes.login, (route) => false);
+    Navigator.of(context)
+        .pushNamedAndRemoveUntil(AppRoutes.login, (route) => false);
   }
 
   void _signIn(BuildContext context) {
@@ -215,8 +214,7 @@ class ProfilePage extends StatelessWidget {
                           _ProfileActionTile(
                             icon: Icons.face_retouching_natural_outlined,
                             title: 'Customize avatar',
-                            subtitle:
-                                'Choose an accent colour and a glyph or initials',
+                            subtitle: 'Choose an accent colour and a glyph or initials',
                             onTap: () => _editAvatar(context),
                           ),
                           const Divider(height: 1),
@@ -225,16 +223,14 @@ class ProfilePage extends StatelessWidget {
                           _ProfileActionTile(
                             icon: Icons.login_rounded,
                             title: 'Sign in',
-                            subtitle:
-                                'Unlock the AI assistant and cloud-backed account',
+                            subtitle: 'Unlock the AI assistant and cloud-backed account',
                             onTap: () => _signIn(context),
                           )
                         else
                           _ProfileActionTile(
                             icon: Icons.logout_rounded,
                             title: 'Sign out',
-                            subtitle:
-                                'Keep local tasks and return to the sign-in screen',
+                            subtitle: 'Keep local tasks and return to the sign-in screen',
                             onTap: () => _signOut(context),
                           ),
                       ],

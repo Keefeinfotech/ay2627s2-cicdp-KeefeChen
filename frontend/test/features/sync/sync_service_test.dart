@@ -428,39 +428,36 @@ void main() {
     expect(service.conflicts, isEmpty);
   });
 
-  test(
-    'a permanently rejected change dead-letters after retries and can be discarded',
-    () async {
-      var attempts = 0;
-      final client = MockClient((request) async {
-        attempts += 1;
-        return _json(<String, dynamic>{
-          'message': 'Invalid task.',
-        }, statusCode: 400);
-      });
-      final service = _service(client);
-      await service.enqueue(
-        type: SyncOperationType.create,
-        task: makeTask(id: 'task-a', title: 'Rejected offline'),
-      );
+  test('a permanently rejected change dead-letters after retries and can be discarded', () async {
+    var attempts = 0;
+    final client = MockClient((request) async {
+      attempts += 1;
+      return _json(<String, dynamic>{
+        'message': 'Invalid task.',
+      }, statusCode: 400);
+    });
+    final service = _service(client);
+    await service.enqueue(
+      type: SyncOperationType.create,
+      task: makeTask(id: 'task-a', title: 'Rejected offline'),
+    );
 
-      await service.retry();
-      await service.retry();
-      await service.retry();
+    await service.retry();
+    await service.retry();
+    await service.retry();
 
-      expect(attempts, 3);
-      expect(service.operations.single.attempts, 3);
-      expect(service.operations.single.isDeadLetter, isTrue);
+    expect(attempts, 3);
+    expect(service.operations.single.attempts, 3);
+    expect(service.operations.single.isDeadLetter, isTrue);
 
-      // Automatic flushes skip dead-lettered work until the user intervenes.
-      await service.flush();
-      expect(attempts, 3);
+    // Automatic flushes skip dead-lettered work until the user intervenes.
+    await service.flush();
+    expect(attempts, 3);
 
-      await service.discard(service.operations.single.id);
-      expect(service.operations, isEmpty);
-      expect(attempts, 3);
-    },
-  );
+    await service.discard(service.operations.single.id);
+    expect(service.operations, isEmpty);
+    expect(attempts, 3);
+  });
 
   test('keeping remote in a delete conflict drops the local copy', () async {
     var writes = 0;

@@ -62,10 +62,8 @@ class AuxiliaAppBar extends StatelessWidget implements PreferredSizeWidget {
             title,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              color: foreground,
-              fontWeight: FontWeight.w700,
-            ),
+            style: Theme.of(context).textTheme.titleMedium
+                ?.copyWith(color: foreground, fontWeight: FontWeight.w700),
           ),
           if (subtitle != null) ...[
             const SizedBox(height: AppSpacing.xxs),
@@ -73,10 +71,8 @@ class AuxiliaAppBar extends StatelessWidget implements PreferredSizeWidget {
               subtitle!,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                color: muted,
-                fontWeight: FontWeight.w500,
-              ),
+              style: Theme.of(context).textTheme.labelSmall
+                  ?.copyWith(color: muted, fontWeight: FontWeight.w500),
             ),
           ],
         ],

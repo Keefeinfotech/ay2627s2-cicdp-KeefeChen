@@ -299,9 +299,9 @@ Future<void> showInvitationTokenDialog(
               Container(
                 padding: const EdgeInsets.all(AppSpacing.md),
                 decoration: BoxDecoration(
-                  color: Theme.of(
-                    dialogContext,
-                  ).colorScheme.surfaceContainerHighest,
+                  color: Theme.of(dialogContext)
+                      .colorScheme
+                      .surfaceContainerHighest,
                   borderRadius: BorderRadius.circular(AppRadius.sm),
                 ),
                 child: SelectableText(
@@ -407,9 +407,8 @@ class _JoinGroupDialogState extends State<_JoinGroupDialog> {
               const SizedBox(height: AppSpacing.sm),
               Text(
                 _error!,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.error,
-                ),
+                style: Theme.of(context).textTheme.bodySmall
+                    ?.copyWith(color: Theme.of(context).colorScheme.error),
               ),
             ],
           ],
@@ -655,9 +654,8 @@ class _AssignTaskDialogState extends State<_AssignTaskDialog> {
                   final member = widget.members.firstWhere(
                     (item) => item.userId == _memberId,
                   );
-                  Navigator.of(
-                    context,
-                  ).pop(AssignTaskRequest(taskId: _taskId!, member: member));
+                  Navigator.of(context)
+                      .pop(AssignTaskRequest(taskId: _taskId!, member: member));
                 },
         ),
       ],

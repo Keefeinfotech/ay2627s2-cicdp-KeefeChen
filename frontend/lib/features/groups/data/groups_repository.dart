@@ -49,12 +49,15 @@ class GroupsRepository {
     String description = '',
     bool isPublic = false,
   }) async {
-    final response = await _api
-        .patchJson(ApiEndpoints.group(groupId), <String, dynamic>{
-          'name': name.trim(),
-          'description': description.trim(),
-          'visibility': isPublic ? 'PUBLIC' : 'PRIVATE',
-        }, token: token);
+    final response = await _api.patchJson(
+      ApiEndpoints.group(groupId),
+      <String, dynamic>{
+        'name': name.trim(),
+        'description': description.trim(),
+        'visibility': isPublic ? 'PUBLIC' : 'PRIVATE',
+      },
+      token: token,
+    );
     final group = StudyGroup.tryFromJson(response['data']);
     if (group == null) {
       throw ApiException('The server returned an incomplete group.');
