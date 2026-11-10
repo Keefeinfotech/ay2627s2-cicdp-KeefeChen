@@ -1,4 +1,4 @@
-/*
+﻿/*
  * File Name: auth.test.ts
  * Description: Integration tests for user authentication endpoints.
  * Author: Keefe Chen
@@ -161,7 +161,7 @@ describe("POST /api/auth/signup", () => {
 // PASSWORD STRENGTH TESTS
 // ==========================================
 
-describe("POST /api/auth/signup — password strength", () => {
+describe("POST /api/auth/signup â€” password strength", () => {
   const baseSignup = {
     email: "strength@example.com",
     password: "StrongPass1!", // 12 chars, upper, lower, number, special
@@ -299,5 +299,120 @@ describe("POST /api/auth/login", () => {
 
     expect(res.status).toBe(401);
     expect(res.body.error).toBe("Invalid email or password");
+  });
+});
+
+// ==========================================
+// PASSWORD RESET TESTS
+// ==========================================
+
+describe("POST /api/auth/forgot-password", () => {
+  it("returns the generic message when the address is registered", async () => {
+    const doc: Record<string, unknown> = {
+      _id: "user-1",
+      email: "ada@example.com",
+      role: "user",
+      save: vi.fn().mockResolvedValue(undefined),
+    };
+    userModel.findOne.mockReturnValue(queryResult(doc));
+
+    const res = await request(app)
+      .post("/api/auth/forgot-password")
+      .send({ email: "ada@example.com" });
+
+    expect(res.status).toBe(200);
+    expect(res.body.message).toContain("If an account exists");
+
+    // A reset token must be generated and stored on the mocked document.
+    expect(doc.save).toHaveBeenCalledTimes(1);
+    expect(doc.passwordResetTokenHash).toBeTruthy();
+    expect(doc.passwordResetExpiresAt).toBeInstanceOf(Date);
+  });
+
+  it("returns the same message when the address is not registered", async () => {
+    userModel.findOne.mockReturnValue(queryResult(null));
+
+    const res = await request(app)
+      .post("/api/auth/forgot-password")
+      .send({ email: "nobody@example.com" });
+
+    expect(res.status).toBe(200);
+    expect(res.body.message).toContain("If an account exists");
+  });
+
+  it("rejects a malformed email address", async () => {
+    const res = await request(app)
+      .post("/api/auth/forgot-password")
+      .send({ email: "nope" });
+
+    expect(res.status).toBe(400);
+  });
+});
+
+describe("POST /api/auth/reset-password", () => {
+  // Shared new password that meets the 12-character minimum and complexity rules.
+  const newPassword = "N3w$ecurePassword";
+
+  it("updates the password and clears active sessions when the token is valid", async () => {
+    const doc: Record<string, unknown> = {
+      _id: "user-1",
+      email: "ada@example.com",
+      role: "user",
+      passwordHash: "old-hash",
+      passwordResetTokenHash: "stored-hash",
+      passwordResetExpiresAt: new Date(Date.now() + 10 * 60 * 1000),
+      activeSessionId: "sess-1",
+      activeSessionExpiresAt: new Date(Date.now() + 60 * 60 * 1000),
+      save: vi.fn().mockResolvedValue(undefined),
+    };
+    userModel.findOne.mockReturnValue(queryResult(doc));
+
+    const res = await request(app)
+      .post("/api/auth/reset-password")
+      .send({ token: "reset-token", password: newPassword });
+
+    expect(res.status).toBe(200);
+    expect(doc.passwordResetTokenHash).toBeNull();
+    expect(doc.passwordResetExpiresAt).toBeNull();
+    expect(doc.activeSessionId).toBeNull();
+    expect(doc.activeSessionExpiresAt).toBeNull();
+    expect(doc.passwordHash).not.toBe("old-hash");
+    expect(doc.passwordHash).toBeTruthy();
+  });
+
+  it("rejects an expired link", async () => {
+    userModel.findOne.mockReturnValue(
+      queryResult({
+        _id: "user-1",
+        email: "ada@example.com",
+        passwordResetTokenHash: "old-hash",
+        passwordResetExpiresAt: new Date(Date.now() - 1000),
+        save: vi.fn(),
+      }),
+    );
+
+    const res = await request(app)
+      .post("/api/auth/reset-password")
+      .send({ token: "reset-token", password: newPassword });
+
+    expect(res.status).toBe(400);
+  });
+
+  it("rejects an unknown link", async () => {
+    userModel.findOne.mockReturnValue(queryResult(null));
+
+    const res = await request(app)
+      .post("/api/auth/reset-password")
+      .send({ token: "reset-token", password: newPassword });
+
+    expect(res.status).toBe(400);
+  });
+
+  it("rejects a weak password", async () => {
+    const res = await request(app)
+      .post("/api/auth/reset-password")
+      .send({ token: "reset-token", password: "short" });
+
+    expect(res.status).toBe(400);
   });
 });
