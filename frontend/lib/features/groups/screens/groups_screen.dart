@@ -46,6 +46,7 @@ class GroupsScreen extends ConsumerWidget {
         loading: () => const Center(child: CircularProgressIndicator()),
       ),
       floatingActionButton: FloatingActionButton(
+        heroTag: 'groups-legacy-create-fab',
         onPressed: () {
           // TODO: Show dialog to create new group
           ScaffoldMessenger.of(context).showSnackBar(

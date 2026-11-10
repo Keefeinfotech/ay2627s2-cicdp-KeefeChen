@@ -5,6 +5,8 @@
 abstract final class ApiEndpoints {
   static const String authSignup = '/api/auth/signup';
   static const String authLogin = '/api/auth/login';
+  static const String authLogout = '/api/auth/logout';
+  static const String authMe = '/api/auth/me';
   static const String aiChat = '/api/ai/chat';
   static const String aiDraft = '/api/ai/draft';
   static const String tasks = '/api/tasks';
@@ -16,4 +18,8 @@ abstract final class ApiEndpoints {
   static const String invitationAccept = '/api/invitations/accept';
   static const String calendar = '/api/calendar';
   static const String calendarConflicts = '/api/calendar/conflicts';
+
+  static String? get authForgotPassword => null;
+
+  static String? get authResetPassword => null;
 }

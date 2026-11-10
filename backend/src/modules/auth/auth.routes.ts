@@ -3,8 +3,20 @@ import { requireCaptcha } from "../../middleware/captcha.js";
 import { authRateLimiter } from "../../middleware/rateLimiter.js";
 import { validateRequest } from "../../middleware/validateRequest.js";
 import { authenticate } from "../../middleware/authenticate.js";
-import { login, logout, me, signup } from "./auth.controller.js";
-import { loginSchema, signupSchema } from "./auth.validation.js";
+import {
+  forgotPassword,
+  login,
+  logout,
+  me,
+  resetPassword,
+  signup,
+} from "./auth.controller.js";
+import {
+  forgotPasswordSchema,
+  loginSchema,
+  resetPasswordSchema,
+  signupSchema,
+} from "./auth.validation.js";
 
 const router = Router();
 
@@ -13,14 +25,27 @@ router.post(
   authRateLimiter,
   requireCaptcha,
   validateRequest(signupSchema),
-  signup
+  signup,
 );
 router.post(
   "/login",
   authRateLimiter,
   requireCaptcha,
   validateRequest(loginSchema),
-  login
+  login,
+);
+router.post(
+  "/forgot-password",
+  authRateLimiter,
+  requireCaptcha,
+  validateRequest(forgotPasswordSchema),
+  forgotPassword,
+);
+router.post(
+  "/reset-password",
+  authRateLimiter,
+  validateRequest(resetPasswordSchema),
+  resetPassword,
 );
 
 router.get("/me", authenticate, me);

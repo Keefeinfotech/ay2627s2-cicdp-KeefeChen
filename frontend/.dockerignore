@@ -1,0 +1,34 @@
+# Flutter / Dart
+.dart_tool/
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+/build/
+/coverage/
+**/doc/api/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+
+# OS
+.DS_Store
+*.swp
+
+# Platform-specific (not needed for web build)
+android/
+ios/
+linux/
+macos/
+windows/
+
+# Tests
+test/
+tool/
+
+# Misc
+.metadata
+pubspec.lock.backup

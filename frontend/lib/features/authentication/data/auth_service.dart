@@ -64,9 +64,74 @@ class AuthService {
     return _persist(data);
   }
 
+  Future<void> forgotPassword({required String email}) async {
+    String? captchaToken;
+    if (requiresCaptcha) {
+      try {
+        captchaToken = await _captchaToken();
+      } on ApiException {
+        rethrow;
+      }
+    }
+
+    await _api.postJson(ApiEndpoints.authForgotPassword, <String, dynamic>{
+      'email': email.trim(),
+      'captchaToken': ?captchaToken,
+    });
+  }
+
+  Future<void> resetPassword({
+    required String token,
+    required String password,
+  }) async {
+    await _api.postJson(ApiEndpoints.authResetPassword, <String, dynamic>{
+      'token': token.trim(),
+      'password': password,
+    });
+  }
+
   Future<Session?> restore() => _sessions.read();
 
-  Future<void> logout() => _sessions.clear();
+  /// Validates [session] against the backend. Returns the session when valid,
+  /// or `null` when expired/replaced/invalid (and clears local storage).
+  Future<Session?> validateSession(Session session) async {
+    try {
+      await _api.getJson(ApiEndpoints.authMe, token: session.token);
+      return session;
+    } on ApiException catch (e) {
+      if (e.isUnauthorized) {
+        await clearSession();
+        return null;
+      }
+      // Transient/network errors: keep local session and let feature calls retry.
+      return session;
+    } catch (_) {
+      return session;
+    }
+  }
+
+  /// Clears local session state. Swallows storage errors to avoid blocking
+  /// auth-recovery flows.
+  Future<void> clearSession() async {
+    try {
+      await _sessions.clear();
+    } catch (_) {}
+  }
+
+  /// Best-effort server logout, then clears local session state.
+  Future<void> logout({String? token}) async {
+    final bearer = token ?? (await restore())?.token;
+    if (bearer != null && bearer.isNotEmpty) {
+      try {
+        await _api.postJson(
+          ApiEndpoints.authLogout,
+          const <String, dynamic>{},
+          token: bearer,
+        );
+      } catch (_) {}
+    }
+    await clearSession();
+  }
 
   Future<Session> _persist(Map<String, dynamic> data) async {
     final session = Session.fromApi(data);

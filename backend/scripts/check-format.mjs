@@ -27,10 +27,29 @@ const repoRoot = execFileSync(gitBinary, ["rev-parse", "--show-toplevel"], {
   encoding: "utf8",
 }).trim();
 
-const changedFiles = execFileSync(gitBinary, gitArgs, {
-  cwd: repoRoot,
-  encoding: "utf8",
-})
+// After a force push the base SHA can be unreachable from any ref, and a
+// shallow checkout may not contain it. Fall back to the files touched by the
+// tip commit so the check still covers something instead of hard-failing.
+let diffOutput = "";
+try {
+  diffOutput = execFileSync(gitBinary, gitArgs, {
+    cwd: repoRoot,
+    encoding: "utf8",
+  });
+} catch (err) {
+  const reason = err instanceof Error ? err.message : String(err);
+  console.warn(
+    `Could not diff ${gitArgs.slice(3).join(" ")}: ${reason.split("\n")[0]}`,
+  );
+  console.warn("Falling back to the files changed by the tip commit (HEAD).");
+  diffOutput = execFileSync(
+    gitBinary,
+    ["diff-tree", "--no-commit-id", "--name-only", "-r", "HEAD"],
+    { cwd: repoRoot, encoding: "utf8" },
+  );
+}
+
+const changedFiles = diffOutput
   .split(/\r?\n/)
   .filter(Boolean)
   .map((file) => file.replaceAll("\\", "/"))
