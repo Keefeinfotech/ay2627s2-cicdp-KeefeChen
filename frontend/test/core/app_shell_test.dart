@@ -161,6 +161,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('ABOUT AUXILIA'), findsOneWidget);
+    await tester.ensureVisible(find.text('Introduction'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Introduction'));
     await tester.pumpAndSettle();
 

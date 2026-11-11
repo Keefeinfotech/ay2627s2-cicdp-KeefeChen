@@ -281,9 +281,13 @@ class _CalendarPageState extends State<CalendarPage> {
                   children: <Widget>[
                     heading,
                     const SizedBox(height: AppSpacing.xs),
-                    Row(
+                    Wrap(
+                      spacing: AppSpacing.sm,
+                      runSpacing: AppSpacing.xs,
+                      alignment: WrapAlignment.spaceBetween,
+                      crossAxisAlignment: WrapCrossAlignment.center,
                       children: <Widget>[
-                        Expanded(child: nav),
+                        nav,
                         _ProjectFilter(controller: _controller),
                       ],
                     ),
@@ -447,8 +451,9 @@ class _WarningBanner extends StatelessWidget {
           Expanded(
             child: Text(
               message,
-              style: Theme.of(context).textTheme.bodySmall
-                  ?.copyWith(color: const Color(0xFF92400E)),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: const Color(0xFF92400E)),
             ),
           ),
           IconButton(

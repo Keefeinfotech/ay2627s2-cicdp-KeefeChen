@@ -73,7 +73,8 @@ class _OnboardingScreenState extends State<OnboardingScreen>
       if (!mounted) return;
       setState(() {
         _finishing = false;
-        _finishError = 'Could not save your progress. Check your device storage and try again.';
+        _finishError =
+            'Could not save your progress. Check your device storage and try again.';
       });
       return;
     }
@@ -84,8 +85,9 @@ class _OnboardingScreenState extends State<OnboardingScreen>
       return;
     }
 
-    Navigator.of(context)
-        .pushNamedAndRemoveUntil(AppRoutes.login, (route) => false);
+    Navigator.of(
+      context,
+    ).pushNamedAndRemoveUntil(AppRoutes.login, (route) => false);
   }
 
   void _next() {
@@ -220,7 +222,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
 }
 
 class _OnboardingPageData {
-  _OnboardingPageData({
+  const _OnboardingPageData({
     required this.eyebrow,
     required this.title,
     required this.body,
