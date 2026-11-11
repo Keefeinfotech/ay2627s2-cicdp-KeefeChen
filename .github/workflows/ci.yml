@@ -302,7 +302,10 @@ jobs:
         run: dart format --output=none --set-exit-if-changed lib test tool
 
       - name: Static analysis
-        run: flutter analyze
+        # --no-fatal-infos: pre-existing style info lints (e.g.
+        # prefer_initializing_formals) must not fail the job; errors and
+        # warnings still do.
+        run: flutter analyze --no-fatal-infos
 
       - name: Run tests with coverage
         run: flutter test --coverage

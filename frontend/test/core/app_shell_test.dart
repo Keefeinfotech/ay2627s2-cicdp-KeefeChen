@@ -161,6 +161,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('ABOUT AUXILIA'), findsOneWidget);
+    await tester.drag(find.byType(ListView).first, const Offset(0, -1400));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Introduction'));
     await tester.pumpAndSettle();
 

@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_spacing.dart';
+import '../../../core/widgets/animated_tab.dart';
 import '../data/task_store.dart';
 
-/// Compact status and tag filters with a Trust Blue selected state.
+/// Animated filter tabs where each tab carries its own weather-inspired colour
+/// and pulse animation. Selecting a tab makes it glow and expand slightly.
 class TaskFilterBar extends StatelessWidget {
   const TaskFilterBar({super.key, required this.store});
 
@@ -15,22 +17,39 @@ class TaskFilterBar extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
+        // Primary status tabs — each with its own colour and animation
         Wrap(
           spacing: AppSpacing.sm,
           runSpacing: AppSpacing.sm,
           children: <Widget>[
-            _chip(context, TaskFilter.all, 'All (${store.tasks.length})'),
-            _chip(context, TaskFilter.pending, 'To do (${store.pendingCount})'),
+            AnimatedTab(
+              label: 'All (${store.tasks.length})',
+              accentColor: TabWeather.all,
+              isSelected: store.filter == TaskFilter.all,
+              count: store.tasks.length,
+              onTap: () => store.setFilter(TaskFilter.all),
+            ),
+            AnimatedTab(
+              label: 'To do (${store.pendingCount})',
+              accentColor: TabWeather.pending,
+              isSelected: store.filter == TaskFilter.pending,
+              count: store.pendingCount,
+              onTap: () => store.setFilter(TaskFilter.pending),
+            ),
             if (store.overdueCount > 0)
-              _chip(
-                context,
-                TaskFilter.overdue,
-                'Overdue (${store.overdueCount})',
+              AnimatedTab(
+                label: 'Overdue (${store.overdueCount})',
+                accentColor: TabWeather.overdue,
+                isSelected: store.filter == TaskFilter.overdue,
+                count: store.overdueCount,
+                onTap: () => store.setFilter(TaskFilter.overdue),
               ),
-            _chip(
-              context,
-              TaskFilter.completed,
-              'Done (${store.completedCount})',
+            AnimatedTab(
+              label: 'Done (${store.completedCount})',
+              accentColor: TabWeather.completed,
+              isSelected: store.filter == TaskFilter.completed,
+              count: store.completedCount,
+              onTap: () => store.setFilter(TaskFilter.completed),
             ),
           ],
         ),
@@ -47,38 +66,34 @@ class TaskFilterBar extends StatelessWidget {
                   showCheckmark: false,
                   onSelected: (selected) =>
                       store.setTagFilter(selected ? tag : null),
+                  selectedColor: TabWeather.pending,
+                  backgroundColor: Theme.of(context).colorScheme.surface,
+                  side: BorderSide(
+                    color: store.tagFilter?.toLowerCase() == tag.toLowerCase()
+                        ? TabWeather.pending
+                        : Theme.of(context).colorScheme.outline,
+                  ),
+                  labelStyle: Theme.of(context).textTheme.labelMedium?.copyWith(
+                    color: store.tagFilter?.toLowerCase() == tag.toLowerCase()
+                        ? Theme.of(context).colorScheme.onPrimary
+                        : Theme.of(context).colorScheme.onSurfaceVariant,
+                    fontWeight:
+                        store.tagFilter?.toLowerCase() == tag.toLowerCase()
+                        ? FontWeight.w600
+                        : FontWeight.w500,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.sm,
+                    vertical: AppSpacing.xs,
+                  ),
                 ),
             ],
           ),
         ],
       ],
-    );
-  }
-
-  Widget _chip(BuildContext context, TaskFilter filter, String label) {
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
-    final bool selected = store.filter == filter;
-
-    return ChoiceChip(
-      label: Text(label),
-      selected: selected,
-      showCheckmark: false,
-      onSelected: (_) => store.setFilter(filter),
-      selectedColor: scheme.primary,
-      backgroundColor: scheme.surface,
-      side: BorderSide(color: selected ? scheme.primary : scheme.outline),
-      labelStyle: theme.textTheme.labelMedium?.copyWith(
-        color: selected ? scheme.onPrimary : scheme.onSurfaceVariant,
-        fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
-      ),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppRadius.sm),
-      ),
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.sm,
-        vertical: AppSpacing.xs,
-      ),
     );
   }
 }

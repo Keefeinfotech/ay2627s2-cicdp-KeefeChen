@@ -41,9 +41,8 @@ class ParseQuickAdd {
 
     TaskPriority priority = TaskPriority.medium;
     final String lower = title.toLowerCase();
-    if (RegExp(
-      r'\b(urgent|critical|high priority|asap|important)\b',
-    ).hasMatch(lower)) {
+    if (RegExp(r'\b(urgent|critical|high priority|asap|important)\b')
+        .hasMatch(lower)) {
       priority = TaskPriority.high;
     } else if (RegExp(r'\b(low priority|whenever|someday)\b').hasMatch(lower)) {
       priority = TaskPriority.low;

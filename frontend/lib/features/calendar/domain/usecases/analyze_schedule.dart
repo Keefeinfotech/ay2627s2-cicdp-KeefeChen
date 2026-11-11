@@ -198,9 +198,9 @@ class AnalyzeSchedule {
             .where((event) => event.taskId == null && !event.isCompleted)
             .toList()
           ..sort(
-            (a, b) => _priorityWeight(
-              a.priority,
-            ).compareTo(_priorityWeight(b.priority)),
+            (a, b) =>
+                _priorityWeight(a.priority)
+                    .compareTo(_priorityWeight(b.priority)),
           );
     if (movable.isEmpty) return null;
 

@@ -100,9 +100,8 @@ class _AppTextFieldState extends State<AppTextField> {
             );
     }
 
-    final TextStyle? style = Theme.of(
-      context,
-    ).textTheme.bodyMedium?.copyWith(color: scheme.onSurface);
+    final TextStyle? style = Theme.of(context).textTheme.bodyMedium
+        ?.copyWith(color: scheme.onSurface);
     final InputDecoration decoration = InputDecoration(
       labelText: widget.labelText,
       hintText: widget.hintText,

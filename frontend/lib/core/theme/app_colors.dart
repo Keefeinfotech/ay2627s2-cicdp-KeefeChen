@@ -1,54 +1,83 @@
 import 'package:flutter/material.dart';
 
-/// Auxilia's central colour system.
+/// Auxilia's vivid weather-inspired colour system.
 ///
-/// Trust Blue is reserved for primary actions and selected states, with a
-/// darker shade for pressed states and links. The canvas and surfaces stay
-/// neutral so content remains legible and calm.
+/// Replaces the muted Deep Navy palette with a cafe-by-the-window aesthetic:
+/// warm saffron, earthy moss, teal pacific, soft lichen, persimmon, blush,
+/// coco cream and darkest navy. Each colour is named after the palette the
+/// user shared so the app can feel like sitting in a cosy cafe on a rainy day
+/// — vivid, grounded and alive.
 abstract final class AppColors {
   // ---------------------------------------------------------------------------
-  // Core palette
+  // Weather-inspired vivid palette
   // ---------------------------------------------------------------------------
 
-  /// Trust Blue: primary action colour used for buttons, links and selections.
-  static const Color trustBlue = Color(0xFF2563EB);
+  /// Pacific — deep teal, like ocean seen through a rainy cafe window.
+  static const Color pacific = Color(0xFF0F7B7B);
 
-  /// Primary Dark: pressed states, links and high-contrast accents.
-  static const Color primaryDark = Color(0xFF1D4ED8);
+  /// Moss — grounded earthy green, like forest after rain.
+  static const Color moss = Color(0xFF556B2F);
 
-  /// Light blue tint for selected rows, icon tiles and informational surfaces.
-  static const Color primaryLight = Color(0xFFDBEAFE);
+  /// Malachite — bright vivid green, like new leaves.
+  static const Color malachite = Color(0xFF00C853);
 
-  /// Main application background.
-  static const Color background = Color(0xFFF8FAFC);
+  /// Lichen — soft pale green, like morning mist.
+  static const Color lichen = Color(0xFFA8C686);
 
-  /// Cards and content surfaces.
-  static const Color surface = Color(0xFFFFFFFF);
+  /// Saffron — warm golden yellow, like sunlight through clouds.
+  static const Color saffron = Color(0xFFE9C46A);
 
-  /// Main text and headings.
-  static const Color textPrimary = Color(0xFF0F172A);
+  /// Persimmon — warm orange-red, like a cafe mug of spiced tea.
+  static const Color persimmon = Color(0xFFE76F51);
 
-  /// Secondary text and captions.
-  static const Color textSecondary = Color(0xFF64748B);
+  /// Blush — soft pink, like dawn light on porcelain.
+  static const Color blush = Color(0xFFF4A261);
 
-  /// Success and task completion.
-  static const Color successGreen = Color(0xFF16A34A);
+  /// Darkest navy — deep brand night, like a dark street outside the cafe.
+  static const Color darkestNavy = Color(0xFF1A1A2E);
 
-  /// Warnings and attention states.
-  static const Color warningAmber = Color(0xFFD97706);
+  /// Coco cream — warm off-white, like frothed milk.
+  static const Color cocoCream = Color(0xFFFDF5E6);
 
-  /// Errors and destructive actions.
-  static const Color errorRed = Color(0xFFDC2626);
+  // ---------------------------------------------------------------------------
+  // Core palette (kept for backwards-compatible aliases below)
+  // ---------------------------------------------------------------------------
 
-  /// Dividers and card borders.
-  static const Color divider = Color(0xFFE2E8F0);
+  /// Primary action colour — now saffron for a vivid, energetic feel.
+  static const Color trustBlue = saffron;
+
+  /// Pressed states, links and high-contrast accents — persimmon.
+  static const Color primaryDark = persimmon;
+
+  /// Light tint for selected rows and informational surfaces — lichen.
+  static const Color primaryLight = lichen;
+
+  /// Main application background — coco cream.
+  static const Color background = cocoCream;
+
+  /// Cards and content surfaces — white-ish coco cream variant.
+  static const Color surface = Color(0xFFFFFBF0);
+
+  /// Main text and headings — darkest navy for contrast.
+  static const Color textPrimary = darkestNavy;
+
+  /// Secondary text and captions — moss.
+  static const Color textSecondary = moss;
+
+  /// Success and task completion — malachite.
+  static const Color successGreen = malachite;
+
+  /// Warnings and attention states — saffron.
+  static const Color warningAmber = saffron;
+
+  /// Errors and destructive actions — persimmon.
+  static const Color errorRed = persimmon;
+
+  /// Dividers and card borders — soft lichen tint.
+  static const Color divider = Color(0xFFE8E3D6);
 
   // ---------------------------------------------------------------------------
   // Backwards-compatible aliases
-  //
-  // Existing widgets were built around these palette names. Keeping the aliases
-  // lets the whole application share one set of values without duplicating
-  // components.
   // ---------------------------------------------------------------------------
 
   static const Color deepNavy = primaryDark;
@@ -60,46 +89,30 @@ abstract final class AppColors {
   static const Color mutedText = textSecondary;
   static const Color borderGrey = divider;
 
-  /// A darker blue used for high-contrast brand surfaces.
-  static const Color navyDeep = Color(0xFF172554);
-
-  /// A lighter blue for hover states and quiet accents.
-  static const Color navyLight = Color(0xFF3B82F6);
-
-  /// Very light blue tint for selected rows and icon tiles.
-  static const Color navyTint = Color(0xFFEFF6FF);
-
-  /// Light blue tint for informational surfaces.
+  static const Color navyDeep = darkestNavy;
+  static const Color navyLight = pacific;
+  static const Color navyTint = lichen;
   static const Color blueTint = primaryLight;
-
-  /// Light green tint for success surfaces.
   static const Color tealTint = Color(0xFFDCFCE7);
-
-  /// Light amber tint for warning surfaces.
   static const Color warningTint = Color(0xFFFEF3C7);
-
-  /// Light red tint for error surfaces.
   static const Color errorTint = Color(0xFFFEE2E2);
-
-  /// Accessible darker blue for text links on light surfaces.
   static const Color clearBlueText = primaryDark;
 
-  // Semantic aliases used by feature widgets.
   static const Color success = successGreen;
   static const Color warning = warningAmber;
   static const Color danger = errorRed;
 
   // ---------------------------------------------------------------------------
-  // Dark theme surfaces
+  // Dark theme surfaces (cafe-night variant)
   // ---------------------------------------------------------------------------
 
-  static const Color darkCanvas = Color(0xFF0B1220);
-  static const Color darkSurface = Color(0xFF111B2E);
-  static const Color darkSurfaceAlt = Color(0xFF1B2940);
-  static const Color darkBorder = Color(0xFF2C3E57);
-  static const Color darkOnSurface = Color(0xFFE8EEF7);
-  static const Color darkMuted = Color(0xFF9FB0C3);
-  static const Color darkPrimary = Color(0xFFB9CCE8);
-  static const Color darkBlue = Color(0xFF7DABF8);
-  static const Color darkTeal = Color(0xFF4ADE80);
+  static const Color darkCanvas = darkestNavy;
+  static const Color darkSurface = Color(0xFF24243A);
+  static const Color darkSurfaceAlt = Color(0xFF2E2E4A);
+  static const Color darkBorder = Color(0xFF3E3E5E);
+  static const Color darkOnSurface = cocoCream;
+  static const Color darkMuted = lichen;
+  static const Color darkPrimary = saffron;
+  static const Color darkBlue = pacific;
+  static const Color darkTeal = malachite;
 }

@@ -74,9 +74,8 @@ void main() {
       }, statusCode: 201);
     });
 
-    final group = await _repository(
-      client,
-    ).create(name: ' Study crew ', isPublic: true);
+    final group = await _repository(client)
+        .create(name: ' Study crew ', isPublic: true);
 
     expect(body?['name'], 'Study crew');
     expect(body?['visibility'], 'PUBLIC');
@@ -139,9 +138,8 @@ void main() {
       }, statusCode: 201);
     });
 
-    final invitation = await _repository(
-      client,
-    ).invite(groupId: 'group-1', email: 'Teammate@Example.com');
+    final invitation = await _repository(client)
+        .invite(groupId: 'group-1', email: 'Teammate@Example.com');
 
     expect(invitation.invitationId, 'invite-1');
     expect(invitation.email, 'teammate@example.com');

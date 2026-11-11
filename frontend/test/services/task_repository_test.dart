@@ -85,9 +85,9 @@ void main() {
     await repository.save('owner', <Task>[makeTask(title: 'Stored')]);
 
     final prefs = await SharedPreferences.getInstance();
-    final decoded =
-        jsonDecode(prefs.getString('auxilia.tasks.v2.owner')!)
-            as Map<String, dynamic>;
+    final decoded = jsonDecode(
+      prefs.getString('auxilia.tasks.v2.owner')!,
+    ) as Map<String, dynamic>;
 
     expect(decoded['version'], SharedPreferencesTaskRepository.schemaVersion);
     expect(decoded['tasks'], hasLength(1));
