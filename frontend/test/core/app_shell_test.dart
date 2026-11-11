@@ -161,6 +161,10 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('ABOUT AUXILIA'), findsOneWidget);
+    // The tile can sit just below the fold once the taller navigation bar is
+    // accounted for, so scroll it into view before tapping.
+    await tester.ensureVisible(find.text('Introduction'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Introduction'));
     await tester.pumpAndSettle();
 
