@@ -43,12 +43,12 @@ class AuthShell extends StatelessWidget {
                     // Left Form Panel
                     Expanded(
                       flex: 5,
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AppSpacing.xxl,
-                          vertical: AppSpacing.xl,
-                        ),
-                        child: Center(
+                      child: Center(
+                        child: SingleChildScrollView(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.xxl,
+                            vertical: AppSpacing.xl,
+                          ),
                           child: ConstrainedBox(
                             constraints: const BoxConstraints(maxWidth: 380),
                             child: _AuthForm(
@@ -124,8 +124,9 @@ class _AuthForm extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      mainAxisAlignment: MainAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
       children: <Widget>[
         if (canPop)
           Padding(
@@ -166,7 +167,7 @@ class _AuthBrandPanel extends StatelessWidget {
     final theme = Theme.of(context);
 
     return AppVideoBackground(
-      assetPath: 'assets/video/auth_bg.mp4',
+      assetPath: 'assets/videos/auth_bg.mp4',
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.huge),
         child: Column(

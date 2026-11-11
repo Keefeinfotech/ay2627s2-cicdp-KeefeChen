@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/network/api_client.dart';
 import '../../../../core/routing/app_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
@@ -52,6 +53,7 @@ class _GroupsPageState extends State<GroupsPage> {
   List<StudyGroup> _groups = const <StudyGroup>[];
   bool _loading = true;
   String? _error;
+  bool _unauthorized = false;
   String? _busyGroupId;
 
   @override
@@ -71,6 +73,7 @@ class _GroupsPageState extends State<GroupsPage> {
     setState(() {
       _loading = true;
       _error = null;
+      _unauthorized = false;
     });
     try {
       final groups = await repository.list();
@@ -81,8 +84,12 @@ class _GroupsPageState extends State<GroupsPage> {
       });
     } catch (error) {
       if (!mounted) return;
+      final unauthorized = error is ApiException && error.isUnauthorized;
       setState(() {
-        _error = error.toString();
+        _unauthorized = unauthorized;
+        _error = unauthorized
+            ? 'Your session has expired. Please sign in again to access groups.'
+            : error.toString();
         _loading = false;
       });
     }
@@ -282,20 +289,26 @@ class _GroupsPageState extends State<GroupsPage> {
         title: 'Groups',
         subtitle: 'Study teams, members and shared work',
       ),
-      child: _repository == null ? _signInGate(context) : _content(context),
+      child: _repository == null
+          ? _signInGate(context)
+          : _unauthorized
+          ? _signInGate(context, expired: true)
+          : _content(context),
     );
   }
 
-  Widget _signInGate(BuildContext context) {
+  Widget _signInGate(BuildContext context, {bool expired = false}) {
     return Center(
       child: AppEmptyState(
-        icon: Icons.groups_outlined,
-        title: 'Sign in to use groups',
-        message:
-            'Groups, invitations and shared assignments are tied to your '
-            'account so teammates can find each other.',
+        icon: expired ? Icons.lock_clock_outlined : Icons.groups_outlined,
+        title: expired ? 'Session expired' : 'Sign in to use groups',
+        message: expired
+            ? 'Your sign-in session is no longer valid. Sign in again to view '
+                  'and manage your groups.'
+            : 'Groups, invitations and shared assignments are tied to your '
+                  'account so teammates can find each other.',
         action: AppButton(
-          label: 'Sign in',
+          label: expired ? 'Sign in again' : 'Sign in',
           icon: Icons.login_rounded,
           onPressed: () => Navigator.pushNamed(context, AppRoutes.login),
         ),

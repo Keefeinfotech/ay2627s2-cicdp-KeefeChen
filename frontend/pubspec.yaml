@@ -17,7 +17,7 @@ dependencies:
     sdk: flutter
 
   # UI and platform utilities.
-  cupertino_icons: ^1.0.8
+  cupertino_icons: ^2.0.0
 
   # Video playback support
   video_player: ^2.8.2

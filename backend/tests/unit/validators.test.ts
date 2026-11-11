@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { chatSchema } from "../../src/modules/ai/ai.validation";
-import { loginSchema, signupSchema } from "../../src/modules/auth/auth.validation";
+import {
+  loginSchema,
+  signupSchema,
+} from "../../src/modules/auth/auth.validation";
 
 describe("signup validation", () => {
   it("normalises email casing and whitespace", () => {
@@ -8,7 +11,7 @@ describe("signup validation", () => {
       body: {
         name: "  Ada  ",
         email: "  ADA@Example.COM ",
-        password: "password123",
+        password: "Auxilia$ecure2026",
       },
     });
 
@@ -18,7 +21,7 @@ describe("signup validation", () => {
 
   it("rejects an invalid email", () => {
     const result = signupSchema.safeParse({
-      body: { email: "not-an-email", password: "password123" },
+      body: { email: "not-an-email", password: "Auxilia$ecure2026" },
     });
     expect(result.success).toBe(false);
   });
@@ -35,7 +38,7 @@ describe("signup validation", () => {
       body: {
         name: "x".repeat(81),
         email: "ada@example.com",
-        password: "password123",
+        password: "Auxilia$ecure2026",
       },
     });
     expect(result.success).toBe(false);
@@ -59,10 +62,10 @@ describe("chat validation", () => {
 
   it("rejects blank and oversized messages", () => {
     expect(chatSchema.safeParse({ body: { message: "   " } }).success).toBe(
-      false
+      false,
     );
     expect(
-      chatSchema.safeParse({ body: { message: "x".repeat(1001) } }).success
+      chatSchema.safeParse({ body: { message: "x".repeat(1001) } }).success,
     ).toBe(false);
   });
 });

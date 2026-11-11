@@ -2,7 +2,7 @@ import { User, type IUser } from "./auth.model.js";
 
 export const findUserByEmail = async (
   email: string,
-  includePassword = false
+  includePassword = false,
 ): Promise<IUser | null> => {
   const query = User.findOne({ email: email.toLowerCase() });
   if (includePassword) query.select("+passwordHash");
@@ -11,6 +11,13 @@ export const findUserByEmail = async (
 
 export const findUserById = async (userId: string): Promise<IUser | null> =>
   User.findById(userId).exec();
+
+export const findUserByResetTokenHash = async (
+  tokenHash: string,
+): Promise<IUser | null> =>
+  User.findOne({ passwordResetTokenHash: tokenHash })
+    .select("+passwordResetTokenHash +passwordResetExpiresAt")
+    .exec();
 
 export const findUserByIdWithMfaSecrets = async (
   userId: string,
@@ -32,6 +39,6 @@ export const saveUser = async (user: IUser): Promise<IUser> => user.save();
 export const clearActiveSession = async (userId: string): Promise<void> => {
   await User.updateOne(
     { _id: userId },
-    { $set: { activeSessionId: null, activeSessionExpiresAt: null } }
+    { $set: { activeSessionId: null, activeSessionExpiresAt: null } },
   ).exec();
 };

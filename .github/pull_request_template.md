@@ -13,6 +13,14 @@ Describe the user-visible change and the problem it solves.
 - [ ] Backend
 - [ ] CI / documentation
 
+## CI/CD Checklist
+
+- [ ] All CI gates green (Dependabot review, PR conventions, security scans, backend, frontend, SonarCloud)
+- [ ] Draft PR: CI results are non-blocking until marked "ready for review"
+- [ ] No new secrets, `.env` files, or local build output committed
+- [ ] PR title follows Conventional Commits (e.g. `feat(tasks): add deadline reminders`)
+- [ ] Branch rebased onto latest `main` before merge
+
 ## Verification
 
 Paste the commands and results that prove this change works.
@@ -29,7 +37,6 @@ npm run build
 
 - [ ] Tests added or updated for new behaviour
 - [ ] Accessibility checked (semantics, 200% text scale) when UI changed
-- [ ] No secrets, `.env` files, or local build output committed
 - [ ] PR title follows Conventional Commits
 
 ## Risk and rollback
