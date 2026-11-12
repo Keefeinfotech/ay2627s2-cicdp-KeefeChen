@@ -56,6 +56,19 @@ describe("CORS policy", () => {
     );
   });
 
+  it("allows a loopback origin on any port in development", async () => {
+    const res = await request(app)
+      .options("/api/auth/forgot-password")
+      .set("Origin", "http://localhost:63488")
+      .set("Access-Control-Request-Method", "POST")
+      .set("Access-Control-Request-Headers", "content-type");
+
+    expect(res.status).toBe(204);
+    expect(res.headers["access-control-allow-origin"]).toBe(
+      "http://localhost:63488"
+    );
+  });
+
   it("rejects an unknown browser origin", async () => {
     const res = await request(app)
       .get("/api/health")
