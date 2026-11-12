@@ -119,7 +119,9 @@ export const metricsGuard = (
     return;
   }
 
-  authenticate(req, res, (err?: unknown) => {
+  // Authenticate is promise-based; we handle failures through the callback
+  // and intentionally do not await the outer promise.
+  void authenticate(req, res, (err?: unknown) => {
     if (err) {
       next(err);
       return;

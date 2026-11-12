@@ -32,9 +32,13 @@ import { getBcryptRounds, isProduction } from "../src/config/environment.js";
 import { User } from "../src/modules/users/user.model.js";
 import { Task } from "../src/modules/tasks/task.model.js";
 
+// NOSONAR — public demonstration credentials, not secrets. They exist only
+// to run the local demo seed (see docs/admin/ADMINISTRATION.md §6); the seed
+// refuses to run with NODE_ENV=production without ALLOW_DEMO_SEED=true, and
+// the passwords are documented as public in the README and the admin doc.
 const ADMIN_EMAIL = "admin@auxilia.demo";
-const ADMIN_PASSWORD = "AdminDemo!2026";
-const USER_PASSWORD = "DemoUser!2026";
+const ADMIN_PASSWORD = "AdminDemo!2026"; // NOSONAR
+const USER_PASSWORD = "DemoUser!2026"; // NOSONAR
 
 const DEMO_USERS: ReadonlyArray<{
   name: string;
