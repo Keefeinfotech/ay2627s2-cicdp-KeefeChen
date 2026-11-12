@@ -315,9 +315,9 @@ class _GroupsPageState extends State<GroupsPage> {
         action: AppButton(
           label: expired ? 'Sign in again' : 'Sign in',
           icon: Icons.login_rounded,
-          onPressed: () => Navigator.of(
-            context,
-          ).pushNamedAndRemoveUntil(AppRoutes.login, (route) => false),
+          onPressed: () =>
+              Navigator.of(context)
+                  .pushNamedAndRemoveUntil(AppRoutes.login, (route) => false),
         ),
       ),
     );
