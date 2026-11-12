@@ -297,9 +297,8 @@ class _HomeScreenState extends State<HomeScreen> {
       return;
     }
     if (!mounted) return;
-    Navigator.of(
-      context,
-    ).pushNamedAndRemoveUntil(AppRoutes.login, (route) => false);
+    Navigator.of(context)
+        .pushNamedAndRemoveUntil(AppRoutes.login, (route) => false);
   }
 
   void _openLogin() {

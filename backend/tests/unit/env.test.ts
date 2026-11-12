@@ -4,16 +4,23 @@ import {
   getBcryptRounds,
   getJwtExpiresIn,
   getJwtSecret,
+  getPort,
 } from "../../src/config/environment";
 
 const originalSecret = process.env.JWT_SECRET;
 const originalRounds = process.env.BCRYPT_ROUNDS;
 const originalExpiry = process.env.JWT_EXPIRES_IN;
+const originalPort = process.env.PORT;
 
 afterEach(() => {
   process.env.JWT_SECRET = originalSecret;
   process.env.BCRYPT_ROUNDS = originalRounds;
   process.env.JWT_EXPIRES_IN = originalExpiry;
+  if (originalPort === undefined) {
+    delete process.env.PORT;
+  } else {
+    process.env.PORT = originalPort;
+  }
 });
 
 describe("environment configuration", () => {
@@ -35,6 +42,22 @@ describe("environment configuration", () => {
   it("defaults the token expiry when unset", () => {
     delete process.env.JWT_EXPIRES_IN;
     expect(getJwtExpiresIn()).toBe("1d");
+  });
+
+  it("resolves the port Render injects for web services", () => {
+    process.env.PORT = "10000";
+    expect(getPort()).toBe(10000);
+  });
+
+  it("falls back to 3000 when PORT is unset or invalid", () => {
+    delete process.env.PORT;
+    expect(getPort()).toBe(3000);
+
+    process.env.PORT = "not-a-number";
+    expect(getPort()).toBe(3000);
+
+    process.env.PORT = "70000";
+    expect(getPort()).toBe(3000);
   });
 
   it("clamps bcrypt rounds to a safe range", () => {

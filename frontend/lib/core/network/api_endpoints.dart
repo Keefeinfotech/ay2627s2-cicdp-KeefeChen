@@ -19,7 +19,7 @@ abstract final class ApiEndpoints {
   static const String calendar = '/api/calendar';
   static const String calendarConflicts = '/api/calendar/conflicts';
 
-  static String? get authForgotPassword => null;
+  static const String authForgotPassword = '/api/auth/forgot-password';
 
-  static String? get authResetPassword => null;
+  static const String authResetPassword = '/api/auth/reset-password';
 }

@@ -6,56 +6,66 @@ import 'app_typography.dart';
 
 /// Builds the light and dark Material 3 themes from Auxilia's design tokens.
 ///
-/// Clear Blue is the action colour, Deep Navy is the brand surface, and the
-/// rest of the interface stays on white and Soft Grey. Components use small
-/// radii, thin borders and no decorative gradients.
+/// The palette is now vivid and weather-inspired: saffron for primary actions,
+/// pacific teal, moss green, malachite, lichen, persimmon, blush and coco
+/// cream. The app feels like sitting in a cosy cafe on a rainy day — warm,
+/// grounded and alive. Each tab and stat card carries its own accent colour so
+/// the dashboard reads like a spread of weather patterns rather than one flat
+/// navy surface.
 abstract final class AppTheme {
   const AppTheme._();
 
+  // ---------------------------------------------------------------------------
+  // Light scheme — "Sunlit Cafe"
+  // ---------------------------------------------------------------------------
+
   static const ColorScheme _lightScheme = ColorScheme(
     brightness: Brightness.light,
-    primary: AppColors.trustBlue,
-    onPrimary: AppColors.white,
-    primaryContainer: AppColors.primaryLight,
-    onPrimaryContainer: AppColors.primaryDark,
-    secondary: AppColors.primaryDark,
+    primary: AppColors.saffron,
+    onPrimary: AppColors.darkestNavy,
+    primaryContainer: AppColors.lichen,
+    onPrimaryContainer: AppColors.moss,
+    secondary: AppColors.pacific,
     onSecondary: AppColors.white,
-    secondaryContainer: AppColors.navyTint,
-    onSecondaryContainer: AppColors.primaryDark,
-    tertiary: AppColors.successGreen,
+    secondaryContainer: AppColors.cocoCream,
+    onSecondaryContainer: AppColors.moss,
+    tertiary: AppColors.malachite,
     onTertiary: AppColors.white,
     tertiaryContainer: AppColors.tealTint,
     onTertiaryContainer: Color(0xFF166534),
-    error: AppColors.errorRed,
+    error: AppColors.persimmon,
     onError: AppColors.white,
     errorContainer: AppColors.errorTint,
     onErrorContainer: Color(0xFF7F1D1D),
     surface: AppColors.surface,
     onSurface: AppColors.textPrimary,
     onSurfaceVariant: AppColors.textSecondary,
-    surfaceContainerHighest: Color(0xFFF1F5F9),
+    surfaceContainerHighest: Color(0xFFF1EBD6),
     outline: AppColors.divider,
-    outlineVariant: Color(0xFFEDF1F5),
+    outlineVariant: Color(0xFFE8E3D6),
     shadow: Color(0x1A243B53),
     scrim: Color(0x66243B53),
-    inverseSurface: AppColors.primaryDark,
+    inverseSurface: AppColors.darkestNavy,
     onInverseSurface: AppColors.white,
     inversePrimary: Color(0xFFBFDBFE),
-    surfaceTint: AppColors.trustBlue,
+    surfaceTint: AppColors.saffron,
   );
+
+  // ---------------------------------------------------------------------------
+  // Dark scheme — "Midnight Cafe"
+  // ---------------------------------------------------------------------------
 
   static const ColorScheme _darkScheme = ColorScheme(
     brightness: Brightness.dark,
-    primary: AppColors.darkBlue,
-    onPrimary: Color(0xFF08233F),
-    primaryContainer: Color(0xFF1D3A5A),
-    onPrimaryContainer: Color(0xFFD6E8FF),
-    secondary: AppColors.darkPrimary,
-    onSecondary: Color(0xFF0E1925),
-    secondaryContainer: AppColors.deepNavy,
-    onSecondaryContainer: AppColors.darkOnSurface,
-    tertiary: AppColors.darkTeal,
-    onTertiary: Color(0xFF04241D),
+
+    primary: AppColors.darkPrimary,
+    onPrimary: AppColors.darkestNavy,
+    primaryContainer: AppColors.moss,
+    secondary: AppColors.pacific,
+    onSecondary: AppColors.white,
+    secondaryContainer: AppColors.darkSurfaceAlt,
+    tertiary: AppColors.malachite,
+    onTertiary: AppColors.white,
     tertiaryContainer: Color(0xFF0F3E34),
     onTertiaryContainer: Color(0xFFC9F5EA),
     error: Color(0xFFF87171),
@@ -63,20 +73,20 @@ abstract final class AppTheme {
     errorContainer: Color(0xFF7F1D1D),
     onErrorContainer: Color(0xFFFEE2E2),
     surface: AppColors.darkSurface,
-    onSurface: AppColors.darkOnSurface,
+    onSurface: AppColors.cocoCream,
     onSurfaceVariant: AppColors.darkMuted,
     surfaceContainerHighest: AppColors.darkSurfaceAlt,
-    outline: Color(0xFF3A526B),
+    outline: Color(0xFF3E3E5E),
     outlineVariant: AppColors.darkBorder,
     shadow: Color(0x66000000),
     scrim: Color(0x99000000),
-    inverseSurface: AppColors.darkOnSurface,
+    inverseSurface: AppColors.cocoCream,
     onInverseSurface: AppColors.darkCanvas,
     inversePrimary: AppColors.darkPrimary,
-    surfaceTint: AppColors.darkBlue,
+    surfaceTint: AppColors.saffron,
   );
 
-  static ThemeData light() => _build(_lightScheme, AppColors.softGrey);
+  static ThemeData light() => _build(_lightScheme, AppColors.background);
 
   static ThemeData dark() => _build(_darkScheme, AppColors.darkCanvas);
 
@@ -106,10 +116,10 @@ abstract final class AppTheme {
       canvasColor: scheme.surface,
       visualDensity: VisualDensity.standard,
       materialTapTargetSize: MaterialTapTargetSize.padded,
-      splashColor: scheme.primary.withValues(alpha: 0.07),
-      highlightColor: scheme.primary.withValues(alpha: 0.04),
-      hoverColor: scheme.primary.withValues(alpha: 0.04),
-      focusColor: scheme.primary.withValues(alpha: 0.08),
+      splashColor: scheme.primary.withValues(alpha: 0.12),
+      highlightColor: scheme.primary.withValues(alpha: 0.06),
+      hoverColor: scheme.primary.withValues(alpha: 0.06),
+      focusColor: scheme.primary.withValues(alpha: 0.10),
       dividerTheme: DividerThemeData(
         color: scheme.outlineVariant,
         thickness: 1,
@@ -132,11 +142,11 @@ abstract final class AppTheme {
         ),
       ),
       cardTheme: CardThemeData(
-        elevation: 0,
+        elevation: 2,
         margin: EdgeInsets.zero,
         color: scheme.surface,
-        surfaceTintColor: Colors.transparent,
-        shadowColor: Colors.transparent,
+        surfaceTintColor: scheme.primary.withValues(alpha: 0.08),
+        shadowColor: Colors.black.withValues(alpha: 0.08),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.lg),
           side: BorderSide(color: scheme.outlineVariant),
@@ -229,7 +239,7 @@ abstract final class AppTheme {
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          elevation: 0,
+          elevation: 2,
           backgroundColor: scheme.primary,
           foregroundColor: scheme.onPrimary,
           minimumSize: const Size(0, AppSizes.buttonHeight),
@@ -249,7 +259,7 @@ abstract final class AppTheme {
             horizontal: AppSpacing.xl,
             vertical: AppSpacing.md,
           ),
-          side: BorderSide(color: scheme.outline),
+          side: BorderSide(color: scheme.primary),
           shape: buttonShape,
           textStyle: textTheme.labelLarge,
         ),
@@ -282,9 +292,9 @@ abstract final class AppTheme {
       floatingActionButtonTheme: FloatingActionButtonThemeData(
         backgroundColor: scheme.primary,
         foregroundColor: scheme.onPrimary,
-        elevation: 2,
-        focusElevation: 3,
-        hoverElevation: 3,
+        elevation: 4,
+        focusElevation: 6,
+        hoverElevation: 6,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.md),
         ),
@@ -293,14 +303,14 @@ abstract final class AppTheme {
       snackBarTheme: SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
         backgroundColor: isLight
-            ? AppColors.deepNavy
+            ? AppColors.darkestNavy
             : AppColors.darkSurfaceAlt,
         contentTextStyle: textTheme.bodyMedium?.copyWith(
           color: AppColors.white,
           fontWeight: FontWeight.w500,
         ),
         actionTextColor: isLight ? const Color(0xFF9CC7FF) : AppColors.darkTeal,
-        elevation: 2,
+        elevation: 4,
         insetPadding: const EdgeInsets.all(AppSpacing.lg),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.sm),
@@ -309,7 +319,7 @@ abstract final class AppTheme {
       dialogTheme: DialogThemeData(
         backgroundColor: scheme.surface,
         surfaceTintColor: Colors.transparent,
-        elevation: 6,
+        elevation: 8,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.xl),
         ),
@@ -325,7 +335,7 @@ abstract final class AppTheme {
         backgroundColor: scheme.surface,
         surfaceTintColor: Colors.transparent,
         modalBackgroundColor: scheme.surface,
-        elevation: 6,
+        elevation: 8,
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(
             top: Radius.circular(AppRadius.xxl),
@@ -351,7 +361,7 @@ abstract final class AppTheme {
       popupMenuTheme: PopupMenuThemeData(
         color: scheme.surface,
         surfaceTintColor: Colors.transparent,
-        elevation: 6,
+        elevation: 8,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.md),
           side: BorderSide(color: scheme.outlineVariant),
@@ -409,7 +419,7 @@ abstract final class AppTheme {
         backgroundColor: scheme.surface,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
-        height: 68,
+        height: 72,
         indicatorColor: scheme.primaryContainer,
         labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
         iconTheme: WidgetStateProperty.resolveWith<IconThemeData>((states) {

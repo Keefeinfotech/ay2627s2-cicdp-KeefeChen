@@ -11,10 +11,22 @@ const logger = winston.createLogger({
       format: "YYYY-MM-DD HH:mm:ss",
     }),
     winston.format.errors({ stack: true }),
-    winston.format.json()
+    winston.format.json(),
   ),
 
   transports: [
+    // Always write to stdout so Render/Docker capture startup and request
+    // logs in their dashboards (12-factor). JSON keeps them machine-readable.
+    new winston.transports.Console({
+      format:
+        process.env.NODE_ENV === "production"
+          ? winston.format.json()
+          : winston.format.combine(
+              winston.format.colorize(),
+              winston.format.simple(),
+            ),
+    }),
+
     // Store application errors
     new winston.transports.File({
       filename: path.join(logDirectory, "error.log"),
@@ -27,17 +39,5 @@ const logger = winston.createLogger({
     }),
   ],
 });
-
-// Display logs in terminal during development
-if (process.env.NODE_ENV !== "production") {
-  logger.add(
-    new winston.transports.Console({
-      format: winston.format.combine(
-        winston.format.colorize(),
-        winston.format.simple()
-      ),
-    })
-  );
-}
 
 export default logger;

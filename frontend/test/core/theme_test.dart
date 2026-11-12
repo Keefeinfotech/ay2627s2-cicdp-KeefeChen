@@ -5,27 +5,26 @@ import 'package:frontend/core/theme/app_theme.dart';
 import 'package:frontend/core/theme/app_typography.dart';
 
 void main() {
-  test('keeps the approved Trust Blue palette', () {
-    expect(AppColors.deepNavy, const Color(0xFF1D4ED8));
-    expect(AppColors.clearBlue, const Color(0xFF2563EB));
-    expect(AppColors.softGrey, const Color(0xFFF8FAFC));
-    expect(AppColors.white, const Color(0xFFFFFFFF));
-    expect(AppColors.teal, const Color(0xFF16A34A));
-    expect(AppColors.darkText, const Color(0xFF0F172A));
-    expect(AppColors.mutedText, const Color(0xFF64748B));
-    expect(AppColors.borderGrey, const Color(0xFFE2E8F0));
-    expect(AppColors.errorRed, const Color(0xFFDC2626));
-    expect(AppColors.warningAmber, const Color(0xFFD97706));
+  test('uses the vivid weather-inspired palette', () {
+    expect(AppColors.pacific, const Color(0xFF0F7B7B));
+    expect(AppColors.moss, const Color(0xFF556B2F));
+    expect(AppColors.malachite, const Color(0xFF00C853));
+    expect(AppColors.lichen, const Color(0xFFA8C686));
+    expect(AppColors.saffron, const Color(0xFFE9C46A));
+    expect(AppColors.persimmon, const Color(0xFFE76F51));
+    expect(AppColors.blush, const Color(0xFFF4A261));
+    expect(AppColors.darkestNavy, const Color(0xFF1A1A2E));
+    expect(AppColors.cocoCream, const Color(0xFFFDF5E6));
   });
 
-  test('builds a flat light theme with Inter typography', () {
+  test('builds a light theme with Inter typography and vivid palette', () {
     final theme = AppTheme.light();
 
     expect(AppTypography.fontFamily, 'Inter');
     expect(theme.textTheme.bodyMedium?.fontFamily, 'Inter');
-    expect(theme.colorScheme.primary, AppColors.clearBlue);
-    expect(theme.colorScheme.secondary, AppColors.deepNavy);
-    expect(theme.scaffoldBackgroundColor, AppColors.softGrey);
-    expect(theme.cardTheme.elevation, 0);
+    expect(theme.colorScheme.primary, AppColors.saffron);
+    expect(theme.colorScheme.secondary, AppColors.pacific);
+    expect(theme.scaffoldBackgroundColor, AppColors.cocoCream);
+    expect(theme.cardTheme.elevation, 2);
   });
 }

@@ -130,7 +130,7 @@ Errors use `{ error, code, details? }`. Validation failures return `400` with
 
 | Variable | Default | Notes |
 |----------|---------|-------|
-| `PORT` | `3000` | HTTP port |
+| `PORT` | `3000` | HTTP port. Render (and most PaaS platforms) inject `PORT` at runtime — leave it unset there; the server binds `0.0.0.0` on it |
 | `NODE_ENV` | `development` | `production` disables Swagger UI |
 | `MONGODB_URI` | - | Required to start |
 | `JWT_SECRET` | - | Required, at least 16 characters |
@@ -241,6 +241,8 @@ tagging a release.
 ## Documentation
 
 - [User story and CI/CD report](docs/reports/USER_STORY_CICD_REPORT.md)
+- [Docker configuration and Render deployment investigation (AUX-58, AUX-84, AUX-85)](docs/reports/AUX-58-DOCKER-RENDER-INVESTIGATION.md)
+- [Frontend/backend integration testing investigation (AUX-57, AUX-76, AUX-77)](docs/reports/AUX-57-FRONTEND-BACKEND-INTEGRATION-TESTING.md)
 - [Project plan](docs/planning/PROJECT_PLAN.md)
 - [Release gates](docs/compliance/NFR_RELEASE_GATES.md)
 - [Release checklist](docs/release/RELEASE_CHECKLIST.md)

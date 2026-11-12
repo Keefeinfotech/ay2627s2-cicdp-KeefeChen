@@ -15,7 +15,9 @@
     "test:contract": "vitest run tests/contract",
     "seed": "tsx scripts/seed.ts",
     "seed:reset": "tsx scripts/seed.ts --reset",
-    "seed:dry-run": "tsx scripts/seed.ts --dry-run"
+    "seed:dry-run": "tsx scripts/seed.ts --dry-run",
+    "validate:collections": "tsx scripts/apply-validation-rules.ts",
+    "validate:collections:dry-run": "tsx scripts/apply-validation-rules.ts --dry-run"
   },
   "keywords": [],
   "author": "",

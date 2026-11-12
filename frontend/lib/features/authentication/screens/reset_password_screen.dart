@@ -3,6 +3,7 @@ import 'package:frontend/core/widgets/app_snackbar.dart';
 
 import '../../../core/network/api_client.dart';
 import '../../../core/routing/app_router.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/app_text_field.dart';
@@ -127,7 +128,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
               const Icon(
                 Icons.check_circle_rounded,
                 size: 72,
-                color: Color(0xFF10B981),
+                color: AppColors.malachite,
               ),
               const SizedBox(height: AppSpacing.md),
               Text(
