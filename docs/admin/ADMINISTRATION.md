@@ -38,10 +38,48 @@ Flutter (admin UI)                      Express backend
 │  presentation/...pages  │            │  admin.controller               │
 │ core/routing/app_router │            │  admin.service (business rules) │
 │ core/layout/app_shell   │            │  admin.repository (Mongoose)    │
-└─────────────────────────┘            │ modules/metrics/metrics.ts      │
+└─────────────────────────┘            │ modules/users/user.schema.js    │
+                                       │  (single User schema — see 2.2) │
+                                       │ modules/metrics/metrics.ts      │
                                        │  /metrics (guarded)             │
                                        └────────────────────────────────┘
 ```
+
+### 2.2 One User schema, not two (required reading for operators)
+
+The repository previously registered the same `User` model twice — once in
+`users/user.model.js` and once in `auth/auth.model.js` — with **different
+`_id` types** (String UUID vs. default ObjectId) and different field sets.
+Whichever schema registered first per process won, silently altering
+validation behaviour:
+
+* logins worked for sign-up-created users (ObjectId ids),
+* seeded demo users (UUID ids) logged in but **failed validation on save**
+  and every interesting auth write threw a `ValidationError` surfaced as
+  `{"error":"Validation failed","code":"VALIDATION_ERROR"}`.
+
+Fix shipped here: `modules/users/user.schema.js` defines the union once and
+both model files are now thin wrappers over it. Registration order no longer
+matters. The union keeps `_id` as String UUID — the type every other
+collection already uses (tasks, groups, sessions, sessions.userId, ...).
+
+**Production data note:** any pre-existing user documents with an ObjectId
+`_id` must be migrated to string ids *before* this code is deployed, or
+their full-document saves will fail validation after the change. The
+guarded migration is included:
+
+```bash
+cd backend
+MONGODB_URI=... npm run migrate:user-ids            # dry run, prints a plan
+MONGODB_URI=... npm run migrate:user-ids -- --apply # applies, keeps a backup
+```
+
+It backs up every migrated document into
+`users_backup_pre_string_ids`, rewrites `_id` to the string form in place,
+is idempotent (only ObjectId-typed `_id`s are touched), and in production
+refuses to apply unless `ALLOW_USER_ID_MIGRATION=true` is set explicitly.
+References (`sessions.userId`, `tasks.userId`, etc.) were always stored as
+`String(user._id)` and need no changes.
 
 ### 2.1 RBAC design
 
@@ -276,11 +314,10 @@ supported way to create them.
   trailing 30-day creation spread; completed tasks carry `completedAt`,
   roughly half a day after creation — enough to drive non-empty charts.
 * **Reminders and calendar events are NOT seeded.** Both models reference the
-  user by `Schema.Types.ObjectId`, while the rest of the application
-  identifies users by string UUID (`_id: randomUUID()`), so any seeded
-  reminder would reference a non-existent ObjectId. This is a pre-existing
-  schema inconsistency (tracked as future work below), not something the seed
-  script works around by inventing data.
+  user by `Schema.Types.ObjectId`, while the application identifies users by
+  string UUID — a separate pre-existing schema inconsistency (tracked as
+  future work below), not something the seed script works around by
+  inventing data.
 * `lastLoginAt` is populated for the accounts that demonstrate it; accounts
   created after the field shipped may show `—` (no login recorded yet).
 
@@ -302,7 +339,29 @@ supported way to create them.
 
 Backend admin tests mock the Mongoose models (repository layer) and exercise
 the real Express pipeline with supertest — consistent with the existing
-integration-test convention (`tests/integration/auth.test.ts`).
+integration-test convention (`tests/integration/auth.test.ts`). Two existing
+assertions changed because the public auth payload now includes `role`
+(required for admin-UI gating): `auth.test.ts` sign-up deep-equal and
+`session.test.ts` `/api/auth/me` property check.
+
+### 7.1 End-to-end verification (local Docker)
+
+Run against `mongo:7` in Docker with the backend started via `tsx` on a free
+port, seeded by `npm run seed:demo`:
+
+| Check | Result |
+|---|---|
+| Seed creates admin + 7 users + 70 tasks idempotently | pass |
+| Admin login → `user.role` is `admin` in the response | pass |
+| `GET /api/admin/stats` with admin JWT | 200; real aggregates (9 users, 70 tasks, 28 completed) |
+| `GET /api/admin/users?status=active` | safe fields only, no `passwordHash` |
+| Standard user hits `/api/admin/stats` and `/api/admin/users` | 403 both |
+| Admin deactivates Grace; raw Mongo read-back | `status: "disabled"` persisted; re-activated to `active` |
+| `/metrics` without token (when `METRICS_TOKEN` set) | 401 |
+| `/metrics` with `Bearer local-e2e-metrics-token` | 200; `auxilia_db_connected 1`, counters reflect the 200/403 traffic above |
+| Migration script dry-run on a hand-created legacy ObjectId user | reports 1 candidate, no writes |
+| Migration `--apply` | document moved to `users_backup_pre_string_ids`, `_id` stringified; legacy user login succeeds afterwards |
+| Web release build (`flutter build web --release`) | pass; bundle contains admin routes |
 
 ---
 
@@ -328,8 +387,9 @@ integration-test convention (`tests/integration/auth.test.ts`).
 
 ## 9. Future enhancements
 
-* Unify user identifier strategy (all ObjectId **or** all string UUID) — fixes
-  reminders/calendar seeding and simplifies joins.
+* Unify reminders/calendar `userId` field types with the rest of the app
+  (currently `ObjectId` vs the app-wide string UUID) — fixes reminder/calendar
+  demo seeding and simplifies joins.
 * Audit log of administrative actions (deactivation events) with the existing
   audit module.
 * A blackbox Prometheus probe against `/api/health` for an availability SLO.
@@ -338,6 +398,10 @@ integration-test convention (`tests/integration/auth.test.ts`).
 
 ## 10. Future production checklist
 
+* **Run `npm run migrate:user-ids` before deploying** if any production user
+  documents still carry ObjectId `_id`s (created before the schema union);
+  verify logins afterwards and drop `users_backup_pre_string_ids` once the
+  rollback window is closed.
 * Set `METRICS_TOKEN` (random 32+ bytes) in Render/GitHub secrets; update
   `monitoring/prometheus.yml` or, better, a private scrape config.
 * Do **not** create the demo accounts in production. The seed refuses without
