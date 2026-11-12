@@ -18,7 +18,7 @@ extension AvatarAccentStyle on AvatarAccent {
   };
 
   Color get background => switch (this) {
-    AvatarAccent.trustBlue => const Color(0xFF2563EB),
+    AvatarAccent.trustBlue => const Color(0xFF6B7C98),
     AvatarAccent.emerald => const Color(0xFF047857),
     AvatarAccent.amber => const Color(0xFFB45309),
     AvatarAccent.rose => const Color(0xFFBE123C),

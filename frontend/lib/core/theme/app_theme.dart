@@ -6,29 +6,27 @@ import 'app_typography.dart';
 
 /// Builds the light and dark Material 3 themes from Auxilia's design tokens.
 ///
-/// The palette is now vivid and weather-inspired: saffron for primary actions,
-/// pacific teal, moss green, malachite, lichen, persimmon, blush and coco
-/// cream. The app feels like sitting in a cosy cafe on a rainy day — warm,
-/// grounded and alive. Each tab and stat card carries its own accent colour so
-/// the dashboard reads like a spread of weather patterns rather than one flat
-/// navy surface.
+/// Urban Slate: a warm greige canvas, a dark taupe for primary buttons and the
+/// top app bar, steel blue for links and selected states, slate grey for
+/// secondary text and warm clay for accents. Components use small radii, thin
+/// borders and no decorative gradients.
 abstract final class AppTheme {
   const AppTheme._();
 
   // ---------------------------------------------------------------------------
-  // Light scheme — "Sunlit Cafe"
+  // Light scheme — "Urban Slate"
   // ---------------------------------------------------------------------------
 
   static const ColorScheme _lightScheme = ColorScheme(
     brightness: Brightness.light,
     primary: AppColors.saffron,
-    onPrimary: AppColors.darkestNavy,
+    onPrimary: AppColors.white,
     primaryContainer: AppColors.lichen,
-    onPrimaryContainer: AppColors.moss,
+    onPrimaryContainer: AppColors.darkestNavy,
     secondary: AppColors.pacific,
     onSecondary: AppColors.white,
-    secondaryContainer: AppColors.cocoCream,
-    onSecondaryContainer: AppColors.moss,
+    secondaryContainer: AppColors.lichen,
+    onSecondaryContainer: AppColors.darkestNavy,
     tertiary: AppColors.malachite,
     onTertiary: AppColors.white,
     tertiaryContainer: AppColors.tealTint,
@@ -40,27 +38,27 @@ abstract final class AppTheme {
     surface: AppColors.surface,
     onSurface: AppColors.textPrimary,
     onSurfaceVariant: AppColors.textSecondary,
-    surfaceContainerHighest: Color(0xFFF1EBD6),
+    surfaceContainerHighest: Color(0xFFF1EFEE),
     outline: AppColors.divider,
-    outlineVariant: Color(0xFFE8E3D6),
-    shadow: Color(0x1A243B53),
-    scrim: Color(0x66243B53),
+    outlineVariant: Color(0xFFE7E3E2),
+    shadow: Color(0x1A2B2724),
+    scrim: Color(0x662B2724),
     inverseSurface: AppColors.darkestNavy,
     onInverseSurface: AppColors.white,
-    inversePrimary: Color(0xFFBFDBFE),
+    inversePrimary: Color(0xFF93A4BF),
     surfaceTint: AppColors.saffron,
   );
 
   // ---------------------------------------------------------------------------
-  // Dark scheme — "Midnight Cafe"
+  // Dark scheme — "Slate Night"
   // ---------------------------------------------------------------------------
 
   static const ColorScheme _darkScheme = ColorScheme(
     brightness: Brightness.dark,
-    primary: AppColors.saffron,
+    primary: AppColors.darkPrimary,
     onPrimary: AppColors.darkestNavy,
     primaryContainer: AppColors.moss,
-    onPrimaryContainer: AppColors.saffron,
+    onPrimaryContainer: AppColors.darkestNavy,
     secondary: AppColors.pacific,
     onSecondary: AppColors.white,
     secondaryContainer: AppColors.darkSurfaceAlt,
@@ -77,14 +75,14 @@ abstract final class AppTheme {
     onSurface: AppColors.cocoCream,
     onSurfaceVariant: AppColors.darkMuted,
     surfaceContainerHighest: AppColors.darkSurfaceAlt,
-    outline: Color(0xFF3E3E5E),
+    outline: Color(0xFF5A5451),
     outlineVariant: AppColors.darkBorder,
     shadow: Color(0x66000000),
     scrim: Color(0x99000000),
     inverseSurface: AppColors.cocoCream,
     onInverseSurface: AppColors.darkCanvas,
     inversePrimary: AppColors.darkPrimary,
-    surfaceTint: AppColors.saffron,
+    surfaceTint: AppColors.darkPrimary,
   );
 
   static ThemeData light() => _build(_lightScheme, AppColors.background);
@@ -310,7 +308,7 @@ abstract final class AppTheme {
           color: AppColors.white,
           fontWeight: FontWeight.w500,
         ),
-        actionTextColor: isLight ? const Color(0xFF9CC7FF) : AppColors.darkTeal,
+        actionTextColor: isLight ? AppColors.primaryLight : AppColors.darkTeal,
         elevation: 4,
         insetPadding: const EdgeInsets.all(AppSpacing.lg),
         shape: RoundedRectangleBorder(
