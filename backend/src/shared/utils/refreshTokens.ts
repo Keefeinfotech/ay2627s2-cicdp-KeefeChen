@@ -50,7 +50,7 @@ export const parseRefreshToken = (token: string): RefreshTokenParts | null => {
  */
 export const refreshTokenHashMatches = (
   presentedSecret: string,
-  storedHash: string | null | undefined
+  storedHash: string | null | undefined,
 ): boolean => {
   if (!storedHash) return false;
 

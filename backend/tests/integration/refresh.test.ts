@@ -48,7 +48,7 @@ const activeUser = () => ({
 const withLiveSession = (
   sessionId: string,
   overrides: Record<string, unknown> = {},
-  hash?: string
+  hash?: string,
 ) => {
   sessionModel.findById.mockReturnValue(
     queryResult({
@@ -60,7 +60,7 @@ const withLiveSession = (
       revokedAt: null,
       expiresAt: new Date(Date.now() + 60 * 60 * 1000),
       ...overrides,
-    })
+    }),
   );
   userModel.findById.mockReturnValue(queryResult(activeUser()));
 };
@@ -105,7 +105,7 @@ describe("POST /api/auth/refresh", () => {
           refreshedAt: expect.any(Date),
           lastUsedAt: expect.any(Date),
         }),
-      }
+      },
     );
     const $set = (sessionModel.updateOne.mock.calls[0][1] as any).$set;
     expect($set.refreshTokenHash).not.toBe(issued.hash);
@@ -129,7 +129,7 @@ describe("POST /api/auth/refresh", () => {
         previousRefreshTokenHash: first.hash,
         refreshedAt: new Date(),
       },
-      nextHash
+      nextHash,
     );
 
     const res2 = await request(app)
@@ -150,7 +150,7 @@ describe("POST /api/auth/refresh", () => {
         previousRefreshTokenHash: previous.hash,
         refreshedAt: new Date(Date.now() - 2_000),
       },
-      current.hash
+      current.hash,
     );
 
     const res = await request(app)
@@ -171,7 +171,7 @@ describe("POST /api/auth/refresh", () => {
         // Past REFRESH_REUSE_GRACE_MS (10s): assume the token was stolen.
         refreshedAt: new Date(Date.now() - 30_000),
       },
-      current.hash
+      current.hash,
     );
 
     const res = await request(app)
@@ -183,7 +183,7 @@ describe("POST /api/auth/refresh", () => {
     // The whole session is revoked, not just the presented token.
     expect(sessionModel.updateOne).toHaveBeenCalledWith(
       { _id: "session-1", userId: "user-1", revokedAt: null },
-      { $set: { revokedAt: expect.any(Date) } }
+      { $set: { revokedAt: expect.any(Date) } },
     );
   });
 
@@ -227,7 +227,7 @@ describe("POST /api/auth/refresh", () => {
     withLiveSession(
       "session-1",
       { revokedAt: new Date(Date.now() - 1000) },
-      issued.hash
+      issued.hash,
     );
 
     const res = await request(app)
@@ -243,7 +243,7 @@ describe("POST /api/auth/refresh", () => {
     withLiveSession(
       "session-1",
       { expiresAt: new Date(Date.now() - 1000) },
-      issued.hash
+      issued.hash,
     );
 
     const res = await request(app)
@@ -266,7 +266,7 @@ describe("POST /api/auth/refresh", () => {
     expect(res.status).toBe(401);
     expect(sessionModel.updateOne).toHaveBeenCalledWith(
       { _id: "session-1", userId: "user-1", revokedAt: null },
-      { $set: { revokedAt: expect.any(Date) } }
+      { $set: { revokedAt: expect.any(Date) } },
     );
   });
 

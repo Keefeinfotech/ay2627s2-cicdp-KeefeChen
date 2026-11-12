@@ -1,7 +1,6 @@
 import { AuthSession, type IAuthSession } from "./session.model.js";
 
-const SESSION_ID_PROJECTION =
-  "+refreshTokenHash +previousRefreshTokenHash";
+const SESSION_ID_PROJECTION = "+refreshTokenHash +previousRefreshTokenHash";
 
 const MAX_USER_AGENT_LENGTH = 255;
 
