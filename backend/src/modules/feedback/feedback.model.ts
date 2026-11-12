@@ -1,28 +1,28 @@
-import { Schema, model, Document, Types } from 'mongoose';
+import { Schema, model, Document } from "mongoose";
 
 export enum FeedbackCategory {
-  BUG = 'BUG',
-  FEATURE_REQUEST = 'FEATURE_REQUEST',
-  GENERAL = 'GENERAL',
-  UI_UX = 'UI_UX',
+  BUG = "BUG",
+  FEATURE_REQUEST = "FEATURE_REQUEST",
+  GENERAL = "GENERAL",
+  UI_UX = "UI_UX",
 }
 
 export enum FeedbackStatus {
-  PENDING = 'PENDING',
-  IN_REVIEW = 'IN_REVIEW',
-  RESOLVED = 'RESOLVED',
-  DISMISSED = 'DISMISSED',
+  PENDING = "PENDING",
+  IN_REVIEW = "IN_REVIEW",
+  RESOLVED = "RESOLVED",
+  DISMISSED = "DISMISSED",
 }
 
 export interface IFeedback extends Document {
-  userId: Types.ObjectId;
+  userId: string;
   category: FeedbackCategory;
   title: string;
   description: string;
   rating?: number;
   status: FeedbackStatus;
   adminResponse?: {
-    respondedBy: Types.ObjectId;
+    respondedBy: string;
     message: string;
     respondedAt: Date;
   };
@@ -33,8 +33,8 @@ export interface IFeedback extends Document {
 const FeedbackSchema = new Schema<IFeedback>(
   {
     userId: {
-      type: Schema.Types.ObjectId,
-      ref: 'User',
+      type: String,
+      ref: "User",
       required: true,
       index: true,
     },
@@ -67,14 +67,14 @@ const FeedbackSchema = new Schema<IFeedback>(
       index: true,
     },
     adminResponse: {
-      respondedBy: { type: Schema.Types.ObjectId, ref: 'User' },
+      respondedBy: { type: String, ref: "User" },
       message: { type: String, trim: true },
       respondedAt: { type: Date },
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 FeedbackSchema.index({ userId: 1, createdAt: -1 });
 
-export const FeedbackModel = model<IFeedback>('Feedback', FeedbackSchema);
+export const FeedbackModel = model<IFeedback>("Feedback", FeedbackSchema);

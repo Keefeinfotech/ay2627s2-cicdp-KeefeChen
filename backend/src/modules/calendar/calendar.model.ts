@@ -1,20 +1,20 @@
-import { Schema, model, Document, Types } from 'mongoose';
+import { Schema, model, Document } from "mongoose";
 
 export enum EventPriority {
-  LOW = 'LOW',
-  MEDIUM = 'MEDIUM',
-  HIGH = 'HIGH',
-  URGENT = 'URGENT',
+  LOW = "LOW",
+  MEDIUM = "MEDIUM",
+  HIGH = "HIGH",
+  URGENT = "URGENT",
 }
 
 export enum EventStatus {
-  SCHEDULED = 'SCHEDULED',
-  COMPLETED = 'COMPLETED',
-  CANCELLED = 'CANCELLED',
+  SCHEDULED = "SCHEDULED",
+  COMPLETED = "COMPLETED",
+  CANCELLED = "CANCELLED",
 }
 
 export interface ICalendarEvent extends Document {
-  userId: Types.ObjectId;
+  userId: string;
   title: string;
   description?: string;
   startTime: Date;
@@ -23,10 +23,10 @@ export interface ICalendarEvent extends Document {
   priority: EventPriority;
   status: EventStatus;
   location?: string;
-  groupId?: Types.ObjectId;
-  taskId?: Types.ObjectId;
+  groupId?: string;
+  taskId?: string;
   recurrence?: {
-    frequency: 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'YEARLY';
+    frequency: "DAILY" | "WEEKLY" | "MONTHLY" | "YEARLY";
     interval?: number;
     until?: Date;
   };
@@ -37,8 +37,8 @@ export interface ICalendarEvent extends Document {
 const CalendarEventSchema = new Schema<ICalendarEvent>(
   {
     userId: {
-      type: Schema.Types.ObjectId,
-      ref: 'User',
+      type: String,
+      ref: "User",
       required: true,
       index: true,
     },
@@ -50,7 +50,7 @@ const CalendarEventSchema = new Schema<ICalendarEvent>(
     description: {
       type: String,
       trim: true,
-      default: '',
+      default: "",
     },
     startTime: {
       type: Date,
@@ -81,20 +81,20 @@ const CalendarEventSchema = new Schema<ICalendarEvent>(
       trim: true,
     },
     groupId: {
-      type: Schema.Types.ObjectId,
-      ref: 'Group',
+      type: String,
+      ref: "Group",
       default: null,
       index: true,
     },
     taskId: {
-      type: Schema.Types.ObjectId,
-      ref: 'Task',
+      type: String,
+      ref: "Task",
       default: null,
     },
     recurrence: {
       frequency: {
         type: String,
-        enum: ['DAILY', 'WEEKLY', 'MONTHLY', 'YEARLY'],
+        enum: ["DAILY", "WEEKLY", "MONTHLY", "YEARLY"],
       },
       interval: {
         type: Number,
@@ -107,7 +107,7 @@ const CalendarEventSchema = new Schema<ICalendarEvent>(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 // Compound indexes for range queries and conflict checking
@@ -115,6 +115,6 @@ CalendarEventSchema.index({ userId: 1, startTime: 1, endTime: 1 });
 CalendarEventSchema.index({ groupId: 1, startTime: 1, endTime: 1 });
 
 export const CalendarEventModel = model<ICalendarEvent>(
-  'CalendarEvent',
-  CalendarEventSchema
+  "CalendarEvent",
+  CalendarEventSchema,
 );

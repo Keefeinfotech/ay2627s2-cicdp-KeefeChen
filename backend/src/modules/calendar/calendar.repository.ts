@@ -1,14 +1,13 @@
-import { CalendarEventModel, ICalendarEvent } from './calendar.model';
-import { CreateEventDTO, UpdateEventDTO } from './calendar.types';
-import { Types } from 'mongoose';
+import { CalendarEventModel, ICalendarEvent } from "./calendar.model";
+import { CreateEventDTO, UpdateEventDTO } from "./calendar.types";
 
 export class CalendarRepository {
   async create(userId: string, data: CreateEventDTO): Promise<ICalendarEvent> {
     const event = new CalendarEventModel({
       ...data,
-      userId: new Types.ObjectId(userId),
-      groupId: data.groupId ? new Types.ObjectId(data.groupId) : undefined,
-      taskId: data.taskId ? new Types.ObjectId(data.taskId) : undefined,
+      userId,
+      groupId: data.groupId ? data.groupId : undefined,
+      taskId: data.taskId ? data.taskId : undefined,
     });
     return await event.save();
   }
@@ -21,16 +20,16 @@ export class CalendarRepository {
     userId: string,
     startDate: Date,
     endDate: Date,
-    groupId?: string
+    groupId?: string,
   ): Promise<ICalendarEvent[]> {
     const query: any = {
-      userId: new Types.ObjectId(userId),
+      userId,
       startTime: { $lte: endDate },
       endTime: { $gte: startDate },
     };
 
     if (groupId) {
-      query.groupId = new Types.ObjectId(groupId);
+      query.groupId = groupId;
     }
 
     return await CalendarEventModel.find(query).sort({ startTime: 1 }).exec();
@@ -39,19 +38,19 @@ export class CalendarRepository {
   async update(
     eventId: string,
     userId: string,
-    data: UpdateEventDTO
+    data: UpdateEventDTO,
   ): Promise<ICalendarEvent | null> {
     return await CalendarEventModel.findOneAndUpdate(
-      { _id: eventId, userId: new Types.ObjectId(userId) },
+      { _id: eventId, userId },
       { $set: data },
-      { new: true }
+      { new: true },
     ).exec();
   }
 
   async delete(eventId: string, userId: string): Promise<boolean> {
     const result = await CalendarEventModel.deleteOne({
       _id: eventId,
-      userId: new Types.ObjectId(userId),
+      userId,
     }).exec();
     return result.deletedCount > 0;
   }
@@ -60,16 +59,16 @@ export class CalendarRepository {
     userId: string,
     startTime: Date,
     endTime: Date,
-    excludeEventId?: string
+    excludeEventId?: string,
   ): Promise<ICalendarEvent[]> {
     const query: any = {
-      userId: new Types.ObjectId(userId),
+      userId,
       startTime: { $lt: endTime },
       endTime: { $gt: startTime },
     };
 
     if (excludeEventId) {
-      query._id = { $ne: new Types.ObjectId(excludeEventId) };
+      query._id = { $ne: excludeEventId };
     }
 
     return await CalendarEventModel.find(query).exec();
