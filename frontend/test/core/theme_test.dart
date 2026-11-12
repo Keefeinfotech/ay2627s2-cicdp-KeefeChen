@@ -5,19 +5,19 @@ import 'package:frontend/core/theme/app_theme.dart';
 import 'package:frontend/core/theme/app_typography.dart';
 
 void main() {
-  test('uses the vivid weather-inspired palette', () {
-    expect(AppColors.pacific, const Color(0xFF0F7B7B));
-    expect(AppColors.moss, const Color(0xFF556B2F));
-    expect(AppColors.malachite, const Color(0xFF00C853));
-    expect(AppColors.lichen, const Color(0xFFA8C686));
-    expect(AppColors.saffron, const Color(0xFFE9C46A));
-    expect(AppColors.persimmon, const Color(0xFFE76F51));
-    expect(AppColors.blush, const Color(0xFFF4A261));
-    expect(AppColors.darkestNavy, const Color(0xFF1A1A2E));
-    expect(AppColors.cocoCream, const Color(0xFFFDF5E6));
+  test('uses the Urban Slate palette', () {
+    expect(AppColors.pacific, const Color(0xFF6B7C98));
+    expect(AppColors.moss, const Color(0xFF7B7F8A));
+    expect(AppColors.malachite, const Color(0xFF16A34A));
+    expect(AppColors.lichen, const Color(0xFFDFE3EB));
+    expect(AppColors.saffron, const Color(0xFF5E5653));
+    expect(AppColors.persimmon, const Color(0xFFDC2626));
+    expect(AppColors.blush, const Color(0xFFAB978C));
+    expect(AppColors.darkestNavy, const Color(0xFF2B2724));
+    expect(AppColors.cocoCream, const Color(0xFFE9E6E7));
   });
 
-  test('builds a light theme with Inter typography and vivid palette', () {
+  test('builds a light theme with Inter typography and Urban Slate', () {
     final theme = AppTheme.light();
 
     expect(AppTypography.fontFamily, 'Inter');
