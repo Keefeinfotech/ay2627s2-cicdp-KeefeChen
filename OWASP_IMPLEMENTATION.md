@@ -13,13 +13,13 @@ This document describes the OWASP Top 10 security mitigations implemented in the
   - `get()`: Checks membership or public visibility before allowing access
   - `update()` and `archive()`: Only group owners can modify
   - `list()`: Only returns groups user is active member of
-- **Authentication middleware**: `authenticate` middleware in `middleware/authenticate.ts` verifies JWT token, checks session activity, and populates `req.userId`, `req.userEmail`, `req.userRole`
+- **Authentication middleware**: `authenticate` middleware in `middleware/authenticate.ts` verifies JWT token, validates the session against the auth sessions collection (with a short-lived in-memory cache), and populates `req.userId`, `req.userEmail`, `req.userRole`, `req.sessionId`
 - **Rate limiting**: Auth rate limiter (`middleware/rateLimiter.ts`) with 10 attempts per 15-minute window, configurable via `AUTH_RATE_LIMIT_MAX` env var
 
 #### Frontend
 - **Form validation**: All forms use `AppTextField` with validators for email format and password length
 - **Navigation protection**: Routes guarded by `AppShell` which checks authentication state
-- **Session management**: Token stored in `SessionStore` with jti tracking for session replacement detection
+- **Session management**: Access + refresh tokens stored in `SessionStore` (secure storage); backend keeps a revocable session per device
 
 #### Remaining Risks
 - No explicit resource-level access checks beyond owner verification in task service
@@ -88,24 +88,31 @@ This document describes the OWASP Top 10 security mitigations implemented in the
 - **JWT tokens**: 
   - Algorithm: HS256
   - Secret: from `JWT_SECRET` env var (minimum 16 chars validated)
-  - Expiration: `JWT_EXPIRES_IN` (default "1d")
+  - Expiration: `JWT_EXPIRES_IN` (default "15m")
   - Issuer: "auxilia-api"
   - Payload includes `sub`, `email`, `jti` (JWT ID)
+- **Refresh tokens**: 
+  - Opaque `sessionId.secret` token, only `sha256(secret)` persisted
+  - Rotated on every refresh; replaying a superseded token outside a short
+    grace window revokes the whole session
+  - Session lifetime fixed by `REFRESH_TOKEN_EXPIRES_IN` (default "30d")
 - **Token session binding**: 
-  - Each login generates unique `jti` (random UUID)
-  - `authenticateSession()` validates `jti` matches user's active session
+  - Each login generates a session row whose id is the JWT `jti`
+  - `authenticateSession()` validates the session row: exists, belongs to the
+    user, not revoked, not expired (validated results cached in memory)
+  - `logout()`/device revocation invalidate the cache immediately
   - Prevents session fixation/reuse attacks
 
 #### Frontend
 - **No cryptographic operations** performed in Flutter code
-- **Secure storage**: Session managed via `SessionStore` (SharedPreferences)
+- **Secure storage**: Access and refresh tokens stored via `SessionStore`
+  (`flutter_secure_storage`); silent renewal on 401 via `POST /api/auth/refresh`
 - **HTTPS**: Recommend using in production (enforced by backend Helmet HSTS)
 
 #### Remaining Risks
 - JWT uses HS256 (symmetric key) - consider RS256 for production with key management
-- No token rotation policy documented
 - Secret length validation only checks minimum 16 chars, not entropy
-- No mention of token refresh/revocation mechanism beyond jti check
+- Revocation propagation is bounded by `SESSION_CACHE_TTL_MS` (default 30s)
 
 ## A05 — Injection
 
@@ -184,9 +191,12 @@ This document describes the OWASP Top 10 security mitigations implemented in the
   - Rate limit events logged via `logSecurityEvent`
   - Configurable via `AUTH_RATE_LIMIT_MAX` env var
 - **Session expiration**:
-  - JWT TTL from `JWT_EXPIRES_IN` env var (default "1d")
-  - Session tracking with `activeSessionId` and `activeSessionExpiresAt`
-  - `logout()` clears active session
+  - Access-token TTL from `JWT_EXPIRES_IN` env var (default "15m")
+  - Session rows in the auth sessions collection expire after
+    `REFRESH_TOKEN_EXPIRES_IN` (default "30d") and are dropped by a TTL index
+  - `logout()` revokes only the calling session; password reset revokes all
+  - Validated sessions cached in memory for `SESSION_CACHE_TTL_MS` to avoid a
+    MongoDB read per request
 - **Generic failure messages**:
   - "Invalid email or password" - no distinction between bad email vs bad password
   - No account enumeration possible from error messages
@@ -309,8 +319,7 @@ This document describes the OWASP Top 10 security mitigations implemented in the
 3. Add CAPTCHA to registration/login forms
 4. Add security headers: X-Content-Type-Options, X-Frame-Options
 5. Add request validation middleware for all route parameters
-6. Implement proper session revocation on password change
-7. Add security headers to frontend HTTP client requests
-8. Write automated security tests for access control scenarios
-9. Review and update dependency versions regularly
-10. Document security incident response procedure
+6. Add security headers to frontend HTTP client requests
+7. Write automated security tests for access control scenarios
+8. Review and update dependency versions regularly
+9. Document security incident response procedure

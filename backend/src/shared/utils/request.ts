@@ -8,6 +8,13 @@ export const requireUserId = (req: Request): string => {
   return req.userId;
 };
 
+export const requireSessionId = (req: Request): string => {
+  if (!req.sessionId) {
+    throw unauthorized();
+  }
+  return req.sessionId;
+};
+
 export function getWelcomeMessage(name: string): string {
   return `Hello, ${name}! TypeScript NodeNext setup is working.`;
 }

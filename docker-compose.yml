@@ -52,7 +52,9 @@ services:
       PORT: 3000
       MONGODB_URI: mongodb://mongodb:27017/auxilia
       JWT_SECRET: ${JWT_SECRET}
-      JWT_EXPIRES_IN: 1d
+      JWT_EXPIRES_IN: 15m
+      REFRESH_TOKEN_EXPIRES_IN: 30d
+      SESSION_CACHE_TTL_MS: 30000
       BCRYPT_ROUNDS: 10
       CORS_ORIGIN: http://localhost:8080,http://localhost:3000
       TRUST_PROXY: "true"

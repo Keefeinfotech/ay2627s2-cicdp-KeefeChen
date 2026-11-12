@@ -35,10 +35,3 @@ export const createUser = async (input: {
 }): Promise<IUser> => User.create(input);
 
 export const saveUser = async (user: IUser): Promise<IUser> => user.save();
-
-export const clearActiveSession = async (userId: string): Promise<void> => {
-  await User.updateOne(
-    { _id: userId },
-    { $set: { activeSessionId: null, activeSessionExpiresAt: null } },
-  ).exec();
-};

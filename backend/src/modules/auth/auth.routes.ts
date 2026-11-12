@@ -5,15 +5,19 @@ import { validateRequest } from "../../middleware/validateRequest.js";
 import { authenticate } from "../../middleware/authenticate.js";
 import {
   forgotPassword,
+  listSessions,
   login,
   logout,
   me,
+  refresh,
   resetPassword,
+  revokeSession,
   signup,
 } from "./auth.controller.js";
 import {
   forgotPasswordSchema,
   loginSchema,
+  refreshSchema,
   resetPasswordSchema,
   signupSchema,
 } from "./auth.validation.js";
@@ -35,6 +39,12 @@ router.post(
   login,
 );
 router.post(
+  "/refresh",
+  authRateLimiter,
+  validateRequest(refreshSchema),
+  refresh,
+);
+router.post(
   "/forgot-password",
   authRateLimiter,
   requireCaptcha,
@@ -50,5 +60,7 @@ router.post(
 
 router.get("/me", authenticate, me);
 router.post("/logout", authenticate, logout);
+router.get("/sessions", authenticate, listSessions);
+router.delete("/sessions/:id", authenticate, revokeSession);
 
 export default router;

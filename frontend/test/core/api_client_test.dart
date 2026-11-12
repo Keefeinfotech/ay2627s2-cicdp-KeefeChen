@@ -218,5 +218,257 @@ void main() {
 
       await expectLater(client.deleteJson('/api/tasks/1'), completes);
     });
+
+    test('a success with an empty body decodes to an empty map', () async {
+      final client = _client(MockClient((_) async => http.Response('', 200)));
+
+      await expectLater(
+        client.postJson('/api/auth/logout', <String, dynamic>{}),
+        completion(<String, dynamic>{}),
+      );
+    });
+  });
+
+  group('silent token refresh', () {
+    /// A syntactically valid JWT with the given subject, so the client's
+    /// same-user matching logic can decode it.
+    ///
+    /// [jti] makes otherwise identical tokens distinct while keeping the same
+    /// `sub` — the claim the upgrade logic matches on.
+    String jwt(String sub, {String? jti}) {
+      String encode(Map<String, Object> value) {
+        return base64Url
+            .encode(utf8.encode(jsonEncode(value)))
+            .replaceAll('=', '');
+      }
+
+      final claims = <String, Object>{'sub': sub};
+      if (jti != null) claims['jti'] = jti;
+      return '${encode(<String, Object>{'alg': 'none'})}.'
+          '${encode(claims)}.sig';
+    }
+
+    setUp(() {
+      ApiClient.resetTokenCache();
+      ApiClient.tokenRefresher = null;
+    });
+
+    tearDown(() {
+      ApiClient.tokenRefresher = null;
+      ApiClient.resetTokenCache();
+    });
+
+    test('retries the request once with the renewed token', () async {
+      final seen = <String?>[];
+      final client = _client(
+        MockClient((request) async {
+          seen.add(request.headers['Authorization']);
+          if (seen.length == 1) {
+            return _json(<String, dynamic>{
+              'code': 'UNAUTHORIZED',
+            }, statusCode: 401);
+          }
+          return _json(<String, dynamic>{'ok': true});
+        }),
+      );
+      ApiClient.tokenRefresher = () async => 'renewed';
+
+      final result = await client.getJson('/api/tasks', token: 'expired');
+
+      expect(result, <String, dynamic>{'ok': true});
+      expect(seen, <String?>['Bearer expired', 'Bearer renewed']);
+    });
+
+    test('shares a single refresh across concurrent 401s', () async {
+      var refreshCalls = 0;
+      final unauthorized = _json(<String, dynamic>{
+        'code': 'UNAUTHORIZED',
+      }, statusCode: 401);
+      final client = _client(
+        MockClient((request) async {
+          if (request.headers['Authorization'] == 'Bearer renewed') {
+            return _json(<String, dynamic>{'ok': true});
+          }
+          return unauthorized;
+        }),
+      );
+      ApiClient.tokenRefresher = () async {
+        refreshCalls += 1;
+        // Give both requests time to hit their 401 before renewal finishes.
+        await Future<void>.delayed(const Duration(milliseconds: 10));
+        return 'renewed';
+      };
+
+      final results = await Future.wait(<Future<Map<String, dynamic>>>[
+        client.getJson('/api/a', token: 'expired'),
+        client.getJson('/api/b', token: 'expired'),
+      ]);
+
+      expect(results, hasLength(2));
+      expect(refreshCalls, 1);
+    });
+
+    test('does not refresh requests that carried no token', () async {
+      var refreshCalls = 0;
+      final client = _client(
+        MockClient(
+          (_) async => _json(<String, dynamic>{
+            'code': 'LOGIN_REQUIRED',
+          }, statusCode: 401),
+        ),
+      );
+      ApiClient.tokenRefresher = () async {
+        refreshCalls += 1;
+        return 'renewed';
+      };
+
+      await expectLater(
+        client.postJson('/api/auth/login', <String, dynamic>{}),
+        throwsA(
+          isA<ApiException>().having((e) => e.statusCode, 'statusCode', 401),
+        ),
+      );
+      expect(refreshCalls, 0);
+    });
+
+    test('surfaces the second 401 instead of looping', () async {
+      var refreshCalls = 0;
+      final client = _client(
+        MockClient(
+          (_) async =>
+              _json(<String, dynamic>{'code': 'UNAUTHORIZED'}, statusCode: 401),
+        ),
+      );
+      ApiClient.tokenRefresher = () async {
+        refreshCalls += 1;
+        return 'renewed';
+      };
+
+      await expectLater(
+        client.getJson('/api/tasks', token: 'expired'),
+        throwsA(
+          isA<ApiException>().having((e) => e.statusCode, 'statusCode', 401),
+        ),
+      );
+      // One renewal, one retry — then the failure is surfaced.
+      expect(refreshCalls, 1);
+    });
+
+    test('surfaces the original 401 when renewal fails', () async {
+      final client = _client(
+        MockClient(
+          (_) async =>
+              _json(<String, dynamic>{'code': 'UNAUTHORIZED'}, statusCode: 401),
+        ),
+      );
+      ApiClient.tokenRefresher = () async => null;
+
+      await expectLater(
+        client.getJson('/api/tasks', token: 'expired'),
+        throwsA(
+          isA<ApiException>()
+              .having((e) => e.statusCode, 'statusCode', 401)
+              .having((e) => e.code, 'code', 'UNAUTHORIZED'),
+        ),
+      );
+    });
+
+    test('upgrades a stale token only for the same subject', () async {
+      final stale = jwt('user-1', jti: 'stale');
+      final latest = jwt('user-1', jti: 'fresh');
+      final other = jwt('user-2');
+      final seen = <String?>[];
+      final client = _client(
+        MockClient((request) async {
+          seen.add(request.headers['Authorization']);
+          if (request.headers['Authorization'] == 'Bearer $stale') {
+            return _json(<String, dynamic>{
+              'code': 'UNAUTHORIZED',
+            }, statusCode: 401);
+          }
+          return _json(<String, dynamic>{'ok': true});
+        }),
+      );
+
+      // The first call is rejected; the renewal remembers `latest` for this
+      // user and the retry succeeds with it.
+      ApiClient.tokenRefresher = () async => latest;
+      await client.getJson('/api/seed', token: stale);
+      expect(seen, <String?>['Bearer $stale', 'Bearer $latest']);
+
+      // A stale copy of the same user's token is upgraded without a 401...
+      seen.clear();
+      await client.getJson('/api/tasks', token: stale);
+      expect(seen, <String?>['Bearer $latest']);
+
+      // ...but another account's token is never substituted.
+      seen.clear();
+      await client.getJson('/api/tasks', token: other);
+      expect(seen, <String?>['Bearer $other']);
+    });
+
+    test('resetTokenCache forgets the renewed token', () async {
+      final stale = jwt('user-1', jti: 'stale');
+      final latest = jwt('user-1', jti: 'fresh');
+      final seen = <String?>[];
+      // The first call is rejected so the renewal actually runs and `latest`
+      // becomes the remembered token for this user.
+      final client = _client(
+        MockClient((request) async {
+          seen.add(request.headers['Authorization']);
+          if (request.headers['Authorization'] == 'Bearer $stale') {
+            return _json(<String, dynamic>{
+              'code': 'UNAUTHORIZED',
+            }, statusCode: 401);
+          }
+          return _json(<String, dynamic>{'ok': true});
+        }),
+      );
+      ApiClient.tokenRefresher = () async => latest;
+
+      await client.getJson('/api/seed', token: stale);
+      expect(seen, <String?>['Bearer $stale', 'Bearer $latest']);
+
+      ApiClient.resetTokenCache();
+
+      // Nothing is remembered: the stale token goes out verbatim instead of
+      // being silently upgraded to the renewed one.
+      seen.clear();
+      final probe = _client(
+        MockClient((request) async {
+          seen.add(request.headers['Authorization']);
+          return _json(<String, dynamic>{'ok': true});
+        }),
+      );
+      await probe.getJson('/api/tasks', token: stale);
+      expect(seen, <String?>['Bearer $stale']);
+    });
+
+    test('delete retries once after a renewal', () async {
+      var refreshCalls = 0;
+      var attempts = 0;
+      final client = _client(
+        MockClient((request) async {
+          attempts += 1;
+          if (attempts == 1) {
+            return _json(<String, dynamic>{
+              'code': 'UNAUTHORIZED',
+            }, statusCode: 401);
+          }
+          return http.Response('', 204);
+        }),
+      );
+      ApiClient.tokenRefresher = () async {
+        refreshCalls += 1;
+        return 'renewed';
+      };
+
+      await expectLater(
+        client.deleteJson('/api/sessions/1', token: 'expired'),
+        completes,
+      );
+      expect(refreshCalls, 1);
+      expect(attempts, 2);
+    });
   });
 }

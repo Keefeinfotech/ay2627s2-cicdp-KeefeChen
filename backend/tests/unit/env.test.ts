@@ -5,12 +5,16 @@ import {
   getJwtExpiresIn,
   getJwtSecret,
   getPort,
+  getRefreshTokenExpiresIn,
+  getSessionCacheTtlMs,
 } from "../../src/config/environment";
 
 const originalSecret = process.env.JWT_SECRET;
 const originalRounds = process.env.BCRYPT_ROUNDS;
 const originalExpiry = process.env.JWT_EXPIRES_IN;
 const originalPort = process.env.PORT;
+const originalRefreshExpiry = process.env.REFRESH_TOKEN_EXPIRES_IN;
+const originalCacheTtl = process.env.SESSION_CACHE_TTL_MS;
 
 afterEach(() => {
   process.env.JWT_SECRET = originalSecret;
@@ -21,6 +25,8 @@ afterEach(() => {
   } else {
     process.env.PORT = originalPort;
   }
+  process.env.REFRESH_TOKEN_EXPIRES_IN = originalRefreshExpiry;
+  process.env.SESSION_CACHE_TTL_MS = originalCacheTtl;
 });
 
 describe("environment configuration", () => {
@@ -39,9 +45,48 @@ describe("environment configuration", () => {
     expect(() => getJwtSecret()).toThrow(EnvError);
   });
 
-  it("defaults the token expiry when unset", () => {
+  it("defaults the access-token expiry to 15 minutes", () => {
     delete process.env.JWT_EXPIRES_IN;
-    expect(getJwtExpiresIn()).toBe("1d");
+    expect(getJwtExpiresIn()).toBe("15m");
+  });
+
+  it("returns a configured access-token expiry", () => {
+    process.env.JWT_EXPIRES_IN = "5m";
+    expect(getJwtExpiresIn()).toBe("5m");
+  });
+
+  it("defaults the refresh-token expiry to 30 days", () => {
+    delete process.env.REFRESH_TOKEN_EXPIRES_IN;
+    expect(getRefreshTokenExpiresIn()).toBe("30d");
+  });
+
+  it("returns a configured refresh-token expiry", () => {
+    process.env.REFRESH_TOKEN_EXPIRES_IN = "7d";
+    expect(getRefreshTokenExpiresIn()).toBe("7d");
+  });
+
+  it("defaults the session cache TTL to 30 seconds", () => {
+    delete process.env.SESSION_CACHE_TTL_MS;
+    expect(getSessionCacheTtlMs()).toBe(30_000);
+  });
+
+  it("accepts an explicit session cache TTL including 0", () => {
+    process.env.SESSION_CACHE_TTL_MS = "0";
+    expect(getSessionCacheTtlMs()).toBe(0);
+
+    process.env.SESSION_CACHE_TTL_MS = "5000";
+    expect(getSessionCacheTtlMs()).toBe(5_000);
+  });
+
+  it("rejects out-of-range or malformed session cache TTLs", () => {
+    process.env.SESSION_CACHE_TTL_MS = "-1";
+    expect(getSessionCacheTtlMs()).toBe(30_000);
+
+    process.env.SESSION_CACHE_TTL_MS = "600001";
+    expect(getSessionCacheTtlMs()).toBe(30_000);
+
+    process.env.SESSION_CACHE_TTL_MS = "soon";
+    expect(getSessionCacheTtlMs()).toBe(30_000);
   });
 
   it("resolves the port Render injects for web services", () => {

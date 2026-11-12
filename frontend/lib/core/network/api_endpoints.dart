@@ -5,6 +5,7 @@
 abstract final class ApiEndpoints {
   static const String authSignup = '/api/auth/signup';
   static const String authLogin = '/api/auth/login';
+  static const String authRefresh = '/api/auth/refresh';
   static const String authLogout = '/api/auth/logout';
   static const String authMe = '/api/auth/me';
   static const String aiChat = '/api/ai/chat';
