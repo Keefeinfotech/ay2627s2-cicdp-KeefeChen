@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../features/admin/presentation/pages/admin_dashboard_page.dart';
 import '../../features/assistant/presentation/pages/assistant_page.dart';
 import '../../features/authentication/models/session.dart';
 import '../../features/calendar/presentation/pages/calendar_page.dart';
@@ -63,6 +64,11 @@ enum ShellDestination {
     icon: Icons.person_outline_rounded,
     selectedIcon: Icons.person_rounded,
     mobile: true,
+  ),
+  admin(
+    label: 'Admin',
+    icon: Icons.admin_panel_settings_outlined,
+    selectedIcon: Icons.admin_panel_settings_rounded,
   );
 
   const ShellDestination({
@@ -217,7 +223,30 @@ class _AppShellState extends State<AppShell> {
         onOpenGroups: () => _selectPage(ShellDestination.groups),
         onOpenReports: () => _selectPage(ShellDestination.reports),
       ),
+      ShellDestination.admin => _adminPage(),
     };
+  }
+
+  /// The administrative console is reachable only with an administrator
+  /// session. Standard users never see the destination, and a forged deep
+  /// link lands them on a sign-in placeholder instead of the console.
+  Widget _adminPage() {
+    final session = widget.session;
+    if (session == null || !session.isAdmin) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Administration')),
+        body: const Center(
+          child: Padding(
+            padding: EdgeInsets.all(24),
+            child: Text(
+              'This console requires an administrator account.',
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ),
+      );
+    }
+    return AdminDashboardPage(session: session);
   }
 
   void _selectPage(ShellDestination destination) {
@@ -226,7 +255,17 @@ class _AppShellState extends State<AppShell> {
     setState(() => _selected = destination);
   }
 
-  List<AppNavDestination> get _sidebarDestinations => ShellDestination.values
+  /// Destinations visible to this session. The admin console is hidden for
+  /// standard users — the server enforces authorisation either way.
+  List<ShellDestination> get _visibleDestinations => ShellDestination.values
+      .where(
+        (destination) =>
+            destination != ShellDestination.admin ||
+            (widget.session?.isAdmin ?? false),
+      )
+      .toList(growable: false);
+
+  List<AppNavDestination> get _sidebarDestinations => _visibleDestinations
       .map((destination) {
         final nav = destination.navDestination;
         return AppNavDestination(
@@ -249,7 +288,7 @@ class _AppShellState extends State<AppShell> {
       })
       .toList(growable: false);
 
-  int get _sidebarIndex => ShellDestination.values.indexOf(_selected);
+  int get _sidebarIndex => _visibleDestinations.indexOf(_selected);
 
   int get _mobileIndex {
     final mobile = _mobileDestinations;
@@ -321,10 +360,10 @@ class _AppShellState extends State<AppShell> {
               destinations: _sidebarDestinations,
               selectedIndex: _sidebarIndex,
               onSelected: (index) {
-                if (index < 0 || index >= ShellDestination.values.length) {
+                if (index < 0 || index >= _visibleDestinations.length) {
                   return;
                 }
-                _selectPage(ShellDestination.values[index]);
+                _selectPage(_visibleDestinations[index]);
               },
               userName: _displayName,
               userEmail: widget.session?.email,
@@ -351,10 +390,10 @@ class _AppShellState extends State<AppShell> {
             destinations: _sidebarDestinations,
             selectedIndex: _sidebarIndex,
             onSelected: (index) {
-              if (index < 0 || index >= ShellDestination.values.length) {
+              if (index < 0 || index >= _visibleDestinations.length) {
                 return;
               }
-              _selectPage(ShellDestination.values[index]);
+              _selectPage(_visibleDestinations[index]);
             },
           ),
           Expanded(child: pages),
