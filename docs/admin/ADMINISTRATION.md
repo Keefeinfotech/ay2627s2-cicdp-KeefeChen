@@ -247,6 +247,9 @@ strings are stripped. **No per-user labels, no task content, no request bodies.*
 
 The token never enters git for real deployments — only the local-demo default
 value is committed, and it is labelled as such in the compose file and docs.
+The endpoint is additionally rate-limited at 120 requests/minute per IP
+(`metricsRateLimiter` in `middleware/rateLimiter.ts`) so a misconfigured or
+hostile scraper cannot exhaust the service.
 
 ### 5.3 Running the stack (local demo)
 

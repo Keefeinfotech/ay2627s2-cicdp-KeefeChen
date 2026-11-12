@@ -18,7 +18,10 @@ import {
 import { errorHandler } from "./middleware/errorHandler.js";
 import { notFound } from "./middleware/notFound.js";
 import { requestId } from "./middleware/requestId.js";
-import { apiRateLimiter } from "./middleware/rateLimiter.js";
+import {
+  apiRateLimiter,
+  metricsRateLimiter,
+} from "./middleware/rateLimiter.js";
 import authRoutes from "./modules/auth/auth.routes.js";
 import aiRoutes from "./modules/ai/ai.routes.js";
 import healthRoutes from "./modules/health/health.routes.js";
@@ -98,7 +101,7 @@ app.use("/api/sync", syncRoutes);
 app.use("/api/admin", adminRoutes);
 // Protected Prometheus metrics — outside the /api rate limiter so scrape
 // intervals are not throttled, and guarded by METRICS_TOKEN or admin auth.
-app.get("/metrics", metricsGuard, metricsHandler);
+app.get("/metrics", metricsRateLimiter, metricsGuard, metricsHandler);
 
 // --------------------------------------------------
 // 7. Global Error Handling
