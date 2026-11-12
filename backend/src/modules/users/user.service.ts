@@ -1,4 +1,3 @@
-
 /**
  * File Name: user.service.ts
  * Description: Implements business logic for user account operations.
@@ -27,7 +26,7 @@ import type {
 function toPublicUser(user: UserRecord): PublicUser {
   return {
     id: user._id,
-    name: user.name,
+    name: user.name ?? user.email,
     email: user.email,
     role: user.role,
     status: user.status,
@@ -41,12 +40,10 @@ function toPublicUser(user: UserRecord): PublicUser {
 /**
  * Converts a database record into a limited user summary.
  */
-function toPublicSummary(
-  user: UserRecord
-): PublicUserSummary {
+function toPublicSummary(user: UserRecord): PublicUserSummary {
   return {
     id: user._id,
-    name: user.name,
+    name: user.name ?? user.email,
     role: user.role,
   };
 }
@@ -55,24 +52,18 @@ export const userService = {
   /**
    * Retrieves the authenticated user's profile.
    */
-  async getOwnProfile(
-    userId: string
-  ): Promise<PublicUser> {
+  async getOwnProfile(userId: string): Promise<PublicUser> {
     const user = await userRepository.findById(userId);
 
     if (!user) {
-      throw new AppError(
-        404,
-        "USER_NOT_FOUND",
-        "User account was not found."
-      );
+      throw new AppError(404, "USER_NOT_FOUND", "User account was not found.");
     }
 
     if (user.status !== "active") {
       throw new AppError(
         403,
         "ACCOUNT_UNAVAILABLE",
-        "This account is unavailable."
+        "This account is unavailable.",
       );
     }
 
@@ -84,18 +75,15 @@ export const userService = {
    */
   async updateOwnProfile(
     userId: string,
-    input: UpdateOwnProfileInput
+    input: UpdateOwnProfileInput,
   ): Promise<PublicUser> {
-    const user = await userRepository.updateOwnProfile(
-      userId,
-      input
-    );
+    const user = await userRepository.updateOwnProfile(userId, input);
 
     if (!user) {
       throw new AppError(
         404,
         "USER_NOT_FOUND",
-        "User account was not found or is unavailable."
+        "User account was not found or is unavailable.",
       );
     }
 
@@ -108,17 +96,11 @@ export const userService = {
    * This avoids exposing unnecessary account information
    * when another feature only needs a user's identity.
    */
-  async getPublicSummary(
-    userId: string
-  ): Promise<PublicUserSummary> {
+  async getPublicSummary(userId: string): Promise<PublicUserSummary> {
     const user = await userRepository.findById(userId);
 
     if (!user || user.status !== "active") {
-      throw new AppError(
-        404,
-        "USER_NOT_FOUND",
-        "User account was not found."
-      );
+      throw new AppError(404, "USER_NOT_FOUND", "User account was not found.");
     }
 
     return toPublicSummary(user);
@@ -135,22 +117,16 @@ export const userService = {
    */
   async deleteOwnAccount(
     userId: string,
-    currentPassword: string
+    currentPassword: string,
   ): Promise<void> {
     // Retrieve the account and explicitly include its password hash.
-    const user = await userRepository.findByIdWithPassword(
-      userId
-    );
+    const user = await userRepository.findByIdWithPassword(userId);
 
-    if (
-      !user ||
-      user.status !== "active" ||
-      user.deletedAt
-    ) {
+    if (!user || user.status !== "active" || user.deletedAt) {
       throw new AppError(
         404,
         "USER_NOT_FOUND",
-        "User account was not found or is unavailable."
+        "User account was not found or is unavailable.",
       );
     }
 
@@ -159,36 +135,34 @@ export const userService = {
       throw new AppError(
         403,
         "PASSWORD_VERIFICATION_UNAVAILABLE",
-        "Account password verification is unavailable."
+        "Account password verification is unavailable.",
       );
     }
 
     // Verify the supplied password against the stored hash.
     const passwordMatches = await bcrypt.compare(
       currentPassword,
-      user.passwordHash
+      user.passwordHash,
     );
 
     if (!passwordMatches) {
       throw new AppError(
         401,
         "INVALID_PASSWORD",
-        "The current password is incorrect."
+        "The current password is incorrect.",
       );
     }
 
     // Deactivate the account using a conditional database update.
     // This prevents two concurrent requests from deactivating
     // the same account successfully.
-    const deactivated = await userRepository.deactivateAccount(
-      userId
-    );
+    const deactivated = await userRepository.deactivateAccount(userId);
 
     if (!deactivated) {
       throw new AppError(
         409,
         "ACCOUNT_DEACTIVATION_CONFLICT",
-        "The account could not be deactivated. It may already be unavailable."
+        "The account could not be deactivated. It may already be unavailable.",
       );
     }
   },

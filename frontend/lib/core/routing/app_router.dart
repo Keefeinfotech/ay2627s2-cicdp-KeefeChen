@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:frontend/features/reminders/screens/reminders_screen.dart';
 
 import '../../features/assistant/presentation/pages/assistant_page.dart';
+import '../../features/admin/presentation/pages/admin_dashboard_page.dart';
 import '../../features/authentication/models/session.dart';
 import '../../features/authentication/screens/forgot_password_screen.dart';
 import '../../features/authentication/screens/login_screen.dart';
@@ -30,6 +31,7 @@ abstract final class AppRoutes {
   static const String assistant = '/assistant';
   static const String reminders = '/reminders';
   static const String groups = '/groups';
+  static const String admin = '/admin';
 }
 
 class HomeArgs {
@@ -51,6 +53,12 @@ class OnboardingArgs {
 
   /// Pop back to the existing screen when onboarding is opened from Settings.
   final bool returnToPrevious;
+}
+
+class AdminArgs {
+  const AdminArgs({required this.session});
+
+  final Session session;
 }
 
 /// Resolves the reset token from a route argument (in-app navigation) or the
@@ -158,6 +166,18 @@ class AppRouter {
             ),
             session: null,
           ),
+        );
+      case AppRoutes.admin:
+        final args = settings.arguments;
+        if (args is AdminArgs) {
+          return MaterialPageRoute<void>(
+            settings: settings,
+            builder: (_) => AdminDashboardPage(session: args.session),
+          );
+        }
+        return MaterialPageRoute<void>(
+          settings: settings,
+          builder: (_) => const StartupGate(),
         );
       default:
         return MaterialPageRoute<void>(

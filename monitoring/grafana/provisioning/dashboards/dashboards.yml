@@ -1,0 +1,13 @@
+# Grafana provisioning: load JSON dashboards from /var/lib/grafana/dashboards.
+apiVersion: 1
+
+providers:
+  - name: auxilia-dashboards
+    orgId: 1
+    folder: Auxilia
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 10
+    allowUiUpdates: true
+    options:
+      path: /var/lib/grafana/dashboards

@@ -23,4 +23,9 @@ abstract final class ApiEndpoints {
   static const String authForgotPassword = '/api/auth/forgot-password';
 
   static const String authResetPassword = '/api/auth/reset-password';
+
+  /// Administrative API (requires an `admin`-role session).
+  static const String adminUsers = '/api/admin/users';
+  static const String adminStats = '/api/admin/stats';
+  static String adminUserStatus(String id) => '/api/admin/users/$id/status';
 }

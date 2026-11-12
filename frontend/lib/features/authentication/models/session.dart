@@ -13,11 +13,20 @@ class Session {
     required this.email,
     this.name,
     this.refreshToken,
+    this.role = 'user',
   });
 
   final String token;
   final String email;
   final String? name;
+
+  /// Server-assigned role (`user` or `admin`). UI-gating only — the backend
+  /// is always the authority for administrative endpoints.
+  final String role;
+
+  /// Convenience for hiding/showing administrative entry points. Never used
+  /// for authentication decisions on the client.
+  bool get isAdmin => role.toLowerCase() == 'admin';
 
   /// Opaque refresh token bound to this device's session.
   ///
@@ -51,6 +60,7 @@ class Session {
 
     final name = user['name'];
     final refreshToken = data['refreshToken'];
+    final role = user['role'];
     return Session(
       token: token,
       email: email,
@@ -58,6 +68,7 @@ class Session {
       refreshToken: refreshToken is String && refreshToken.isNotEmpty
           ? refreshToken
           : null,
+      role: role is String && role.trim().isNotEmpty ? role.trim() : 'user',
     );
   }
 }

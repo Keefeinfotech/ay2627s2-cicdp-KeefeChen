@@ -68,6 +68,9 @@ services:
       API_RATE_LIMIT_MAX: 300
       APP_BASE_URL: http://localhost:8080
       BACKEND_URL: http://localhost:3000
+      # Local-only default for the /metrics guard — matches the token in
+      # monitoring/prometheus.yml. Override with METRICS_TOKEN for real use.
+      METRICS_TOKEN: ${METRICS_TOKEN:-auxilia-local-metrics-token}
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000/api/health"]
       interval: 15s
@@ -92,5 +95,46 @@ services:
     ports:
       - "8080:8080"
 
+  # ------------------------------------------------------------------
+  # Monitoring (optional): Prometheus + Grafana for the backend.
+  # Start with:  docker compose --profile monitoring up -d
+  # Grafana: http://localhost:3001  (admin / ${GRAFANA_ADMIN_PASSWORD:-admin})
+  # Prometheus: http://localhost:9090
+  # Never expose these ports or the METRICS_TOKEN publicly; the scrape
+  # token above is a local-demo default, override it for anything real.
+  # ------------------------------------------------------------------
+  prometheus:
+    image: prom/prometheus:v2.55.1
+    container_name: auxilia-prometheus
+    profiles: ["monitoring"]
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+
+  grafana:
+    image: grafana/grafana:11.3.0
+    container_name: auxilia-grafana
+    profiles: ["monitoring"]
+    restart: unless-stopped
+    depends_on:
+      - prometheus
+    ports:
+      - "3001:3000"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+
 volumes:
   mongodb_data:
+  prometheus_data:
+  grafana_data:

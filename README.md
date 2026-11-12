@@ -240,6 +240,32 @@ tagging a release.
   shown once to the inviter for manual delivery.
 - Swagger UI is intentionally unavailable when `NODE_ENV=production`.
 
+## Demonstration accounts (development and marking only)
+
+These accounts are created by `npm run seed:demo` (idempotent, and **refused in
+production** unless `ALLOW_DEMO_SEED=true` is set). They exist only to
+demonstrate the administrative console and the normal user experience.
+
+| Role | Email | Password |
+|---|---|---|
+| Administrator | `admin@auxilia.demo` | `AdminDemo!2026` |
+| Standard user | `grace@auxilia.demo` | `DemoUser!2026` |
+| Standard user | `liam@auxilia.demo` | `DemoUser!2026` |
+| Standard user | `priya@auxilia.demo` | `DemoUser!2026` |
+| Standard user | `wei@auxilia.demo` | `DemoUser!2026` |
+| Standard user | `fatimah@auxilia.demo` | `DemoUser!2026` |
+| Standard user | `daniel@auxilia.demo` | `DemoUser!2026` (disabled) |
+| Standard user | `meera@auxilia.demo` | `DemoUser!2026` (pending) |
+
+Administrators see an **Admin** entry in the sidebar (desktop/tablet). Standard
+users never see it; the API returns 403 for admin endpoints regardless of what
+the client shows. Full documentation: [Administrative module](docs/admin/ADMINISTRATION.md).
+
+Observability demo: `docker compose --profile monitoring up -d` then open
+Grafana at http://localhost:3001 (admin / `admin`, change
+`GRAFANA_ADMIN_PASSWORD`) — the **Auxilia Backend** dashboard is provisioned
+automatically. Prometheus scrapes the guarded `/metrics` endpoint.
+
 ## Documentation
 
 - [User story and CI/CD report](docs/reports/USER_STORY_CICD_REPORT.md)

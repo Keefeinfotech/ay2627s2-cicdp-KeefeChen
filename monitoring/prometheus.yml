@@ -1,0 +1,24 @@
+# Prometheus scrape configuration for the Auxilia backend (local demo).
+#
+# SECURITY: `credentials` below is a throwaway local-demo token used ONLY by
+# this docker compose profile on your machine — it is not a production secret
+# and must be rotated if the compose profile is ever exposed beyond localhost.
+# In production, set METRICS_TOKEN on the backend and pass the same value here
+# (mount it as a secret instead of committing it for real deployments).
+global:
+  scrape_interval: 10s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: auxilia-backend
+    metrics_path: /metrics
+    scheme: http
+    authorization:
+      type: Bearer
+      credentials: auxilia-local-metrics-token
+    static_configs:
+      - targets:
+          - backend:3000
+        labels:
+          service: auxilia-backend
+          tier: backend

@@ -18,7 +18,10 @@ import {
 import { errorHandler } from "./middleware/errorHandler.js";
 import { notFound } from "./middleware/notFound.js";
 import { requestId } from "./middleware/requestId.js";
-import { apiRateLimiter } from "./middleware/rateLimiter.js";
+import {
+  apiRateLimiter,
+  metricsRateLimiter,
+} from "./middleware/rateLimiter.js";
 import authRoutes from "./modules/auth/auth.routes.js";
 import aiRoutes from "./modules/ai/ai.routes.js";
 import healthRoutes from "./modules/health/health.routes.js";
@@ -35,6 +38,12 @@ import progressRoutes from "./modules/progress/progress.routes.js";
 import calendarRoutes from "./modules/calendar/calendar.routes.js";
 import syncRoutes from "./modules/sync/index.js";
 import reminderRoutes from "./modules/reminders/reminder.routes.js";
+import adminRoutes from "./modules/admin/admin.routes.js";
+import {
+  metricsMiddleware,
+  metricsGuard,
+  metricsHandler,
+} from "./modules/metrics/metrics.js";
 
 const app = express();
 
@@ -51,6 +60,7 @@ if (shouldTrustProxy()) {
 }
 
 app.use(requestId);
+app.use(metricsMiddleware);
 app.use(helmetMiddleware);
 app.use(cors(corsOptions));
 app.use(express.json(jsonBodyOptions));
@@ -88,6 +98,10 @@ app.use("/api/feedback", feedbackRoutes);
 app.use("/api/calendar", calendarRoutes);
 app.use("/api/reminders", reminderRoutes);
 app.use("/api/sync", syncRoutes);
+app.use("/api/admin", adminRoutes);
+// Protected Prometheus metrics — outside the /api rate limiter so scrape
+// intervals are not throttled, and guarded by METRICS_TOKEN or admin auth.
+app.get("/metrics", metricsRateLimiter, metricsGuard, metricsHandler);
 
 // --------------------------------------------------
 // 7. Global Error Handling

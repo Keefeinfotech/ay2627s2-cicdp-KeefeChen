@@ -4,6 +4,11 @@ export interface PublicUser {
   id: string;
   name?: string;
   email: string;
+  /**
+   * Server-assigned role. Included so clients can gate administrative UI;
+   * administrative endpoints always re-check the role server-side.
+   */
+  role: UserRole;
 }
 
 export interface AuthenticatedUser extends PublicUser {
