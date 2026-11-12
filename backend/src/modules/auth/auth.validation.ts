@@ -102,3 +102,15 @@ export const resetPasswordSchema = z.object({
     })
     .strict(),
 });
+
+export const refreshSchema = z.object({
+  body: z
+    .object({
+      refreshToken: z
+        .string()
+        .trim()
+        .min(1, "Refresh token is required")
+        .max(512),
+    })
+    .strict(),
+});

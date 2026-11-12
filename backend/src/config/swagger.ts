@@ -85,6 +85,11 @@ export const swaggerDocument: OpenAPIV3.Document = {
                   type: "object",
                   properties: {
                     token: { type: "string" },
+                    refreshToken: {
+                      type: "string",
+                      description:
+                        "Opaque refresh token; send to /api/auth/refresh to renew the access token.",
+                    },
                     user: { $ref: "#/components/schemas/User" },
                   },
                 },
@@ -128,6 +133,7 @@ export const swaggerDocument: OpenAPIV3.Document = {
                   type: "object",
                   properties: {
                     token: { type: "string" },
+                    refreshToken: { type: "string" },
                     user: { $ref: "#/components/schemas/User" },
                   },
                 },
@@ -136,6 +142,49 @@ export const swaggerDocument: OpenAPIV3.Document = {
           },
           "400": { description: "Validation failed or CAPTCHA rejected" },
           "401": { description: "Invalid credentials" },
+          "429": { description: "Too many attempts" },
+        },
+      },
+    },
+    "/api/auth/refresh": {
+      post: {
+        summary: "Renew an expired access token",
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["refreshToken"],
+                properties: {
+                  refreshToken: { type: "string", maxLength: 512 },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "200": {
+            description:
+              "New access/refresh token pair (the old refresh token is rotated)",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    token: { type: "string" },
+                    refreshToken: { type: "string" },
+                    user: { $ref: "#/components/schemas/User" },
+                  },
+                },
+              },
+            },
+          },
+          "400": { description: "Validation failed" },
+          "401": {
+            description:
+              "Unknown, expired or revoked refresh token; a replayed rotated token revokes the session",
+          },
           "429": { description: "Too many attempts" },
         },
       },
@@ -170,6 +219,67 @@ export const swaggerDocument: OpenAPIV3.Document = {
         responses: {
           "204": { description: "Session ended" },
           "401": { description: "Authentication required" },
+        },
+      },
+    },
+    "/api/auth/sessions": {
+      get: {
+        summary: "List this account's signed-in devices",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "200": {
+            description: "Active sessions, newest first",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    sessions: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          id: { type: "string" },
+                          current: {
+                            type: "boolean",
+                            description: "True for the calling session",
+                          },
+                          userAgent: {
+                            type: "string",
+                            nullable: true,
+                          },
+                          createdAt: { type: "string", format: "date-time" },
+                          lastUsedAt: { type: "string", format: "date-time" },
+                          expiresAt: { type: "string", format: "date-time" },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          "401": { description: "Authentication required" },
+        },
+      },
+    },
+    "/api/auth/sessions/{id}": {
+      delete: {
+        summary: "Revoke one session (sign out a single device)",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            schema: { type: "string" },
+            description: "Session id from GET /api/auth/sessions",
+          },
+        ],
+        responses: {
+          "204": { description: "Session revoked (idempotent)" },
+          "401": { description: "Authentication required" },
+          "404": { description: "No such session for this account" },
         },
       },
     },

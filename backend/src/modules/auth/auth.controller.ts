@@ -1,8 +1,11 @@
 import type { NextFunction, Request, Response } from "express";
 import { AppError } from "../../shared/utils/AppError.js";
-import { requireUserId } from "../../shared/utils/request.js";
+import { requireSessionId, requireUserId } from "../../shared/utils/request.js";
 import { logSecurityEvent } from "../../shared/utils/securityLogger.js";
 import * as authService from "./auth.service.js";
+
+const userAgentOf = (req: Request): string | null =>
+  req.get("user-agent") ?? null;
 
 const logAuthFailure = (req: Request, event: string): void => {
   logSecurityEvent(event, {
@@ -23,7 +26,12 @@ export const signup = async (
       email: string;
       password: string;
     };
-    const result = await authService.signup({ name, email, password });
+    const result = await authService.signup({
+      name,
+      email,
+      password,
+      userAgent: userAgentOf(req),
+    });
     res.status(201).json(result);
   } catch (err) {
     if (err instanceof AppError && err.code === "CONFLICT") {
@@ -43,11 +51,32 @@ export const login = async (
       email: string;
       password: string;
     };
-    const result = await authService.login({ email, password });
+    const result = await authService.login({
+      email,
+      password,
+      userAgent: userAgentOf(req),
+    });
     res.status(200).json(result);
   } catch (err) {
     if (err instanceof AppError && err.code === "UNAUTHORIZED") {
       logAuthFailure(req, "login_failed");
+    }
+    next(err);
+  }
+};
+
+export const refresh = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const { refreshToken } = req.body as { refreshToken: string };
+    const result = await authService.refreshSession({ refreshToken });
+    res.status(200).json(result);
+  } catch (err) {
+    if (err instanceof AppError && err.code === "UNAUTHORIZED") {
+      logAuthFailure(req, "refresh_failed");
     }
     next(err);
   }
@@ -59,7 +88,43 @@ export const logout = async (
   next: NextFunction,
 ): Promise<void> => {
   try {
-    await authService.logout(requireUserId(req));
+    await authService.logout(requireUserId(req), requireSessionId(req));
+    res.status(204).send();
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const listSessions = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const sessions = await authService.listSessions(
+      requireUserId(req),
+      requireSessionId(req),
+    );
+    res.status(200).json({ sessions });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const revokeSession = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const userId = requireUserId(req);
+    await authService.revokeSession(userId, req.params.id as string);
+    logSecurityEvent("session_revoked_via_api", {
+      requestId: req.requestId,
+      ip: req.ip,
+      path: req.path,
+      userId,
+    });
     res.status(204).send();
   } catch (err) {
     next(err);

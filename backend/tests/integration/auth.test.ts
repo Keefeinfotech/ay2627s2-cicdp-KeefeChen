@@ -8,26 +8,26 @@ import bcrypt from "bcryptjs";
 import request from "supertest";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("../../src/modules/auth/auth.model.js", () => ({
-  User: {
-    findOne: vi.fn(),
-    create: vi.fn(),
-    findById: vi.fn(),
-  },
-}));
+vi.mock("../../src/modules/auth/auth.model.js", async () => {
+  const { authModelMock } = await import("../helpers/authMocks.js");
+  return authModelMock();
+});
+
+vi.mock("../../src/modules/auth/session.model.js", async () => {
+  const { sessionModelMock } = await import("../helpers/authMocks.js");
+  return sessionModelMock();
+});
 
 import app from "../../src/app";
 import { User } from "../../src/modules/auth/auth.model.js";
+import { AuthSession } from "../../src/modules/auth/session.model.js";
+import { sessionCache } from "../../src/modules/auth/session.cache.js";
 import { verifyAccessToken } from "../../src/shared/utils/tokens";
+import { queryResult } from "../helpers/authMocks.js";
 
-// Access mocked User model methods.
+// Access mocked model methods.
 const userModel = User as any;
-
-// Query result helper supporting .exec().
-const queryResult = (value: unknown) => ({
-  select: vi.fn().mockReturnThis(),
-  exec: vi.fn().mockResolvedValue(value),
-});
+const sessionModel = AuthSession as any;
 
 // Shared test password and its hash. Meets the 12-character minimum and
 // complexity rules (uppercase + number + special character).
@@ -36,7 +36,15 @@ const passwordHashPromise = bcrypt.hash(password, 10);
 
 // Reset mock call history before each test.
 beforeEach(() => {
-  vi.clearAllMocks();
+  vi.resetAllMocks();
+  // Validations are cached in memory; drop any hit from a previous test.
+  sessionCache.clear();
+  // Default query chains so model calls the test does not stub still resolve.
+  sessionModel.create.mockResolvedValue({});
+  sessionModel.find.mockReturnValue(queryResult([]));
+  sessionModel.findById.mockReturnValue(queryResult(null));
+  sessionModel.updateOne.mockReturnValue(queryResult({}));
+  sessionModel.updateMany.mockReturnValue(queryResult({}));
 });
 
 // ==========================================
@@ -85,8 +93,18 @@ describe("POST /api/auth/signup", () => {
 
     expect(payload?.sub).toBe("user-1");
 
-    // Verify that the token becomes the user's active session.
-    expect(created.activeSessionId).toBe(payload?.jti);
+    // Verify a refresh token bound to the same session was issued.
+    expect(res.body.refreshToken).toMatch(new RegExp(`^${payload?.jti}\\.`));
+
+    // Verify that a session row was created for this login.
+    expect(sessionModel.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        _id: payload?.jti,
+        userId: "user-1",
+        refreshTokenHash: expect.any(String),
+        expiresAt: expect.any(Date),
+      }),
+    );
     expect(created.save).toHaveBeenCalledTimes(1);
   });
 
@@ -247,7 +265,6 @@ describe("POST /api/auth/login", () => {
       role: "user",
       passwordHash: await passwordHashPromise,
       lastLoginAt: null as Date | null,
-      activeSessionId: null as string | null,
       save,
     };
 
@@ -262,7 +279,19 @@ describe("POST /api/auth/login", () => {
     expect(res.body.user.email).toBe("ada@example.com");
 
     // Verify the returned access token.
-    expect(verifyAccessToken(res.body.token)?.email).toBe("ada@example.com");
+    const payload = verifyAccessToken(res.body.token);
+    expect(payload?.email).toBe("ada@example.com");
+
+    // A session row with a refresh token backs this login.
+    expect(res.body.refreshToken).toMatch(new RegExp(`^${payload?.jti}\\.`));
+    expect(sessionModel.create).toHaveBeenCalledWith(
+      expect.objectContaining({ _id: payload?.jti, userId: "user-1" }),
+    );
+    // Concurrent sessions are disabled by default: older devices are revoked.
+    expect(sessionModel.updateMany).toHaveBeenCalledWith(
+      { userId: "user-1", _id: { $ne: payload?.jti }, revokedAt: null },
+      { $set: { revokedAt: expect.any(Date) } },
+    );
 
     // Verify that the login timestamp was updated.
     expect(save).toHaveBeenCalledTimes(1);
@@ -353,7 +382,7 @@ describe("POST /api/auth/reset-password", () => {
   // Shared new password that meets the 12-character minimum and complexity rules.
   const newPassword = "N3w$ecurePassword";
 
-  it("updates the password and clears active sessions when the token is valid", async () => {
+  it("updates the password and revokes every session when the token is valid", async () => {
     const doc: Record<string, unknown> = {
       _id: "user-1",
       email: "ada@example.com",
@@ -361,8 +390,6 @@ describe("POST /api/auth/reset-password", () => {
       passwordHash: "old-hash",
       passwordResetTokenHash: "stored-hash",
       passwordResetExpiresAt: new Date(Date.now() + 10 * 60 * 1000),
-      activeSessionId: "sess-1",
-      activeSessionExpiresAt: new Date(Date.now() + 60 * 60 * 1000),
       save: vi.fn().mockResolvedValue(undefined),
     };
     userModel.findOne.mockReturnValue(queryResult(doc));
@@ -374,10 +401,14 @@ describe("POST /api/auth/reset-password", () => {
     expect(res.status).toBe(200);
     expect(doc.passwordResetTokenHash).toBeNull();
     expect(doc.passwordResetExpiresAt).toBeNull();
-    expect(doc.activeSessionId).toBeNull();
-    expect(doc.activeSessionExpiresAt).toBeNull();
     expect(doc.passwordHash).not.toBe("old-hash");
     expect(doc.passwordHash).toBeTruthy();
+
+    // Every session is revoked so a stolen password cannot keep one.
+    expect(sessionModel.updateMany).toHaveBeenCalledWith(
+      { userId: "user-1", revokedAt: null },
+      { $set: { revokedAt: expect.any(Date) } },
+    );
   });
 
   it("rejects an expired link", async () => {
