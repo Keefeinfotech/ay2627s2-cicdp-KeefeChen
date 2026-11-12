@@ -80,8 +80,10 @@ const STANDARD = {
 
 const futureExpiry = () => new Date(Date.now() + 3_600_000);
 
-const adminToken = () => signAccessToken("admin-1", ADMIN.email, "session-1").token;
-const userToken = () => signAccessToken("user-1", STANDARD.email, "session-u").token;
+const adminToken = () =>
+  signAccessToken("admin-1", ADMIN.email, "session-1").token;
+const userToken = () =>
+  signAccessToken("user-1", STANDARD.email, "session-u").token;
 
 const leanChain = (value: unknown) => ({
   select: vi.fn().mockReturnThis(),
@@ -91,7 +93,10 @@ const leanChain = (value: unknown) => ({
   lean: vi.fn().mockResolvedValue(value),
 });
 
-const giveSessionFor = (user: typeof ADMIN | typeof STANDARD, sessionId: string) => {
+const giveSessionFor = (
+  user: typeof ADMIN | typeof STANDARD,
+  sessionId: string,
+) => {
   authUser.findById.mockReturnValue(queryResult({ ...user }));
   authSession.findById.mockReturnValue(
     queryResult({

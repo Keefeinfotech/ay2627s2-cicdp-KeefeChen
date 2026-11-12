@@ -7,8 +7,7 @@ import 'package:frontend/features/admin/presentation/pages/admin_dashboard_page.
 import 'package:frontend/features/authentication/models/session.dart';
 
 class _FakeAdminRepository extends AdminRepository {
-  _FakeAdminRepository({this.stats, this.error})
-      : super(token: 'demo-token');
+  _FakeAdminRepository({this.stats, this.error}) : super(token: 'demo-token');
 
   final AdminStats? stats;
   final Object? error;

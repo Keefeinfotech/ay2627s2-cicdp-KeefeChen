@@ -41,9 +41,9 @@ const Map<String, dynamic> _statsPayload = <String, dynamic>{
 };
 
 AdminRepository _repo(MockClient client) => AdminRepository(
-      token: 'demo-token',
-      api: ApiClient(baseUrl: 'https://auxilia.test', client: client),
-    );
+  token: 'demo-token',
+  api: ApiClient(baseUrl: 'https://auxilia.test', client: client),
+);
 
 void main() {
   group('AdminRepository', () {
@@ -51,10 +51,7 @@ void main() {
       final client = MockClient((request) async {
         expect(request.url.path, '/api/admin/stats');
         expect(request.headers['authorization'], 'Bearer demo-token');
-        return _json(<String, dynamic>{
-          'message': 'ok',
-          'data': _statsPayload,
-        });
+        return _json(<String, dynamic>{'message': 'ok', 'data': _statsPayload});
       });
 
       final stats = await _repo(client).fetchStats();
@@ -97,12 +94,8 @@ void main() {
         });
       });
 
-      final page = await _repo(client).fetchUsers(
-        search: 'keefe',
-        status: 'active',
-        page: 2,
-        limit: 10,
-      );
+      final page = await _repo(client)
+          .fetchUsers(search: 'keefe', status: 'active', page: 2, limit: 10);
 
       expect(page.total, 37);
       expect(page.totalPages, 4);
@@ -112,10 +105,9 @@ void main() {
 
     test('wraps a 401 response in AdminException', () async {
       final client = MockClient(
-        (_) async => _json(
-          <String, dynamic>{'error': 'Authentication required'},
-          statusCode: 401,
-        ),
+        (_) async => _json(<String, dynamic>{
+          'error': 'Authentication required',
+        }, statusCode: 401),
       );
 
       await expectLater(
@@ -128,10 +120,9 @@ void main() {
 
     test('wraps a 403 response in AdminException', () async {
       final client = MockClient(
-        (_) async => _json(
-          <String, dynamic>{'error': 'Insufficient permissions'},
-          statusCode: 403,
-        ),
+        (_) async => _json(<String, dynamic>{
+          'error': 'Insufficient permissions',
+        }, statusCode: 403),
       );
 
       await expectLater(
@@ -160,7 +151,8 @@ void main() {
         });
       });
 
-      final updated = await _repo(client).updateUserStatus('user-1', 'disabled');
+      final updated = await _repo(client)
+          .updateUserStatus('user-1', 'disabled');
 
       expect(updated.status, 'disabled');
       expect(updated.id, 'user-1');
