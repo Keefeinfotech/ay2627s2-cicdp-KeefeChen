@@ -12,11 +12,16 @@ export const helmetMiddleware = helmet({
     : false,
 });
 
+// Matches any origin on the loopback interface with any port, e.g.
+// http://localhost:63488. Flutter's web dev server picks a random port on
+// every run, which would otherwise fall outside the CORS_ORIGIN allowlist.
+// Only used outside production, where strict allowlisting still applies.
+const LOOPBACK_ORIGIN_PATTERN =
+  /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:\d{1,5})?$/i;
+
 const isLocalDevOrigin = (origin: string): boolean => {
   if (isProduction()) return false;
-  return (
-    origin === "http://localhost:3000" || origin === "http://127.0.0.1:3000"
-  );
+  return LOOPBACK_ORIGIN_PATTERN.test(origin);
 };
 
 export const corsOptions: CorsOptions = {

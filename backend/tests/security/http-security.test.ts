@@ -52,7 +52,20 @@ describe("CORS policy", () => {
 
     expect(res.status).toBe(200);
     expect(res.headers["access-control-allow-origin"]).toBe(
-      "http://localhost:5173"
+      "http://localhost:5173",
+    );
+  });
+
+  it("allows a loopback origin on any port in development", async () => {
+    const res = await request(app)
+      .options("/api/auth/forgot-password")
+      .set("Origin", "http://localhost:63488")
+      .set("Access-Control-Request-Method", "POST")
+      .set("Access-Control-Request-Headers", "content-type");
+
+    expect(res.status).toBe(204);
+    expect(res.headers["access-control-allow-origin"]).toBe(
+      "http://localhost:63488",
     );
   });
 
@@ -68,10 +81,12 @@ describe("CORS policy", () => {
 
 describe("request body limits", () => {
   it("rejects oversized JSON payloads", async () => {
-    const res = await request(app).post("/api/auth/login").send({
-      email: "ada@example.com",
-      password: "x".repeat(20_000),
-    });
+    const res = await request(app)
+      .post("/api/auth/login")
+      .send({
+        email: "ada@example.com",
+        password: "x".repeat(20_000),
+      });
 
     expect(res.status).toBe(413);
     expect(res.body.code).toBe("PAYLOAD_TOO_LARGE");

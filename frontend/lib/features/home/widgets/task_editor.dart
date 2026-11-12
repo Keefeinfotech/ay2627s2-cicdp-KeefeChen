@@ -101,17 +101,23 @@ class _TaskEditorState extends State<TaskEditor> {
   }
 
   Future<DateTime?> _pickDateTime(DateTime initial) async {
+    final firstDate = DateTime(2000);
+    final lastDate = DateTime(2100);
+    var safeInitial = initial;
+    if (safeInitial.isBefore(firstDate)) safeInitial = firstDate;
+    if (safeInitial.isAfter(lastDate)) safeInitial = lastDate;
+
     final date = await showDatePicker(
       context: context,
-      initialDate: initial,
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2100),
+      initialDate: safeInitial,
+      firstDate: firstDate,
+      lastDate: lastDate,
     );
     if (date == null || !mounted) return null;
 
     final time = await showTimePicker(
       context: context,
-      initialTime: TimeOfDay.fromDateTime(initial),
+      initialTime: TimeOfDay.fromDateTime(safeInitial),
     );
     if (time == null) return null;
 

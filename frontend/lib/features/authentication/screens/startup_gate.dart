@@ -48,6 +48,11 @@ class _StartupGateState extends State<StartupGate> {
         const Duration(seconds: 3),
         onTimeout: () => null,
       );
+      if (session != null) {
+        session = await _auth
+            .validateSession(session)
+            .timeout(const Duration(seconds: 5), onTimeout: () => session);
+      }
     } on SessionException {
       session = null;
     } catch (_) {

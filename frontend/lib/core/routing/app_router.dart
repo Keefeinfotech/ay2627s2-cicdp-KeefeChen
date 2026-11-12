@@ -9,7 +9,9 @@ import '../../features/authentication/screens/reset_password_screen.dart';
 import '../../features/authentication/screens/signup_screen.dart';
 import '../../features/authentication/screens/startup_gate.dart';
 import '../../features/authentication/screens/welcome_screen.dart';
-import '../../features/groups/screens/groups_screen.dart';
+import '../../features/groups/presentation/pages/groups_page.dart';
+import '../../features/home/data/api_task_repository.dart';
+import '../../features/home/data/task_store.dart';
 import '../../features/onboarding/screens/onboarding_screen.dart';
 import '../constants/app_constants.dart';
 import '../layout/app_shell.dart';
@@ -149,7 +151,13 @@ class AppRouter {
       case AppRoutes.groups:
         return MaterialPageRoute<void>(
           settings: settings,
-          builder: (_) => const GroupsScreen(),
+          builder: (_) => GroupsPage(
+            store: TaskStore(
+              repository: ApiTaskRepository(token: ''),
+              ownerId: AppConstants.guestOwnerId,
+            ),
+            session: null,
+          ),
         );
       default:
         return MaterialPageRoute<void>(

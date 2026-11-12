@@ -218,6 +218,7 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: 'tasks-quick-add-fab',
         onPressed: _quickAdd,
         icon: const Icon(Icons.add_task_rounded),
         label: const Text('Quick add'),

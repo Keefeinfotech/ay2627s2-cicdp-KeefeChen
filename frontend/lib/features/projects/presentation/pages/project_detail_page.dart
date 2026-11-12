@@ -359,6 +359,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
               project.effectiveStatus == ProjectStatus.archived
               ? null
               : FloatingActionButton.extended(
+                  heroTag: 'project-detail-add-task-fab',
                   onPressed: _createTask,
                   icon: const Icon(Icons.add_task_rounded),
                   label: const Text('Add task'),

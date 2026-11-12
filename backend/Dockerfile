@@ -50,7 +50,9 @@ COPY --from=build /app/dist ./dist
 # unprivileged runtime user before dropping privileges.
 RUN mkdir -p /app/logs && chown -R node:node /app
 
-# Expose application port
+# Informational only. Render injects its own PORT (default 10000) and routes
+# to it; the server binds 0.0.0.0 on process.env.PORT. docker-compose maps
+# 3000:3000 and sets PORT=3000 explicitly.
 EXPOSE 3000
 
 # Run the compiled server as the unprivileged node user instead of root.
