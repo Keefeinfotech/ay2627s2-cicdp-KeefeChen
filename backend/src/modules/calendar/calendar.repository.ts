@@ -1,13 +1,33 @@
 import { CalendarEventModel, ICalendarEvent } from "./calendar.model";
 import { CreateEventDTO, UpdateEventDTO } from "./calendar.types";
+import { Types } from "mongoose";
+
+/**
+ * Allowlist patterns for user-supplied identifiers. Values that do not match
+ * are rejected before they reach a Mongo query (defense in depth on top of
+ * the route-level validators).
+ */
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+const requireUuid = (value: string, field: string): string => {
+  if (!UUID_PATTERN.test(value)) {
+    throw new Error(`Invalid ${field}`);
+  }
+  return value;
+};
 
 export class CalendarRepository {
   async create(userId: string, data: CreateEventDTO): Promise<ICalendarEvent> {
     const event = new CalendarEventModel({
       ...data,
       userId,
-      groupId: data.groupId ? data.groupId : undefined,
-      taskId: data.taskId ? data.taskId : undefined,
+      groupId: data.groupId
+        ? requireUuid(String(data.groupId), "groupId")
+        : undefined,
+      taskId: data.taskId
+        ? requireUuid(String(data.taskId), "taskId")
+        : undefined,
     });
     return await event.save();
   }
@@ -29,7 +49,7 @@ export class CalendarRepository {
     };
 
     if (groupId) {
-      query.groupId = groupId;
+      query.groupId = requireUuid(groupId, "groupId");
     }
 
     return await CalendarEventModel.find(query).sort({ startTime: 1 }).exec();
@@ -68,7 +88,10 @@ export class CalendarRepository {
     };
 
     if (excludeEventId) {
-      query._id = { $ne: excludeEventId };
+      if (!Types.ObjectId.isValid(excludeEventId)) {
+        throw new Error("Invalid excludeEventId");
+      }
+      query._id = { $ne: new Types.ObjectId(excludeEventId) };
     }
 
     return await CalendarEventModel.find(query).exec();
