@@ -27,6 +27,13 @@ class ApiException implements Exception {
 /// client also refuses to send credentials to a plaintext non-loopback origin,
 /// so a misconfigured `API_BASE_URL` cannot silently downgrade transport
 /// security in a release build.
+///
+/// When a [tokenRefresher] is registered (see `main.dart`), a request that is
+/// rejected with a 401 is retried once with a silently renewed access token;
+/// concurrent 401s share a single renewal. Without a registered refresher the
+/// client behaves exactly as a plain HTTP wrapper.
+typedef TokenRefresher = Future<String?> Function();
+
 class ApiClient {
   ApiClient({String? baseUrl, http.Client? client, Duration? timeout})
     : baseUrl = _validateBaseUrl(baseUrl ?? defaultBaseUrl),
@@ -37,6 +44,25 @@ class ApiClient {
     'API_BASE_URL',
     defaultValue: 'http://localhost:3000',
   );
+
+  /// Registered once at startup (see `main.dart`); when null, 401s surface
+  /// immediately exactly as before.
+  static TokenRefresher? tokenRefresher;
+
+  /// Newest access token issued to this device, remembered after each
+  /// successful renewal so stale copies held by screens can be upgraded.
+  static String? _latestToken;
+
+  /// Single-flight renewal: concurrent 401s await the same future instead of
+  /// firing duplicate refresh requests (which would invalidate each other).
+  static Future<String?>? _pendingRefresh;
+
+  /// Forgets the remembered access token — called on logout and after a
+  /// failed renewal so a signed-out device never reuses old credentials.
+  static void resetTokenCache() {
+    _latestToken = null;
+    _pendingRefresh = null;
+  }
 
   /// Loopback hosts allowed to use plain HTTP for local development.
   static const Set<String> _loopbackHosts = <String>{
@@ -87,7 +113,10 @@ class ApiClient {
       '$baseUrl$path',
     ).replace(queryParameters: query == null || query.isEmpty ? null : query);
 
-    return _send(() => _client.get(uri, headers: _headers(token: token)));
+    return _send(
+      token,
+      (effective) => _client.get(uri, headers: _headers(token: effective)),
+    );
   }
 
   Future<Map<String, dynamic>> postJson(
@@ -96,13 +125,13 @@ class ApiClient {
     String? token,
   }) {
     final uri = Uri.parse('$baseUrl$path');
-    return _send(
-      () => _client.post(
+    return _send(token, (effective) {
+      return _client.post(
         uri,
-        headers: _headers(token: token, json: true),
+        headers: _headers(token: effective, json: true),
         body: jsonEncode(body),
-      ),
-    );
+      );
+    });
   }
 
   Future<Map<String, dynamic>> patchJson(
@@ -111,19 +140,20 @@ class ApiClient {
     String? token,
   }) {
     final uri = Uri.parse('$baseUrl$path');
-    return _send(
-      () => _client.patch(
+    return _send(token, (effective) {
+      return _client.patch(
         uri,
-        headers: _headers(token: token, json: true),
+        headers: _headers(token: effective, json: true),
         body: jsonEncode(body),
-      ),
-    );
+      );
+    });
   }
 
   Future<void> deleteJson(String path, {String? token}) async {
     final uri = Uri.parse('$baseUrl$path');
-    final response = await _execute(
-      () => _client.delete(uri, headers: _headers(token: token)),
+    final response = await _exchange(
+      token,
+      (effective) => _client.delete(uri, headers: _headers(token: effective)),
     );
 
     if (response.statusCode >= 200 && response.statusCode < 300) return;
@@ -139,11 +169,101 @@ class ApiClient {
     };
   }
 
+  /// Decodes a successful response, first renewing the access token once if
+  /// the server rejected the original attempt with a 401.
   Future<Map<String, dynamic>> _send(
-    Future<http.Response> Function() request,
+    String? token,
+    Future<http.Response> Function(String? token) request,
   ) async {
-    final response = await _execute(request);
+    final response = await _exchange(token, request);
     return _handleResponse(response);
+  }
+
+  /// Runs [request] with the effective token; on 401, with a renewed token.
+  ///
+  /// Only requests that carried a bearer token are renewed — that keeps the
+  /// refresh call itself (which is sent without one) from ever recursing —
+  /// and only ever one retry is made, so a genuinely dead session surfaces
+  /// the second 401 instead of looping.
+  Future<http.Response> _exchange(
+    String? token,
+    Future<http.Response> Function(String? token) request,
+  ) async {
+    final effective = _effectiveToken(token);
+    final response = await _execute(() => request(effective));
+
+    if (response.statusCode != 401) return response;
+    if (effective == null || effective.isEmpty || tokenRefresher == null) {
+      return response;
+    }
+
+    final renewed = await _renewToken();
+    if (renewed == null || renewed.isEmpty) return response;
+
+    return _execute(() => request(renewed));
+  }
+
+  /// Renews the access token, sharing one in-flight renewal across every
+  /// request that hits a 401 at the same time.
+  static Future<String?> _renewToken() {
+    final pending = _pendingRefresh;
+    if (pending != null) return pending;
+
+    final refresher = tokenRefresher;
+    if (refresher == null) return Future<String?>.value(null);
+
+    // Failures resolve to null so the caller surfaces the original 401
+    // rather than whatever went wrong inside the refresher.
+    final renewal = () async {
+      try {
+        final token = await refresher();
+        if (token != null && token.isNotEmpty) _latestToken = token;
+        return token;
+      } catch (_) {
+        return null;
+      }
+    }();
+
+    // Clear only after this call stack has stored the future, and only if it
+    // is still the current one.
+    renewal.then((_) {
+      if (identical(_pendingRefresh, renewal)) _pendingRefresh = null;
+    });
+    _pendingRefresh = renewal;
+    return renewal;
+  }
+
+  /// The token to send: upgrades a stale copy of the caller's token to the
+  /// newest one, but only when both belong to the same user — a previous
+  /// account's token is never silently substituted.
+  static String? _effectiveToken(String? token) {
+    if (token == null || token.isEmpty) return token;
+    final latest = _latestToken;
+    if (latest == null || latest.isEmpty || latest == token) return token;
+    return _sameSubject(token, latest) ? latest : token;
+  }
+
+  /// True when both JWTs are well-formed and carry the same `sub` claim.
+  static bool _sameSubject(String token, String other) {
+    final subject = _subjectOf(token);
+    return subject != null && subject == _subjectOf(other);
+  }
+
+  /// Reads the (unverified) `sub` claim of a JWT for identity matching only.
+  static String? _subjectOf(String token) {
+    final parts = token.split('.');
+    if (parts.length != 3) return null;
+    try {
+      final payload = jsonDecode(
+        utf8.decode(base64Url.decode(base64Url.normalize(parts[1]))),
+      );
+      if (payload is Map && payload['sub'] is String) {
+        return payload['sub'] as String;
+      }
+    } catch (_) {
+      // Not a JWT (or corrupt): treated as non-matchable.
+    }
+    return null;
   }
 
   Future<http.Response> _execute(
@@ -168,6 +288,10 @@ class ApiClient {
 
     if (isSuccess) {
       if (data == null) {
+        // 204 No Content (and other body-less successes) decode to an empty
+        // map so callers can inspect fields without a null check. A non-empty
+        // body that is not JSON is still an error.
+        if (response.body.isEmpty) return <String, dynamic>{};
         throw ApiException(
           'The server returned an unexpected response.',
           statusCode: response.statusCode,

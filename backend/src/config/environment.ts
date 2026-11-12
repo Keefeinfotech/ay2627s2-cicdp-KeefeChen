@@ -28,8 +28,27 @@ export const getJwtSecret = (): string => {
   return secret;
 };
 
+// Access-token lifetime. Kept short because refresh tokens allow silent
+// renewal; a leaked access token dies within minutes instead of days.
 export const getJwtExpiresIn = (): string =>
-  process.env.JWT_EXPIRES_IN?.trim() || "1d";
+  process.env.JWT_EXPIRES_IN?.trim() || "15m";
+
+// Absolute lifetime of a session (its refresh token). Refreshing rotates the
+// token but does not extend this deadline.
+export const getRefreshTokenExpiresIn = (): string =>
+  process.env.REFRESH_TOKEN_EXPIRES_IN?.trim() || "30d";
+
+// How long a validated session may be reused from memory before MongoDB is
+// read again. Also bounds how long a revocation can take to take effect.
+// 0 disables the cache. Clamped to 10 minutes.
+export const getSessionCacheTtlMs = (): number => {
+  const raw = process.env.SESSION_CACHE_TTL_MS?.trim();
+  if (!raw) return 30_000;
+  const parsed = Number(raw);
+  return Number.isInteger(parsed) && parsed >= 0 && parsed <= 600_000
+    ? parsed
+    : 30_000;
+};
 
 export const getBcryptRounds = (): number => {
   const parsed = Number(process.env.BCRYPT_ROUNDS);

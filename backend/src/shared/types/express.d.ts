@@ -13,6 +13,8 @@ declare global {
       userId?: string;
       userEmail?: string;
       userRole?: UserRole;
+      /** Session id (JWT id) of the token that authenticated this request. */
+      sessionId?: string;
       requestId: string;
 
       // Custom payload typing extensions (optional defaults)

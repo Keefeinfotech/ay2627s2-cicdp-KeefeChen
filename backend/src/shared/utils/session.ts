@@ -1,10 +1,10 @@
 // Session rules for the API.
 //
-// Enterprise APIs usually enforce "one active session per user" (or a small cap).
-// We keep it intentionally simple and testable:
-//   - every login gets a unique JWT id (jti)
-//   - the newest jti is persisted on the user document
-//   - any token whose jti no longer matches is rejected as "replaced"
+// Every login creates a row in the auth sessions collection:
+//   - the session id doubles as the JWT id (jti)
+//   - refresh tokens are opaque secrets bound to that session
+//   - a session can be revoked individually (device sign-out), which ends
+//     every access token issued for it
 //
 // The pure helpers below have no dependencies so they can be unit tested
 // without MongoDB.
@@ -33,31 +33,36 @@ export const parseDurationToMs = (value: string | undefined): number | null => {
 };
 
 export interface SessionRecord {
-  activeSessionId?: string | null;
-  activeSessionExpiresAt?: Date | string | null;
+  expiresAt?: Date | string | null;
+  revokedAt?: Date | string | null;
 }
 
-/**
- * Returns true only when the presented token still represents the user's
- * active session and that session has not expired.
- */
-export const isSessionActive = (
-  record: SessionRecord,
-  tokenJti: string | undefined,
-  now: Date = new Date()
-): boolean => {
-  if (!tokenJti) return false;
-  if (!record.activeSessionId) return false;
-  if (record.activeSessionId !== tokenJti) return false;
+const toDate = (value: Date | string | null | undefined): Date | null => {
+  if (value === null || value === undefined) return null;
+  const date = value instanceof Date ? value : new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+};
 
-  if (record.activeSessionExpiresAt) {
-    const expiresAt =
-      record.activeSessionExpiresAt instanceof Date
-        ? record.activeSessionExpiresAt
-        : new Date(record.activeSessionExpiresAt);
-    if (Number.isNaN(expiresAt.getTime())) return false;
-    if (expiresAt.getTime() <= now.getTime()) return false;
+/** True once the session has been explicitly revoked (logout, device sign-out,
+ *  a newer login when concurrent sessions are disabled, or refresh-token
+ *  reuse). A present but unparseable timestamp counts as revoked so a corrupt
+ *  row fails closed. */
+export const isSessionRevoked = (record: SessionRecord): boolean => {
+  if (record.revokedAt === null || record.revokedAt === undefined) {
+    return false;
   }
-
+  // Any present value counts as revoked: a corrupt timestamp must fail
+  // closed rather than silently reopening the session.
   return true;
+};
+
+/** True when the session has passed its refresh-token deadline. A missing or
+ *  unparseable deadline counts as expired so a corrupt row fails closed. */
+export const isSessionExpired = (
+  record: SessionRecord,
+  now: Date = new Date(),
+): boolean => {
+  const expiresAt = toDate(record.expiresAt);
+  if (!expiresAt) return true;
+  return expiresAt.getTime() <= now.getTime();
 };

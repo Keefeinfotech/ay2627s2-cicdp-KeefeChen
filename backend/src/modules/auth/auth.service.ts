@@ -6,31 +6,43 @@ import {
   allowConcurrentSessions,
   getAppBaseUrl,
   getBcryptRounds,
-  getJwtExpiresIn,
+  getRefreshTokenExpiresIn,
 } from "../../config/environment.js";
 
 import { sendPasswordResetEmail } from "../../services/email.service.js";
 
-import { SESSION_TTL_MS } from "../../constants/security.js";
+import {
+  REFRESH_REUSE_GRACE_MS,
+  REFRESH_TOKEN_TTL_MS,
+} from "../../constants/security.js";
 
 import {
   badRequest,
   conflict,
+  notFound,
   sessionReplaced,
   unauthorized,
 } from "../../shared/utils/AppError.js";
 
 import {
-  isSessionActive,
+  isSessionExpired,
+  isSessionRevoked,
   parseDurationToMs,
 } from "../../shared/utils/session.js";
 
+import {
+  generateRefreshToken,
+  parseRefreshToken,
+  refreshTokenHashMatches,
+} from "../../shared/utils/refreshTokens.js";
+
 import { signAccessToken } from "../../shared/utils/tokens.js";
+
+import { logSecurityEvent } from "../../shared/utils/securityLogger.js";
 
 import type { IUser } from "./auth.model.js";
 
 import {
-  clearActiveSession,
   createUser,
   findUserByEmail,
   findUserById,
@@ -38,10 +50,23 @@ import {
   saveUser,
 } from "./auth.repository.js";
 
+import {
+  createSession,
+  findActiveSessionsByUser,
+  findSessionById,
+  revokeAllSessions,
+  revokeOtherSessions,
+  revokeSessionForUser,
+  updateSessionRefresh,
+} from "./session.repository.js";
+
+import { sessionCache } from "./session.cache.js";
+
 import type {
   AuthenticatedUser,
   AuthResult,
   PublicUser,
+  SessionSummary,
 } from "./auth.types.js";
 
 // --------------------------------------------------
@@ -65,26 +90,44 @@ const toPublicUser = (user: IUser): PublicUser => ({
 // SESSION MANAGEMENT
 // --------------------------------------------------
 
+/** Deadline of a session. Refreshing rotates the token but never extends it. */
 const sessionExpiry = (): Date => {
-  const configuredExpiry = parseDurationToMs(getJwtExpiresIn());
+  const configuredExpiry = parseDurationToMs(getRefreshTokenExpiresIn());
 
-  const ttl = configuredExpiry ?? SESSION_TTL_MS;
+  const ttl = configuredExpiry ?? REFRESH_TOKEN_TTL_MS;
 
   return new Date(Date.now() + ttl);
 };
 
-const startSession = async (user: IUser): Promise<AuthResult> => {
+const startSession = async (
+  user: IUser,
+  context: { userAgent?: string | null } = {},
+): Promise<AuthResult> => {
   const { token, sessionId } = signAccessToken(String(user._id), user.email);
+  const { token: refreshToken, hash } = generateRefreshToken(sessionId);
 
-  // Persist the session before returning the token.
-  user.activeSessionId = sessionId;
-  user.activeSessionExpiresAt = sessionExpiry();
+  // Persist the session before returning the tokens.
+  await createSession({
+    id: sessionId,
+    userId: String(user._id),
+    expiresAt: sessionExpiry(),
+    refreshTokenHash: hash,
+    userAgent: context.userAgent ?? null,
+  });
+
+  if (!allowConcurrentSessions()) {
+    // Newest login wins: every older device's session ends immediately.
+    await revokeOtherSessions(String(user._id), sessionId);
+    sessionCache.invalidateUser(String(user._id));
+  }
+
   user.lastLoginAt = new Date();
 
   await saveUser(user);
 
   return {
     token,
+    refreshToken,
     user: toPublicUser(user),
   };
 };
@@ -109,6 +152,7 @@ export const signup = async (input: {
   name?: string;
   email: string;
   password: string;
+  userAgent?: string | null;
 }): Promise<AuthResult> => {
   const email = input.email.trim().toLowerCase();
 
@@ -138,7 +182,7 @@ export const signup = async (input: {
     throw err;
   }
 
-  return startSession(user);
+  return startSession(user, { userAgent: input.userAgent });
 };
 
 // --------------------------------------------------
@@ -148,6 +192,7 @@ export const signup = async (input: {
 export const login = async (input: {
   email: string;
   password: string;
+  userAgent?: string | null;
 }): Promise<AuthResult> => {
   const email = input.email.trim().toLowerCase();
 
@@ -162,7 +207,87 @@ export const login = async (input: {
     throw unauthorized("Invalid email or password");
   }
 
-  return startSession(user);
+  return startSession(user, { userAgent: input.userAgent });
+};
+
+// --------------------------------------------------
+// REFRESH TOKEN RENEWAL
+// --------------------------------------------------
+
+/**
+ * Exchanges a refresh token for a new access/refresh token pair.
+ *
+ * The refresh token is rotated on every use. Replaying a superseded token
+ * after the short grace window revokes the whole session, so a stolen token
+ * cannot keep a foothold — the legitimate client must sign in again.
+ */
+export const refreshSession = async (input: {
+  refreshToken: string;
+}): Promise<AuthResult> => {
+  const parts = parseRefreshToken(input.refreshToken);
+  if (!parts) {
+    throw unauthorized("Invalid or expired session");
+  }
+
+  const session = await findSessionById(parts.sessionId);
+  const now = new Date();
+
+  if (!session || isSessionRevoked(session) || isSessionExpired(session, now)) {
+    throw unauthorized("Invalid or expired session");
+  }
+
+  const matchesCurrent = refreshTokenHashMatches(
+    parts.secret,
+    session.refreshTokenHash,
+  );
+  const matchesPrevious = refreshTokenHashMatches(
+    parts.secret,
+    session.previousRefreshTokenHash,
+  );
+  const withinGraceWindow =
+    session.refreshedAt != null &&
+    now.getTime() - session.refreshedAt.getTime() <= REFRESH_REUSE_GRACE_MS;
+
+  if (!matchesCurrent && !(matchesPrevious && withinGraceWindow)) {
+    if (matchesPrevious) {
+      // A once-valid token replayed long after rotation: assume theft.
+      await revokeSessionForUser(String(session._id), session.userId);
+      sessionCache.invalidate(session.userId, String(session._id));
+      logSecurityEvent("refresh_token_reuse", {
+        userId: session.userId,
+        sessionId: String(session._id),
+      });
+    }
+    throw unauthorized("Invalid or expired session");
+  }
+
+  const user = await findUserById(session.userId);
+  if (!user) {
+    // The account no longer exists; the session must not outlive it.
+    await revokeSessionForUser(String(session._id), session.userId);
+    sessionCache.invalidate(session.userId, String(session._id));
+    throw unauthorized("Invalid or expired session");
+  }
+
+  const next = generateRefreshToken(String(session._id));
+  await updateSessionRefresh(String(session._id), {
+    refreshTokenHash: next.hash,
+    previousRefreshTokenHash: session.refreshTokenHash ?? null,
+    refreshedAt: now,
+    lastUsedAt: now,
+  });
+
+  const { token } = signAccessToken(
+    String(user._id),
+    user.email,
+    String(session._id),
+  );
+
+  return {
+    token,
+    refreshToken: next.token,
+    user: toPublicUser(user),
+  };
 };
 
 // --------------------------------------------------
@@ -228,10 +353,11 @@ export const resetPassword = async (input: {
   user.passwordHash = passwordHash;
   user.passwordResetTokenHash = null;
   user.passwordResetExpiresAt = null;
-  user.activeSessionId = null;
-  user.activeSessionExpiresAt = null;
 
   await saveUser(user);
+
+  await revokeAllSessions(String(user._id));
+  sessionCache.invalidateUser(String(user._id));
 
   return { message: "Password updated. Sign in with your new password." };
 };
@@ -240,8 +366,13 @@ export const resetPassword = async (input: {
 // USER LOGOUT
 // --------------------------------------------------
 
-export const logout = async (userId: string): Promise<void> => {
-  await clearActiveSession(userId);
+/** Ends the given session only; other devices stay signed in. */
+export const logout = async (
+  userId: string,
+  sessionId: string,
+): Promise<void> => {
+  await revokeSessionForUser(sessionId, userId);
+  sessionCache.invalidate(userId, sessionId);
 };
 
 // --------------------------------------------------
@@ -259,6 +390,44 @@ export const getCurrentUser = async (userId: string): Promise<PublicUser> => {
 };
 
 // --------------------------------------------------
+// DEVICE (SESSION) MANAGEMENT
+// --------------------------------------------------
+
+export const listSessions = async (
+  userId: string,
+  currentSessionId: string,
+): Promise<SessionSummary[]> => {
+  const sessions = await findActiveSessionsByUser(userId);
+
+  return sessions.map((session) => ({
+    id: String(session._id),
+    current: String(session._id) === currentSessionId,
+    userAgent: session.userAgent ?? null,
+    createdAt: session.createdAt,
+    lastUsedAt: session.lastUsedAt,
+    expiresAt: session.expiresAt,
+  }));
+};
+
+/** Revokes one of the caller's sessions. Revoking the current one signs this
+ *  device out. Idempotent; unknown or foreign sessions are a 404. */
+export const revokeSession = async (
+  userId: string,
+  sessionId: string,
+): Promise<void> => {
+  const session = await findSessionById(sessionId);
+
+  if (!session || session.userId !== userId) {
+    throw notFound("Session not found");
+  }
+
+  if (!isSessionRevoked(session)) {
+    await revokeSessionForUser(sessionId, userId);
+    sessionCache.invalidate(userId, sessionId);
+  }
+};
+
+// --------------------------------------------------
 // SESSION AUTHENTICATION
 // --------------------------------------------------
 
@@ -266,18 +435,34 @@ export const authenticateSession = async (
   userId: string,
   sessionId: string,
 ): Promise<AuthenticatedUser> => {
+  const cached = sessionCache.get(userId, sessionId);
+  if (cached) {
+    return cached;
+  }
+
   const user = await findUserById(userId);
 
   if (!user) {
     throw unauthorized("Invalid or expired session");
   }
 
-  if (!allowConcurrentSessions() && !isSessionActive(user, sessionId)) {
+  const session = await findSessionById(sessionId);
+
+  if (!session || session.userId !== userId) {
+    throw unauthorized("Invalid or expired session");
+  }
+  if (isSessionRevoked(session)) {
     throw sessionReplaced();
   }
+  if (isSessionExpired(session)) {
+    throw unauthorized("Invalid or expired session");
+  }
 
-  return {
+  const authenticated: AuthenticatedUser = {
     ...toPublicUser(user),
     role: user.role ?? "user",
   };
+  sessionCache.set(userId, sessionId, authenticated);
+
+  return authenticated;
 };

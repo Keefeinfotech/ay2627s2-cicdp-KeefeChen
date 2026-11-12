@@ -7,18 +7,35 @@ vi.mock("../../src/modules/auth/auth.model.js", () => ({
   },
 }));
 
+vi.mock("../../src/modules/auth/session.model.js", () => ({
+  AuthSession: {
+    create: vi.fn(),
+    findById: vi.fn(),
+    find: vi.fn(),
+    updateOne: vi.fn(),
+    updateMany: vi.fn(),
+  },
+}));
+
 import app from "../../src/app";
 import { User } from "../../src/modules/auth/auth.model.js";
+import { AuthSession } from "../../src/modules/auth/session.model.js";
+import { sessionCache } from "../../src/modules/auth/session.cache.js";
 import { signAccessToken } from "../../src/shared/utils/tokens";
 
 const userModel = User as any;
+const sessionModel = AuthSession as any;
 
 const queryResult = (value: unknown) => ({
+  select: vi.fn().mockReturnThis(),
+  sort: vi.fn().mockReturnThis(),
   exec: vi.fn().mockResolvedValue(value),
 });
 
 beforeEach(() => {
   vi.clearAllMocks();
+  // Validations are cached in memory; drop any hit from a previous test.
+  sessionCache.clear();
 });
 
 const authenticate = (): string => {
@@ -28,8 +45,17 @@ const authenticate = (): string => {
       _id: "user-1",
       email: "ada@example.com",
       role: "user",
-      activeSessionId: sessionId,
-      activeSessionExpiresAt: new Date(Date.now() + 60 * 60 * 1000),
+    }),
+  );
+  sessionModel.findById.mockReturnValue(
+    queryResult({
+      _id: sessionId,
+      userId: "user-1",
+      revokedAt: null,
+      expiresAt: new Date(Date.now() + 60 * 60 * 1000),
+      userAgent: "vitest",
+      createdAt: new Date(),
+      lastUsedAt: new Date(),
     }),
   );
   return token;

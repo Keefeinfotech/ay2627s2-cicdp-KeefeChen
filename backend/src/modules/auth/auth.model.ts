@@ -7,8 +7,6 @@ export interface IUser extends Document {
   passwordHash: string;
   role: UserRole;
   lastLoginAt?: Date | null;
-  activeSessionId?: string | null;
-  activeSessionExpiresAt?: Date | null;
   // MFA
   mfaEnabled?: boolean;
   mfaSecretEncrypted?: string | null;
@@ -43,8 +41,6 @@ const UserSchema = new Schema<IUser>(
       required: true,
     },
     lastLoginAt: { type: Date, default: null },
-    activeSessionId: { type: String, default: null },
-    activeSessionExpiresAt: { type: Date, default: null },
 
     // MFA
     mfaEnabled: { type: Boolean, default: false },

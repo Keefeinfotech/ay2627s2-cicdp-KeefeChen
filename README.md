@@ -134,7 +134,9 @@ Errors use `{ error, code, details? }`. Validation failures return `400` with
 | `NODE_ENV` | `development` | `production` disables Swagger UI |
 | `MONGODB_URI` | - | Required to start |
 | `JWT_SECRET` | - | Required, at least 16 characters |
-| `JWT_EXPIRES_IN` | `1d` | Token lifetime |
+| `JWT_EXPIRES_IN` | `15m` | Access-token lifetime; renewed silently with the refresh token |
+| `REFRESH_TOKEN_EXPIRES_IN` | `30d` | Absolute session lifetime; refreshing does not extend it |
+| `SESSION_CACHE_TTL_MS` | `30000` | How long validated sessions are cached in memory (0 disables, max 600000) |
 | `BCRYPT_ROUNDS` | `10` | Clamped to 10-15 |
 | `CORS_ORIGIN` | `http://localhost:3000,http://localhost:5173` | Comma-separated allowlist |
 | `AI_PROVIDER` | `mock` | `mock` or `openai-compatible`; mock is clearly labelled and makes no external calls |

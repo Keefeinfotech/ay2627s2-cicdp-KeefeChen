@@ -11,6 +11,7 @@ class SessionStore {
     : _storage = storage ?? const FlutterSecureStorage();
 
   static const String _tokenKey = 'auxilia.session.token';
+  static const String _refreshKey = 'auxilia.session.refresh';
   static const String _emailKey = 'auxilia.session.email';
   static const String _nameKey = 'auxilia.session.name';
 
@@ -24,7 +25,17 @@ class SessionStore {
         return null;
       }
       final name = await _storage.read(key: _nameKey);
-      return Session(token: token, email: email, name: name);
+      // The refresh token is optional: a session stored by an older build has
+      // none, and simply cannot renew silently.
+      final refreshToken = await _storage.read(key: _refreshKey);
+      return Session(
+        token: token,
+        email: email,
+        name: name,
+        refreshToken: refreshToken == null || refreshToken.isEmpty
+            ? null
+            : refreshToken,
+      );
     } catch (_) {
       return null;
     }
@@ -34,6 +45,12 @@ class SessionStore {
     try {
       await _storage.write(key: _tokenKey, value: session.token);
       await _storage.write(key: _emailKey, value: session.email);
+      final refreshToken = session.refreshToken;
+      if (refreshToken == null || refreshToken.isEmpty) {
+        await _storage.delete(key: _refreshKey);
+      } else {
+        await _storage.write(key: _refreshKey, value: refreshToken);
+      }
       if (session.name == null) {
         await _storage.delete(key: _nameKey);
       } else {
@@ -49,6 +66,7 @@ class SessionStore {
   Future<void> clear() async {
     try {
       await _storage.delete(key: _tokenKey);
+      await _storage.delete(key: _refreshKey);
       await _storage.delete(key: _emailKey);
       await _storage.delete(key: _nameKey);
     } catch (_) {
