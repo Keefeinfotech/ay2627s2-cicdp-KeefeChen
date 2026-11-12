@@ -8,40 +8,26 @@ import bcrypt from "bcryptjs";
 import request from "supertest";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("../../src/modules/auth/auth.model.js", () => ({
-  User: {
-    findOne: vi.fn(),
-    create: vi.fn(),
-    findById: vi.fn(),
-  },
-}));
+vi.mock("../../src/modules/auth/auth.model.js", async () => {
+  const { authModelMock } = await import("../helpers/authMocks.js");
+  return authModelMock();
+});
 
-vi.mock("../../src/modules/auth/session.model.js", () => ({
-  AuthSession: {
-    create: vi.fn(),
-    findById: vi.fn(),
-    find: vi.fn(),
-    updateOne: vi.fn(),
-    updateMany: vi.fn(),
-  },
-}));
+vi.mock("../../src/modules/auth/session.model.js", async () => {
+  const { sessionModelMock } = await import("../helpers/authMocks.js");
+  return sessionModelMock();
+});
 
 import app from "../../src/app";
 import { User } from "../../src/modules/auth/auth.model.js";
 import { AuthSession } from "../../src/modules/auth/session.model.js";
 import { sessionCache } from "../../src/modules/auth/session.cache.js";
 import { verifyAccessToken } from "../../src/shared/utils/tokens";
+import { queryResult } from "../helpers/authMocks.js";
 
 // Access mocked model methods.
 const userModel = User as any;
 const sessionModel = AuthSession as any;
-
-// Query result helper supporting .exec().
-const queryResult = (value: unknown) => ({
-  select: vi.fn().mockReturnThis(),
-  sort: vi.fn().mockReturnThis(),
-  exec: vi.fn().mockResolvedValue(value),
-});
 
 // Shared test password and its hash. Meets the 12-character minimum and
 // complexity rules (uppercase + number + special character).

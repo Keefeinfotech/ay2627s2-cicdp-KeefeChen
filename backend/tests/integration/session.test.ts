@@ -1,40 +1,25 @@
 import request from "supertest";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("../../src/modules/auth/auth.model.js", () => ({
-  User: {
-    findOne: vi.fn(),
-    create: vi.fn(),
-    findById: vi.fn(),
-  },
-}));
+vi.mock("../../src/modules/auth/auth.model.js", async () => {
+  const { authModelMock } = await import("../helpers/authMocks.js");
+  return authModelMock();
+});
 
-vi.mock("../../src/modules/auth/session.model.js", () => ({
-  AuthSession: {
-    create: vi.fn(),
-    findById: vi.fn(),
-    find: vi.fn(),
-    updateOne: vi.fn(),
-    updateMany: vi.fn(),
-  },
-}));
+vi.mock("../../src/modules/auth/session.model.js", async () => {
+  const { sessionModelMock } = await import("../helpers/authMocks.js");
+  return sessionModelMock();
+});
 
 import app from "../../src/app";
 import { User } from "../../src/modules/auth/auth.model.js";
 import { AuthSession } from "../../src/modules/auth/session.model.js";
 import { sessionCache } from "../../src/modules/auth/session.cache.js";
 import { signAccessToken } from "../../src/shared/utils/tokens";
+import { queryResult } from "../helpers/authMocks.js";
 
 const userModel = User as any;
 const sessionModel = AuthSession as any;
-
-// Query helper supporting the .select()/.sort()/.exec() chains used by the
-// repositories.
-const queryResult = (value: unknown) => ({
-  select: vi.fn().mockReturnThis(),
-  sort: vi.fn().mockReturnThis(),
-  exec: vi.fn().mockResolvedValue(value),
-});
 
 const future = new Date(Date.now() + 60 * 60 * 1000);
 const past = new Date(Date.now() - 60 * 1000);
