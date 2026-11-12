@@ -49,7 +49,11 @@ export class CalendarRepository {
     };
 
     if (groupId) {
-      query.groupId = requireUuid(groupId, "groupId");
+      if (typeof groupId !== "string" || !UUID_PATTERN.test(groupId)) {
+        throw new Error("Invalid groupId");
+      }
+      // Plain-string coercion so the filter can never carry an operator object.
+      query.groupId = groupId.toString();
     }
 
     return await CalendarEventModel.find(query).sort({ startTime: 1 }).exec();
