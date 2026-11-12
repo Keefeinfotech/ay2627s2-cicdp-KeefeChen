@@ -5,12 +5,21 @@
 # the same deploy hook and then waits for /api/health before smoke-checking;
 # this keeps a single deploy path instead of two competing pipelines.
 #
-# If a service already exists in the Render dashboard, align `name` (or point
-# the dashboard at this file as a Blueprint) so Render manages the same
-# service rather than creating a duplicate.
+# HOW TO APPLY
+#   Render Dashboard > New > Blueprint > select this repository. Render reads
+#   this file, provisions the service, and prompts for every `sync: false`
+#   variable below. If the service already exists in the dashboard, align
+#   `name` (or point the dashboard at this file as a Blueprint) so Render
+#   manages the same service rather than creating a duplicate.
+#
+#   If the deployed URL returns HTTP 404 with the header
+#   `x-render-routing: no-server`, no service is registered at that hostname:
+#   the Blueprint was never applied (or the service was deleted/suspended).
+#   Applying this file is the fix.
 #
 # Sensitive values (JWT_SECRET, MONGODB_URI, TURNSTILE_SECRET_KEY, SMTP_*,
-# AI_API_KEY, ...) must be set in the Render dashboard, never here.
+# AI_API_KEY, ...) must be set in the Render dashboard — the Blueprint
+# declares them as `sync: false` so they are prompted for, never hard-coded.
 
 services:
   - type: web
@@ -27,11 +36,26 @@ services:
         value: production
       - key: TRUST_PROXY
         value: "true"
-      # Set in the Render dashboard (not committed):
-      # - MONGODB_URI
-      # - JWT_SECRET
-      # - CORS_ORIGIN  (only the deployed web origin, e.g. https://auxilia-web.onrender.com)
-      # - TURNSTILE_SECRET_KEY and TURNSTILE_SITE_KEY
-      # - SMTP_HOST, SMTP_USER, SMTP_PASS, EMAIL_FROM
-      # - AI_PROVIDER, AI_API_KEY, AI_BASE_URL, AI_MODEL
-      # - API_BASE_URL only for the frontend build (see frontend/web)
+      # Non-secret configuration; safe to pin here.
+      - key: CAPTCHA_ENABLED
+        value: "true"
+      - key: AI_PROVIDER
+        value: mock
+      # Required secrets — Render prompts for these when applying the
+      # Blueprint. The backend exits at startup without them
+      # (assertRuntimeEnv), so the health check would never pass.
+      - key: MONGODB_URI
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      # Exact deployed web origin, e.g. https://auxilia-web.onrender.com
+      # (comma-separated if several). No trailing slash.
+      - key: CORS_ORIGIN
+        sync: false
+      - key: TURNSTILE_SECRET_KEY
+        sync: false
+      # Optional — only when the corresponding feature is used:
+      # - key: TURNSTILE_SITE_KEY        # frontend build (GitHub Pages/static site)
+      # - key: SMTP_HOST / SMTP_USER / SMTP_PASS / EMAIL_FROM   # email delivery
+      # - key: AI_PROVIDER / AI_BASE_URL / AI_MODEL / AI_API_KEY # non-mock AI
+      # - key: API_BASE_URL              # frontend build only
