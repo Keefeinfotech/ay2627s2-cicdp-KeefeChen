@@ -75,7 +75,7 @@ describe("task query validation - design techniques", () => {
       (status) => {
         const result = getTasksQuerySchema.safeParse({ status });
         expect(result.success).toBe(true);
-      }
+      },
     );
 
     it("EP-invalid status value is rejected", () => {
@@ -88,7 +88,7 @@ describe("task query validation - design techniques", () => {
       (priority) => {
         const result = getTasksQuerySchema.safeParse({ priority });
         expect(result.success).toBe(true);
-      }
+      },
     );
 
     it("EP-invalid priority value is rejected", () => {
@@ -138,7 +138,7 @@ describe("task query validation - design techniques", () => {
         expect.objectContaining({
           success: false,
           message: "Invalid query parameters.",
-        })
+        }),
       );
       expect(res.locals.taskFilters).toBeUndefined();
     });
