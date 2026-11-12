@@ -1,58 +1,61 @@
-import { body, query, param } from 'express-validator';
-import { EventPriority, EventStatus } from './calendar.model';
+import { body, query, param } from "express-validator";
+import { EventPriority, EventStatus } from "./calendar.model";
 
 export const createEventValidation = [
-  body('title').isString().notEmpty().withMessage('Title is required'),
-  body('startTime')
+  body("title").isString().notEmpty().withMessage("Title is required"),
+  body("startTime")
     .isISO8601()
     .toDate()
-    .withMessage('Valid start time is required'),
-  body('endTime')
+    .withMessage("Valid start time is required"),
+  body("endTime")
     .isISO8601()
     .toDate()
-    .withMessage('Valid end time is required')
+    .withMessage("Valid end time is required")
     .custom((endTime, { req }) => {
       if (new Date(endTime) <= new Date(req.body.startTime)) {
-        throw new Error('End time must be after start time');
+        throw new Error("End time must be after start time");
       }
       return true;
     }),
-  body('priority')
+  body("priority")
     .optional()
     .isIn(Object.values(EventPriority))
-    .withMessage('Invalid priority level'),
-  body('groupId').optional().isMongoId().withMessage('Invalid group ID'),
-  body('taskId').optional().isMongoId().withMessage('Invalid task ID'),
+    .withMessage("Invalid priority level"),
+  body("groupId").optional().isUUID().withMessage("Invalid group ID"),
+  body("taskId").optional().isUUID().withMessage("Invalid task ID"),
 ];
 
 export const updateEventValidation = [
-  param('id').isMongoId().withMessage('Invalid event ID'),
-  body('title').optional().isString().notEmpty(),
-  body('startTime').optional().isISO8601().toDate(),
-  body('endTime')
+  param("id").isMongoId().withMessage("Invalid event ID"),
+  body("title").optional().isString().notEmpty(),
+  body("startTime").optional().isISO8601().toDate(),
+  body("endTime")
     .optional()
     .isISO8601()
     .toDate()
     .custom((endTime, { req }) => {
-      if (req.body.startTime && new Date(endTime) <= new Date(req.body.startTime)) {
-        throw new Error('End time must be after start time');
+      if (
+        req.body.startTime &&
+        new Date(endTime) <= new Date(req.body.startTime)
+      ) {
+        throw new Error("End time must be after start time");
       }
       return true;
     }),
-  body('status')
+  body("status")
     .optional()
     .isIn(Object.values(EventStatus))
-    .withMessage('Invalid status value'),
+    .withMessage("Invalid status value"),
 ];
 
 export const getEventsQueryValidation = [
-  query('startDate')
+  query("startDate")
     .isISO8601()
     .toDate()
-    .withMessage('Valid startDate query param required'),
-  query('endDate')
+    .withMessage("Valid startDate query param required"),
+  query("endDate")
     .isISO8601()
     .toDate()
-    .withMessage('Valid endDate query param required'),
-  query('groupId').optional().isMongoId(),
+    .withMessage("Valid endDate query param required"),
+  query("groupId").optional().isUUID(),
 ];

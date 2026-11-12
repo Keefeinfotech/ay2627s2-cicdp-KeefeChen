@@ -6,7 +6,7 @@ export class FeedbackRepository {
   async create(userId: string, data: CreateFeedbackDTO): Promise<IFeedback> {
     const feedback = new FeedbackModel({
       ...data,
-      userId: new Types.ObjectId(userId),
+      userId,
     });
     return await feedback.save();
   }
@@ -19,9 +19,7 @@ export class FeedbackRepository {
   }
 
   async findByUserId(userId: string): Promise<IFeedback[]> {
-    return await FeedbackModel.find({ userId: new Types.ObjectId(userId) })
-      .sort({ createdAt: -1 })
-      .exec();
+    return await FeedbackModel.find({ userId }).sort({ createdAt: -1 }).exec();
   }
 
   async findAll(): Promise<IFeedback[]> {
@@ -52,7 +50,7 @@ export class FeedbackRepository {
       {
         $set: {
           adminResponse: {
-            respondedBy: new Types.ObjectId(adminId),
+            respondedBy: adminId,
             message,
             respondedAt: new Date(),
           },
@@ -66,7 +64,7 @@ export class FeedbackRepository {
   async delete(id: string, userId?: string): Promise<boolean> {
     const filter: any = { _id: new Types.ObjectId(id) };
     if (userId) {
-      filter.userId = new Types.ObjectId(userId);
+      filter.userId = userId;
     }
     const result = await FeedbackModel.deleteOne(filter).exec();
     return result.deletedCount > 0;
