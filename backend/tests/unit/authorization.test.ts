@@ -14,13 +14,9 @@ afterEach(() => {
 describe("authorize", () => {
   it("rejects an unauthenticated request", () => {
     const next = vi.fn();
-    authorize("admin")(
-      mockRequest(),
-      {} as Response,
-      next as NextFunction
-    );
+    authorize("admin")(mockRequest(), {} as Response, next as NextFunction);
     expect(next).toHaveBeenCalledWith(
-      expect.objectContaining({ status: 401, code: "UNAUTHORIZED" })
+      expect.objectContaining({ status: 401, code: "UNAUTHORIZED" }),
     );
   });
 
@@ -30,11 +26,32 @@ describe("authorize", () => {
       authorize("admin")(
         mockRequest({ userId: "user-1", userRole: "user" }),
         {} as Response,
-        next as NextFunction
-      )
+        next as NextFunction,
+      ),
     ).not.toThrow();
     expect(next).toHaveBeenCalledWith(
-      expect.objectContaining({ status: 403, code: "FORBIDDEN" })
+      expect.objectContaining({ status: 403, code: "FORBIDDEN" }),
+    );
+    expect(next).toHaveBeenCalledTimes(1);
+  });
+
+  it("matches roles case-insensitively (upper-case call sites, lower-case storage)", () => {
+    const next = vi.fn();
+    authorize("ADMIN")(
+      mockRequest({ userId: "user-1", userRole: "admin" }),
+      {} as Response,
+      next as NextFunction,
+    );
+    expect(next).toHaveBeenCalledTimes(1);
+    expect(next).toHaveBeenCalledWith();
+  });
+
+  it("matches roles case-insensitively in the reverse direction", () => {
+    const next = vi.fn();
+    authorize("admin")(
+      mockRequest({ userId: "user-1", userRole: "ADMIN" }),
+      {} as Response,
+      next as NextFunction,
     );
     expect(next).toHaveBeenCalledTimes(1);
   });
@@ -44,7 +61,7 @@ describe("authorize", () => {
     authorize("admin")(
       mockRequest({ userId: "user-1", userRole: "admin" }),
       {} as Response,
-      next as NextFunction
+      next as NextFunction,
     );
     expect(next).toHaveBeenCalledTimes(1);
   });
@@ -54,7 +71,7 @@ describe("authorize", () => {
     authorize()(
       mockRequest({ userId: "user-1", userRole: "user" }),
       {} as Response,
-      next as NextFunction
+      next as NextFunction,
     );
     expect(next).toHaveBeenCalledTimes(1);
   });
