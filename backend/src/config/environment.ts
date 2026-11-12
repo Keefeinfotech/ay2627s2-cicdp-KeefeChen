@@ -120,27 +120,42 @@ export const getMongoUri = (): string | null =>
   process.env.MONGODB_URI?.trim() || null;
 
 export const assertRuntimeEnv = (): void => {
-  getJwtSecret();
+  // Collect every problem instead of failing on the first one, so a single
+  // deploy log shows the full list of environment variables to fix.
+  const problems: string[] = [];
+
+  try {
+    getJwtSecret();
+  } catch (err) {
+    problems.push(err instanceof Error ? err.message : String(err));
+  }
 
   if (
     process.env.CAPTCHA_ENABLED === "true" &&
     !process.env.TURNSTILE_SECRET_KEY?.trim()
   ) {
-    throw new EnvError(
+    problems.push(
       "CAPTCHA_ENABLED=true requires TURNSTILE_SECRET_KEY to be set",
     );
   }
 
   if (getAiProvider() !== "mock" && !getAiApiKey()) {
-    throw new EnvError("AI_PROVIDER is not mock but AI_API_KEY is not set");
+    problems.push("AI_PROVIDER is not mock but AI_API_KEY is not set");
   }
 
   if (isProduction()) {
     if (process.env.CAPTCHA_ENABLED !== "true") {
-      throw new EnvError("CAPTCHA_ENABLED must be 'true' in production");
+      problems.push("CAPTCHA_ENABLED must be 'true' in production");
     }
     if (!process.env.CORS_ORIGIN?.trim()) {
-      throw new EnvError("CORS_ORIGIN must be set in production");
+      problems.push("CORS_ORIGIN must be set in production");
     }
+  }
+
+  if (problems.length === 1) {
+    throw new EnvError(problems[0]);
+  }
+  if (problems.length > 1) {
+    throw new EnvError(`Invalid configuration:\n- ${problems.join("\n- ")}`);
   }
 };
