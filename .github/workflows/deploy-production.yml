@@ -56,7 +56,9 @@ jobs:
         run: |
           set -euo pipefail
           if [[ -z "$SMOKE_BASE_URL" ]]; then
-            echo "::error::Set the production RENDER_API_BASE_URL variable before deploying (e.g. https://auxilia-backend.onrender.com)."
+            echo "::error::RENDER_API_BASE_URL is not set."
+            echo "::error::Set it to your Render service URL, e.g. https://auxilia-backend.onrender.com"
+            echo "::error::GitHub: Settings > Secrets and variables > Actions > Variables > New repository variable"
             exit 1
           fi
           # Poll up to 10 minutes (60 x 10s) for a healthy deploy.
@@ -69,7 +71,12 @@ jobs:
             fi
             sleep 10
           done
-          echo "::error::$SMOKE_BASE_URL/api/health did not return 200 within 10 minutes of the deploy."
+          echo "::error::Backend never returned 200 from $SMOKE_BASE_URL/api/health within 10 minutes."
+          echo "::error::The most likely cause is that the Render service is failing at startup because"
+          echo "::error::required environment variables are not set in the Render dashboard."
+          echo "::error::In Render: Dashboard > your service > Environment > confirm each of the following is set:"
+          echo "::error::  MONGODB_URI, JWT_SECRET (>=16 chars), CORS_ORIGIN, CAPTCHA_ENABLED=true, TURNSTILE_SECRET_KEY,"
+          echo "::error::  and AI_API_KEY if AI_PROVIDER != mock. Also confirm health check path is /api/health."
           exit 1
 
       - name: Run post-deployment smoke checks
