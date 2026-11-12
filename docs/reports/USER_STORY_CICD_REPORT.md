@@ -227,6 +227,39 @@ unique task UUID index. The sync queue automatically converts a 409 into a
 user-facing conflict resolution (nearest-task options, keep-mine/keep-server)
 instead of silently overwriting.
 
+## Database validation rules (2026-11-12)
+
+`npm run validate:collections` (see `docs/release/RELEASE_CHECKLIST.md`) applies
+MongoDB `$jsonSchema` validators to every application collection. The rules
+mirror the Mongoose schemas: required fields, string/number/date types,
+enum memberships, string length caps, numeric ranges (e.g. `weight` 0–100),
+array item types and caps (`tags` max 8), and `validationLevel: moderate` with
+`validationAction: error` so existing documents stay readable while invalid
+writes are rejected.
+
+Two important observations found while auditing the schemas:
+
+1. Two different `User` schemas are registered under the same model name
+   (`users/user.model.ts` vs `auth/auth.model.ts`); whichever registers first
+   wins per process. The Atlas validator for `users` deliberately accepts the
+   union of both field sets.
+2. Mongoose's default collection pluralization must be asserted against the
+   Atlas UI (e.g. model `AuditEvent` → collection `auditevents`,
+   `StudySession` → `studysessions`). Validators are keyed by those Atlas
+   names and skip collections that do not exist yet (re-run the script after
+   first writes).
+
+To apply (after confirming `MONGODB_URI`; dry-run prints the plan only):
+
+```bash
+npm run validate:collections:dry-run   # plan, no database access
+npm run validate:collections          # apply to existing collections
+```
+
+Collections covered: users, tasks, groups, groupmembers, members,
+invitations, roadmaps, rubrics, reminders, calendarevents, feedbacks,
+batchjobs, auditevents, studysessions.
+
 ## Security and privacy notes
 
 - Invitation tokens are stored as SHA-256 hashes and are bound to the invitee's

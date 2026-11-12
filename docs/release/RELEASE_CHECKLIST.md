@@ -58,6 +58,10 @@ flutter build web --release
 ## 4. Deploy
 
 - [ ] Back up the production database.
+- [ ] Apply MongoDB schema validators (`$jsonSchema` on every collection):
+      `npm run validate:collections` with `MONGODB_URI` set. Verify at least
+      one invalid document is rejected by the API, or by a direct insert, that
+      the validator is active (`db.getCollectionInfos()` shows the validator).
 - [ ] Deploy the backend, then confirm `GET /api/health` returns `200`.
 - [ ] Confirm a signup and a login succeed against the deployed API over HTTPS.
 - [ ] Build and deploy the web frontend with
