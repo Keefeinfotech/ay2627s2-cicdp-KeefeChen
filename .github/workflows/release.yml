@@ -50,7 +50,7 @@ jobs:
         working-directory: frontend
         run: |
           flutter pub get --enforce-lockfile
-          dart format --output=none --set-exit-if-changed lib test tool
+          dart format --output=none --set-exit-if-changed lib test tool integration_test
           flutter analyze
           flutter test --coverage
           dart run tool/check_coverage.dart 60

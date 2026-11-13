@@ -1,11 +1,34 @@
 # ==========================================
 # Stage 1: Flutter web build
 # ==========================================
-FROM ghcr.io/cirruslabs/flutter:3.47.8 AS build
+# No public registry image carries Flutter 3.47.8, so the build stage fetches
+# the exact stable Linux SDK release from Google's release bucket. This keeps
+# `docker compose up --build` self-contained and matches the version used by
+# CI (subosito/flutter-action with flutter-version: "3.47.8") and local dev.
+FROM debian:bookworm-slim AS build
 
-# ARG is only available in the stage where it is declared.
+ARG FLUTTER_VERSION=3.47.8
 ARG API_BASE_URL=http://localhost:3000
 ENV API_BASE_URL=${API_BASE_URL}
+ENV PATH="/opt/flutter/bin:${PATH}"
+
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends \
+    ca-certificates \
+    curl \
+    git \
+    xz-utils \
+    unzip \
+    libglu1-mesa \
+    fontconfig \
+  && rm -rf /var/lib/apt/lists/*
+
+RUN curl -fSL \
+      "https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_${FLUTTER_VERSION}-stable.tar.xz" \
+      | tar -xJ -C /opt \
+  # Flutter refuses to run from a git repository owned by another user.
+  && git config --global --add safe.directory /opt/flutter \
+  && flutter --version
 
 WORKDIR /app
 

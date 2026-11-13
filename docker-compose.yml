@@ -51,7 +51,10 @@ services:
       NODE_ENV: development
       PORT: 3000
       MONGODB_URI: mongodb://mongodb:27017/auxilia
-      JWT_SECRET: ${JWT_SECRET}
+      # Development-only default so a fresh clone works out of the box.
+      # REQUIRED in real deployments: set JWT_SECRET (>= 16 chars) in .env or
+      # the environment before exposing the stack.
+      JWT_SECRET: ${JWT_SECRET:-auxilia-local-development-secret-change-me}
       JWT_EXPIRES_IN: 15m
       REFRESH_TOKEN_EXPIRES_IN: 30d
       SESSION_CACHE_TTL_MS: 30000
@@ -66,12 +69,18 @@ services:
       AI_TIMEOUT_MS: 15000
       AI_RATE_LIMIT_PER_USER: 20
       API_RATE_LIMIT_MAX: 300
+      # Local/CI runs fire many requests from 127.0.0.1; the production
+      # default would 429 the E2E suite. Raise it in dev only.
+      AUTH_RATE_LIMIT_MAX: ${AUTH_RATE_LIMIT_MAX:-10000}
       APP_BASE_URL: http://localhost:8080
       BACKEND_URL: http://localhost:3000
       # Local-only default for the /metrics guard — matches the token in
       # monitoring/prometheus.yml. Override with METRICS_TOKEN for real use.
       METRICS_TOKEN: ${METRICS_TOKEN:-auxilia-local-metrics-token}
     healthcheck:
+      # 127.0.0.1, not localhost: in alpine, localhost resolves to ::1 while
+      # the server listens on 0.0.0.0 (IPv4), so wget against localhost is
+      # refused and the container flaps unhealthy.
       test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:3000/api/health"]
       interval: 15s
       timeout: 5s
@@ -94,6 +103,34 @@ services:
         condition: service_healthy
     ports:
       - "8080:8080"
+
+  # ------------------------------------------------------------------
+  # Jenkins (optional): local CI/CD server running the root Jenkinsfile.
+  # Start with:  docker compose --profile jenkins up -d --build
+  # UI: http://localhost:8081  (initial admin password:
+  #   docker exec auxilia-jenkins cat /var/jenkins_home/secrets/initialAdminPassword)
+  # The image adds Node.js 22, Flutter 3.47.8 and the Docker CLI on top of
+  # jenkins/jenkins:lts-jdk21 (see jenkins/Dockerfile). The host Docker
+  # socket is mounted so the deploy stage can rebuild and restart this
+  # same stack. See docs/development/jenkins.md.
+  # ------------------------------------------------------------------
+  jenkins:
+    build:
+      context: ./jenkins
+      dockerfile: Dockerfile
+    image: auxilia-jenkins:lts
+    container_name: auxilia-jenkins
+    profiles: ["jenkins"]
+    restart: unless-stopped
+    ports:
+      # 8081 because the frontend already owns host port 8080.
+      - "8081:8080"
+      - "50000:50000"
+    volumes:
+      - jenkins_home:/var/jenkins_home
+      # Lets the deploy stage run `docker compose` on the host engine.
+      # Remove this mount if you do not want pipelines able to redeploy.
+      - /var/run/docker.sock:/var/run/docker.sock
 
   # ------------------------------------------------------------------
   # Monitoring (optional): Prometheus + Grafana for the backend.
@@ -138,3 +175,4 @@ volumes:
   mongodb_data:
   prometheus_data:
   grafana_data:
+  jenkins_home:
