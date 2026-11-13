@@ -1,61 +1,18 @@
-import mongoose, { type Document, Schema } from "mongoose";
-import { USER_ROLES, type UserRole } from "../../constants/security.js";
+/**
+ * File Name: auth.model.ts
+ * Description: Auth-side handle on the shared User model. The schema is the
+ *              single source of truth in ../users/user.schema.js; this module
+ *              keeps the auth-facing type aliases for compatibility.
+ * Author: Keefe Chen
+ */
 
-export interface IUser extends Document {
-  name?: string;
-  email: string;
-  passwordHash: string;
-  role: UserRole;
-  lastLoginAt?: Date | null;
-  // MFA
-  mfaEnabled?: boolean;
-  mfaSecretEncrypted?: string | null;
-  mfaPendingSecretEncrypted?: string | null;
-  mfaPendingExpiresAt?: Date | null;
-  mfaRecoveryCodeHashes?: string[];
-  mfaLastUsedStep?: number | null;
-  mfaEnabledAt?: Date | null;
-  // Password reset
-  passwordResetTokenHash?: string | null;
-  passwordResetExpiresAt?: Date | null;
-  createdAt: Date;
-  updatedAt: Date;
-}
+import mongoose, { type HydratedDocument } from "mongoose";
 
-const UserSchema = new Schema<IUser>(
-  {
-    name: { type: String, trim: true, maxlength: 80 },
-    email: {
-      type: String,
-      required: true,
-      unique: true,
-      lowercase: true,
-      trim: true,
-      maxlength: 254,
-    },
-    passwordHash: { type: String, required: true, select: false },
-    role: {
-      type: String,
-      enum: USER_ROLES,
-      default: "user",
-      required: true,
-    },
-    lastLoginAt: { type: Date, default: null },
+import { userSchema, type UserRecord } from "../users/user.schema.js";
 
-    // MFA
-    mfaEnabled: { type: Boolean, default: false },
-    mfaSecretEncrypted: { type: String, default: null, select: false },
-    mfaPendingSecretEncrypted: { type: String, default: null, select: false },
-    mfaPendingExpiresAt: { type: Date, default: null },
-    mfaRecoveryCodeHashes: { type: [String], default: [], select: false },
-    mfaLastUsedStep: { type: Number, default: null, select: false },
-    mfaEnabledAt: { type: Date, default: null },
+export type IUserRecord = UserRecord;
 
-    // Password reset. Only the hash is stored. Never store the raw token.
-    passwordResetTokenHash: { type: String, default: null, select: false },
-    passwordResetExpiresAt: { type: Date, default: null },
-  },
-  { timestamps: true },
-);
+/** The hydrated Mongoose document type consumers receive. */
+export type IUser = HydratedDocument<UserRecord>;
 
-export const User = mongoose.model<IUser>("User", UserSchema);
+export const User = mongoose.model<UserRecord>("User", userSchema);

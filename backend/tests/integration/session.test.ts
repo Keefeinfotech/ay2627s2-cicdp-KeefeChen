@@ -90,7 +90,7 @@ describe("session enforcement", () => {
 
     expect(res.status).toBe(200);
     expect(res.body.user.email).toBe("ada@example.com");
-    expect(res.body.user).not.toHaveProperty("role");
+    expect(res.body.user).toHaveProperty("role", "user");
   });
 
   it("rejects a revoked session as replaced", async () => {

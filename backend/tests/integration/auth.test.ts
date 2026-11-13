@@ -79,8 +79,9 @@ describe("POST /api/auth/signup", () => {
       id: "user-1",
       name: "Ada",
       email: "ada@example.com",
+      role: "user",
     });
-    expect(res.body.user).not.toHaveProperty("role");
+    expect(res.body.user).toHaveProperty("role", "user");
     expect(userModel.create).toHaveBeenCalledWith(
       expect.objectContaining({
         email: "ada@example.com",

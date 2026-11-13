@@ -57,6 +57,19 @@ export const aiRateLimiter = createRateLimiter({
   keyGenerator: (req) => req.userId ?? ipKeyGenerator(req.ip ?? ""),
 });
 
+// Dedicated limiter for the /metrics scrape endpoint. Generous on purpose:
+// a 10s scrape interval is ~6 requests/min, so 120/min leaves ample headroom
+// while still bounding abuse of the authenticated metrics surface.
+const METRICS_RATE_LIMIT_WINDOW_MS = 60 * 1000;
+const METRICS_RATE_LIMIT_MAX = 120;
+export const metricsRateLimiter = createRateLimiter({
+  name: "metrics",
+  windowMs: METRICS_RATE_LIMIT_WINDOW_MS,
+  limit: METRICS_RATE_LIMIT_MAX,
+  message: { error: "Too many requests, please try again later." },
+  keyGenerator: (req) => ipKeyGenerator(req.ip ?? ""),
+});
+
 // Baseline limiter for the whole API. Authorization is cheap, but every route
 // handler still needs a baseline because it runs after authentication; mounted
 // before the routers so it covers handlers grouped under /api. The skip keeps

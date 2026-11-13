@@ -13,7 +13,7 @@ import '../../../../core/widgets/app_loading.dart';
 import '../../../../core/widgets/app_snackbar.dart';
 import '../../../../core/widgets/app_status_badge.dart';
 import '../../../../core/widgets/responsive_page_layout.dart';
-import '../../../authentication/models/session.dart';
+import '../../../authentication/data/session_store.dart';
 import '../../../home/data/task_store.dart';
 import '../../data/groups_repository.dart';
 import '../../models/group.dart';
@@ -85,6 +85,11 @@ class _GroupsPageState extends State<GroupsPage> {
     } catch (error) {
       if (!mounted) return;
       final unauthorized = error is ApiException && error.isUnauthorized;
+      if (unauthorized) {
+        try {
+          await SessionStore().clear();
+        } catch (_) {}
+      }
       setState(() {
         _unauthorized = unauthorized;
         _error = unauthorized
@@ -310,7 +315,9 @@ class _GroupsPageState extends State<GroupsPage> {
         action: AppButton(
           label: expired ? 'Sign in again' : 'Sign in',
           icon: Icons.login_rounded,
-          onPressed: () => Navigator.pushNamed(context, AppRoutes.login),
+          onPressed: () =>
+              Navigator.of(context)
+                  .pushNamedAndRemoveUntil(AppRoutes.login, (route) => false),
         ),
       ),
     );

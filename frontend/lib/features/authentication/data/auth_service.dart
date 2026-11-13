@@ -92,6 +92,32 @@ class AuthService {
 
   Future<Session?> restore() => _sessions.read();
 
+  /// Validates [session] against the backend. Returns the session when valid,
+  /// or `null` when expired/replaced/invalid (and clears local storage).
+  Future<Session?> validateSession(Session session) async {
+    try {
+      await _api.getJson(ApiEndpoints.authMe, token: session.token);
+      return session;
+    } on ApiException catch (e) {
+      if (e.isUnauthorized) {
+        await clearSession();
+        return null;
+      }
+      // Transient/network errors: keep local session and let feature calls retry.
+      return session;
+    } catch (_) {
+      return session;
+    }
+  }
+
+  /// Clears local session state. Swallows storage errors to avoid blocking
+  /// auth-recovery flows.
+  Future<void> clearSession() async {
+    try {
+      await _sessions.clear();
+    } catch (_) {}
+  }
+
   /// Best-effort sign-out: tells the backend to revoke this session, then
   /// always clears local state so the device signs out even offline.
   Future<void> logout() async {
@@ -126,8 +152,8 @@ class AuthService {
   ///
   /// Registered as [ApiClient.tokenRefresher] from `main()` so API calls that
   /// hit an expired access token are retried transparently. Returns null when
-  /// renewal is impossible — no stored refresh token, or the backend rejected
-  /// it — in which case the local session is dropped so the app falls back to
+  /// renewal is impossible - no stored refresh token, or the backend rejected
+  /// it - in which case the local session is dropped so the app falls back to
   /// sign-in instead of looping on 401s.
   Future<String?> refreshSilently() async {
     Session? current;
@@ -150,7 +176,7 @@ class AuthService {
       return renewed.token;
     } on ApiException catch (error) {
       // Only an explicit rejection from the backend means the refresh token
-      // is dead (revoked, expired, replayed) — then the local session is
+      // is dead (revoked, expired, replayed) - then the local session is
       // dropped so the app falls back to sign-in instead of looping on 401s.
       // A network blip or 5xx keeps the stored session; the next attempt can
       // still succeed.
@@ -159,7 +185,7 @@ class AuthService {
         try {
           await _sessions.clear();
         } catch (_) {
-          // Best effort — the cached token state above is what matters.
+          // Best effort - the cached token state above is what matters.
         }
       }
       return null;

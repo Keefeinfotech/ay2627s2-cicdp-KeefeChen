@@ -209,6 +209,7 @@ class _ProjectsPageState extends State<ProjectsPage> {
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: 'projects-new-project-fab',
         onPressed: _createProject,
         icon: const Icon(Icons.add_rounded),
         label: const Text('New project'),

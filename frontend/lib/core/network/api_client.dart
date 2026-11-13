@@ -40,6 +40,10 @@ class ApiClient {
       _client = client ?? http.Client(),
       _timeout = timeout ?? const Duration(seconds: 12);
 
+  /// Optional app-wide hook invoked when an authenticated request receives 401.
+  /// Use to clear stale local sessions; callers still receive [ApiException].
+  static FutureOr<void> Function()? onUnauthorized;
+
   static const String defaultBaseUrl = String.fromEnvironment(
     'API_BASE_URL',
     defaultValue: 'http://localhost:3000',
@@ -158,7 +162,11 @@ class ApiClient {
 
     if (response.statusCode >= 200 && response.statusCode < 300) return;
 
-    throw _errorFor(response, _decodeBody(response.body));
+    throw await _errorFor(
+      response,
+      _decodeBody(response.body),
+      authenticated: token != null && token.isNotEmpty,
+    );
   }
 
   Map<String, String> _headers({String? token, bool json = false}) {
@@ -176,7 +184,10 @@ class ApiClient {
     Future<http.Response> Function(String? token) request,
   ) async {
     final response = await _exchange(token, request);
-    return _handleResponse(response);
+    return _handleResponse(
+      response,
+      authenticated: token != null && token.isNotEmpty,
+    );
   }
 
   /// Runs [request] with the effective token; on 401, with a renewed token.
@@ -282,7 +293,10 @@ class ApiClient {
     }
   }
 
-  Map<String, dynamic> _handleResponse(http.Response response) {
+  Future<Map<String, dynamic>> _handleResponse(
+    http.Response response, {
+    required bool authenticated,
+  }) async {
     final data = _decodeBody(response.body);
     final isSuccess = response.statusCode >= 200 && response.statusCode < 300;
 
@@ -300,12 +314,25 @@ class ApiClient {
       return data;
     }
 
-    throw _errorFor(response, data);
+    throw await _errorFor(response, data, authenticated: authenticated);
   }
 
-  ApiException _errorFor(http.Response response, Map<String, dynamic>? data) {
+  Future<ApiException> _errorFor(
+    http.Response response,
+    Map<String, dynamic>? data, {
+    required bool authenticated,
+  }) async {
     final statusCode = response.statusCode;
     final code = data?['code'] as String?;
+
+    if (statusCode == 401 && authenticated) {
+      final hook = onUnauthorized;
+      if (hook != null) {
+        try {
+          await hook();
+        } catch (_) {}
+      }
+    }
 
     // 5xx bodies are untrusted server internals. Keep the code for retry and
     // conflict logic but never render the raw message.

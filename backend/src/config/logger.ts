@@ -15,6 +15,18 @@ const logger = winston.createLogger({
   ),
 
   transports: [
+    // Always write to stdout so Render/Docker capture startup and request
+    // logs in their dashboards (12-factor). JSON keeps them machine-readable.
+    new winston.transports.Console({
+      format:
+        process.env.NODE_ENV === "production"
+          ? winston.format.json()
+          : winston.format.combine(
+              winston.format.colorize(),
+              winston.format.simple(),
+            ),
+    }),
+
     // Store application errors
     new winston.transports.File({
       filename: path.join(logDirectory, "error.log"),
@@ -27,21 +39,5 @@ const logger = winston.createLogger({
     }),
   ],
 });
-
-// Always log to stdout/stderr as well: in production the container's stdout
-// is the only place platform logs (e.g. Render) can surface startup failures.
-// Startup errors previously went exclusively to the file transports, so a
-// crash during boot showed as a bare "Exited with status 1" with no reason.
-logger.add(
-  new winston.transports.Console({
-    format:
-      process.env.NODE_ENV === "production"
-        ? winston.format.json()
-        : winston.format.combine(
-            winston.format.colorize(),
-            winston.format.simple(),
-          ),
-  }),
-);
 
 export default logger;

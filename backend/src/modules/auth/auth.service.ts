@@ -84,6 +84,7 @@ const toPublicUser = (user: IUser): PublicUser => ({
   id: String(user._id),
   ...(user.name ? { name: user.name } : {}),
   email: user.email,
+  role: user.role ?? "user",
 });
 
 // --------------------------------------------------

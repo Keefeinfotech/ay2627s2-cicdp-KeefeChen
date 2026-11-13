@@ -32,6 +32,9 @@ services:
     healthCheckPath: /api/health
     autoDeploy: true
     envVars:
+      # Render injects PORT automatically (default 10000) for web services.
+      # The app binds 0.0.0.0 on that port — do not set PORT here or the
+      # deploy will boot on one port while Render probes another.
       - key: NODE_ENV
         value: production
       - key: TRUST_PROXY

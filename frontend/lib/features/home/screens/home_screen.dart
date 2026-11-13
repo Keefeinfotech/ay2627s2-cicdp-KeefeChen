@@ -343,6 +343,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: 'home-new-task-fab',
         onPressed: _createTask,
         icon: const Icon(Icons.add_rounded),
         label: const Text('New task'),
