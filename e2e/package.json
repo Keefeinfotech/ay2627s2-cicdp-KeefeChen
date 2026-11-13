@@ -1,0 +1,17 @@
+{
+  "name": "auxilia-e2e",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Black-box end-to-end tests for the Auxilia web app and API. Runs against the docker-compose stack (or any deployed base URL).",
+  "scripts": {
+    "test": "playwright test",
+    "test:chromium": "playwright test --project=chromium",
+    "test:a11y": "playwright test tests/a11y.spec.ts",
+    "test:ui": "playwright test --ui",
+    "report": "playwright show-report"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.10.2",
+    "@playwright/test": "^1.55.0"
+  }
+}
