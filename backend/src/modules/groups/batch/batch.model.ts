@@ -105,5 +105,4 @@ batchJobSchema.index({ groupId: 1, createdAt: -1 });
 export type BatchJobRecord = InferSchemaType<typeof batchJobSchema>;
 
 export const BatchJob =
-  mongoose.models.BatchJob ??
-  mongoose.model("BatchJob", batchJobSchema);
+  mongoose.models.BatchJob ?? mongoose.model("BatchJob", batchJobSchema);
