@@ -45,7 +45,7 @@
 - [x] Run flutter analyze — No issues found
 - [x] Run flutter test — All 276 tests pass
 - [x] Run backend lint, typecheck, and tests — All 219 tests pass
-- [ ] Add seed script unit tests (verify idempotency, no duplicates on re-seed)
+- [x] Add seed script unit tests (verify idempotency, no duplicates on re-seed)
 
 ## Phase 8 - CI/CD Best Practices for PRs
 - [x] Add .github/CODEOWNERS for automatic reviewer assignment
