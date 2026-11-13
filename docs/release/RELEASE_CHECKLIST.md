@@ -1,7 +1,9 @@
 # Release Checklist
 
 Use this checklist for every tagged release. Work through it in order and keep
-the completed checklist with the release notes.
+the completed checklist with the release notes. The full testing strategy and
+test-suite inventory live in [docs/testing/TESTING_STRATEGY.md](../testing/TESTING_STRATEGY.md);
+the manual test plan is [docs/testing/MANUAL_TEST_PLAN.md](../testing/MANUAL_TEST_PLAN.md).
 
 ## 1. Prepare
 
@@ -24,11 +26,14 @@ cd backend
 npm ci
 npm run typecheck
 npm run test:coverage
+npm run test:functional
+npm run test:regression
+npm run test:ai
 npm run build
 
 cd ../frontend
 flutter pub get
-dart format --output=none --set-exit-if-changed lib test tool
+dart format --output=none --set-exit-if-changed lib test tool integration_test
 flutter analyze
 flutter test --coverage
 dart run tool/check_coverage.dart 60

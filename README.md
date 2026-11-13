@@ -146,8 +146,8 @@ Errors use `{ error, code, details? }`. Validation failures return `400` with
 | `AI_MAX_TOKENS` | `400` | Clamped to 32-4096 |
 | `AI_TIMEOUT_MS` | `15000` | Clamped to 1000-60000 |
 | `AI_RATE_LIMIT_PER_USER` | `20` | AI requests per hour per client |
-| `APP_BASE_URL` | `http://localhost:8080` | Public frontend URL used in invitation emails |
-| `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASS` / `EMAIL_FROM` | empty | Enables group invitation email delivery; without SMTP, invite codes are returned for manual delivery |
+| `APP_BASE_URL` | `http://localhost:8080` | Public frontend URL used in invitation and password-reset emails |
+| `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASS` / `EMAIL_FROM` | empty | Enables invitation and password-reset email delivery; without SMTP, invite codes are returned for manual delivery and, outside production, the reset link is printed to the backend console |
 
 Auth requests are limited to 10 per 15 minutes per client. Request bodies are
 capped at 10 kb.
@@ -160,18 +160,32 @@ inventory, deletion paths, and the AI data flow.
 
 ## Testing
 
+All testing disciplines live under [docs/testing/TESTING_STRATEGY.md](docs/testing/TESTING_STRATEGY.md);
+the manual plan is in [docs/testing/MANUAL_TEST_PLAN.md](docs/testing/MANUAL_TEST_PLAN.md).
+Run everything locally with `node scripts/run-all-tests.mjs` (add `--e2e` for the
+docker-compose stack and Playwright, `--perf` for the API load smoke).
+
 ```bash
 cd backend
 npm run typecheck
-npm run test:coverage     # 188 tests, ratchet coverage thresholds enforced
+npm run test:coverage     # 340 tests (unit, integration, contract, security,
+                          #  functional, regression, AI guardrails)
+npm run test:functional   # API journeys (black box, in-memory store)
+npm run test:regression   # incident-pinning regression tests
+npm run test:ai           # AI guardrails: injection, output schema, provider failures
+npm run test:performance  # latency/error budget smoke (p95 health < 500 ms)
 npm run build
 
 cd ../frontend
-dart format --output=none --set-exit-if-changed lib test tool
+dart format --output=none --set-exit-if-changed lib test tool integration_test
 flutter analyze
-flutter test --coverage  # 270 tests, including accessibility checks
+flutter test --coverage  # 320 tests, incl. accessibility guidelines and goldens
 dart run tool/check_coverage.dart 60
 flutter build web --release
+
+cd ../e2e                 # after: docker compose up -d --build
+npm ci && npx playwright install --with-deps
+npm test                  # smoke, API contract, a11y, first-run auth (4 browsers)
 ```
 
 Frontend tests cover the model, validation, XP/levels, repository schema
@@ -193,8 +207,16 @@ faked in tests, so no emulator is required.
 | `secret-scan` | High-confidence committed-secret patterns fail the build |
 | `backend` | `npm ci`, production audit, typecheck, tests with coverage, build; coverage artifact |
 | `frontend` | Flutter 3.47.8, `pub get`, format check, `flutter analyze`, tests with coverage, 60% line-coverage gate, web release build; coverage artifact |
+| `e2e` | `docker compose up --build` (mongo + API + nginx/Flutter web), waits for health, then Playwright across Chromium/Firefox/WebKit/mobile-chrome: smoke, black-box API contract, axe a11y scan, first-run auth path |
+| `performance` | API load smoke (`npm run test:performance`) — opt-in via manual `workflow_dispatch` |
 | `sonarqube` / `sonarqube-automatic` | SonarCloud quality gate, using CI-based analysis or Automatic Analysis |
 | `ci-summary` | Single gate for branch protection and PR review |
+
+`Jenkinsfile` at the repository root runs the same backend and frontend gates
+(npm ci, lint, tests with coverage, build; Flutter format/analyze/test, 60%
+coverage gate, web build) on a local Jenkins server, and can rebuild and
+restart the local Docker Compose stack behind a manual approval. See
+[docs/development/jenkins.md](docs/development/jenkins.md) for setup.
 
 SonarCloud analysis mode is controlled by the repository variable
 `SONAR_ANALYSIS_MODE`. It defaults to Automatic Analysis and the pipeline checks
@@ -226,8 +248,11 @@ tagging a release.
 ## Limitations
 
 - No account deletion in the app yet; contact the maintainer.
-- No Google/GitHub sign-in or password reset. The backend exposes email/password
-  signup and login only, so the login screen does not simulate those flows.
+- No Google/GitHub sign-in. Password reset is implemented end-to-end. Without
+  SMTP, non-production backends print the reset link to the server console so
+  the flow can be tested locally; production deployments must configure
+  `SMTP_HOST`/`SMTP_PORT`/`SMTP_USER`/`SMTP_PASS`/`EMAIL_FROM` to send real
+  reset emails (the link is never logged in production).
 - Signed-in users get server-side task sync with an offline queue, conflict
   detection and manual retry; writes made while signed out stay on-device.
   OS-level background sync and scheduled OS reminders are not implemented.
@@ -272,6 +297,7 @@ automatically. Prometheus scrapes the guarded `/metrics` endpoint.
 - [Docker configuration and Render deployment investigation (AUX-58, AUX-84, AUX-85)](docs/reports/AUX-58-DOCKER-RENDER-INVESTIGATION.md)
 - [Frontend/backend integration testing investigation (AUX-57, AUX-76, AUX-77)](docs/reports/AUX-57-FRONTEND-BACKEND-INTEGRATION-TESTING.md)
 - [Project plan](docs/planning/PROJECT_PLAN.md)
+- [OWASP implementation](docs/compliance/OWASP_IMPLEMENTATION.md)
 - [Release gates](docs/compliance/NFR_RELEASE_GATES.md)
 - [Release checklist](docs/release/RELEASE_CHECKLIST.md)
 - [Privacy notice](docs/compliance/PRIVACY.md)
