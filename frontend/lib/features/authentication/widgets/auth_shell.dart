@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/widgets/app_avatar.dart';
@@ -43,6 +44,97 @@ class AuthShell extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final bool canPop = showBack ?? (ModalRoute.of(context)?.canPop ?? false);
+
+    final width = MediaQuery.sizeOf(context).width;
+    final isWide = width >= 880;
+
+    if (isWide) {
+      // Wide (web/desktop) layout: brand panel on the left, form on the right.
+      return Scaffold(
+        backgroundColor: AppColors.cocoCream,
+        body: Row(
+          children: <Widget>[
+            Expanded(
+              flex: 5,
+              child: Container(
+                color: AppColors.deepNavy,
+                padding: const EdgeInsets.all(AppSpacing.xxl),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: <Widget>[
+                    const ClipOval(child: BrandMark(size: 96)),
+                    const SizedBox(height: AppSpacing.lg),
+                    Text(
+                      AppConstants.appName,
+                      style: theme.textTheme.headlineMedium?.copyWith(
+                        color: AppColors.white,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    Text(
+                      AppConstants.tagline,
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: AppColors.white.withValues(alpha: 0.8),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            Expanded(
+              flex: 6,
+              child: SafeArea(
+                child: SingleChildScrollView(
+                  padding: EdgeInsets.fromLTRB(
+                    AppSpacing.xl,
+                    AppSpacing.xxl,
+                    AppSpacing.xl,
+                    AppSpacing.xxl + MediaQuery.viewInsetsOf(context).bottom,
+                  ),
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(
+                        maxWidth: AppSizes.maxFormWidth,
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: <Widget>[
+                          Text(
+                            title,
+                            textAlign: TextAlign.center,
+                            style: theme.textTheme.headlineSmall?.copyWith(
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: AppSpacing.sm),
+                          Text(
+                            subtitle,
+                            textAlign: TextAlign.center,
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                          const SizedBox(height: AppSpacing.xl),
+                          child,
+                          if (footer != null) ...[
+                            const SizedBox(height: AppSpacing.xl),
+                            Center(child: footer),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
 
     return Scaffold(
       backgroundColor: AppColors.cocoCream,

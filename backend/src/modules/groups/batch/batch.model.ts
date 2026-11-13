@@ -96,6 +96,7 @@ const batchJobSchema = new Schema(
     timestamps: true,
     versionKey: false,
     strict: "throw",
+    suppressReservedKeysWarning: true,
   },
 );
 
