@@ -22,7 +22,9 @@ abstract final class AppTheme {
   static const ColorScheme _lightScheme = ColorScheme(
     brightness: Brightness.light,
     primary: AppColors.saffron,
-    onPrimary: AppColors.darkestNavy,
+    // Dark taupe is not dark enough to carry near-black text (2.07:1);
+    // white on taupe is ~7:1, well above WCAG AA.
+    onPrimary: Colors.white,
     primaryContainer: AppColors.lichen,
     onPrimaryContainer: AppColors.moss,
     secondary: AppColors.pacific,

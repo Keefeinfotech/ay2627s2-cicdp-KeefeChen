@@ -264,9 +264,9 @@ class TaskCard extends StatelessWidget {
       tooltip: tooltip,
       onPressed: onPressed,
       icon: Icon(icon, size: AppSizes.iconMd, color: accent),
-      visualDensity: VisualDensity.compact,
       style: IconButton.styleFrom(
-        minimumSize: const Size(40, 40),
+        // Minimum 48x48 tap target per WCAG 2.5.5 / Android guidance.
+        minimumSize: const Size(48, 48),
         padding: EdgeInsets.zero,
         foregroundColor: accent,
       ),

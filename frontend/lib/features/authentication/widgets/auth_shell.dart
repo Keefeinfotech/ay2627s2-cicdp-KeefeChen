@@ -44,6 +44,10 @@ class AuthShell extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final bool canPop = showBack ?? (ModalRoute.of(context)?.canPop ?? false);
+    // Theme-aware chrome: dark mode gets the dark canvas instead of the
+    // light greige, keeping contrast of muted/secondary text readable.
+    final bool isDark = theme.brightness == Brightness.dark;
+    final Color canvas = isDark ? AppColors.darkCanvas : AppColors.cocoCream;
 
     final width = MediaQuery.sizeOf(context).width;
     final isWide = width >= 880;
@@ -137,7 +141,7 @@ class AuthShell extends StatelessWidget {
     }
 
     return Scaffold(
-      backgroundColor: AppColors.cocoCream,
+      backgroundColor: canvas,
       appBar: AppBar(
         backgroundColor: AppColors.saffron,
         foregroundColor: AppColors.white,

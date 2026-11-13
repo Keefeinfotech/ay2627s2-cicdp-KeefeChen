@@ -6,8 +6,10 @@ import 'package:frontend/core/theme/app_typography.dart';
 
 void main() {
   test('uses the Urban Slate palette', () {
-    expect(AppColors.pacific, const Color(0xFF6B7C98));
-    expect(AppColors.moss, const Color(0xFF7B7F8A));
+    // pacific/moss were darkened to meet WCAG AA contrast (>= 4.5) on light
+    // surfaces; the hue relationships are unchanged.
+    expect(AppColors.pacific, const Color(0xFF4F5D75));
+    expect(AppColors.moss, const Color(0xFF5A5F6A));
     expect(AppColors.malachite, const Color(0xFF16A34A));
     expect(AppColors.lichen, const Color(0xFFDFE3EB));
     expect(AppColors.saffron, const Color(0xFF5E5653));
