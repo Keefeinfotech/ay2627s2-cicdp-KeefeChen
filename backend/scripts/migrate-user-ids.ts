@@ -3,7 +3,7 @@
  * Description: Migrates the users collection `_id` values from ObjectId to
  *              String.Required because auth/auth.model.ts historically used
  *              a default ObjectId _id while every other collection (and the
- *              users model in user.model.ts) uses String UUIDs — a mismatch
+ *              users model in user.model.ts) uses String UUIDs - a mismatch
  *              that broke full-document saves and logins for UUID-id users.
  *
  * Behaviour:
@@ -20,6 +20,8 @@
  *   npm run migrate:user-ids            # report only (any environment)
  *   npm run migrate:user-ids -- --apply # migrate (production needs the ALLOW flag)
  */
+
+import "dotenv/config";
 
 import { connectDatabase, disconnectDatabase } from "../src/config/database.js";
 import { isProduction } from "../src/config/environment.js";

@@ -7,7 +7,10 @@ import {
   getAppBaseUrl,
   getBcryptRounds,
   getRefreshTokenExpiresIn,
+  isProduction,
 } from "../../config/environment.js";
+
+import logger from "../../config/logger.js";
 
 import { sendPasswordResetEmail } from "../../services/email.service.js";
 
@@ -303,6 +306,44 @@ const hashResetToken = (rawToken: string): string =>
   createHash("sha256").update(rawToken).digest("hex");
 
 /**
+ * Delivers the reset link by email. When SMTP is unavailable or delivery
+ * fails, non-production environments log the link to the server console so
+ * the flow stays testable without a mail provider. The link is never logged
+ * in production.
+ */
+const deliverResetLink = async (
+  email: string,
+  resetUrl: string,
+): Promise<void> => {
+  try {
+    const delivered = await sendPasswordResetEmail(email, resetUrl);
+    if (delivered) {
+      return;
+    }
+    if (isProduction()) {
+      logger.warn("auth.password_reset.email_unavailable", {
+        message: "SMTP is not configured; the reset link was not sent.",
+      });
+      return;
+    }
+    logger.warn(
+      `SMTP is not configured. Password reset link for ${email} ` +
+        `(development fallback, do not rely on this in production): ${resetUrl}`,
+    );
+  } catch (error) {
+    logger.warn("auth.password_reset.email_failed", {
+      message: error instanceof Error ? error.message : String(error),
+    });
+    if (!isProduction()) {
+      logger.warn(
+        `Password reset email delivery failed. Reset link for ${email} ` +
+          `(development fallback): ${resetUrl}`,
+      );
+    }
+  }
+};
+
+/**
  * Handles a forgot-password request. Always returns the same message so the
  * endpoint cannot be used to enumerate registered email addresses.
  */
@@ -321,11 +362,9 @@ export const requestPasswordReset = async (input: {
   await saveUser(user);
 
   const resetUrl = `${getAppBaseUrl()}/reset-password?token=${encodeURIComponent(rawToken)}`;
-  try {
-    await sendPasswordResetEmail(email, resetUrl);
-  } catch {
-    // Do not leak whether the email was delivered — the reset link expires soon anyway.
-  }
+  // Best-effort delivery: never fails the request, so an outsider cannot
+  // probe SMTP availability or learn whether the email address exists.
+  await deliverResetLink(email, resetUrl);
 
   return { message: GENERIC_RESET_MESSAGE };
 };
