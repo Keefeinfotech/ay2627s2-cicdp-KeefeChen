@@ -23,13 +23,11 @@ enum _ApplyOutcome { applied, conflict, offline, failed }
 /// responsible for merging remote results back into the local cache.
 class SyncService {
   SyncService({
-    required ApiClient api,
+    required this._api,
     required this.ownerId,
-    required SyncTokenProvider tokenProvider,
+    required this._tokenProvider,
     SyncQueueStore? store,
-  }) : _api = api,
-       _tokenProvider = tokenProvider,
-       _store = store ?? SyncQueueStore();
+  }) : _store = store ?? SyncQueueStore();
 
   final ApiClient _api;
   final String ownerId;

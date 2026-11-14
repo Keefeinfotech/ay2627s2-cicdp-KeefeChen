@@ -5,8 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 /// The key is versioned so a future onboarding redesign can intentionally show
 /// the introduction again without clearing unrelated preferences.
 class OnboardingStore {
-  OnboardingStore({SharedPreferences? preferences})
-    : _preferences = preferences;
+  OnboardingStore({this._preferences});
 
   static const String storageKey = 'auxilia.onboarding.completed.v1';
 
