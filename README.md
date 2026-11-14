@@ -6,6 +6,14 @@ backend provides authentication and the AI endpoint.
 
 Built with Flutter, Express.js, TypeScript, MongoDB, and GitHub Actions.
 
+## Demo
+
+- Live web build: https://auxilia-web.onrender.com (placeholder - deploy via Render blueprint)
+- Demo accounts: see `docs/admin/ADMINISTRATION.md`
+- Demo video: `docs/demo/auxilia-demo.mp4` (2 min walkthrough)
+
+![Auxilia dashboard](docs/screenshots/dashboard.png)
+
 ## Prerequisites
 
 - Flutter 3.47.8 (Dart 3.13 or newer)
