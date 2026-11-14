@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'core/routing/app_router.dart';
 import 'core/theme/app_theme.dart';
+import 'core/widgets/animated_gradient_background.dart';
 
 /// Root widget for Auxilia.
 ///
@@ -21,6 +22,8 @@ class AuxiliaApp extends StatelessWidget {
       themeMode: ThemeMode.system,
       initialRoute: AppRoutes.startup,
       onGenerateRoute: AppRouter.onGenerateRoute,
+      builder: (context, child) =>
+          AnimatedGradientBackground(child: child ?? const SizedBox.shrink()),
     );
   }
 }
