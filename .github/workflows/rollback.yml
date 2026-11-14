@@ -23,16 +23,20 @@ jobs:
         with:
           ref: ${{ inputs.commit_sha }}
           fetch-depth: 0
-      - name: Force-push rollback commit
+      - name: Force-push rollback branch
+        env:
+          COMMIT_SHA: ${{ inputs.commit_sha }}
         run: |
+          set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git checkout -B rollback/${{ inputs.commit_sha }}
-          git push origin rollback/${{ inputs.commit_sha }} --force-with-lease
+          git checkout -B "rollback/${COMMIT_SHA}"
+          git push origin "rollback/${COMMIT_SHA}" --force-with-lease
       - name: Trigger Render deploy hook
         env:
           RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
         run: |
+          set -euo pipefail
           if [[ -n "$RENDER_DEPLOY_HOOK_URL" ]]; then
             curl --proto "=https" -fsSL -X POST "$RENDER_DEPLOY_HOOK_URL"
           fi

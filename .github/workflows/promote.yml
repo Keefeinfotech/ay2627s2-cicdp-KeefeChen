@@ -38,9 +38,12 @@ jobs:
             curl --proto "=https" -fsSL -X POST "$RENDER_DEPLOY_HOOK_URL"
           fi
       - name: Health check
+        env:
+          SMOKE_BASE_URL: ${{ vars.RENDER_API_BASE_URL }}
         run: |
+          set -euo pipefail
           for i in $(seq 1 30); do
-            if curl -fsS ${{ vars.RENDER_API_BASE_URL }}/api/health; then exit 0; fi
+            if curl -fsS "${SMOKE_BASE_URL}/api/health"; then exit 0; fi
             sleep 10
           done
           exit 1
