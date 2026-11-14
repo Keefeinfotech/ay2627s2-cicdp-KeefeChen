@@ -99,32 +99,43 @@ class AuthShell extends StatelessWidget {
                       constraints: const BoxConstraints(
                         maxWidth: AppSizes.maxFormWidth,
                       ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: <Widget>[
-                          Text(
-                            title,
-                            textAlign: TextAlign.center,
-                            style: theme.textTheme.headlineSmall?.copyWith(
-                              fontWeight: FontWeight.w600,
-                            ),
+                      child: Card(
+                        elevation: 0,
+                        color: AppColors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.xl),
+                          side: const BorderSide(color: AppColors.borderGrey),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(AppSpacing.xxl),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: <Widget>[
+                              Text(
+                                title,
+                                textAlign: TextAlign.center,
+                                style: theme.textTheme.headlineSmall?.copyWith(
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              const SizedBox(height: AppSpacing.sm),
+                              Text(
+                                subtitle,
+                                textAlign: TextAlign.center,
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  color: theme.colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                              const SizedBox(height: AppSpacing.xl),
+                              child,
+                              if (footer != null) ...[
+                                const SizedBox(height: AppSpacing.xl),
+                                Center(child: footer),
+                              ],
+                            ],
                           ),
-                          const SizedBox(height: AppSpacing.sm),
-                          Text(
-                            subtitle,
-                            textAlign: TextAlign.center,
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              color: theme.colorScheme.onSurfaceVariant,
-                            ),
-                          ),
-                          const SizedBox(height: AppSpacing.xl),
-                          child,
-                          if (footer != null) ...[
-                            const SizedBox(height: AppSpacing.xl),
-                            Center(child: footer),
-                          ],
-                        ],
+                        ),
                       ),
                     ),
                   ),
@@ -196,7 +207,18 @@ class AuthShell extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: AppSpacing.xl),
-                  child,
+                  Card(
+                    elevation: 0,
+                    color: AppColors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.xl),
+                      side: const BorderSide(color: AppColors.borderGrey),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(AppSpacing.xl),
+                      child: child,
+                    ),
+                  ),
                   if (footer != null) ...[
                     const SizedBox(height: AppSpacing.xl),
                     Center(child: footer),
