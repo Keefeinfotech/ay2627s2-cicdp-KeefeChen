@@ -8,10 +8,9 @@ import '../../data/repositories/reports_repository.dart';
 class ReportsController extends ChangeNotifier {
   ReportsController({
     required this.store,
-    ReportsRepository repository = const ReportsRepository(),
+    this._repository = const ReportsRepository(),
     DateTime Function()? clock,
-  }) : _repository = repository,
-       _clock = clock ?? DateTime.now {
+  }) : _clock = clock ?? DateTime.now {
     store.addListener(_storeChanged);
     _snapshot = _build();
   }

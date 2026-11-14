@@ -50,8 +50,7 @@ abstract interface class SyncAwareTaskRepository implements TaskRepository {
 }
 
 class SharedPreferencesTaskRepository implements TaskRepository {
-  SharedPreferencesTaskRepository({SharedPreferences? preferences})
-    : _preferences = preferences;
+  SharedPreferencesTaskRepository({this._preferences});
 
   static const String _keyPrefix = 'auxilia.tasks.v2.';
   static const String _legacyKeyPrefix = 'auxilia.tasks.v1.';
