@@ -18,12 +18,12 @@ jobs:
       - name: Build & run backend
         run: |
           cd backend
-          npm ci
+          npm ci --ignore-scripts
           npm run build
           node dist/index.js &
           sleep 10
       - name: ZAP Baseline Scan
-        uses: zaproxy/action-baseline@v0.15.0
+        uses: zaproxy/action-baseline@6c5a007541891231cd9e0ddec25d4f25c59c9874 # v0.15.0
         with:
           target: 'http://localhost:3000'
           rules_file_name: '.zap/rules.tsv'
