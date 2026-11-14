@@ -1,0 +1,35 @@
+name: SBOM & SLSA Provenance
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+  attestations: write
+
+jobs:
+  sbom:
+    name: Generate SBOM & Attest
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - name: Generate SBOM (Syft)
+        uses: anchore/sbom-action@v0
+        with:
+          path: .
+          format: spdx-json
+          output-file: sbom.spdx.json
+      - name: Upload SBOM
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: sbom
+          path: sbom.spdx.json
+      - name: Attest SBOM (SLSA)
+        uses: actions/attest-sbom@v2
+        with:
+          subject-path: backend/package.json
+          sbom-path: sbom.spdx.json
