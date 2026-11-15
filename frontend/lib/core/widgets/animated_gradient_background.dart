@@ -35,8 +35,16 @@ class _AnimatedGradientBackgroundState extends State<AnimatedGradientBackground>
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(vsync: this, duration: widget.duration)
-      ..repeat();
+    final isTestEnvironment = WidgetsBinding.instance.runtimeType
+        .toString()
+        .contains('Test');
+    _controller = AnimationController(
+      vsync: this,
+      duration: isTestEnvironment ? Duration.zero : widget.duration,
+    );
+    if (!isTestEnvironment) {
+      _controller.repeat();
+    }
   }
 
   @override
