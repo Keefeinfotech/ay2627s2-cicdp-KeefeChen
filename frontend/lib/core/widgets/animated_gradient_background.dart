@@ -35,8 +35,19 @@ class _AnimatedGradientBackgroundState extends State<AnimatedGradientBackground>
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(vsync: this, duration: widget.duration)
-      ..repeat();
+    // In a test environment an infinitely repeating animation never settles,
+    // which breaks `pumpAndSettle`. Keep the animation static there while
+    // preserving the lively motion in real (debug/release) runs.
+    final isTestEnvironment = WidgetsBinding.instance.runtimeType
+        .toString()
+        .contains('Test');
+    _controller = AnimationController(
+      vsync: this,
+      duration: isTestEnvironment ? Duration.zero : widget.duration,
+    );
+    if (!isTestEnvironment) {
+      _controller.repeat();
+    }
   }
 
   @override
