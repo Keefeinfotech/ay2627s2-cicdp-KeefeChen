@@ -47,6 +47,10 @@ vi.mock("../../src/modules/tasks/task.model.js", async () => {
         !(condition instanceof Date)
       ) {
         for (const [op, operand] of Object.entries(condition)) {
+          if (op === "$eq") {
+            if (value !== operand) return false;
+            continue;
+          }
           if (op === "$in") {
             if (!(operand as any[]).includes(value)) return false;
             continue;

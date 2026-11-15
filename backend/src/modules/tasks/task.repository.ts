@@ -46,8 +46,8 @@ export const taskRepository = {
     userId: string,
   ): Promise<TaskRecord | null> {
     return Task.findOne({
-      _id: taskId,
-      userId,
+      _id: { $eq: taskId },
+      userId: { $eq: userId },
       deletedAt: null,
     })
       .lean<TaskRecord>()
@@ -183,8 +183,8 @@ export const taskRepository = {
   ): Promise<TaskRecord | null> {
     const { expectedUpdatedAt, ...fields } = input;
     const filter: Record<string, unknown> = {
-      _id: taskId,
-      userId,
+      _id: { $eq: taskId },
+      userId: { $eq: userId },
       deletedAt: null,
     };
 
@@ -212,8 +212,8 @@ export const taskRepository = {
   async softDeleteForUser(taskId: string, userId: string): Promise<boolean> {
     const result = await Task.updateOne(
       {
-        _id: taskId,
-        userId,
+        _id: { $eq: taskId },
+        userId: { $eq: userId },
         deletedAt: null,
       },
       {

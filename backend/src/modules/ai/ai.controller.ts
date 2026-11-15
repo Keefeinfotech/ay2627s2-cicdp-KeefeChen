@@ -90,8 +90,8 @@ export const completeTaskAi = async (
       res.status(401).json({ message: "Unauthenticated" });
       return;
     }
-    const { taskId } = req.body as { taskId?: string };
-    if (!taskId) {
+    const { taskId } = req.body as { taskId?: unknown };
+    if (typeof taskId !== "string" || !taskId.trim()) {
       res.status(400).json({ message: "taskId is required" });
       return;
     }
@@ -115,8 +115,8 @@ export const deleteTaskAi = async (
       res.status(401).json({ message: "Unauthenticated" });
       return;
     }
-    const { taskId } = req.body as { taskId?: string };
-    if (!taskId) {
+    const { taskId } = req.body as { taskId?: unknown };
+    if (typeof taskId !== "string" || !taskId.trim()) {
       res.status(400).json({ message: "taskId is required" });
       return;
     }

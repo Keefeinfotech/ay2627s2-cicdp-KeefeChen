@@ -25,7 +25,7 @@ jobs:
           cd backend
           npm ci --ignore-scripts
           npm run build
-          MONGODB_URI=mongodb://localhost:27017/auxilia JWT_SECRET=ci-secret PORT=3000 node dist/server.js &
+          MONGODB_URI=mongodb://localhost:27017/auxilia JWT_SECRET=ci-secret-0123456789abcdef PORT=3000 node dist/server.js &
           sleep 15
       - name: ZAP Baseline Scan
         uses: zaproxy/action-baseline@6c5a007541891231cd9e0ddec25d4f25c59c9874 # v0.15.0
