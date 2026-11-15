@@ -10,7 +10,13 @@ import "dotenv/config";
 import process from "node:process";
 import app from "./app.js";
 import { connectDatabase, disconnectDatabase } from "./config/database.js";
-import { assertRuntimeEnv, EnvError, getPort } from "./config/environment.js";
+import {
+  assertRuntimeEnv,
+  getPort,
+  isSmtpConfigured,
+  isProduction,
+  EnvError,
+} from "./config/environment.js";
 import logger from "./config/logger.js";
 
 const start = async (): Promise<void> => {
@@ -39,6 +45,17 @@ const start = async (): Promise<void> => {
     });
 
     process.exit(1);
+  }
+
+  // Surface a missing mail transport at boot: invitations and password resets
+  // would otherwise fail silently until the first user tries them.
+  if (!isSmtpConfigured()) {
+    const log = isProduction() ? logger.error : logger.warn;
+    log(
+      "SMTP is not configured (SMTP_HOST/SMTP_USER/SMTP_PASS/EMAIL_FROM); " +
+        "password reset and invitation emails will not be delivered. " +
+        "Run 'npm run smtp:test' to diagnose.",
+    );
   }
 
   // Render (and most PaaS platforms) inject PORT and probe the service on it.

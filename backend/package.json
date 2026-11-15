@@ -23,6 +23,7 @@
     "validate:collections": "tsx scripts/apply-validation-rules.ts",
     "validate:collections:dry-run": "tsx scripts/apply-validation-rules.ts --dry-run",
     "seed:demo": "tsx scripts/seed-admin-demo.ts",
+    "smtp:test": "tsx scripts/smtp-test.ts",
     "migrate:user-ids": "tsx scripts/migrate-user-ids.ts"
   },
   "keywords": [],
