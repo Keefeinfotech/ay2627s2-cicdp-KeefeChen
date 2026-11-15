@@ -45,7 +45,9 @@ enterprise-grade delivery pipeline.
 
 - Backend: prettier/ESLint/tsc, 212 tests green, coverage ratcheted,
   `npm audit` clean, Docker image Trivy-clean (non-root, pinned digest base)
-- Frontend: format/analyzer, **277 tests** green, ≥60% line coverage, web
+- Frontend: format/analyzer, **277 tests** green at release-tagging time
+  (325 after the 15 November 2026 reminders-hub work — re-measure before tagging),
+  ≥60% line coverage, web
   build (`flutter build web --release`) clean
 - CI: single required check `CI - Final Quality Gate` aggregates everything;
   SonarCloud quality gate passing; CodeQL passing

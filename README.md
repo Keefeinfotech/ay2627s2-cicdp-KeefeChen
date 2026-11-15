@@ -78,7 +78,7 @@ lib/features/
   assistant/      confirmation-first AI task assistant and chat API service
   groups/         group workspace, invitations and shared assignments
   sync/           durable offline queue, conflict resolution and status UI
-  reminders/      in-app reminder host
+  reminders/      in-app reminder host and offline-first reminder hub screen
   reports/        progress summaries and charts
   profile/        profile and local-data actions sheet
 lib/app.dart      MaterialApp shell and theme wiring
@@ -181,7 +181,7 @@ docker-compose stack and Playwright, `--perf` for the API load smoke).
 ```bash
 cd backend
 npm run typecheck
-npm run test:coverage     # 340 tests (unit, integration, contract, security,
+npm run test:coverage     # 344 tests in 45 files (unit, integration, contract, security,
                           #  functional, regression, AI guardrails)
 npm run test:functional   # API journeys (black box, in-memory store)
 npm run test:regression   # incident-pinning regression tests
@@ -192,7 +192,7 @@ npm run build
 cd ../frontend
 dart format --output=none --set-exit-if-changed lib test tool integration_test
 flutter analyze
-flutter test --coverage  # 320 tests, incl. accessibility guidelines and goldens
+flutter test --coverage  # 326 tests, incl. accessibility guidelines and goldens
 dart run tool/check_coverage.dart 60
 flutter build web --release
 
@@ -306,6 +306,8 @@ automatically. Prometheus scrapes the guarded `/metrics` endpoint.
 
 ## Documentation
 
+- [User stories and acceptance criteria](docs/planning/USER_STORIES.md)
+- [Rubric self-assessment (CA1)](docs/reports/RUBRIC_SELF_ASSESSMENT.md)
 - [User story and CI/CD report](docs/reports/USER_STORY_CICD_REPORT.md)
 - [Docker configuration and Render deployment investigation (AUX-58, AUX-84, AUX-85)](docs/reports/AUX-58-DOCKER-RENDER-INVESTIGATION.md)
 - [Frontend/backend integration testing investigation (AUX-57, AUX-76, AUX-77)](docs/reports/AUX-57-FRONTEND-BACKEND-INTEGRATION-TESTING.md)
