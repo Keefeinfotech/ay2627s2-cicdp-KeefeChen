@@ -70,9 +70,12 @@ test.describe("first-run authentication path", () => {
     if (skipVisible) {
       await skip.click();
     }
-    await expect(page.getByText("Welcome to Auxilia").first()).toBeVisible({
-      timeout: 30_000,
-    });
+    // Flutter's semantics tree groups the title and subtitle into a single
+    // node exposed through aria-label, so match the accessible name rather
+    // than a DOM text node.
+    await expect(
+      page.getByRole("group", { name: /Welcome to Auxilia/i }).first(),
+    ).toBeVisible({ timeout: 30_000 });
     await expect(
       page.getByRole("button", { name: "Sign In" }).first(),
     ).toBeVisible({ timeout: 10_000 });
