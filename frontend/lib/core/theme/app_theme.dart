@@ -161,8 +161,10 @@ abstract final class AppTheme {
           horizontal: AppSpacing.lg,
           vertical: AppSpacing.lg,
         ),
+        // 0.9 alpha keeps hint text at or above WCAG AA (>= 4.5:1) on both
+        // the light greige surfaces and the dark charcoal surfaces.
         hintStyle: textTheme.bodyMedium?.copyWith(
-          color: scheme.onSurfaceVariant.withValues(alpha: 0.7),
+          color: scheme.onSurfaceVariant.withValues(alpha: 0.9),
         ),
         labelStyle: textTheme.bodyMedium?.copyWith(
           color: scheme.onSurfaceVariant,
