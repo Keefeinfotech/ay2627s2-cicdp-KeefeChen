@@ -17,7 +17,7 @@ export class GroupController {
     next: NextFunction,
   ): Promise<void> => {
     try {
-      const userId = req.user?.id;
+      const userId = req.userId;
       if (!userId) {
         res.status(401).json({ success: false, error: "Unauthorized" });
         return;
@@ -36,15 +36,19 @@ export class GroupController {
     next: NextFunction,
   ): Promise<void> => {
     try {
-      const userId = req.user?.id;
+      const userId = req.userId;
       if (!userId) {
         res.status(401).json({ success: false, error: "Unauthorized" });
         return;
       }
 
       const query: GroupListQuery = {
-        page: req.query.page ? Number.parseInt(req.query.page as string, 10) : 1,
-        limit: req.query.limit ? Number.parseInt(req.query.limit as string, 10) : 10,
+        page: req.query.page
+          ? Number.parseInt(req.query.page as string, 10)
+          : 1,
+        limit: req.query.limit
+          ? Number.parseInt(req.query.limit as string, 10)
+          : 10,
         search: req.query.search ? (req.query.search as string) : undefined,
       };
 
@@ -61,7 +65,7 @@ export class GroupController {
     next: NextFunction,
   ): Promise<void> => {
     try {
-      const userId = req.user?.id;
+      const userId = req.userId;
       if (!userId) {
         res.status(401).json({ success: false, error: "Unauthorized" });
         return;
@@ -81,7 +85,7 @@ export class GroupController {
     next: NextFunction,
   ): Promise<void> => {
     try {
-      const userId = req.user?.id;
+      const userId = req.userId;
       if (!userId) {
         res.status(401).json({ success: false, error: "Unauthorized" });
         return;
@@ -101,7 +105,7 @@ export class GroupController {
     next: NextFunction,
   ): Promise<void> => {
     try {
-      const userId = req.user?.id;
+      const userId = req.userId;
       if (!userId) {
         res.status(401).json({ success: false, error: "Unauthorized" });
         return;

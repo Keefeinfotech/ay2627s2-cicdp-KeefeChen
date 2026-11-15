@@ -48,12 +48,7 @@ export interface GroupListQuery {
   search?: string;
 }
 
-export interface AuthenticatedUser {
-  id: string;
-  email?: string;
-  [key: string]: unknown;
-}
-
+/** Request shape after the shared authenticate middleware runs. */
 export interface AuthenticatedRequest extends Request {
-  user?: AuthenticatedUser;
+  userId?: string;
 }
