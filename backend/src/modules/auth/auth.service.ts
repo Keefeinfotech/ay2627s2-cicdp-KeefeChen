@@ -305,6 +305,8 @@ const GENERIC_RESET_MESSAGE =
 const hashResetToken = (rawToken: string): string =>
   createHash("sha256").update(rawToken).digest("hex");
 
+const sanitizeForLog = (value: string): string => value.replace(/[\r\n]/g, "");
+
 /**
  * Delivers the reset link by email. When SMTP is unavailable or delivery
  * fails, non-production environments log the link to the server console so
@@ -315,6 +317,8 @@ const deliverResetLink = async (
   email: string,
   resetUrl: string,
 ): Promise<void> => {
+  const safeEmail = sanitizeForLog(email);
+
   try {
     const delivered = await sendPasswordResetEmail(email, resetUrl);
     if (delivered) {
@@ -327,7 +331,7 @@ const deliverResetLink = async (
       return;
     }
     logger.warn(
-      `SMTP is not configured. Password reset link for ${email} ` +
+      `SMTP is not configured. Password reset link for ${safeEmail} ` +
         `(development fallback, do not rely on this in production): ${resetUrl}`,
     );
   } catch (error) {
@@ -336,7 +340,7 @@ const deliverResetLink = async (
     });
     if (!isProduction()) {
       logger.warn(
-        `Password reset email delivery failed. Reset link for ${email} ` +
+        `Password reset email delivery failed. Reset link for ${safeEmail} ` +
           `(development fallback): ${resetUrl}`,
       );
     }
