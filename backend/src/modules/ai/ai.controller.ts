@@ -46,6 +46,87 @@ export const taskDraft = async (
   }
 };
 
+export const createTaskAi = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const userId = (req as Request & { user?: { id: string } }).user?.id;
+    if (!userId) {
+      res.status(401).json({ message: "Unauthenticated" });
+      return;
+    }
+    const { title, description, dueDate, priority } = req.body as {
+      title?: string;
+      description?: string;
+      dueDate?: string;
+      priority?: "low" | "medium" | "high";
+    };
+    if (!title) {
+      res.status(400).json({ message: "title is required" });
+      return;
+    }
+    const task = await taskService.createTask(userId, {
+      title,
+      description: description ?? null,
+      dueDate: dueDate ? new Date(dueDate) : null,
+      priority: priority ?? null,
+    } as never);
+    res.status(201).json({ message: "Task created", task });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const completeTaskAi = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const userId = (req as Request & { user?: { id: string } }).user?.id;
+    if (!userId) {
+      res.status(401).json({ message: "Unauthenticated" });
+      return;
+    }
+    const { taskId } = req.body as { taskId?: string };
+    if (!taskId) {
+      res.status(400).json({ message: "taskId is required" });
+      return;
+    }
+    const task = await taskService.updateTask(userId, taskId, {
+      status: "completed",
+    } as never);
+    res.status(200).json({ message: "Task completed", task });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const deleteTaskAi = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const userId = (req as Request & { user?: { id: string } }).user?.id;
+    if (!userId) {
+      res.status(401).json({ message: "Unauthenticated" });
+      return;
+    }
+    const { taskId } = req.body as { taskId?: string };
+    if (!taskId) {
+      res.status(400).json({ message: "taskId is required" });
+      return;
+    }
+    await taskService.deleteTask(userId, taskId);
+    res.status(200).json({ message: "Task deleted" });
+  } catch (err) {
+    next(err);
+  }
+};
+
 export const tasks = async (
   req: Request,
   res: Response,
