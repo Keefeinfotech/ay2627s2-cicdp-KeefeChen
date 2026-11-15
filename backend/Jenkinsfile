@@ -1,8 +1,10 @@
 /*
  * File Name: Jenkinsfile
- * Description: Defines the CI pipeline for the Personal Secretary API.
+ * Description: Legacy minimal CI pipeline for the Auxilia backend API.
+ *              Superseded by the all-in-one pipeline at the repository root
+ *              (../Jenkinsfile); retained for reference and kept green.
  * Author: Keefe Chen
- * Date: 27 October 2026
+ * Date: 27 October 2026 (header corrected 15 November 2026)
  */
 
 pipeline {
