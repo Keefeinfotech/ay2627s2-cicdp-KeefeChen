@@ -16,6 +16,6 @@ describe("GET /api/health", () => {
 
     expect(response.status).toBe(200);
     expect(response.body.status).toBe("ok");
-    expect(response.body.service).toBe("personal-secretary-api");
+    expect(response.body.service).toBe("auxilia-api");
   });
 });
