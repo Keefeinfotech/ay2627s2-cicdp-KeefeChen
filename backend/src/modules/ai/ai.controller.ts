@@ -46,6 +46,45 @@ export const taskDraft = async (
   }
 };
 
+export const tasks = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const userId = (req as Request & { user?: { id: string } }).user?.id;
+    if (!userId) {
+      res.status(401).json({ message: "Unauthenticated" });
+      return;
+    }
+    const { status, priority, dueBefore, dueAfter } = req.query as Record<
+      string,
+      string | undefined
+    >;
+    const result = await taskService.listTasks(userId, {
+      status: status ? (status.split(",") as never) : undefined,
+      priority: priority ? (priority.split(",") as never) : undefined,
+      dueBefore: dueBefore ? new Date(dueBefore) : undefined,
+      dueAfter: dueAfter ? new Date(dueAfter) : undefined,
+      limit: 100,
+      sortBy: "dueDate",
+      sortOrder: "asc",
+    });
+    res.status(200).json({
+      count: result.items.length,
+      tasks: result.items.map((task) => ({
+        id: task._id,
+        title: task.title,
+        status: task.status,
+        priority: task.priority,
+        dueDate: task.dueDate,
+      })),
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
 export const today = async (
   req: Request,
   res: Response,

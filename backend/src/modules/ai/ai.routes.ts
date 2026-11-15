@@ -2,7 +2,7 @@ import { Router } from "express";
 import { authenticate } from "../../middleware/authenticate.js";
 import { aiRateLimiter } from "../../middleware/rateLimiter.js";
 import { validateRequest } from "../../middleware/validateRequest.js";
-import { chat, taskDraft, today } from "./ai.controller.js";
+import { chat, taskDraft, tasks, today } from "./ai.controller.js";
 import { chatSchema, taskDraftRequestSchema } from "./ai.validation.js";
 
 const router = Router();
@@ -28,5 +28,6 @@ router.post(
 );
 
 router.get("/today", authenticate, aiRateLimiter, today);
+router.get("/tasks", authenticate, aiRateLimiter, tasks);
 
 export default router;
