@@ -2,10 +2,6 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 
-/// A lively, animated gradient background that slowly shifts colours.
-///
-/// Wrap any screen (or the app root) to give a dynamic, energetic feel
-/// instead of a flat static colour. Colours cycle smoothly on a loop.
 class AnimatedGradientBackground extends StatefulWidget {
   const AnimatedGradientBackground({
     super.key,
