@@ -1,0 +1,49 @@
+name: Promote - Staging to Production
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: "Image tag / commit SHA to promote"
+        required: true
+        type: string
+      environment:
+        description: "Target environment"
+        required: true
+        type: choice
+        options: [staging, production]
+
+permissions:
+  contents: read
+  deployments: write
+
+jobs:
+  promote:
+    name: Promote to ${{ inputs.environment }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment:
+      name: ${{ inputs.environment }}
+      url: ${{ vars.RENDER_API_BASE_URL }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ inputs.image_tag }}
+      - name: Trigger deploy hook
+        env:
+          RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+        run: |
+          set -euo pipefail
+          if [[ -n "$RENDER_DEPLOY_HOOK_URL" ]]; then
+            curl --proto "=https" -fsSL -X POST "$RENDER_DEPLOY_HOOK_URL"
+          fi
+      - name: Health check
+        env:
+          SMOKE_BASE_URL: ${{ vars.RENDER_API_BASE_URL }}
+        run: |
+          set -euo pipefail
+          for i in $(seq 1 30); do
+            if curl -fsS "${SMOKE_BASE_URL}/api/health"; then exit 0; fi
+            sleep 10
+          done
+          exit 1

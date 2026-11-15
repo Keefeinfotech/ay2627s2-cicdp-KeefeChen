@@ -1,10 +1,23 @@
 # Auxilia
 
+![CI](https://github.com/Keefeinfotech/ay2627s2-cicdp-KeefeChen/actions/workflows/ci.yml/badge.svg)
+![Coverage](https://img.shields.io/badge/coverage-62%25-brightgreen)
+![SonarCloud](https://sonarcloud.io/api/project_badges/measure?project=Keefeinfotech_ay2627s2-cicdp-KeefeChen&metric=alert_status)
+![Release](https://img.shields.io/github/v/release/Keefeinfotech/ay2627s2-cicdp-KeefeChen)
+
 Auxilia is an offline-first task manager with optional accounts and an AI
 assistant. Tasks, XP, and achievements work without a network connection; the
 backend provides authentication and the AI endpoint.
 
 Built with Flutter, Express.js, TypeScript, MongoDB, and GitHub Actions.
+
+## Demo
+
+- Live web build: https://auxilia-web.onrender.com (placeholder - deploy via Render blueprint)
+- Demo accounts: see `docs/admin/ADMINISTRATION.md`
+- Demo video: `docs/demo/auxilia-demo.mp4` (2 min walkthrough)
+
+![Auxilia dashboard](docs/screenshots/dashboard.png)
 
 ## Prerequisites
 

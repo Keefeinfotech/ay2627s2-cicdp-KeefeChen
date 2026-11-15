@@ -38,7 +38,7 @@ class SyncQueueData {
 /// must never make the user's tasks unreadable, and a corrupt cache must never
 /// make pending changes disappear.
 class SyncQueueStore {
-  SyncQueueStore({SharedPreferences? preferences}) : _preferences = preferences;
+  SyncQueueStore({this._preferences});
 
   static const String _keyPrefix = 'auxilia.sync.queue.v1.';
   static const int schemaVersion = 1;

@@ -313,7 +313,7 @@ jobs:
         run: flutter test --coverage
 
       - name: Enforce coverage threshold
-        run: dart run tool/check_coverage.dart 60
+        run: dart run tool/check_coverage.dart 62
 
       - name: Build Flutter web
         run: flutter build web --release

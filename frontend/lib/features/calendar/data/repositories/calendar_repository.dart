@@ -38,9 +38,8 @@ class CalendarWriteResult {
 /// deadlines. If the API is unavailable, local events are still shown instead
 /// of replacing the screen with a hard failure.
 class CalendarRepository {
-  CalendarRepository({required TaskStore store, CalendarApiDataSource? api})
-    : _store = store,
-      _api = api ?? CalendarApiDataSource();
+  CalendarRepository({required this._store, CalendarApiDataSource? api})
+    : _api = api ?? CalendarApiDataSource();
 
   final TaskStore _store;
   final CalendarApiDataSource _api;

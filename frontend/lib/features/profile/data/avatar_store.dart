@@ -10,8 +10,7 @@ import '../../../core/models/avatar_style.dart';
 /// The store is a [ChangeNotifier] so the sidebar, dashboard and profile can
 /// all reflect a change immediately without a global singleton.
 class AvatarStore extends ChangeNotifier {
-  AvatarStore({required this.ownerId, SharedPreferences? preferences})
-    : _preferences = preferences;
+  AvatarStore({required this.ownerId, this._preferences});
 
   static const String _keyPrefix = 'auxilia.avatar.v1.';
   static const int schemaVersion = 1;

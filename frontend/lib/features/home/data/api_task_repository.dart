@@ -28,12 +28,11 @@ class ApiTaskRepository implements SyncAwareTaskRepository {
     SessionStore? sessions,
     ApiClient? api,
     SharedPreferences? preferences,
-    SyncQueueStore? queueStore,
+    this._queueStore,
   }) : _tokenValue = token,
        _sessions = token == null ? (sessions ?? SessionStore()) : null,
        _api = api ?? ApiClient(),
-       _cache = SharedPreferencesTaskRepository(preferences: preferences),
-       _queueStore = queueStore;
+       _cache = SharedPreferencesTaskRepository(preferences: preferences);
 
   final String? _tokenValue;
   final SessionStore? _sessions;
