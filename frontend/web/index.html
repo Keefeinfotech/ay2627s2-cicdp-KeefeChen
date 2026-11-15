@@ -22,27 +22,35 @@
   <meta name="referrer" content="strict-origin-when-cross-origin">
 
   <!--
-    Content Security Policy for the Flutter web build.
+    Content Security Policy is served as an HTTP header from the production
+    host (frontend/nginx.conf) instead of a <meta> tag here. Keep it that way:
 
-    * Scripts stay same-origin; the only third-party scripts are Flutter
-      CanvasKit from gstatic.com and Cloudflare Turnstile.
-    * CanvasKit/WASM needs 'wasm-unsafe-eval'. Release builds do not require
-      'unsafe-eval'; keep it out so injected strings cannot be evaluated.
-    * Flutter renders through inline styles via JavaScript (element.style),
-      which CSP style-src does not restrict. No 'unsafe-inline' needed.
+    * Local debug sessions (`flutter run -d chrome`) inject inline bootstrap
+      scripts (the dwds debug client, e.g. `window.$dartRunMain();`) that a
+      <meta> CSP would block, leaving a blank page with a broken debug
+      session. A static <meta> tag cannot issue per-response nonces, so it
+      cannot allow the debug bootstrap while staying strict for release.
+      The backend follows the same prod-only pattern (helmet CSP disabled
+      in development).
+    * Meta tags cannot set frame-ancestors or HSTS anyway, so the nginx
+      header is the effective enforcement point regardless.
+    * Keep the header CSP strict: script-src without 'unsafe-inline' or
+      'unsafe-eval'. 'wasm-unsafe-eval' is required for the CanvasKit WASM
+      engine and is not the same directive as 'unsafe-eval'. Styles allow
+      'unsafe-inline' (Flutter injects <style> elements at boot). Fonts
+      allow fonts.gstatic.com for the Roboto WOFF2 fetch Flutter makes at
+      runtime; without it the page renders blank on Firefox.
     * API calls are limited to the backend origin (localhost in dev) plus
       gstatic.com for CanvasKit and challenges.cloudflare.com for Turnstile.
-      Do not use 'https:' wildcard as it allows connections to any HTTPS
+      Do not use an 'https:' wildcard as it allows connections to any HTTPS
       domain.
 
-    Serve these headers from the production host as well (meta tags cannot set
-    frame-ancestors or HSTS):
+    The production host also serves:
       Content-Security-Policy: frame-ancestors 'none'
       Strict-Transport-Security: max-age=31536000; includeSubDomains
       X-Content-Type-Options: nosniff
       Referrer-Policy: strict-origin-when-cross-origin
   -->
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; script-src 'self' 'wasm-unsafe-eval' https://challenges.cloudflare.com https://www.gstatic.com; style-src 'self'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' blob:; connect-src 'self' http://localhost:3000 http://127.0.0.1:3000 https://www.gstatic.com https://challenges.cloudflare.com; frame-src https://challenges.cloudflare.com; worker-src 'self' blob:;">
 
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">

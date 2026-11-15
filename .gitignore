@@ -131,3 +131,14 @@ app.*.symbols
 !**/ios/**/default.perspectivev3
 !/packages/flutter_tools/test/data/dart_dependencies_test/**/.packages
 !/dev/ci/**/Gemfile.lock
+# Playwright (e2e)
+playwright-report/
+test-results/
+**/playwright-report/
+**/test-results/
+
+# One-off local strays that must not be committed
+analyze_result.json
+**/pubspec.lock.backup
+**/*.iml
+

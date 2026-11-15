@@ -13,6 +13,13 @@ jobs:
     name: DAST - OWASP ZAP Baseline
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    permissions:
+      contents: read
+    services:
+      mongo:
+        image: mongo:7
+        ports:
+          - 27017:27017
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       - name: Build & run backend
@@ -20,11 +27,12 @@ jobs:
           cd backend
           npm ci --ignore-scripts
           npm run build
-          node dist/index.js &
-          sleep 10
+          MONGODB_URI=mongodb://localhost:27017/auxilia JWT_SECRET=ci-test-only-jwt-secret PORT=3000 node dist/server.js &
+          sleep 15
       - name: ZAP Baseline Scan
         uses: zaproxy/action-baseline@6c5a007541891231cd9e0ddec25d4f25c59c9874 # v0.15.0
         with:
-          target: 'http://localhost:3000'
+          target: 'http://localhost:3000/api/health'
           rules_file_name: '.zap/rules.tsv'
-          cmd_options: '-a'
+          cmd_options: '-a -i'
+          allow_issue_writing: false

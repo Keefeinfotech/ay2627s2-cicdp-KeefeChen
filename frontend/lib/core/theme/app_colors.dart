@@ -16,11 +16,14 @@ abstract final class AppColors {
   // Urban Slate palette
   // ---------------------------------------------------------------------------
 
-  /// Steel blue — links, focus rings, selections and quiet accents.
-  static const Color pacific = Color(0xFF6B7C98);
+  /// Steel blue - links, focus rings, selections and quiet accents.
+  /// Darkened to #4F5D75 so link text meets WCAG AA (>= 4.5) on light surfaces.
+  static const Color pacific = Color(0xFF4F5D75);
 
-  /// Slate grey — secondary text, captions and muted accents.
-  static const Color moss = Color(0xFF7B7F8A);
+  /// Slate grey - secondary text, captions and muted accents.
+  /// Darkened to #5A5F6A so secondary text meets WCAG AA (>= 4.5) on
+  /// greige, white and selected-row tints.
+  static const Color moss = Color(0xFF5A5F6A);
 
   /// Success green — completion states and positive indicators.
   static const Color malachite = Color(0xFF16A34A);

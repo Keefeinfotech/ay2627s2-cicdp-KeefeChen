@@ -48,6 +48,10 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
 
+  # Device/web end-to-end testing (drives the real app on a device or web).
+  integration_test:
+    sdk: flutter
+
   # Static analysis and linting.
   flutter_lints: ^6.0.0
 

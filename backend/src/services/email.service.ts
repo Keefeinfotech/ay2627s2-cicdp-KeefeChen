@@ -1,6 +1,7 @@
 import nodemailer, { type Transporter } from "nodemailer";
 
 import { isSmtpConfigured } from "../config/environment.js";
+import logger from "../config/logger.js";
 
 const smtpPort = Number(process.env.SMTP_PORT || 587);
 
@@ -38,6 +39,10 @@ export async function sendPasswordResetEmail(
   resetUrl: string,
 ): Promise<boolean> {
   if (!isSmtpConfigured()) {
+    logger.warn(
+      "email.smtp_not_configured: password reset link was not sent. " +
+        "Set SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS and EMAIL_FROM to enable email delivery.",
+    );
     return false;
   }
 
@@ -132,6 +137,10 @@ export async function sendGroupInvitationEmail(input: {
   role: string;
 }): Promise<boolean> {
   if (!isSmtpConfigured()) {
+    logger.warn(
+      "email.smtp_not_configured: invitation email was not sent. " +
+        "Set SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS and EMAIL_FROM to enable email delivery.",
+    );
     return false;
   }
 

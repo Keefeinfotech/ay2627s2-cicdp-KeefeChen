@@ -9,7 +9,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/reminder_store.dart';
 
 class RemindersScreen extends ConsumerWidget {
-  const RemindersScreen({super.key});
+  const RemindersScreen({super.key, this.store});
+
+  final dynamic store;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
