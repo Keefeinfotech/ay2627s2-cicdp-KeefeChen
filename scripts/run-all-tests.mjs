@@ -58,11 +58,21 @@ run("Backend: lint (typecheck + eslint)", npmCmd, ["run", "lint"], backend);
 run("Backend: tests", npmCmd, ["test"], backend);
 
 if (wantsPerf) {
-  run("Backend: performance smoke", npmCmd, ["run", "test:performance"], backend);
+  run(
+    "Backend: performance smoke",
+    npmCmd,
+    ["run", "test:performance"],
+    backend,
+  );
 }
 
 // Frontend
-run("Frontend: static analysis", flutterCmd, ["analyze", "--no-fatal-infos"], frontend);
+run(
+  "Frontend: static analysis",
+  flutterCmd,
+  ["analyze", "--no-fatal-infos"],
+  frontend,
+);
 run("Frontend: tests", flutterCmd, ["test"], frontend);
 
 // E2E against the docker-compose stack
@@ -79,14 +89,29 @@ if (wantsE2E) {
     root,
   );
   run("E2E: npm install", npmCmd, ["ci"], e2e);
-  run("E2E: install browsers", npxCmd, ["playwright", "install", "--with-deps", "chromium"], e2e);
-  run("E2E: playwright (chromium)", npxCmd, ["playwright", "test", "--project=chromium"], e2e);
+  run(
+    "E2E: install browsers",
+    npxCmd,
+    ["playwright", "install", "--with-deps", "chromium"],
+    e2e,
+  );
+  run(
+    "E2E: playwright (chromium)",
+    npxCmd,
+    ["playwright", "test", "--project=chromium"],
+    e2e,
+  );
   run("E2E: stack down", docker, ["compose", "down"], root);
 }
 
 // Post-deployment smoke checks against a deployed environment
 if (smokeUrl) {
-  run("Smoke: post-deploy checks", process.execPath, [path.join(root, "scripts", "smoke-test.mjs"), smokeUrl], root);
+  run(
+    "Smoke: post-deploy checks",
+    process.execPath,
+    [path.join(root, "scripts", "smoke-test.mjs"), smokeUrl],
+    root,
+  );
 }
 
 // Summary
@@ -96,5 +121,9 @@ for (const { label, ok, durationS } of results) {
   console.log(`${ok ? "PASS" : "FAIL"}  ${durationS.padStart(6)}s  ${label}`);
   if (!ok) failed += 1;
 }
-console.log(failed === 0 ? "\nAll selected suites passed." : `\n${failed} suite(s) failed.`);
+console.log(
+  failed === 0
+    ? "\nAll selected suites passed."
+    : `\n${failed} suite(s) failed.`,
+);
 process.exit(failed === 0 ? 0 : 1);
