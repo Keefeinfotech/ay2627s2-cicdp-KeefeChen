@@ -55,7 +55,10 @@ const activeSession = (sessionId: string, userId: string) => ({
 });
 
 const authenticate = (userId = "regression-user-1"): string => {
-  const { token, sessionId } = signAccessToken(userId, "regression@example.com");
+  const { token, sessionId } = signAccessToken(
+    userId,
+    "regression@example.com",
+  );
   userModel.findById.mockReturnValue(
     queryResult({ _id: userId, email: "regression@example.com", role: "user" }),
   );
@@ -132,9 +135,8 @@ describe("regression: refresh-token replay revocation (4c40f63)", () => {
       .send({ email: "ada@example.com", password });
     expect(login.status).toBe(200);
 
-    const { parseRefreshToken, hashRefreshToken } = await import(
-      "../../src/shared/utils/refreshTokens.js"
-    );
+    const { parseRefreshToken, hashRefreshToken } =
+      await import("../../src/shared/utils/refreshTokens.js");
     const original = parseRefreshToken(login.body.refreshToken)!;
 
     // Session row as it exists *after* a first refresh rotated the secret:
@@ -176,21 +178,16 @@ describe("regression: password policy (auth hardening)", () => {
     ["short1!A", "12"],
     ["NOLOWERCASE1!", "lowercase"],
     ["NoSpecial123", "special character"],
-  ])(
-    "rejects %s with a 400 validation error",
-    async (candidate) => {
-      const res = await request(app)
-        .post("/api/auth/signup")
-        .send({
-          name: "Ada",
-          email: "policy@example.com",
-          password: candidate,
-        });
+  ])("rejects %s with a 400 validation error", async (candidate) => {
+    const res = await request(app).post("/api/auth/signup").send({
+      name: "Ada",
+      email: "policy@example.com",
+      password: candidate,
+    });
 
-      expect(res.status).toBe(400);
-      expect(res.body.code).toBe("VALIDATION_ERROR");
-    },
-  );
+    expect(res.status).toBe(400);
+    expect(res.body.code).toBe("VALIDATION_ERROR");
+  });
 });
 
 // ==========================================
@@ -203,9 +200,8 @@ describe("regression: auth rate limiter responds with structured 429", () => {
     // rate-limit middleware itself produces the documented structure by
     // mounting a constrained limiter on a probe app.
     const { default: express } = await import("express");
-    const { createRateLimiter } = await import(
-      "../../src/middleware/rateLimiter.js"
-    );
+    const { createRateLimiter } =
+      await import("../../src/middleware/rateLimiter.js");
 
     const probe = express();
     probe.use(

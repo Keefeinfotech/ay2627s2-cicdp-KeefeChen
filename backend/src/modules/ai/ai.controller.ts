@@ -197,9 +197,7 @@ export const today = async (
       items.length === 0
         ? "You have no open tasks today. Great job!"
         : `You have ${items.length} open task(s). ` +
-          (overdue.length > 0
-            ? `${overdue.length} are overdue. `
-            : "") +
+          (overdue.length > 0 ? `${overdue.length} are overdue. ` : "") +
           "Top priorities: " +
           items
             .slice(0, 3)

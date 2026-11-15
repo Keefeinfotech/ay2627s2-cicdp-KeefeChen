@@ -24,7 +24,10 @@ test.describe("system smoke", () => {
     // WebKit (MiniBrowser on Windows CI) cannot boot Flutter's CanvasKit/WASM
     // engine reliably; it still covers HTTP/CSP/headers and the API contract
     // in the other specs. Rendering is verified on Chromium and Firefox.
-    test.skip(browserName === "webkit", "CanvasKit does not boot under WebKitGTK on CI");
+    test.skip(
+      browserName === "webkit",
+      "CanvasKit does not boot under WebKitGTK on CI",
+    );
     test.setTimeout(90_000);
     await page.goto("/", { waitUntil: "domcontentloaded" });
     // CanvasKit renders into a <canvas>; html renderer/semantics exposes
@@ -41,7 +44,8 @@ test.describe("system smoke", () => {
     // 'wasm-unsafe-eval' is required for the CanvasKit WASM engine and is
     // not the same directive as 'unsafe-eval'. Styles may use 'unsafe-inline'
     // (Flutter injects inline style elements) but scripts may not.
-    const scriptSrc = csp.split(";").find((d) => d.trim().startsWith("script-src")) ?? "";
+    const scriptSrc =
+      csp.split(";").find((d) => d.trim().startsWith("script-src")) ?? "";
     expect(scriptSrc).not.toContain("'unsafe-eval'");
     expect(scriptSrc).not.toContain("'unsafe-inline'");
   });
@@ -56,7 +60,9 @@ test.describe("system smoke", () => {
   test("SPA falls back to index.html for unknown client-side routes", async ({
     page,
   }) => {
-    const response = await page.goto("/some/deep/client/route", { waitUntil: "domcontentloaded" });
+    const response = await page.goto("/some/deep/client/route", {
+      waitUntil: "domcontentloaded",
+    });
     // Nginx serves the app shell; the router resolves the route client-side.
     expect(response).not.toBeNull();
     expect(response!.status()).toBe(200);

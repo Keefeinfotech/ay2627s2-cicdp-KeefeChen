@@ -103,9 +103,8 @@ describe("authentication journey (functional)", () => {
     // 3. Refresh the session. The live session must be found for rotation.
     // The refresh flow re-hashes the presented secret and compares it
     // against the stored hash; reuse the real utilities.
-    const { hashRefreshToken, parseRefreshToken } = await import(
-      "../../src/shared/utils/refreshTokens.js"
-    );
+    const { hashRefreshToken, parseRefreshToken } =
+      await import("../../src/shared/utils/refreshTokens.js");
     const refreshParts = parseRefreshToken(refreshToken)!;
     const storedHash = hashRefreshToken(refreshParts.secret);
     sessionModel.findById.mockReturnValue(

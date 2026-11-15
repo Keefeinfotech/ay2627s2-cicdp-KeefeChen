@@ -14,7 +14,8 @@
  */
 
 process.env.NODE_ENV = "test"; // skips the baseline API rate limiter
-process.env.JWT_SECRET = process.env.JWT_SECRET ?? "perf-test-secret-value-1234567890";
+process.env.JWT_SECRET =
+  process.env.JWT_SECRET ?? "perf-test-secret-value-1234567890";
 process.env.BCRYPT_ROUNDS = "10";
 process.env.AUTH_RATE_LIMIT_MAX = "100000";
 process.env.AI_RATE_LIMIT_PER_USER = "100000";
@@ -82,7 +83,8 @@ const run = async (): Promise<void> => {
     const res = await fetch(`${baseUrl}${route.path}`, {
       method: route.method,
       headers: { "content-type": "application/json" },
-      body: route.method === "POST" ? JSON.stringify({ message: "hi" }) : undefined,
+      body:
+        route.method === "POST" ? JSON.stringify({ message: "hi" }) : undefined,
     });
     await res.arrayBuffer(); // drain
     return {
@@ -120,7 +122,9 @@ const run = async (): Promise<void> => {
   server.close();
 
   console.log("\nAuxilia API — performance smoke results");
-  console.log(`duration=${DURATION_S}s concurrency=${CONCURRENCY} requests=${samples.length}\n`);
+  console.log(
+    `duration=${DURATION_S}s concurrency=${CONCURRENCY} requests=${samples.length}\n`,
+  );
   console.table(
     routes.map((route) =>
       summary(
@@ -146,7 +150,9 @@ const run = async (): Promise<void> => {
     process.exit(1);
   }
   if (healthP95 > MAX_P95_MS) {
-    console.error(`FAIL: health p95 ${healthP95.toFixed(1)}ms exceeds ${MAX_P95_MS}ms budget.`);
+    console.error(
+      `FAIL: health p95 ${healthP95.toFixed(1)}ms exceeds ${MAX_P95_MS}ms budget.`,
+    );
     process.exit(1);
   }
   console.log("PASS: latency and error budgets met.");
