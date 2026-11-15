@@ -77,7 +77,7 @@ run("Frontend: tests", flutterCmd, ["test"], frontend);
 
 // E2E against the docker-compose stack
 if (wantsE2E) {
-  const docker = isWindows ? "docker" : "docker";
+  const docker = "docker";
   run("E2E: build stack", docker, ["compose", "up", "-d", "--build"], root);
   run(
     "E2E: wait for frontend",

@@ -372,11 +372,11 @@ jobs:
 
       - name: Install E2E dependencies
         working-directory: e2e
-        run: npm ci
+        run: npm ci --ignore-scripts
 
       - name: Install Playwright browsers
         working-directory: e2e
-        run: npx playwright install --with-deps
+        run: npx --yes playwright@1.55.0 install --with-deps
 
       - name: Run Playwright E2E tests
         working-directory: e2e
