@@ -124,11 +124,17 @@ class ReminderSection extends StatelessWidget {
     super.key,
     required this.store,
     this.onOpenTask,
+    this.onViewAll,
     this.maxItems = 3,
   });
 
   final TaskStore store;
   final ValueChanged<Task>? onOpenTask;
+
+  /// Optional callback for the header's "View all" action. When null the
+  /// action is hidden, keeping the section usable in contexts without a
+  /// navigator (for example widget tests).
+  final VoidCallback? onViewAll;
   final int maxItems;
 
   @override
@@ -172,6 +178,17 @@ class ReminderSection extends StatelessWidget {
                   color: scheme.onSurfaceVariant,
                 ),
               ),
+              if (onViewAll != null) ...[
+                const SizedBox(width: AppSpacing.sm),
+                TextButton(
+                  onPressed: onViewAll,
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    minimumSize: const Size(0, AppSizes.touchTarget),
+                  ),
+                  child: const Text('View all'),
+                ),
+              ],
             ],
           ),
           const SizedBox(height: AppSpacing.xs),

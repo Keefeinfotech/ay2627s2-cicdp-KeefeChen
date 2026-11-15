@@ -83,35 +83,38 @@ class StatusBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final Color background = filled ? color : color.withValues(alpha: 0.1);
-    final Color foreground = filled ? Colors.white : color;
+    final Color foreground = filled ? AppColors.white : color;
 
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.sm,
-        vertical: 3,
-      ),
-      decoration: BoxDecoration(
-        color: background,
-        borderRadius: BorderRadius.circular(AppRadius.pill),
-        border: Border.all(
-          color: filled ? color : color.withValues(alpha: 0.2),
+    return Semantics(
+      label: label,
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.sm,
+          vertical: 3,
         ),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          if (icon != null) ...[
-            Icon(icon, size: 12, color: foreground),
-            const SizedBox(width: 4),
-          ],
-          Text(
-            label,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: Theme.of(context).textTheme.labelSmall
-                ?.copyWith(color: foreground, fontWeight: FontWeight.w600),
+        decoration: BoxDecoration(
+          color: background,
+          borderRadius: BorderRadius.circular(AppRadius.pill),
+          border: Border.all(
+            color: filled ? color : color.withValues(alpha: 0.2),
           ),
-        ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            if (icon != null) ...[
+              Icon(icon, size: 12, color: foreground),
+              const SizedBox(width: 4),
+            ],
+            Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.labelSmall
+                  ?.copyWith(color: foreground, fontWeight: FontWeight.w600),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -137,7 +140,7 @@ class CompletionBar extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
 
     return Semantics(
-      label: label,
+      label: label ?? '${(value.clamp(0.0, 1.0) * 100).round()}% complete',
       child: ClipRRect(
         borderRadius: BorderRadius.circular(height),
         child: LinearProgressIndicator(

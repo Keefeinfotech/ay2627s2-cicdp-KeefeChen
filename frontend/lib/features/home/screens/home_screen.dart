@@ -395,7 +395,17 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
           if (_store.upcomingReminders.isNotEmpty) ...<Widget>[
             const SizedBox(height: AppSpacing.lg),
-            ReminderSection(store: _store, onOpenTask: _editTask),
+            ReminderSection(
+              store: _store,
+              onOpenTask: _editTask,
+              onViewAll: () => Navigator.of(context).pushNamed(
+                AppRoutes.reminders,
+                arguments: RemindersArgs(
+                  store: _store,
+                  session: widget.session,
+                ),
+              ),
+            ),
           ],
           const SizedBox(height: AppSpacing.xl),
           AppSectionHeader(

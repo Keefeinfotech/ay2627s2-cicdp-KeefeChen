@@ -49,6 +49,8 @@ class AppCard extends StatelessWidget {
     return Semantics(
       container: true,
       label: semanticLabel,
+      button: onTap != null,
+      enabled: onTap != null,
       child: Container(
         margin: margin,
         decoration: BoxDecoration(

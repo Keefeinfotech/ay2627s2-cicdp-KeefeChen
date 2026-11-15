@@ -48,6 +48,27 @@ class AssistantArgs {
   final Session session;
 }
 
+/// Shares the caller's live [TaskStore] with the full-screen reminders hub.
+///
+/// Navigators that already hold a store (the shell, the dashboard) pass it
+/// through so completing a reminder there is reflected everywhere without a
+/// reload. Without arguments the route builds an isolated guest store.
+class RemindersArgs {
+  const RemindersArgs({this.store, this.session});
+
+  final TaskStore? store;
+  final Session? session;
+}
+
+/// Same pattern for the groups workspace: signed-in callers pass their live
+/// store and session instead of the route building a blank guest context.
+class GroupsArgs {
+  const GroupsArgs({this.store, this.session});
+
+  final TaskStore? store;
+  final Session? session;
+}
+
 class OnboardingArgs {
   const OnboardingArgs({this.returnToPrevious = false});
 
@@ -76,6 +97,16 @@ String? _resetTokenFrom(RouteSettings settings) {
   }
 
   return null;
+}
+
+/// Returns the caller-provided store, or builds one scoped to [session]
+/// (guest when absent). Mirrors how the shell wires its own store.
+TaskStore _storeFor({TaskStore? store, Session? session}) {
+  if (store != null) return store;
+  return TaskStore(
+    repository: ApiTaskRepository(token: session?.token ?? ''),
+    ownerId: session?.email ?? AppConstants.guestOwnerId,
+  );
 }
 
 /// Central route table for the whole application.
@@ -152,20 +183,28 @@ class AppRouter {
           ),
         );
       case AppRoutes.reminders:
+        final args = settings.arguments;
+        final remindersArgs = args is RemindersArgs ? args : null;
         return MaterialPageRoute<void>(
           settings: settings,
-          builder: (_) => const RemindersScreen(),
+          builder: (_) => RemindersScreen(
+            store: _storeFor(
+              store: remindersArgs?.store,
+              session: remindersArgs?.session,
+            ),
+          ),
         );
       case AppRoutes.groups:
+        final args = settings.arguments;
+        final groupsArgs = args is GroupsArgs ? args : null;
+        final store = _storeFor(
+          store: groupsArgs?.store,
+          session: groupsArgs?.session,
+        );
         return MaterialPageRoute<void>(
           settings: settings,
-          builder: (_) => GroupsPage(
-            store: TaskStore(
-              repository: ApiTaskRepository(token: ''),
-              ownerId: AppConstants.guestOwnerId,
-            ),
-            session: null,
-          ),
+          builder: (_) =>
+              GroupsPage(store: store, session: groupsArgs?.session),
         );
       case AppRoutes.admin:
         final args = settings.arguments;
