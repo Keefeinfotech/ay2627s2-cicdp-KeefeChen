@@ -25,6 +25,6 @@ jobs:
       - name: ZAP Baseline Scan
         uses: zaproxy/action-baseline@6c5a007541891231cd9e0ddec25d4f25c59c9874 # v0.15.0
         with:
-          target: 'http://localhost:3000'
+          target: 'http://localhost:3000/api/health'
           rules_file_name: '.zap/rules.tsv'
-          cmd_options: '-a'
+          cmd_options: '-a -i'
