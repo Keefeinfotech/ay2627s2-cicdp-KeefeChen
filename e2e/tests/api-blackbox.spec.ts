@@ -5,16 +5,20 @@
  * codes, response bodies and headers only. Mirrors the contract enforced by
  * the backend suite, but against the real deployed stack (not mocks).
  *
- * Target via E2E_API_URL (default http://localhost:3000). Set
- * E2E_CAPTCHA_ENABLED=true when the target runs with Turnstile enabled
- * (e.g. production); the auth assertions then expect the captcha gate
- * instead of the underlying credential/validation contract.
+ * Target via E2E_API_URL (default http://localhost:3000). The global precheck
+ * (global-setup.ts) detects whether the target enforces the Turnstile CAPTCHA
+ * gate and writes the result to .e2e-state.json, so the same suite passes
+ * unchanged against both the local compose stack and production. Set
+ * E2E_CAPTCHA_ENABLED=true/false to override detection manually.
  *
- * A global precheck (global-setup.ts) fails fast with instructions when the
- * stack is unreachable instead of timing out every test.
+ * A global precheck (global-setup.ts) also warms up a cold-starting service
+ * (Render free tier) and fails fast with instructions when the stack is
+ * unreachable instead of timing out every test.
  */
 
 import { expect, test } from "@playwright/test";
+import { readFileSync } from "node:fs";
+import path from "node:path";
 
 const API_URL = process.env.E2E_API_URL ?? "http://localhost:3000";
 
@@ -25,8 +29,27 @@ const API_URL = process.env.E2E_API_URL ?? "http://localhost:3000";
  * evaluated, which is the correct production behaviour. The assertions below
  * therefore accept either the underlying contract or the captcha gate, and
  * always check that account enumeration is impossible.
+ *
+ * Resolution order: E2E_CAPTCHA_ENABLED env var (explicit override) >
+ * detection by the global precheck (writes .e2e-state.json) > false.
  */
-const CAPTCHA_ENABLED = process.env.E2E_CAPTCHA_ENABLED === "true";
+const STATE_PATH = path.resolve(process.cwd(), ".e2e-state.json");
+
+function resolveCaptchaEnabled(): boolean {
+  const fromEnv = process.env.E2E_CAPTCHA_ENABLED;
+  if (fromEnv === "true") return true;
+  if (fromEnv === "false") return false;
+  try {
+    const state = JSON.parse(readFileSync(STATE_PATH, "utf8")) as {
+      captchaEnabled?: boolean;
+    };
+    return state.captchaEnabled === true;
+  } catch {
+    return false;
+  }
+}
+
+const CAPTCHA_ENABLED = resolveCaptchaEnabled();
 
 test.describe("API black-box contract", () => {
   test("unknown routes return a structured 404", async ({ request }) => {

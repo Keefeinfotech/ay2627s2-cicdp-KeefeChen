@@ -136,6 +136,7 @@ playwright-report/
 test-results/
 **/playwright-report/
 **/test-results/
+e2e/.e2e-state.json
 
 # One-off local strays that must not be committed
 analyze_result.json
