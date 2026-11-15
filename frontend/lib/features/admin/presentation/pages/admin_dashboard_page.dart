@@ -429,13 +429,16 @@ class _UserStatusRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    Widget stat(String label, int value, Color tone) => Expanded(
+    Widget stat(String label, int value, Color tone, IconData icon) => AppCard(
+      padding: const EdgeInsets.all(AppSpacing.md),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
+          Icon(icon, color: tone, size: 20),
+          const SizedBox(height: AppSpacing.sm),
           Text(
             '$value',
-            style: theme.textTheme.titleLarge?.copyWith(
+            style: theme.textTheme.headlineSmall?.copyWith(
               fontWeight: FontWeight.w700,
               color: tone,
             ),
@@ -451,13 +454,55 @@ class _UserStatusRow extends StatelessWidget {
       ),
     );
 
-    return Row(
-      children: <Widget>[
-        stat('Active', stats.users.active, AppColors.malachite),
-        stat('Disabled', stats.users.disabled, AppColors.persimmon),
-        stat('Pending', stats.users.pending, AppColors.warningAmber),
-        stat('Total', stats.users.total, AppColors.trustBlue),
-      ],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final columns = constraints.maxWidth >= 600 ? 4 : 2;
+        final spacing = AppSpacing.md.toDouble();
+        final itemWidth =
+            (constraints.maxWidth - spacing * (columns - 1)) / columns;
+        return Wrap(
+          spacing: spacing,
+          runSpacing: spacing,
+          children: <Widget>[
+            SizedBox(
+              width: itemWidth,
+              child: stat(
+                'Active',
+                stats.users.active,
+                AppColors.malachite,
+                Icons.check_circle_outline_rounded,
+              ),
+            ),
+            SizedBox(
+              width: itemWidth,
+              child: stat(
+                'Disabled',
+                stats.users.disabled,
+                AppColors.persimmon,
+                Icons.block_rounded,
+              ),
+            ),
+            SizedBox(
+              width: itemWidth,
+              child: stat(
+                'Pending',
+                stats.users.pending,
+                AppColors.warningAmber,
+                Icons.hourglass_empty_rounded,
+              ),
+            ),
+            SizedBox(
+              width: itemWidth,
+              child: stat(
+                'Total',
+                stats.users.total,
+                AppColors.trustBlue,
+                Icons.group_rounded,
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }
