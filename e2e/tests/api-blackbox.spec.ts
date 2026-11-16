@@ -53,7 +53,9 @@ const CAPTCHA_ENABLED = resolveCaptchaEnabled();
 
 test.describe("API black-box contract", () => {
   test("unknown routes return a structured 404", async ({ request }) => {
-    const response = await request.get(`${API_URL}/api/__auxilia_e2e_missing__`);
+    const response = await request.get(
+      `${API_URL}/api/__auxilia_e2e_missing__`,
+    );
     expect(response.status()).toBe(404);
     const body = await response.json();
     expect(body.code).toBe("NOT_FOUND");
@@ -96,7 +98,10 @@ test.describe("API black-box contract", () => {
 
   test("login does not enumerate accounts", async ({ request }) => {
     const response = await request.post(`${API_URL}/api/auth/login`, {
-      data: { email: "definitely-not-registered@example.com", password: "WrongP@ss1234" },
+      data: {
+        email: "definitely-not-registered@example.com",
+        password: "WrongP@ss1234",
+      },
     });
     const body = await response.json();
 
@@ -119,7 +124,9 @@ test.describe("API black-box contract", () => {
   });
 
   test("error responses never leak stack traces", async ({ request }) => {
-    const response = await request.get(`${API_URL}/api/__auxilia_e2e_missing__`);
+    const response = await request.get(
+      `${API_URL}/api/__auxilia_e2e_missing__`,
+    );
     const text = await response.text();
     expect(text).not.toContain("    at ");
     expect(text).not.toContain("node_modules");

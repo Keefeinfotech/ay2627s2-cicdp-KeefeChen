@@ -1,4 +1,3 @@
-
 /*
  * File Name: app.test.ts
  * Description: Tests the Express API health endpoint.
