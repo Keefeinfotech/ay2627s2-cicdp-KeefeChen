@@ -62,7 +62,7 @@ Flutter app ── local storage (shared_preferences)  -> tasks, offline-first
 ```
 backend/   Express + TypeScript API (auth, AI, groups, sync, health)
 frontend/  Flutter application (core design system, feature modules, local storage)
-docs/      Release gates, release checklist, privacy, dependencies, reports
+docs/      Release gates, release checklist, privacy, dependencies, change management, reports
 scripts/   Non-mutating deployment smoke checks
 .github/   CI and release workflows
 ```
@@ -317,6 +317,8 @@ automatically. Prometheus scrapes the guarded `/metrics` endpoint.
 - [OWASP implementation](docs/compliance/OWASP_IMPLEMENTATION.md)
 - [Release gates](docs/compliance/NFR_RELEASE_GATES.md)
 - [Release checklist](docs/release/RELEASE_CHECKLIST.md)
+- [Change management process](docs/change-management/change-management-process.md)
+- [Change log](docs/change-management/change-log.md)
 - [Privacy notice](docs/compliance/PRIVACY.md)
 - [Dependencies](docs/release/DEPENDENCIES.md)
 - [Security policy](SECURITY.md)
