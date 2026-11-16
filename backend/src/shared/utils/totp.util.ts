@@ -1,27 +1,23 @@
-import { authenticator } from "otplib";
+import { generateSecret, generateURI, verifySync } from "otplib";
 import QRCode from "qrcode";
 import { createHash, randomBytes } from "node:crypto";
 
 const APP_NAME = "Auxilia";
 
-authenticator.options = {
-  step: 30,
-  window: 1,
-};
-
 export function generateTotpSecret(): string {
-  return authenticator.generateSecret();
+  return generateSecret();
 }
 
 export function generateTotpUri(
   email: string,
   secret: string,
 ): string {
-  return authenticator.keyuri(
-    email,
-    APP_NAME,
+  return generateURI({
+    issuer: APP_NAME,
+    label: email,
     secret,
-  );
+    period: 30,
+  });
 }
 
 export async function generateTotpQrCode(
@@ -41,10 +37,13 @@ export function verifyTotpCode(
     return false;
   }
 
-  return authenticator.verify({
+  return verifySync({
     token: code,
     secret,
-  });
+    period: 30,
+    // v12 `window: 1` allowed +/- one 30s step
+    epochTolerance: 30,
+  }).valid;
 }
 
 export function generateRecoveryCodes(
