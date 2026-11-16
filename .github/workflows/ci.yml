@@ -16,17 +16,17 @@ on:
       - develop
       - "release/**"
     paths-ignore:
-      - 'README.md'
-      - 'LICENSE'
-      - 'CONTRIBUTING.md'
-      - 'docs/**'
+      - "README.md"
+      - "LICENSE"
+      - "CONTRIBUTING.md"
+      - "docs/**"
 
   workflow_dispatch:
     inputs:
       ref:
-        description: 'Branch, tag, or SHA to run against'
+        description: "Branch, tag, or SHA to run against"
         required: false
-        default: ''
+        default: ""
 
 permissions:
   contents: read
@@ -42,7 +42,11 @@ jobs:
 
   dependency-review:
     name: Dependencies - Review
-    if: github.event_name == 'pull_request'
+    # Dependency Review requires the dependency graph over the PR diff, which
+    # is unavailable for this user-owned private repository (it demands
+    # GitHub Advanced Security). It is therefore opt-in: set the repo
+    # variable DEPENDENCY_REVIEW_ENABLED='true' once the repo is eligible.
+    if: github.event_name == 'pull_request' && vars.DEPENDENCY_REVIEW_ENABLED == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -148,14 +152,14 @@ jobs:
           exit-code: "1"
 
       - name: Upload Trivy filesystem results
-        uses: github/codeql-action/upload-sarif@9418214df1f2c4b8128c770156c409013b07d6b9 # v3.39.3
+        uses: github/codeql-action/upload-sarif@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
         if: always()
         continue-on-error: true
         with:
           sarif_file: trivy-filesystem-results.sarif
 
       - name: Upload Trivy image results
-        uses: github/codeql-action/upload-sarif@9418214df1f2c4b8128c770156c409013b07d6b9 # v3.39.3
+        uses: github/codeql-action/upload-sarif@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
         if: always()
         continue-on-error: true
         with:
@@ -198,19 +202,41 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Check whether code scanning upload is possible
+        id: codeql_upload
+        env:
+          GH_TOKEN: ${{ github.token }}
+        # Fork PRs get read-only tokens: they analyze but never upload.
+        # Same-repo PRs on private repositories cannot upload SARIF unless
+        # code scanning (GitHub Advanced Security) is available, which
+        # depends on the plan. Set the repo variable CODE_SCANNING_ENABLED
+        # to 'true' once it is and SARIF upload turns back on everywhere.
+        run: |
+          upload=always
+          if [[ "${{ github.event_name }}" == "pull_request" && \
+                "${{ github.event.pull_request.head.repo.full_name }}" != "${{ github.repository }}" ]]; then
+            upload=never
+            echo "Fork pull request: SARIF upload disabled."
+          elif [[ "$(gh api "repos/${GITHUB_REPOSITORY}" --jq '.private')" == "true" && \
+                  "${{ vars.CODE_SCANNING_ENABLED }}" != 'true' ]]; then
+            upload=never
+            echo "Private repository without GitHub Advanced Security: SARIF upload disabled; analysis still runs."
+          fi
+          echo "upload=${upload}" >> "$GITHUB_OUTPUT"
+
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@9418214df1f2c4b8128c770156c409013b07d6b9 # v3.39.3
+        uses: github/codeql-action/init@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
         with:
           languages: javascript-typescript
           queries: security-extended
 
       - name: Analyze with CodeQL
-        uses: github/codeql-action/analyze@9418214df1f2c4b8128c770156c409013b07d6b9 # v3.39.3
+        uses: github/codeql-action/analyze@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
         with:
           category: "/language:javascript-typescript"
           # Fork pull requests have read-only GITHUB_TOKEN permissions. Keep
           # the analysis job green there, but only upload SARIF when allowed.
-          upload: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository && 'never' || 'always' }}
+          upload: ${{ steps.codeql_upload.outputs.upload }}
 
   # ==========================================
   # STAGE 2: BACKEND VALIDATION

@@ -13,11 +13,10 @@ Built with Flutter, Express.js, TypeScript, MongoDB, and GitHub Actions.
 
 ## Demo
 
-- Live web build: https://auxilia-web.onrender.com (placeholder - deploy via Render blueprint)
+- Live API: https://ay2627s2-cicdp-keefechen-1.onrender.com (`/api/health` returns 200; Render free tier)
+- Web build: not currently deployed — deploy with `flutter build web --release --dart-define=API_BASE_URL=https://ay2627s2-cicdp-keefechen-1.onrender.com` to any static host
 - Demo accounts: see `docs/admin/ADMINISTRATION.md`
-- Demo video: `docs/demo/auxilia-demo.mp4` (2 min walkthrough)
-
-![Auxilia dashboard](docs/screenshots/dashboard.png)
+- Demo video: not yet published
 
 ## Prerequisites
 
@@ -62,7 +61,7 @@ Flutter app ── local storage (shared_preferences)  -> tasks, offline-first
 ```
 backend/   Express + TypeScript API (auth, AI, groups, sync, health)
 frontend/  Flutter application (core design system, feature modules, local storage)
-docs/      Release gates, release checklist, privacy, dependencies, reports
+docs/      Release gates, release checklist, privacy, dependencies, change management, reports
 scripts/   Non-mutating deployment smoke checks
 .github/   CI and release workflows
 ```
@@ -319,6 +318,8 @@ automatically. Prometheus scrapes the guarded `/metrics` endpoint.
 - [OWASP implementation](docs/compliance/OWASP_IMPLEMENTATION.md)
 - [Release gates](docs/compliance/NFR_RELEASE_GATES.md)
 - [Release checklist](docs/release/RELEASE_CHECKLIST.md)
+- [Change management process](docs/change-management/change-management-process.md)
+- [Change log](docs/change-management/change-log.md)
 - [Privacy notice](docs/compliance/PRIVACY.md)
 - [Dependencies](docs/release/DEPENDENCIES.md)
 - [Security policy](SECURITY.md)
