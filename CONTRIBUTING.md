@@ -15,18 +15,20 @@ making changes to the repository.
 
 ## Branch Naming
 
-Use one of the following prefixes:
+Use one of the prefixes enforced by the `Source Control - PR Conventions` CI
+job (see [docs/release/BRANCHING.md](docs/release/BRANCHING.md)):
 
 | Prefix | Use case |
 |--------|----------|
-| `feat/` | New feature |
-| `fix/` | Bug fix |
-| `docs/` | Documentation only |
-| `refactor/` | Code refactor without behavior change |
-| `perf/` | Performance improvement |
-| `test/` | Adding or fixing tests |
-| `chore/` | Build, CI, or maintenance |
+| `feature/` | New feature |
+| `bugfix/` | Bug fix |
 | `hotfix/` | Urgent production fix |
+| `refactor/` | Code refactor without behavior change |
+| `release/` | Release preparation |
+
+Docs, tests and chore changes ride on the closest matching prefix
+(e.g. `feature/add-tests`, `bugfix/fix-typo`); bot branches (`dependabot/`,
+`renovate/`) are exempt.
 
 ## Commit Message Format
 
@@ -46,6 +48,8 @@ Examples:
 The CI will reject PR titles that do not match this pattern.
 
 ## Pull Request Requirements
+
+This repository uses the traceable workflow: **issue → branch → pull request → CI → merge → changelog**. Every pull request must link its issue (`Closes #<issue-number>`), and changes to changelog/change-log are expected for anything user-facing or system-level.
 
 Before opening a PR, ensure:
 
@@ -72,6 +76,20 @@ The following CI checks run on every PR:
 9. **Final Quality Gate** — Aggregates all results.
 
 A PR can only be merged when all required checks pass.
+
+## Change Management
+
+All non-trivial changes follow the process in
+[docs/change-management/change-management-process.md](docs/change-management/change-management-process.md):
+
+1. File a GitHub Issue — `change_request.md` for broad-impact changes,
+   `feature_request.md` / `bug_report.md` otherwise.
+2. The maintainer approves, rejects or defers the change in the issue.
+3. Implement on a `feature/`/`bugfix/`/`hotfix/`/`refactor/` branch and open a
+   pull request that closes the issue.
+4. CI gates must pass; docs-only changes skip CI via `paths-ignore`.
+5. Update `CHANGELOG.md` and `docs/change-management/change-log.md`, then the
+   issue closes on merge.
 
 ## Review Process
 
