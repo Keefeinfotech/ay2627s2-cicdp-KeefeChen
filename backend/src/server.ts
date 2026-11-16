@@ -8,7 +8,7 @@
 
 import "dotenv/config";
 import process from "node:process";
-import type { Express } from "express";
+import app from "./app.js";
 import { connectDatabase, disconnectDatabase } from "./config/database.js";
 import {
   assertRuntimeEnv,
@@ -30,8 +30,9 @@ const start = async (): Promise<void> => {
       );
     }
     logger.info("Runtime environment validated successfully");
-    // Connect to Redis (if configured) before importing the app so the
-    // rate limiter loads its scripts against a healthy connection. Fails open.
+    // Warm the shared Redis connection (if configured) so requests issued
+    // before it completes fail fast instead of queuing, and so the limiter
+    // can self-heal its Lua scripts on first use. Never blocks boot.
     await connectRedis();
   } catch (err) {
     const message =
@@ -59,13 +60,6 @@ const start = async (): Promise<void> => {
   // Render (and most PaaS platforms) inject PORT and probe the service on it.
   // Binding to 0.0.0.0 instead of the unspecified IPv6 address keeps IPv4
   // health checks and port scans reachable regardless of dual-stack support.
-  // Imported here (not statically) so rate-limit stores are created after
-  // the best-effort Redis connect above. The explicit type is needed because
-  // NodeNext reports the CJS-emitted namespace for the dynamic import.
-  const { default: app } = (await import("./app.js")) as unknown as {
-    default: Express;
-  };
-
   const port = getPort();
   const host = "0.0.0.0";
 

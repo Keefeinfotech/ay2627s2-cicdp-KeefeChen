@@ -7,6 +7,7 @@ import {
   getAuthRateLimitMax,
 } from "../config/environment.js";
 import { getRedisClient } from "../config/redis.js";
+import logger from "../config/logger.js";
 import {
   AI_RATE_LIMIT_WINDOW_MS,
   API_RATE_LIMIT_WINDOW_MS,
@@ -22,6 +23,25 @@ interface LimiterConfig {
   keyGenerator?: (req: Request) => string;
   skip?: (req: Request) => boolean;
 }
+
+// express-rate-limit logs one error per store failure; during a Redis outage
+// that would be one line per request. Throttle to one line per 30s.
+const STORE_ERROR_LOG_THROTTLE_MS = 30_000;
+const throttledStoreLogger = (() => {
+  let lastLogAt = 0;
+  const emit = (level: "warn" | "error", args: unknown[]): void => {
+    const now = Date.now();
+    if (now - lastLogAt < STORE_ERROR_LOG_THROTTLE_MS) return;
+    lastLogAt = now;
+    logger[level]("rate_limit.store_error", {
+      detail: args.map(String).join(" "),
+    });
+  };
+  return {
+    warn: (...args: unknown[]) => emit("warn", args),
+    error: (...args: unknown[]) => emit("error", args),
+  };
+})();
 
 // When REDIS_URL is configured, counters live in Redis (namespace per limiter)
 // so configured caps are enforced across backend replicas. Otherwise each
@@ -45,7 +65,9 @@ export const createRateLimiter = (config: LimiterConfig) => {
     standardHeaders: true,
     legacyHeaders: false,
     message: config.message,
-    ...(store ? { store, passOnStoreError: true } : {}),
+    ...(store
+      ? { store, passOnStoreError: true, logger: throttledStoreLogger }
+      : {}),
     ...(config.keyGenerator ? { keyGenerator: config.keyGenerator } : {}),
     ...(config.skip ? { skip: config.skip } : {}),
     handler: (req, res, _next, options) => {

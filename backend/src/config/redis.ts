@@ -57,9 +57,9 @@ export const getRedisClient = (): Redis | null => {
   return client;
 };
 
-// Best-effort initial connect. Called at startup before the Express app is
-// imported so rate-limit scripts are loaded against a healthy connection;
-// a down Redis never blocks boot (limiters fail open instead).
+// Best-effort initial connect. Called at startup to warm the connection; a
+// down Redis never blocks boot (limiters fail open) and recovers on their
+// next successful script reload.
 export const connectRedis = async (): Promise<void> => {
   const client = getRedisClient();
   if (!client) return;

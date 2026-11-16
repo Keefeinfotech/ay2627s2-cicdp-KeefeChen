@@ -173,8 +173,7 @@ const startFakeRedis = (): Promise<{
       }
       resolve({
         url: `redis://127.0.0.1:${address.port}`,
-        close: () =>
-          new Promise<void>((done) => server.close(() => done())),
+        close: () => new Promise<void>((done) => server.close(() => done())),
       });
     });
   });
