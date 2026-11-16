@@ -22,7 +22,9 @@ const enableFlutterSemantics = async (page: Page): Promise<void> => {
     // Mobile emulation boots the Flutter engine much slower under load.
     await placeholder.waitFor({ state: "attached", timeout: 60_000 });
   } catch {
-    console.warn("flt-semantics-placeholder never appeared; semantics unavailable");
+    console.warn(
+      "flt-semantics-placeholder never appeared; semantics unavailable",
+    );
     return;
   }
   for (let attempt = 0; attempt < 20; attempt++) {
@@ -39,13 +41,16 @@ const enableFlutterSemantics = async (page: Page): Promise<void> => {
 };
 
 test.describe("first-run authentication path", () => {
-  test("boots into the intro and reaches the login screen", async ({ page }, testInfo) => {
+  test("boots into the intro and reaches the login screen", async ({
+    page,
+  }, testInfo) => {
     // Flutter web does not activate its semantics tree under Pixel 7 device
     // emulation (no screen reader exists to trip the mobile accessibility
     // path) and under WebKitGTK. The first-run flow is verified on the
     // desktop Chromium/Firefox projects instead.
     test.skip(
-      testInfo.project.name === "mobile-chrome" || testInfo.project.name === "webkit",
+      testInfo.project.name === "mobile-chrome" ||
+        testInfo.project.name === "webkit",
       "Flutter semantics unavailable on Pixel 7 emulation and WebKitGTK",
     );
     test.setTimeout(120_000);
@@ -65,9 +70,12 @@ test.describe("first-run authentication path", () => {
     if (skipVisible) {
       await skip.click();
     }
-    await expect(page.getByText("Welcome to Auxilia").first()).toBeVisible({
-      timeout: 30_000,
-    });
+    // Flutter's semantics tree groups the title and subtitle into a single
+    // node exposed through aria-label, so match the accessible name rather
+    // than a DOM text node.
+    await expect(
+      page.getByRole("group", { name: /Welcome to Auxilia/i }).first(),
+    ).toBeVisible({ timeout: 30_000 });
     await expect(
       page.getByRole("button", { name: "Sign In" }).first(),
     ).toBeVisible({ timeout: 10_000 });

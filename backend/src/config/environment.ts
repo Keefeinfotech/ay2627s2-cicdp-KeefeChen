@@ -13,6 +13,15 @@ const stripTrailingSlashes = (value: string): string => {
   return value.slice(0, end);
 };
 
+// Optional shared Redis connection string (redis://host:port or rediss://
+// for TLS, e.g. Render Key Value). Rate-limit counters are stored in Redis
+// so the configured limits behave the same no matter how many backend
+// replicas are running. Without it, limits are counted per instance.
+export const getRedisUrl = (): string | null =>
+  process.env.REDIS_URL?.trim() || null;
+
+export const isRateLimitRedisEnabled = (): boolean => Boolean(getRedisUrl());
+
 export const isProduction = (): boolean =>
   process.env.NODE_ENV === "production";
 

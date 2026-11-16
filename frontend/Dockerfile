@@ -23,7 +23,7 @@ RUN apt-get update \
     fontconfig \
   && rm -rf /var/lib/apt/lists/*
 
-RUN curl -fSL \
+RUN curl --proto '=https' --tlsv1.2 -fSL \
       "https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_${FLUTTER_VERSION}-stable.tar.xz" \
       | tar -xJ -C /opt \
   # Flutter refuses to run from a git repository owned by another user.

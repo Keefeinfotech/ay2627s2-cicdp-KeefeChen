@@ -37,13 +37,13 @@ RUN apt-get update \
 # Docker Compose v2 as a CLI plugin (pinned; Debian's package name for
 # compose varies by release, a pinned plugin does not).
 RUN mkdir -p /usr/local/lib/docker/cli-plugins \
- && curl -fSSL -o /usr/local/lib/docker/cli-plugins/docker-compose \
+ && curl --proto '=https' --tlsv1.2 -fSSL -o /usr/local/lib/docker/cli-plugins/docker-compose \
       "https://github.com/docker/compose/releases/download/v2.29.7/docker-compose-linux-x86_64" \
  && chmod +x /usr/local/lib/docker/cli-plugins/docker-compose \
  && docker compose version
 
 # Node.js (official binary tarball, x64).
-RUN curl -fsSLO "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar.xz" \
+RUN curl --proto '=https' --tlsv1.2 -fsSLO "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar.xz" \
  && tar -xJf "node-v${NODE_VERSION}-linux-x64.tar.xz" -C /usr/local --strip-components=1 \
  && rm "node-v${NODE_VERSION}-linux-x64.tar.xz" \
  && node --version \
@@ -51,7 +51,7 @@ RUN curl -fsSLO "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-
 
 # Flutter SDK (stable, Linux x64). Flutter requires git; mark the SDK
 # directory as safe so the jenkins user can run the tool.
-RUN curl -fSSL -o flutter.tar.xz \
+RUN curl --proto '=https' --tlsv1.2 -fSSL -o flutter.tar.xz \
       "https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_${FLUTTER_VERSION}-stable.tar.xz" \
  && tar -xJf flutter.tar.xz -C /opt \
  && rm flutter.tar.xz \

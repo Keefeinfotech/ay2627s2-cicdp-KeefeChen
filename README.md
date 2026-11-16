@@ -159,11 +159,15 @@ Errors use `{ error, code, details? }`. Validation failures return `400` with
 | `AI_MAX_TOKENS` | `400` | Clamped to 32-4096 |
 | `AI_TIMEOUT_MS` | `15000` | Clamped to 1000-60000 |
 | `AI_RATE_LIMIT_PER_USER` | `20` | AI requests per hour per client |
+| `REDIS_URL` | empty | Optional shared Redis for rate-limit counters; set it so limits behave the same across backend replicas. Without it, limits are per instance |
 | `APP_BASE_URL` | `http://localhost:8080` | Public frontend URL used in invitation and password-reset emails |
 | `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASS` / `EMAIL_FROM` | empty | Enables invitation and password-reset email delivery; without SMTP, invite codes are returned for manual delivery and, outside production, the reset link is printed to the backend console |
 
 Auth requests are limited to 10 per 15 minutes per client. Request bodies are
-capped at 10 kb.
+capped at 10 kb. When `REDIS_URL` is set, rate-limit counters live in Redis so
+the limits are enforced across backend replicas; otherwise each instance
+enforces its own. Rate limiting fails open (requests pass through) if Redis is
+unreachable, and logs a warning instead of failing requests.
 
 ## Data and privacy
 
@@ -181,7 +185,7 @@ docker-compose stack and Playwright, `--perf` for the API load smoke).
 ```bash
 cd backend
 npm run typecheck
-npm run test:coverage     # 344 tests in 45 files (unit, integration, contract, security,
+npm run test:coverage     # 347 tests in 47 files (unit, integration, contract, security,
                           #  functional, regression, AI guardrails)
 npm run test:functional   # API journeys (black box, in-memory store)
 npm run test:regression   # incident-pinning regression tests

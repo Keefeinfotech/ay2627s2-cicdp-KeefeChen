@@ -47,6 +47,10 @@ vi.mock("../../src/modules/tasks/task.model.js", async () => {
         !(condition instanceof Date)
       ) {
         for (const [op, operand] of Object.entries(condition)) {
+          if (op === "$eq") {
+            if (value !== operand) return false;
+            continue;
+          }
           if (op === "$in") {
             if (!(operand as any[]).includes(value)) return false;
             continue;
@@ -135,8 +139,7 @@ vi.mock("../../src/modules/tasks/task.model.js", async () => {
       }),
       findOne: vi.fn((filter: Record<string, any>) =>
         chainable(
-          () =>
-            store.tasks.find((doc) => matchesFilter(doc, filter)) ?? null,
+          () => store.tasks.find((doc) => matchesFilter(doc, filter)) ?? null,
         ),
       ),
       find: vi.fn((filter: Record<string, any>) => {
@@ -160,8 +163,7 @@ vi.mock("../../src/modules/tasks/task.model.js", async () => {
       }),
       countDocuments: vi.fn((filter: Record<string, any>) =>
         chainable(
-          () =>
-            store.tasks.filter((doc) => matchesFilter(doc, filter)).length,
+          () => store.tasks.filter((doc) => matchesFilter(doc, filter)).length,
         ),
       ),
       findOneAndUpdate: vi.fn(
@@ -226,9 +228,15 @@ const authenticate = (userId: string, email: string): string => {
 const authHeader = (token: string) => ({ Authorization: `Bearer ${token}` });
 
 const bodyTaskId = (body: any): string =>
-  body.data?.id ?? body.data?._id ?? body.task?.id ?? body.task?._id ?? body.id ?? body._id;
+  body.data?.id ??
+  body.data?._id ??
+  body.task?.id ??
+  body.task?._id ??
+  body.id ??
+  body._id;
 
-const listItems = (body: any): any[] => body.data ?? body.items ?? body.tasks ?? [];
+const listItems = (body: any): any[] =>
+  body.data ?? body.items ?? body.tasks ?? [];
 
 beforeEach(() => {
   store.tasks.length = 0;
@@ -271,9 +279,7 @@ describe("task API journey (functional)", () => {
     ]);
 
     // List (defaults: page 1, limit 20)
-    const list = await request(app)
-      .get("/api/tasks")
-      .set(authHeader(token));
+    const list = await request(app).get("/api/tasks").set(authHeader(token));
     expect(list.status).toBe(200);
     expect(listItems(list.body)).toHaveLength(1);
 
@@ -295,8 +301,7 @@ describe("task API journey (functional)", () => {
         ...(updatedAt ? { expectedUpdatedAt: updatedAt } : {}),
       });
     expect(updated.status).toBe(200);
-    const priority =
-      updated.body.data?.priority ?? updated.body.priority;
+    const priority = updated.body.data?.priority ?? updated.body.priority;
     expect(priority).toBe("urgent");
 
     // Delete (soft delete)
@@ -327,9 +332,7 @@ describe("task API journey (functional)", () => {
       .set(authHeader(beta));
     expect([403, 404]).toContain(stolen.status);
 
-    const betaList = await request(app)
-      .get("/api/tasks")
-      .set(authHeader(beta));
+    const betaList = await request(app).get("/api/tasks").set(authHeader(beta));
     expect(listItems(betaList.body)).toHaveLength(0);
   });
 
