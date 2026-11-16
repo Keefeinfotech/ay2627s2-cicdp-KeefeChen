@@ -42,7 +42,11 @@ jobs:
 
   dependency-review:
     name: Dependencies - Review
-    if: github.event_name == 'pull_request'
+    # Dependency Review requires the dependency graph over the PR diff, which
+    # is unavailable for this user-owned private repository (it demands
+    # GitHub Advanced Security). It is therefore opt-in: set the repo
+    # variable DEPENDENCY_REVIEW_ENABLED='true' once the repo is eligible.
+    if: github.event_name == 'pull_request' && vars.DEPENDENCY_REVIEW_ENABLED == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
