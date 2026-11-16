@@ -10,14 +10,30 @@ import "dotenv/config";
 import process from "node:process";
 import app from "./app.js";
 import { connectDatabase, disconnectDatabase } from "./config/database.js";
-import { assertRuntimeEnv, EnvError, getPort } from "./config/environment.js";
+import {
+  assertRuntimeEnv,
+  EnvError,
+  getPort,
+  isProduction,
+  isRateLimitRedisEnabled,
+} from "./config/environment.js";
+import { connectRedis, closeRedisClient } from "./config/redis.js";
 import logger from "./config/logger.js";
 
 const start = async (): Promise<void> => {
   // Validate environment configuration
   try {
     assertRuntimeEnv();
+    if (isProduction() && !isRateLimitRedisEnabled()) {
+      logger.warn(
+        "REDIS_URL is not set; rate-limit counters are kept in this process and each replica enforces its own cap. Set REDIS_URL (shared Redis) for consistent limits across instances.",
+      );
+    }
     logger.info("Runtime environment validated successfully");
+    // Warm the shared Redis connection (if configured) so requests issued
+    // before it completes fail fast instead of queuing, and so the limiter
+    // can self-heal its Lua scripts on first use. Never blocks boot.
+    await connectRedis();
   } catch (err) {
     const message =
       err instanceof EnvError ? err.message : "Invalid configuration";
@@ -87,6 +103,7 @@ const start = async (): Promise<void> => {
 
     server.close(() => {
       void disconnectDatabase()
+        .then(() => closeRedisClient())
         .then(() => {
           logger.info("Database disconnected successfully");
           logger.info("Application shutdown completed");

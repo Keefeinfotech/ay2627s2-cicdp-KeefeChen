@@ -9,6 +9,7 @@
 #
 # Services:
 #   mongodb   - Database (persisted in mongodb_data volume)
+#   redis     - Shared rate-limit counters
 #   backend   - Express API (http://localhost:3000)
 #   frontend  - Flutter web app served by Nginx (http://localhost:8080)
 
@@ -32,6 +33,23 @@ services:
       start_period: 10s
 
   # ------------------------------------------------------------------
+  # Redis (rate limiting): shared counters so the configured limits apply
+  # across backend replicas. Optional for production (set REDIS_URL to an
+  # external Redis/Key Value instead); always on here for local/E2E parity.
+  # ------------------------------------------------------------------
+  redis:
+    image: redis:7.2-alpine
+    container_name: auxilia-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ------------------------------------------------------------------
   # Backend API
   # ------------------------------------------------------------------
   backend:
@@ -45,12 +63,15 @@ services:
     depends_on:
       mongodb:
         condition: service_healthy
+      redis:
+        condition: service_healthy
     ports:
       - "3000:3000"
     environment:
       NODE_ENV: development
       PORT: 3000
       MONGODB_URI: mongodb://mongodb:27017/auxilia
+      REDIS_URL: redis://redis:6379
       # Development-only default so a fresh clone works out of the box.
       # REQUIRED in real deployments: set JWT_SECRET (>= 16 chars) in .env or
       # the environment before exposing the stack.
