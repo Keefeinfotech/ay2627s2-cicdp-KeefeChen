@@ -13,11 +13,10 @@ Built with Flutter, Express.js, TypeScript, MongoDB, and GitHub Actions.
 
 ## Demo
 
-- Live web build: https://auxilia-web.onrender.com (placeholder - deploy via Render blueprint)
+- Live API: https://ay2627s2-cicdp-keefechen-1.onrender.com (`/api/health` returns 200; Render free tier)
+- Web build: not currently deployed — deploy with `flutter build web --release --dart-define=API_BASE_URL=https://ay2627s2-cicdp-keefechen-1.onrender.com` to any static host
 - Demo accounts: see `docs/admin/ADMINISTRATION.md`
-- Demo video: `docs/demo/auxilia-demo.mp4` (2 min walkthrough)
-
-![Auxilia dashboard](docs/screenshots/dashboard.png)
+- Demo video: not yet published
 
 ## Prerequisites
 
