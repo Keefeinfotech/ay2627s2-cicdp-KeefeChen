@@ -1,3 +1,4 @@
+import { RedisStore, type RedisReply } from "rate-limit-redis";
 import rateLimit, { ipKeyGenerator } from "express-rate-limit";
 import type { Request } from "express";
 import {
@@ -5,6 +6,7 @@ import {
   getApiRateLimitMax,
   getAuthRateLimitMax,
 } from "../config/environment.js";
+import { getRedisClient } from "../config/redis.js";
 import {
   AI_RATE_LIMIT_WINDOW_MS,
   API_RATE_LIMIT_WINDOW_MS,
@@ -21,13 +23,29 @@ interface LimiterConfig {
   skip?: (req: Request) => boolean;
 }
 
-export const createRateLimiter = (config: LimiterConfig) =>
-  rateLimit({
+// When REDIS_URL is configured, counters live in Redis (namespace per limiter)
+// so configured caps are enforced across backend replicas. Otherwise each
+// instance counts independently. Store errors fail open: the request proceeds
+// rather than erroring while Redis is unavailable.
+const createStore = (name: string) => {
+  const client = getRedisClient();
+  if (!client) return undefined;
+  return new RedisStore({
+    prefix: `auxilia:rate-limit:${name}:`,
+    sendCommand: (command: string, ...args: string[]) =>
+      client.call(command, ...args) as Promise<RedisReply>,
+  });
+};
+
+export const createRateLimiter = (config: LimiterConfig) => {
+  const store = createStore(config.name);
+  return rateLimit({
     windowMs: config.windowMs,
     limit: config.limit,
     standardHeaders: true,
     legacyHeaders: false,
     message: config.message,
+    ...(store ? { store, passOnStoreError: true } : {}),
     ...(config.keyGenerator ? { keyGenerator: config.keyGenerator } : {}),
     ...(config.skip ? { skip: config.skip } : {}),
     handler: (req, res, _next, options) => {
@@ -41,6 +59,7 @@ export const createRateLimiter = (config: LimiterConfig) =>
       res.status(options.statusCode).json(options.message);
     },
   });
+};
 
 export const authRateLimiter = createRateLimiter({
   name: "auth",

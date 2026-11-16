@@ -8,16 +8,31 @@
 
 import "dotenv/config";
 import process from "node:process";
-import app from "./app.js";
+import type { Express } from "express";
 import { connectDatabase, disconnectDatabase } from "./config/database.js";
-import { assertRuntimeEnv, EnvError, getPort } from "./config/environment.js";
+import {
+  assertRuntimeEnv,
+  EnvError,
+  getPort,
+  isProduction,
+  isRateLimitRedisEnabled,
+} from "./config/environment.js";
+import { connectRedis, closeRedisClient } from "./config/redis.js";
 import logger from "./config/logger.js";
 
 const start = async (): Promise<void> => {
   // Validate environment configuration
   try {
     assertRuntimeEnv();
+    if (isProduction() && !isRateLimitRedisEnabled()) {
+      logger.warn(
+        "REDIS_URL is not set; rate-limit counters are kept in this process and each replica enforces its own cap. Set REDIS_URL (shared Redis) for consistent limits across instances.",
+      );
+    }
     logger.info("Runtime environment validated successfully");
+    // Connect to Redis (if configured) before importing the app so the
+    // rate limiter loads its scripts against a healthy connection. Fails open.
+    await connectRedis();
   } catch (err) {
     const message =
       err instanceof EnvError ? err.message : "Invalid configuration";
@@ -44,6 +59,13 @@ const start = async (): Promise<void> => {
   // Render (and most PaaS platforms) inject PORT and probe the service on it.
   // Binding to 0.0.0.0 instead of the unspecified IPv6 address keeps IPv4
   // health checks and port scans reachable regardless of dual-stack support.
+  // Imported here (not statically) so rate-limit stores are created after
+  // the best-effort Redis connect above. The explicit type is needed because
+  // NodeNext reports the CJS-emitted namespace for the dynamic import.
+  const { default: app } = (await import("./app.js")) as unknown as {
+    default: Express;
+  };
+
   const port = getPort();
   const host = "0.0.0.0";
 
@@ -87,6 +109,7 @@ const start = async (): Promise<void> => {
 
     server.close(() => {
       void disconnectDatabase()
+        .then(() => closeRedisClient())
         .then(() => {
           logger.info("Database disconnected successfully");
           logger.info("Application shutdown completed");
