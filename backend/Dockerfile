@@ -42,7 +42,7 @@ COPY package*.json ./
 # extra supervision on top of the container's restart policy. Cost: the image
 # grows and npm's transitive tree is re-introduced, so Trivy findings on
 # this layer should be re-checked after changing it.
-RUN npm ci --omit=dev --ignore-scripts && npm install -g pm2@7.1.2 \
+RUN npm ci --omit=dev --ignore-scripts && npm install -g pm2@7.1.2 --ignore-scripts \
     && npm cache clean --force \
     && rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx
 
