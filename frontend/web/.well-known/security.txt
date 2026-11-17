@@ -1,0 +1,7 @@
+# Auxilia security.txt
+# https://securitytxt.org/
+Contact: https://github.com/Keefeinfotech/ay2627s2-cicdp-KeefeChen/security/advisories/new
+Preferred-Languages: en
+Canonical: https://github.com/Keefeinfotech/ay2627s2-cicdp-KeefeChen/blob/main/frontend/web/.well-known/security.txt
+Policy: https://github.com/Keefeinfotech/ay2627s2-cicdp-KeefeChen/blob/main/SECURITY.md
+Expires: 2027-11-17T00:00:00.000Z
