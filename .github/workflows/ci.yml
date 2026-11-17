@@ -247,6 +247,11 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     needs: [pr-conventions, secret-scan]
+    # pr-conventions only runs on pull requests; without this guard a push
+    # event skips it and the whole backend/frontend/e2e chain is skipped too,
+    # so pushes to main shipped untested. `failure()` still blocks the chain
+    # when the conventions check genuinely fails.
+    if: ${{ always() && needs.pr-conventions.result != 'failure' && needs.secret-scan.result != 'failure' }}
 
     defaults:
       run:
@@ -305,6 +310,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     needs: [pr-conventions, secret-scan]
+    # Push events skip pr-conventions; keep the chain alive but still stop on
+    # a genuine failure of either dependency.
+    if: ${{ always() && needs.pr-conventions.result != 'failure' && needs.secret-scan.result != 'failure' }}
 
     defaults:
       run:
@@ -362,6 +370,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     needs: [backend, frontend]
+    # Skip the E2E chain gracefully when upstream jobs were skipped (e.g. a
+    # failed pr-conventions blocks backend/frontend, so e2e would skip too);
+    # only run when both quality jobs succeeded.
+    if: ${{ always() && needs.backend.result == 'success' && needs.frontend.result == 'success' }}
 
     steps:
       - name: Checkout repository
