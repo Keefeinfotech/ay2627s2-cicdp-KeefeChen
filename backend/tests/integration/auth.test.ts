@@ -24,6 +24,7 @@ import { AuthSession } from "../../src/modules/auth/session.model.js";
 import { sessionCache } from "../../src/modules/auth/session.cache.js";
 import { verifyAccessToken } from "../../src/shared/utils/tokens";
 import { queryResult } from "../helpers/authMocks.js";
+import { LOGIN_LOCKOUT_MAX_ATTEMPTS } from "../../src/constants/security";
 
 // Access mocked model methods.
 const userModel = User as any;
@@ -446,5 +447,62 @@ describe("POST /api/auth/reset-password", () => {
       .send({ token: "reset-token", password: "short" });
 
     expect(res.status).toBe(400);
+  });
+});
+
+describe("POST /api/auth/login - account lockout", () => {
+  const buildLockoutUser = async () => ({
+    _id: "user-lockout",
+    name: "Lock Test",
+    email: "lock@example.com",
+    role: "user",
+    passwordHash: await passwordHashPromise,
+    lastLoginAt: null as Date | null,
+    failedLoginAttempts: 0,
+    lockoutUntil: null as Date | null,
+    save: vi.fn().mockResolvedValue(undefined),
+  });
+
+  it("locks the account after the configured number of failed attempts", async () => {
+    const user = await buildLockoutUser();
+    userModel.findOne.mockReturnValue(queryResult(user));
+
+    for (let attempt = 0; attempt < LOGIN_LOCKOUT_MAX_ATTEMPTS; attempt++) {
+      const res = await request(app)
+        .post("/api/auth/login")
+        .send({ email: "lock@example.com", password: "wrong-password" });
+      expect(res.status).toBe(401);
+    }
+
+    // Counter is reset and an expiry is recorded on the account.
+    expect(user.failedLoginAttempts).toBe(0);
+    expect(user.lockoutUntil).toBeInstanceOf(Date);
+    expect(user.lockoutUntil!.getTime()).toBeGreaterThan(Date.now());
+  });
+
+  it("rejects even the correct password while the account is locked", async () => {
+    const user = await buildLockoutUser();
+    user.lockoutUntil = new Date(Date.now() + 10 * 60_000);
+    userModel.findOne.mockReturnValue(queryResult(user));
+
+    const res = await request(app)
+      .post("/api/auth/login")
+      .send({ email: "lock@example.com", password });
+
+    expect(res.status).toBe(401);
+    expect(sessionModel.create).not.toHaveBeenCalled();
+  });
+
+  it("resets the failure counter on a successful login", async () => {
+    const user = await buildLockoutUser();
+    user.failedLoginAttempts = 3;
+    userModel.findOne.mockReturnValue(queryResult(user));
+
+    const res = await request(app)
+      .post("/api/auth/login")
+      .send({ email: "lock@example.com", password });
+
+    expect(res.status).toBe(200);
+    expect(user.failedLoginAttempts).toBe(0);
   });
 });
