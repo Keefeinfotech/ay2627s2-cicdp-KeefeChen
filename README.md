@@ -1,7 +1,6 @@
 # Auxilia
 
 ![CI](https://github.com/Keefeinfotech/ay2627s2-cicdp-KeefeChen/actions/workflows/ci.yml/badge.svg)
-![Coverage](https://img.shields.io/badge/coverage-62%25-brightgreen)
 ![SonarCloud](https://sonarcloud.io/api/project_badges/measure?project=Keefeinfotech_ay2627s2-cicdp-KeefeChen&metric=alert_status)
 ![Release](https://img.shields.io/github/v/release/Keefeinfotech/ay2627s2-cicdp-KeefeChen)
 

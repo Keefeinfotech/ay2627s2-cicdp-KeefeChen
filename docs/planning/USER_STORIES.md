@@ -556,8 +556,11 @@ everyone knows what they own.
 **As** Sam (and stakeholders), **I want** critical workflows tested and a
 tagged release with provenance, **so that** we can ship with confidence.
 
-- Priority: Must · Points: 8 · Status: Partial — release never executed; no
-  `v*.*.*` tag cut from this workspace
+- Priority: Must · Points: 8 · Status: Done — release `v1.0.0` cut 2026-11-15
+  from the release workflow (version verification, provenance attestation,
+  smoke test 3/3 green against production). Manual NFR gates (rollback
+  rehearsal, DB backup evidence) remain open in
+  `docs/reports/RELEASE_EVIDENCE_v1.0.0.md`.
 
 **Acceptance criteria**
 - Given a `v*.*.*` tag, the release workflow re-verifies versions, reruns all
@@ -572,8 +575,9 @@ tagged release with provenance, **so that** we can ship with confidence.
 
 ## Epics NP-1…NP-5, NP-17 — Roll-up status
 
-All child stories of NP-1…NP-5 and NP-17 are delivered except NP-16, which
-carries the open release gates above. Epics close when NP-16 closes.
+All child stories of NP-1…NP-5 and NP-17 are delivered. NP-16 is delivered
+too (`v1.0.0`, 2026-11-15); only the manual NFR evidence items noted there
+remain open.
 
 ---
 
@@ -699,7 +703,7 @@ required.
 | NP-26, NP-27, NP-47–49 | Done | `features/sync/` | `test/features/sync/` |
 | NP-19, NP-46 | Done | assistant, quick-add parser | `test/features/assistant/`, `task_management/`, AI guardrails |
 | NP-45a/b, NP-44 | Done | `modules/groups/`, `features/groups/` | backend group service tests, `groups_page_test.dart` |
-| NP-16 | Partial | release pipeline | see NP-16 section |
+| NP-16 | Done (`v1.0.0`) | release pipeline | see NP-16 section |
 | AUX-4 | Partial | backend MFA | backend auth tests |
 | BACKLOG-1…12 | Not built | — | — |
 
