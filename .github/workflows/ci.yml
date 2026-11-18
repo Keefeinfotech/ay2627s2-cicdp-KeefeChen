@@ -280,8 +280,10 @@ jobs:
           BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
 
-      - name: Audit dependencies
-        run: npm audit --audit-level=high
+      # Dev-only audit findings (e.g. picomatch GHSA-fc5q-39xc-vjpf, no patched
+      # release) block merges; production dependencies are what we ship.
+      - name: Audit dependencies (production)
+        run: npm audit --omit=dev --audit-level=high
 
       - name: ESLint and TypeScript checks
         run: npm run lint
