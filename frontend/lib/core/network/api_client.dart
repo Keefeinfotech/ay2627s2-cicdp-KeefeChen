@@ -288,18 +288,12 @@ class ApiClient {
       LatencyMonitor.instance.record(stopwatch.elapsed);
       return response;
     } on TimeoutException {
-      LatencyMonitor.instance.record(
-        stopwatch.elapsed,
-        failed: true,
-      );
+      LatencyMonitor.instance.record(stopwatch.elapsed, failed: true);
       throw ApiException(
         'The server took too long to respond. Please try again.',
       );
     } on http.ClientException {
-      LatencyMonitor.instance.record(
-        stopwatch.elapsed,
-        failed: true,
-      );
+      LatencyMonitor.instance.record(stopwatch.elapsed, failed: true);
       throw ApiException(
         'Could not reach the server. Check your connection and try again.',
       );

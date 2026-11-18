@@ -35,8 +35,7 @@ class LatencyMonitor extends ChangeNotifier {
   bool get dismissed => _dismissed;
 
   /// True while quality is degraded and the warning was not dismissed.
-  bool get shouldShowBanner =>
-      !_dismissed && _quality != NetworkQuality.good;
+  bool get shouldShowBanner => !_dismissed && _quality != NetworkQuality.good;
 
   /// Rolling average over the retained window, null when empty.
   Duration? get averageLatency {
