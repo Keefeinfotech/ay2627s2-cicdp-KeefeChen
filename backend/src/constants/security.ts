@@ -4,6 +4,12 @@ export const USER_ROLES = ["user", "admin"] as const;
 
 export type UserRole = (typeof USER_ROLES)[number];
 
+// Account lockout: after this many consecutive failed logins the account is
+// locked for the duration. Tracked per account in the user document; the
+// per-IP/general limiter is unchanged.
+export const LOGIN_LOCKOUT_MAX_ATTEMPTS = 5;
+export const LOGIN_LOCKOUT_DURATION_MS = 15 * 60 * 1000;
+
 export const AUTH_RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000;
 export const AI_RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000;
 export const API_RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000;

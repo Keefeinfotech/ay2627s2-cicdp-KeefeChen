@@ -15,6 +15,8 @@ import logger from "../../config/logger.js";
 import { sendPasswordResetEmail } from "../../services/email.service.js";
 
 import {
+  LOGIN_LOCKOUT_DURATION_MS,
+  LOGIN_LOCKOUT_MAX_ATTEMPTS,
   REFRESH_REUSE_GRACE_MS,
   REFRESH_TOKEN_TTL_MS,
 } from "../../constants/security.js";
@@ -202,13 +204,57 @@ export const login = async (input: {
 
   const user = await findUserByEmail(email, true);
 
-  // Perform password comparison even when user does not exist.
+  // Perform password comparison even when user does not exist, so lockout
+  // and unknown accounts are indistinguishable by timing.
   const passwordHash = user?.passwordHash ?? DUMMY_PASSWORD_HASH;
 
   const validPassword = await bcrypt.compare(input.password, passwordHash);
 
-  if (!user || !validPassword) {
+  const lockoutUntil = user?.lockoutUntil ? new Date(user.lockoutUntil) : null;
+  const accountLocked = Boolean(
+    lockoutUntil && lockoutUntil.getTime() > Date.now(),
+  );
+
+  if (!user || !validPassword || accountLocked) {
+    // Count consecutive failures on the account itself. A currently locked
+    // account does not accumulate further attempts; the lock simply expires.
+    if (user && !accountLocked) {
+      const failed = (user.failedLoginAttempts ?? 0) + 1;
+      user.failedLoginAttempts = failed;
+      if (failed >= LOGIN_LOCKOUT_MAX_ATTEMPTS) {
+        user.lockoutUntil = new Date(Date.now() + LOGIN_LOCKOUT_DURATION_MS);
+        user.failedLoginAttempts = 0;
+        logSecurityEvent("account_locked", {
+          userId: String(user._id),
+          failedAttempts: failed,
+          lockoutMinutes: LOGIN_LOCKOUT_DURATION_MS / 60_000,
+        });
+      }
+      try {
+        await user.save();
+      } catch (err) {
+        logger.warn("Failed to persist failed-login counter", {
+          userId: String(user._id),
+          error: err instanceof Error ? err.message : String(err),
+        });
+      }
+    }
+    // Generic message either way - never reveal which branch was taken.
     throw unauthorized("Invalid email or password");
+  }
+
+  // Successful login: clear any leftover failure counter.
+  if ((user.failedLoginAttempts ?? 0) !== 0 || user.lockoutUntil) {
+    user.failedLoginAttempts = 0;
+    user.lockoutUntil = null;
+    try {
+      await user.save();
+    } catch (err) {
+      logger.warn("Failed to reset failed-login counter", {
+        userId: String(user._id),
+        error: err instanceof Error ? err.message : String(err),
+      });
+    }
   }
 
   return startSession(user, { userAgent: input.userAgent });
