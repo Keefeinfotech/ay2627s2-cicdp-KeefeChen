@@ -48,7 +48,10 @@ export const analyticsController = {
       if (!userId) return;
 
       const limit = Number(req.query.limit ?? 20);
-      const result = await analyticsService.getPrioritySuggestions(userId, limit);
+      const result = await analyticsService.getPrioritySuggestions(
+        userId,
+        limit,
+      );
 
       res.status(200).json({
         message: "Priority suggestions generated successfully.",

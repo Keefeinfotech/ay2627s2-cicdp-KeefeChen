@@ -96,7 +96,11 @@ export const analyticsService = {
         created,
         completed,
         completionRate:
-          created === 0 ? (completed > 0 ? 1 : 0) : Math.min(completed / created, 1),
+          created === 0
+            ? completed > 0
+              ? 1
+              : 0
+            : Math.min(completed / created, 1),
       });
     }
 
@@ -206,7 +210,13 @@ export const analyticsService = {
       }
 
       const suggestedPriority: SuggestedPriority =
-        score >= 85 ? "urgent" : score >= 60 ? "high" : score >= 30 ? "medium" : "low";
+        score >= 85
+          ? "urgent"
+          : score >= 60
+            ? "high"
+            : score >= 30
+              ? "medium"
+              : "low";
 
       if (suggestedPriority !== task.priority) {
         reasons.push(`Currently marked as ${task.priority}`);
@@ -249,7 +259,11 @@ export const analyticsService = {
     await Promise.all(
       changes.map((change) =>
         Task.updateOne(
-          { _id: change.taskId, userId, status: { $in: ["todo", "in_progress"] } },
+          {
+            _id: change.taskId,
+            userId,
+            status: { $in: ["todo", "in_progress"] },
+          },
           { $set: { priority: change.suggestedPriority } },
         ),
       ),

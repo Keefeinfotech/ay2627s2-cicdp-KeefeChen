@@ -33,7 +33,11 @@ const server = http.createServer((req, res) => {
         const payload = JSON.parse(body || "{}");
         // Prototype: log instead of sending email/push.
         console.log(
-          JSON.stringify({ event: "notify.received", payload, at: new Date().toISOString() }),
+          JSON.stringify({
+            event: "notify.received",
+            payload,
+            at: new Date().toISOString(),
+          }),
         );
         res.statusCode = 202;
         res.end(JSON.stringify({ accepted: true }));
