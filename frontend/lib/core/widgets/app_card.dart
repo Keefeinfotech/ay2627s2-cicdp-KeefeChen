@@ -59,7 +59,8 @@ class AppCard extends StatelessWidget {
                 ? Colors.white.withValues(alpha: 0.12)
                 : border,
           ),
-          boxShadow: variant == AppCardVariant.surface &&
+          boxShadow:
+              variant == AppCardVariant.surface &&
                   Theme.of(context).brightness == Brightness.light
               ? AppColors.softShadow()
               : null,

@@ -67,12 +67,17 @@ class _GradientPrimaryButton extends StatelessWidget {
                 child: Padding(
                   padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
                   child: DefaultTextStyle.merge(
-                    style: Theme.of(context).textTheme.labelLarge!.copyWith(
-                          color: Colors.white,
-                        ),
+                    style: Theme.of(context).textTheme.labelLarge!
+                        .copyWith(color: Colors.white),
                     child: IconTheme.merge(
-                      data: const IconThemeData(color: Colors.white, size: AppSizes.iconMd),
-                      child: Center(widthFactor: expand ? null : 1, child: child),
+                      data: const IconThemeData(
+                        color: Colors.white,
+                        size: AppSizes.iconMd,
+                      ),
+                      child: Center(
+                        widthFactor: expand ? null : 1,
+                        child: child,
+                      ),
                     ),
                   ),
                 ),

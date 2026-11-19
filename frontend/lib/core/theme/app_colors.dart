@@ -151,17 +151,17 @@ abstract final class AppColors {
 
   /// Soft ambient shadow for elevated surfaces.
   static List<BoxShadow> softShadow({Color tint = const Color(0xFF2563EB)}) => [
-        BoxShadow(
-          color: tint.withValues(alpha: 0.10),
-          blurRadius: 24,
-          offset: const Offset(0, 10),
-        ),
-        BoxShadow(
-          color: const Color(0xFF0F172A).withValues(alpha: 0.06),
-          blurRadius: 6,
-          offset: const Offset(0, 2),
-        ),
-      ];
+    BoxShadow(
+      color: tint.withValues(alpha: 0.10),
+      blurRadius: 24,
+      offset: const Offset(0, 10),
+    ),
+    BoxShadow(
+      color: const Color(0xFF0F172A).withValues(alpha: 0.06),
+      blurRadius: 6,
+      offset: const Offset(0, 2),
+    ),
+  ];
 
   // ---------------------------------------------------------------------------
   // Dark theme surfaces (deep navy variant)
