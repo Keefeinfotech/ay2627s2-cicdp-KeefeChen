@@ -83,7 +83,10 @@ describe("analyticsService.getPrioritySuggestions", () => {
 
   it("clamps the suggestion limit", async () => {
     mocks.find.mockReturnValue(leanQuery([]));
-    const result = await analyticsService.getPrioritySuggestions("user-1", 9999);
+    const result = await analyticsService.getPrioritySuggestions(
+      "user-1",
+      9999,
+    );
     expect(result.suggestions).toHaveLength(0);
   });
 });

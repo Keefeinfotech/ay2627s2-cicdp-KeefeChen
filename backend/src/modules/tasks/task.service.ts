@@ -98,7 +98,10 @@ export const taskService = {
           "code" in error &&
           error.code === 11000
         ) {
-          const existing = await taskRepository.findByIdForUser(input.id, userId);
+          const existing = await taskRepository.findByIdForUser(
+            input.id,
+            userId,
+          );
           if (existing) return existing;
         }
         throw error;

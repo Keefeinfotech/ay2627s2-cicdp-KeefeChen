@@ -69,7 +69,13 @@ export const cacheDelByPattern = async (pattern: string): Promise<number> => {
     let deleted = 0;
 
     do {
-      const [next, keys] = await client.scan(cursor, "MATCH", pattern, "COUNT", 100);
+      const [next, keys] = await client.scan(
+        cursor,
+        "MATCH",
+        pattern,
+        "COUNT",
+        100,
+      );
       cursor = next;
       if (keys.length > 0) {
         await client.del(...keys);

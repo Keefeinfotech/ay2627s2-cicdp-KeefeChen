@@ -7,7 +7,10 @@
 
 import { registerJob } from "./queue.js";
 import { cacheDelByPattern } from "../utils/cache.js";
-import { sendNotification, type NotificationPayload } from "../../services/notification.service.js";
+import {
+  sendNotification,
+  type NotificationPayload,
+} from "../../services/notification.service.js";
 import logger from "../../config/logger.js";
 
 /**
