@@ -30,9 +30,8 @@ vi.mock("../../src/modules/auth/session.model.js", async () => {
 });
 
 vi.mock("../../src/modules/tasks/task.model.js", async () => {
-  const { createInMemoryTaskModel } = await import(
-    "../helpers/inMemoryTaskModel.js"
-  );
+  const { createInMemoryTaskModel } =
+    await import("../helpers/inMemoryTaskModel.js");
   return createInMemoryTaskModel(store);
 });
 
