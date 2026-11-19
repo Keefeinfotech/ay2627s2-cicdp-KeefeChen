@@ -1,4 +1,6 @@
-# Release Evidence — Auxilia v1.0.0
+# Release Evidence - Auxilia v1.0.0
+
+> **Superseded by `docs/reports/RELEASE_EVIDENCE_v1.1.md` (2026-11-19).** The v1.0.0 release itself remains valid; the evidence for the current release line lives in the v1.1 document. The template below is retained for history; its `<fill>` fields were never completed at the time and are not backfilled.
 
 ## Release identifiers
 - Tag: `v1.0.0`
