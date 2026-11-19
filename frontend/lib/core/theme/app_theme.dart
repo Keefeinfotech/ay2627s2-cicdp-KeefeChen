@@ -42,9 +42,9 @@ abstract final class AppTheme {
     surface: AppColors.surface,
     onSurface: AppColors.textPrimary,
     onSurfaceVariant: AppColors.textSecondary,
-    surfaceContainerHighest: Color(0xFFF1EBD6),
+    surfaceContainerHighest: Color(0xFFE4EAF2),
     outline: AppColors.divider,
-    outlineVariant: Color(0xFFE8E3D6),
+    outlineVariant: Color(0xFFE2E8F0),
     shadow: Color(0x1A243B53),
     scrim: Color(0x66243B53),
     inverseSurface: AppColors.darkestNavy,
@@ -144,11 +144,13 @@ abstract final class AppTheme {
         ),
       ),
       cardTheme: CardThemeData(
-        elevation: 2,
+        elevation: 0,
         margin: EdgeInsets.zero,
         color: scheme.surface,
-        surfaceTintColor: scheme.primary.withValues(alpha: 0.08),
-        shadowColor: Colors.black.withValues(alpha: 0.08),
+        surfaceTintColor: Colors.transparent,
+        shadowColor: isLight
+            ? const Color(0xFF2563EB).withValues(alpha: 0.10)
+            : Colors.black.withValues(alpha: 0.4),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.lg),
           side: BorderSide(color: scheme.outlineVariant),
@@ -226,6 +228,8 @@ abstract final class AppTheme {
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
+          elevation: 2,
+          shadowColor: AppColors.saffron.withValues(alpha: 0.35),
           backgroundColor: scheme.primary,
           foregroundColor: scheme.onPrimary,
           disabledBackgroundColor: scheme.primary.withValues(alpha: 0.35),

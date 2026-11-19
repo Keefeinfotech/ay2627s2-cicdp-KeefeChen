@@ -11,6 +11,85 @@ enum AppButtonSize { medium, large }
 ///
 /// It standardises height, radius, padding, disabled/loading states and keeps
 /// destructive actions visually distinct from primary actions.
+/// Primary action rendered with the brand gradient and a soft blue glow.
+class _GradientPrimaryButton extends StatelessWidget {
+  const _GradientPrimaryButton({
+    required this.onPressed,
+    required this.borderRadius,
+    required this.height,
+    required this.expand,
+    required this.horizontalPadding,
+    required this.child,
+  });
+
+  final VoidCallback? onPressed;
+  final double borderRadius;
+  final double height;
+  final bool expand;
+  final double horizontalPadding;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final bool enabled = onPressed != null;
+
+    return Semantics(
+      button: true,
+      enabled: enabled,
+      child: Opacity(
+        opacity: enabled ? 1 : 0.45,
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: AppColors.primaryGradient,
+            borderRadius: BorderRadius.circular(borderRadius),
+            boxShadow: enabled
+                ? [
+                    BoxShadow(
+                      color: AppColors.pacific.withValues(alpha: 0.35),
+                      blurRadius: 16,
+                      offset: const Offset(0, 6),
+                    ),
+                  ]
+                : null,
+          ),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: onPressed,
+              borderRadius: BorderRadius.circular(borderRadius),
+              splashColor: Colors.white.withValues(alpha: 0.25),
+              highlightColor: Colors.white.withValues(alpha: 0.12),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  minHeight: height,
+                  minWidth: expand ? double.infinity : 0,
+                ),
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+                  child: DefaultTextStyle.merge(
+                    style: Theme.of(context).textTheme.labelLarge!
+                        .copyWith(color: Colors.white),
+                    child: IconTheme.merge(
+                      data: const IconThemeData(
+                        color: Colors.white,
+                        size: AppSizes.iconMd,
+                      ),
+                      child: Center(
+                        widthFactor: expand ? null : 1,
+                        child: child,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class AppButton extends StatelessWidget {
   const AppButton({
     super.key,
@@ -91,9 +170,12 @@ class AppButton extends StatelessWidget {
     );
 
     final Widget button = switch (variant) {
-      AppButtonVariant.primary => FilledButton(
+      AppButtonVariant.primary => _GradientPrimaryButton(
         onPressed: isLoading ? null : onPressed,
-        style: baseStyle,
+        borderRadius: AppRadius.md,
+        height: height,
+        expand: expand,
+        horizontalPadding: isLarge ? AppSpacing.xl : AppSpacing.lg,
         child: content,
       ),
       AppButtonVariant.secondary => FilledButton(
