@@ -6,8 +6,8 @@ import 'app_typography.dart';
 
 /// Builds the light and dark Material 3 themes from Auxilia's design tokens.
 ///
-/// The palette is now vivid and weather-inspired: saffron for primary actions,
-/// pacific teal, moss green, malachite, lichen, persimmon, blush and coco
+/// The palette is Trust Blue: trust blue primary actions,
+/// pacific blue, moss slate, malachite emerald, lichen and persimmon,
 /// cream. The app feels like sitting in a cosy cafe on a rainy day — warm,
 /// grounded and alive. Each tab and stat card carries its own accent colour so
 /// the dashboard reads like a spread of weather patterns rather than one flat
@@ -16,7 +16,7 @@ abstract final class AppTheme {
   const AppTheme._();
 
   // ---------------------------------------------------------------------------
-  // Light scheme — "Sunlit Cafe"
+  // Light scheme — "Trust Blue Light"
   // ---------------------------------------------------------------------------
 
   static const ColorScheme _lightScheme = ColorScheme(
@@ -54,7 +54,7 @@ abstract final class AppTheme {
   );
 
   // ---------------------------------------------------------------------------
-  // Dark scheme — "Midnight Cafe"
+  // Dark scheme — "Deep Navy Dark"
   // ---------------------------------------------------------------------------
 
   static const ColorScheme _darkScheme = ColorScheme(
@@ -62,9 +62,9 @@ abstract final class AppTheme {
 
     primary: AppColors.darkPrimary,
     onPrimary: AppColors.darkestNavy,
-    primaryContainer: AppColors.moss,
-    secondary: AppColors.pacific,
-    onSecondary: AppColors.white,
+    primaryContainer: AppColors.darkSurfaceAlt,
+    secondary: AppColors.darkPrimary,
+    onSecondary: AppColors.darkestNavy,
     secondaryContainer: AppColors.darkSurfaceAlt,
     tertiary: AppColors.malachite,
     onTertiary: AppColors.white,
@@ -78,7 +78,7 @@ abstract final class AppTheme {
     onSurface: AppColors.cocoCream,
     onSurfaceVariant: AppColors.darkMuted,
     surfaceContainerHighest: AppColors.darkSurfaceAlt,
-    outline: Color(0xFF3E3E5E),
+    outline: Color(0xFF334155),
     outlineVariant: AppColors.darkBorder,
     shadow: Color(0x66000000),
     scrim: Color(0x99000000),

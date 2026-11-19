@@ -32,11 +32,18 @@ ENV NODE_ENV=production
 # Copy dependency manifests
 COPY package*.json ./
 
-# Install production dependencies only, then remove npm/npx from the runtime
-# image. Nothing at runtime needs them (the container executes `node`
-# directly), and npm ships bundled libraries with known CVEs that Trivy
-# flags during the image scan.
-RUN npm ci --omit=dev --ignore-scripts && npm cache clean --force \
+# Install production dependencies, then install pm2 ONCE for the process
+# supervisor, then remove npm/npx from the runtime image. npm ships with
+# bundled libraries that Trivy flags; pm2 itself is executed by node
+# directly, so removing npm/npx does not break it. The standalone
+# `pm2-runtime` wrapper package shells out to npx and therefore cannot be
+# used here - use the `pm2-runtime` binary that ships with `pm2` itself.
+# PM2 (fork mode) forwards SIGTERM to the app and restarts it on crash —
+# extra supervision on top of the container's restart policy. Cost: the image
+# grows and npm's transitive tree is re-introduced, so Trivy findings on
+# this layer should be re-checked after changing it.
+RUN npm ci --omit=dev --ignore-scripts && npm install -g pm2@7.1.2 --ignore-scripts \
+    && npm cache clean --force \
     && rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx
 
 # Patch Alpine packages so Trivy no longer reports known HIGH/CRITICAL
@@ -58,5 +65,7 @@ EXPOSE 3000
 # Run the compiled server as the unprivileged node user instead of root.
 USER node
 
-# Start application (same entry point as `npm start`, without npm in the image)
-CMD ["node", "dist/server.js"]
+# Start application under pm2 (fork mode via pm2-runtime; no clustering on
+# Render's single instance). pm2-runtime exec-forms the child so SIGTERM
+# reaches node, and PM2 restarts the process on crash.
+CMD ["pm2-runtime", "dist/server.js"]

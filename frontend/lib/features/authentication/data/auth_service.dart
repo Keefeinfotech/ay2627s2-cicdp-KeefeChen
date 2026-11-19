@@ -1,4 +1,5 @@
 import '../../../core/network/api_client.dart';
+import '../../../core/network/latency_monitor.dart';
 import '../../../core/network/api_endpoints.dart';
 import 'captcha.dart';
 import 'session_store.dart';
@@ -145,6 +146,7 @@ class AuthService {
     }
 
     ApiClient.resetTokenCache();
+    LatencyMonitor.instance.reset();
     await _sessions.clear();
   }
 

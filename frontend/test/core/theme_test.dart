@@ -5,25 +5,23 @@ import 'package:frontend/core/theme/app_theme.dart';
 import 'package:frontend/core/theme/app_typography.dart';
 
 void main() {
-  test('uses the Urban Slate palette', () {
-    // pacific/moss were darkened to meet WCAG AA contrast (>= 4.5) on light
-    // surfaces; the hue relationships are unchanged.
-    expect(AppColors.pacific, const Color(0xFF4F5D75));
-    expect(AppColors.moss, const Color(0xFF5A5F6A));
-    expect(AppColors.malachite, const Color(0xFF16A34A));
-    expect(AppColors.lichen, const Color(0xFFDFE3EB));
-    expect(AppColors.saffron, const Color(0xFF5E5653));
+  test('uses the Trust Blue palette', () {
+    expect(AppColors.pacific, const Color(0xFF2563EB));
+    expect(AppColors.moss, const Color(0xFF475569));
+    expect(AppColors.malachite, const Color(0xFF059669));
+    expect(AppColors.lichen, const Color(0xFFDBEAFE));
+    expect(AppColors.saffron, const Color(0xFF1D4ED8));
     expect(AppColors.persimmon, const Color(0xFFDC2626));
-    expect(AppColors.blush, const Color(0xFFAB978C));
-    expect(AppColors.darkestNavy, const Color(0xFF2B2724));
-    expect(AppColors.cocoCream, const Color(0xFFE9E6E7));
+    expect(AppColors.blush, const Color(0xFF64748B));
+    expect(AppColors.darkestNavy, const Color(0xFF0F172A));
+    expect(AppColors.cocoCream, const Color(0xFFF1F5F9));
   });
 
-  test('builds a light theme with Inter typography and Urban Slate', () {
+  test('builds a light theme with Roboto typography and Trust Blue', () {
     final theme = AppTheme.light();
 
-    expect(AppTypography.fontFamily, 'Inter');
-    expect(theme.textTheme.bodyMedium?.fontFamily, 'Inter');
+    expect(AppTypography.fontFamily, 'Roboto');
+    expect(theme.textTheme.bodyMedium?.fontFamily, 'Roboto');
     expect(theme.colorScheme.primary, AppColors.saffron);
     expect(theme.colorScheme.secondary, AppColors.pacific);
     expect(theme.scaffoldBackgroundColor, AppColors.cocoCream);

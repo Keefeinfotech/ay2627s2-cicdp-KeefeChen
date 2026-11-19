@@ -128,6 +128,26 @@ class TaskStore extends ChangeNotifier {
 
   int get overdueCount => _tasks.where((task) => task.isOverdue).length;
 
+  /// Every course/subject in use, ordered by frequency and then
+  /// alphabetically. Used to offer a prelist of the user's own subjects.
+  List<String> get allCourses {
+    final counts = <String, int>{};
+    final labels = <String, String>{};
+    for (final task in _tasks) {
+      final course = task.course.trim();
+      if (course.isEmpty) continue;
+      final key = course.toLowerCase();
+      counts[key] = (counts[key] ?? 0) + 1;
+      labels.putIfAbsent(key, () => course);
+    }
+    final keys = counts.keys.toList(growable: false)
+      ..sort((a, b) {
+        final byCount = counts[b]!.compareTo(counts[a]!);
+        return byCount != 0 ? byCount : a.compareTo(b);
+      });
+    return keys.map((key) => labels[key]!).toList(growable: false);
+  }
+
   /// Every tag in use, ordered by frequency and then alphabetically. The
   /// result is stable so filter chips do not jump between rebuilds.
   List<String> get allTags {

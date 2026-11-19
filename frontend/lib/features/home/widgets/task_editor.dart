@@ -18,6 +18,7 @@ class TaskEditor extends StatefulWidget {
     this.initial,
     this.initialCourse,
     this.existingTags = const <String>[],
+    this.existingCourses = const <String>[],
   });
 
   final Task? initial;
@@ -28,6 +29,10 @@ class TaskEditor extends StatefulWidget {
 
   /// Tags already used elsewhere in the workspace, offered as quick picks.
   final List<String> existingTags;
+
+  /// Courses/subjects already used elsewhere, offered as quick picks so the
+  /// user can prioritise a prelist of their own subjects.
+  final List<String> existingCourses;
 
   @override
   State<TaskEditor> createState() => _TaskEditorState();
@@ -265,6 +270,31 @@ class _TaskEditorState extends State<TaskEditor> {
                             textCapitalization: TextCapitalization.characters,
                             validator: validateCourse,
                           ),
+                          if (widget.existingCourses.isNotEmpty)
+                            Padding(
+                              padding: const EdgeInsets.only(
+                                top: AppSpacing.xs,
+                              ),
+                              child: Wrap(
+                                spacing: AppSpacing.xs,
+                                runSpacing: AppSpacing.xs,
+                                children: <Widget>[
+                                  for (final course
+                                      in widget.existingCourses.take(8))
+                                    ActionChip(
+                                      avatar: const Icon(
+                                        Icons.school_outlined,
+                                        size: 16,
+                                      ),
+                                      label: Text(course),
+                                      tooltip: 'Use subject $course',
+                                      onPressed: () => setState(() {
+                                        _course.text = course;
+                                      }),
+                                    ),
+                                ],
+                              ),
+                            ),
                           const SizedBox(height: AppSpacing.md),
                           Text(
                             'Tags (optional)',

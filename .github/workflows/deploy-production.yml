@@ -1,9 +1,14 @@
 name: Production Deployment
 
 on:
-  push:
-    branches:
-      - main
+  # Deploy only after the CI workflow completes successfully on main.
+  # A green CI on main is now the deploy gate; previously deploy ran on every
+  # push regardless of CI outcome.
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -20,6 +25,8 @@ jobs:
     environment:
       name: production
       url: ${{ vars.RENDER_API_BASE_URL }}
+    # Manual dispatch always runs; CI-triggered runs only proceed on success.
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
 
     steps:
       - name: Checkout merged source

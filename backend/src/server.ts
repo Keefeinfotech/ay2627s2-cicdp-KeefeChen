@@ -19,6 +19,7 @@ import {
   isSmtpConfigured,
 } from "./config/environment.js";
 import { connectRedis, closeRedisClient } from "./config/redis.js";
+import "./shared/jobs/index.js";
 import logger from "./config/logger.js";
 
 const start = async (): Promise<void> => {
