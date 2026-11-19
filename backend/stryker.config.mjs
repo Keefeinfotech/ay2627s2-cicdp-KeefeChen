@@ -22,10 +22,7 @@ export default {
   // Mutation of behaviour the whole system depends on:
   // - tokens.ts: JWT sign/verify (auth for every protected route)
   // - AppError.ts: the error envelope/codes every client parses
-  mutate: [
-    "src/shared/utils/tokens.ts",
-    "src/shared/utils/AppError.ts",
-  ],
+  mutate: ["src/shared/utils/tokens.ts", "src/shared/utils/AppError.ts"],
   reporters: ["clear-text", "progress"],
   thresholds: {
     // break the nightly job below this score (ADR required to lower it):

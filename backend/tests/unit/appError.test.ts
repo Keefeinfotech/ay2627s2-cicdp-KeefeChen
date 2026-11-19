@@ -18,7 +18,9 @@ describe("AppError", () => {
   });
 
   it("carries status, code, message and optional details", () => {
-    const err = new AppError(422, "UNPROCESSABLE", "bad input", { field: "age" });
+    const err = new AppError(422, "UNPROCESSABLE", "bad input", {
+      field: "age",
+    });
     expect(err.status).toBe(422);
     expect(err.code).toBe("UNPROCESSABLE");
     expect(err.message).toBe("bad input");
@@ -70,7 +72,9 @@ describe("AppError", () => {
   });
 
   it("badRequest() accepts a custom message", () => {
-    expect(badRequest("Pick a bigger field").message).toBe("Pick a bigger field");
+    expect(badRequest("Pick a bigger field").message).toBe(
+      "Pick a bigger field",
+    );
   });
 
   it("notFound() builds a 404 NOT_FOUND with the default message", () => {

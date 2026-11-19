@@ -10,7 +10,7 @@ describe("access tokens", () => {
     const { token, sessionId } = signAccessToken(
       "user-1",
       "user@example.com",
-      "session-1"
+      "session-1",
     );
     const payload = verifyAccessToken(token);
 
@@ -37,7 +37,12 @@ describe("access tokens", () => {
     const token = jwt.sign(
       { email: "user@example.com" },
       process.env.JWT_SECRET as string,
-      { subject: "user-1", jwtid: "jti-1", issuer: "auxilia-api", expiresIn: "-1s" }
+      {
+        subject: "user-1",
+        jwtid: "jti-1",
+        issuer: "auxilia-api",
+        expiresIn: "-1s",
+      },
     );
     expect(verifyAccessToken(token)).toBeNull();
   });
@@ -46,13 +51,21 @@ describe("access tokens", () => {
     const token = jwt.sign(
       { email: "user@example.com" },
       process.env.JWT_SECRET as string,
-      { subject: "user-1", jwtid: "jti-1", issuer: "someone-else", expiresIn: "1h" }
+      {
+        subject: "user-1",
+        jwtid: "jti-1",
+        issuer: "someone-else",
+        expiresIn: "1h",
+      },
     );
     expect(verifyAccessToken(token)).toBeNull();
   });
 
   it("rejects an unsigned token", () => {
-    const token = jwt.sign({ email: "user@example.com" }, "wrong-secret-value-123456");
+    const token = jwt.sign(
+      { email: "user@example.com" },
+      "wrong-secret-value-123456",
+    );
     expect(verifyAccessToken(token)).toBeNull();
   });
 
@@ -86,7 +99,10 @@ describe("access tokens", () => {
   it("rejects a token whose payload is a bare string", () => {
     // jwt.sign with a string payload rejects exp/issuer options, so the
     // token fails the issuer check inside verifyAccessToken and is rejected.
-    const token = jwt.sign("plain-string-payload", process.env.JWT_SECRET as string);
+    const token = jwt.sign(
+      "plain-string-payload",
+      process.env.JWT_SECRET as string,
+    );
     expect(verifyAccessToken(token)).toBeNull();
   });
 });

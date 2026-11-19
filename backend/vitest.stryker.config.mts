@@ -12,11 +12,7 @@ export default mergeConfig(
   defineConfig({
     test: {
       include: ["tests/**/*.test.ts"],
-      exclude: [
-        "tests/contract/**",
-        "tests/mongodb/**",
-        "node_modules/**",
-      ],
+      exclude: ["tests/contract/**", "tests/mongodb/**", "node_modules/**"],
       coverage: {
         thresholds: {
           statements: 0,
