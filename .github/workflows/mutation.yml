@@ -40,7 +40,10 @@ jobs:
         run: npm ci --ignore-scripts
 
       - name: Run Stryker (scoped to critical modules)
-        run: npx stryker run --reporters clear-text,progress,json
+        # Stryker is a pinned devDependency; use the lockfile-installed binary
+        # (not npx) so nothing is fetched or resolved at run time. Reporters
+        # override adds the JSON report for the artifact upload below.
+        run: npm run test:mutate -- --reporters clear-text,progress,json
 
       - name: Upload mutation report
         if: always()
