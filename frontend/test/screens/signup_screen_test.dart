@@ -80,18 +80,12 @@ void main() {
     await tester.pumpWidget(pumpSignup());
     await tester.pumpAndSettle();
 
-    expect(
-      tester.widget<AppButton>(find.byType(AppButton)).onPressed,
-      isNull,
-    );
+    expect(tester.widget<AppButton>(find.byType(AppButton)).onPressed, isNull);
 
     // A weak password keeps the button disabled.
     await tester.enterText(find.byType(TextFormField).at(kPassword), 'weak');
     await tester.pumpAndSettle();
-    expect(
-      tester.widget<AppButton>(find.byType(AppButton)).onPressed,
-      isNull,
-    );
+    expect(tester.widget<AppButton>(find.byType(AppButton)).onPressed, isNull);
   });
 
   testWidgets('password strength bar and requirements appear when typing', (
