@@ -15,11 +15,10 @@ on:
       - main
       - develop
       - "release/**"
-    paths-ignore:
-      - "README.md"
-      - "LICENSE"
-      - "CONTRIBUTING.md"
-      - "docs/**"
+    # No paths-ignore: the required "CI - Final Quality Gate" check must
+    # report for every PR, including docs-only ones (otherwise docs PRs can
+    # never merge). Jobs that are irrelevant for docs-only diffs all conclude
+    # "skipped", which the quality gate already treats as pass.
 
   workflow_dispatch:
     inputs:
