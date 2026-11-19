@@ -52,6 +52,9 @@ dev_dependencies:
   integration_test:
     sdk: flutter
 
+  flutter_driver:
+    sdk: flutter
+
   # Static analysis and linting.
   flutter_lints: ^6.0.0
 

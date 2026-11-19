@@ -146,3 +146,8 @@ analyze_result.json
 # Flutter golden test mismatch artifacts (regenerated on failure)
 test/visual/failures/
 **/test/failures/
+
+# Stryker mutation testing artifacts
+backend/.stryker-tmp/
+backend/reports/mutation/
+**/test/visual/failures/
