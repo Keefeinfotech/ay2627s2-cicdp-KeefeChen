@@ -1,0 +1,45 @@
+# SLO burn-rate alerts for the Auxilia backend, derived from the Prometheus
+# metrics the app already exposes (see docs/operations/MONITORING_RUNBOOK.md
+# for the SLI definitions and the error-budget policy).
+#
+# SLIs (28-day window):
+#   - availability SLI:  non-5xx requests / total requests        target 99.5%
+#   - latency SLI:       requests answered within 1s / total      target 99.0%
+#
+# Burn rates (error-budget fraction per hour consumed as a multiple of
+# budget, per Google SRE workbook):
+#   - fast burn  14.4x  → 99% of the budget would burn in 2 days
+#   - slow burn   6.0x  → budget lasts < 5 days at this rate
+#
+# Both alerts page only when BOTH the 5xx ratio is elevated AND it is
+# sustained for `for` — they are complementary to the simpler
+# `HighErrorRate`/`HighLatency` rules in prometheus-alerts.yml, not a
+# replacement for them.
+
+groups:
+  - name: auxilia-slo
+    rules:
+      - alert: ErrorBudgetFastBurn
+        expr: |
+          (
+            sum(rate(http_requests_total{status=~"5.."}[5m]))
+              /
+            sum(rate(http_requests_total[5m]))
+          ) > 0.072
+        for: 2m
+        labels: { severity: critical, slo: availability }
+        annotations:
+          summary: "Auxilia burn rate 14.4x — error budget burning fast (availability)"
+          description: "5xx ratio above 7.2% for 2m — the 28-day budget would exhaust in ~2 days."
+      - alert: ErrorBudgetSlowBurn
+        expr: |
+          (
+            sum(rate(http_requests_total{status=~"5.."}[30m]))
+              /
+            sum(rate(http_requests_total[30m]))
+          ) > 0.03
+        for: 15m
+        labels: { severity: warning, slo: availability }
+        annotations:
+          summary: "Auxilia burn rate 6x — error budget eroding (availability)"
+          description: "5xx ratio above 3% for 15m — the 28-day budget lasts under ~5 days."

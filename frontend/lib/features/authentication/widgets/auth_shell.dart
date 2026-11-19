@@ -51,11 +51,17 @@ class AuthShell extends StatelessWidget {
 
     final width = MediaQuery.sizeOf(context).width;
     final isWide = width >= 880;
+    // In dark mode the form card follows the dark surface instead of the
+    // hardcoded white, so every label inside it keeps WCAG AA contrast.
+    final Color cardColor = isDark ? AppColors.darkSurface : AppColors.white;
+    final Color cardBorder = isDark
+        ? AppColors.darkBorder
+        : AppColors.borderGrey;
 
     if (isWide) {
       // Wide (web/desktop) layout: brand panel on the left, form on the right.
       return Scaffold(
-        backgroundColor: AppColors.cocoCream,
+        backgroundColor: canvas,
         body: Row(
           children: <Widget>[
             Expanded(
@@ -105,10 +111,10 @@ class AuthShell extends StatelessWidget {
                       ),
                       child: Card(
                         elevation: 0,
-                        color: AppColors.white,
+                        color: cardColor,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(AppRadius.xl),
-                          side: const BorderSide(color: AppColors.borderGrey),
+                          side: BorderSide(color: cardBorder),
                         ),
                         child: Padding(
                           padding: const EdgeInsets.all(AppSpacing.xxl),
@@ -213,10 +219,10 @@ class AuthShell extends StatelessWidget {
                   const SizedBox(height: AppSpacing.xl),
                   Card(
                     elevation: 0,
-                    color: AppColors.white,
+                    color: cardColor,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(AppRadius.xl),
-                      side: const BorderSide(color: AppColors.borderGrey),
+                      side: BorderSide(color: cardBorder),
                     ),
                     child: Padding(
                       padding: const EdgeInsets.all(AppSpacing.xl),

@@ -14,6 +14,7 @@ global:
 # Prometheus without compose, keep prometheus-alerts.yml next to this file.
 rule_files:
   - prometheus-alerts.yml
+  - prometheus-slo.yml
 
 # Where to send the alerts those rules fire. Uses the Alertmanager example
 # in this directory (monitoring/alertmanager.yml) with the compose profile;

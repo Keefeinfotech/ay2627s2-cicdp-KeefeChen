@@ -198,6 +198,7 @@ services:
     volumes:
       - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - ./monitoring/prometheus-alerts.yml:/etc/prometheus/prometheus-alerts.yml:ro
+      - ./monitoring/prometheus-slo.yml:/etc/prometheus/prometheus-slo.yml:ro
       - prometheus_data:/prometheus
 
   alertmanager:

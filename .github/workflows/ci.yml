@@ -337,7 +337,7 @@ jobs:
         run: flutter pub get --enforce-lockfile
 
       - name: Verify formatting
-        run: dart format --output=none --set-exit-if-changed lib test tool integration_test
+        run: dart format --output=none --set-exit-if-changed lib test tool integration_test test_driver
 
       - name: Static analysis
         # --no-fatal-infos: pre-existing style info lints (e.g.

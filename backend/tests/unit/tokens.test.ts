@@ -55,4 +55,38 @@ describe("access tokens", () => {
     const token = jwt.sign({ email: "user@example.com" }, "wrong-secret-value-123456");
     expect(verifyAccessToken(token)).toBeNull();
   });
+
+  it("rejects a token whose subject is not a string", () => {
+    const token = jwt.sign(
+      { sub: 123, email: "user@example.com", jti: "session-1" },
+      process.env.JWT_SECRET as string,
+      { issuer: "auxilia-api", expiresIn: "1h" },
+    );
+    expect(verifyAccessToken(token)).toBeNull();
+  });
+
+  it("rejects a token whose email claim is not a string", () => {
+    const token = jwt.sign(
+      { sub: "user-1", email: 456, jti: "session-1" },
+      process.env.JWT_SECRET as string,
+      { issuer: "auxilia-api", expiresIn: "1h" },
+    );
+    expect(verifyAccessToken(token)).toBeNull();
+  });
+
+  it("rejects a token whose jti claim is not a string", () => {
+    const token = jwt.sign(
+      { sub: "user-1", email: "user@example.com", jti: 789 },
+      process.env.JWT_SECRET as string,
+      { issuer: "auxilia-api", expiresIn: "1h" },
+    );
+    expect(verifyAccessToken(token)).toBeNull();
+  });
+
+  it("rejects a token whose payload is a bare string", () => {
+    // jwt.sign with a string payload rejects exp/issuer options, so the
+    // token fails the issuer check inside verifyAccessToken and is rejected.
+    const token = jwt.sign("plain-string-payload", process.env.JWT_SECRET as string);
+    expect(verifyAccessToken(token)).toBeNull();
+  });
 });
