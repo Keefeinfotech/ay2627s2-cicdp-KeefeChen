@@ -150,3 +150,4 @@ test/visual/failures/
 # Stryker mutation testing artifacts
 backend/.stryker-tmp/
 backend/reports/mutation/
+**/test/visual/failures/

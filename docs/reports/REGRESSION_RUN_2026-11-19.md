@@ -32,7 +32,7 @@ not estimated.
 | Stryker mutation (tokens.ts + AppError.ts) | ✅ pass | **100.00 score, 26 mutants killed, 0 survived, break ≥ 60** |
 | Frontend unit/widget (`flutter test --coverage`) | ✅ pass | **330 tests** |
 | Frontend coverage gate (`dart run tool/check_coverage.dart 62`) | ✅ pass | 62.5% ≥ 62 |
-| Frontend visual regression (goldens) | ✅ pass | 2/2 |
+| Frontend visual regression (goldens) | ⚠️ CI-rendered | baselines are ubuntu-generated; suite **skips on Windows** — the CI `frontend` job is the gate |
 | Frontend accessibility guidelines (`test/accessibility/`) | ✅ pass | 3/3 (TaskCard light; LoginScreen light & dark — dark mode caught 3 real WCAG AA defects, now fixed) |
 | Frontend `dart format` / `flutter analyze --no-fatal-infos` | ✅ pass | — |
 | Integration test on Android emulator (`flutter drive`) | ✅ pass | cold-start intro → login path passed on `Medium_Phone_API_37.0` |

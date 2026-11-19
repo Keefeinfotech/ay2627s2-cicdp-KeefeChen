@@ -43,7 +43,7 @@ suite. Full details: `docs/reports/REGRESSION_RUN_2026-11-19.md`.
 | AI guardrails | `backend/tests/ai/` | 7 tests |
 | E2E (Playwright, real stack) | `e2e/tests/` | smoke, API contract, a11y, first-run auth path; 4 browser projects |
 | Performance (node + k6) | `backend/tests/performance/` | p95 budget 500 ms |
-| Visual (Flutter goldens) | `frontend/test/visual/` | 2 goldens - suite restored 2026-11-19 (removed as flaky in f4e5976) |
+| Visual (Flutter goldens) | `frontend/test/visual/` | 2 goldens - recreated 2026-11-19; **CI (ubuntu) rendered/gate**, skips off-Linux |
 | Contract (Pact) | `backend/tests/contract/` | consumer contract + provider verification wired into `npm test` |
 | Mutation (Stryker) | `backend/stryker.config.mjs` | `tokens.ts` + `AppError.ts` - 100.00 score (26/26 killed) incl. 3 tests added to kill survivors; nightly/on-demand only, never a per-PR gate |
 | Accessibility (Flutter) | `frontend/test/accessibility/` | 3 guideline tests - recreates the suite earlier doc claimed but never committed; caught 3 real WCAG AA defects in AuthShell dark mode (fixed) |
@@ -180,16 +180,17 @@ staging via the smoke suite and manually.
   overdue (no time-dependent branch), and `tester.pumpAndSettle()` drains the
   `AnimatedContainer` before capture. Goldens are generated with
   Flutter 3.47.8, the exact version pinned in CI (`ci.yml`).
-- Regenerate intentionally:
+- Baselines are **ubuntu-rendered (CI-generated, 2026-11-19)** and the suite
+  **runs on Linux only** — Windows/macOS anti-aliasing differs by ~0.1%,
+  failing `matchesGoldenFile` without any visual change. CI (GitHub
+  ubuntu-latest) is the gate; the suite skips on other platforms. After an
+  intentional UI change, regenerate baselines in a Linux environment (or on
+  the CI runner) with:
   ```bash
   flutter test test/visual --update-goldens
   ```
   The PR that changes goldens must justify each changed PNG. Mismatch
   artifacts land in `test/visual/failures/` and are git-ignored.
-- In CI goldens run as part of `flutter test`. Goldens are generated on the
-  maintainer's platform (Windows); if the ubuntu-latest runner disagrees,
-  regenerate the baselines inside the CI runner and commit those — do not
-  delete the test again.
 - The E2E layer deliberately does not assert screenshots (Flutter web text is
   canvas/semantics and pixel-diffing it across 3 engines is noise); goldens
   cover this instead.

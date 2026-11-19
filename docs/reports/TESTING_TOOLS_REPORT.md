@@ -20,7 +20,7 @@ with this PR applied, not copied from earlier documents.
 | MongoDB-backed integration | **mongodb-memory-server** (real in-memory mongod) | `backend/tests/mongodb/` | 8 tests — real schema/indexes/CAS/soft-delete/ownership |
 | Frontend unit + widget tests | **flutter_test** | `frontend/test/` (46 files, 330 tests) | all pass |
 | Frontend coverage | **`tool/check_coverage.dart`** (62% line gate) | `frontend/tool/` | 62.5% |
-| Visual regression | **Flutter goldens** (`matchesGoldenFile`) | `frontend/test/visual/` | restored (2 goldens) |
+| Visual regression | **Flutter goldens** (`matchesGoldenFile`) | `frontend/test/visual/` | recreated 2026-11-19; CI-rendered (ubuntu); **runs Linux-only** (skips off-Linux) |
 | Contract testing | **Pact JS V3** (consumer + provider verification) | `backend/tests/contract/`, `backend/pacts/` | both halves; runs in `npm test` |
 | E2E / compatibility | **Playwright** (Chromium, Firefox, WebKit, Pixel 7) on docker-compose | `e2e/tests/` | in CI, 4 browser projects |
 | Accessibility | **axe-core** (Playwright) + **Flutter guideline suite** | `e2e/tests/a11y.spec.ts`, `frontend/test/accessibility/` | 3 guideline tests — caught 3 real WCAG AA defects in dark mode (fixed) |
@@ -122,11 +122,11 @@ baselines in `frontend/test/visual/goldens/`. The suite had been **deleted**
 in f4e5976 "remove flaky golden test blocking CI" and was **restored
 2026-11-19** with the flake sources designed out: fixed timestamps (no
 wall-clock dependence), no overdue task (no time-dependent branch),
-`tester.pumpAndSettle()` to drain the `AnimatedContainer` before capture, and
-baselines generated with the same Flutter version CI pins (3.47.8, ubuntu —
-Windows vs Linux baselines must match or be regenerated in the CI runner).
-Playwright screenshots were deliberately not used — Flutter web renders to
-canvas, which is pixel-unstable across engines.
+`tester.pumpAndSettle()` to drain the `AnimatedContainer` before capture.
+Baselines are **ubuntu-rendered (CI-generated 2026-11-19)** and the suite
+**runs on Linux only** (`Platform.isLinux` guard — Windows/macOS AA differs
+by ~0.1%); CI is the gate. Playwright screenshots were deliberately not
+used — Flutter web renders to canvas, which is pixel-unstable across engines.
 
 ### 2.7 Performance testing
 
