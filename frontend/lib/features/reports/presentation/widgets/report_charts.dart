@@ -172,13 +172,17 @@ class _BarPair extends StatelessWidget {
         const SizedBox(height: AppSpacing.xs),
         SizedBox(
           height: 16,
-          child: Text(
-            showLabel ? point.label : '',
-            maxLines: 1,
-            overflow: TextOverflow.clip,
-            style: theme.textTheme.labelSmall?.copyWith(
-              color: scheme.onSurfaceVariant,
-              fontSize: 10,
+          child: Center(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                showLabel ? point.label : '',
+                maxLines: 1,
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: scheme.onSurfaceVariant,
+                  fontSize: 10,
+                ),
+              ),
             ),
           ),
         ),

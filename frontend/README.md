@@ -66,13 +66,13 @@ Unknown routes fall back to the startup gate.
 
 - Palette and semantic colours: `lib/core/theme/app_colors.dart`
 - Spacing, radius, and sizing tokens: `lib/core/theme/app_spacing.dart`
-- Typography scale and Inter font family: `lib/core/theme/app_typography.dart`
+- Typography scale and Roboto font family: `lib/core/theme/app_typography.dart`
 - Light/dark Material 3 themes: `lib/core/theme/app_theme.dart`
 - Shared components: `lib/core/widgets/`
 
-Inter Regular, Medium, SemiBold, and Bold are bundled in `assets/fonts/`.
-Deep Navy is the primary brand colour; white and soft grey carry surfaces; teal
-is reserved for success states. Primary actions use Clear Blue.
+Roboto is used across all surfaces (bundled by Flutter's Material defaults).
+Trust Blue (#2563EB) leads the palette; white and slate carry surfaces; emerald
+is reserved for success states. Primary actions use Trust Blue.
 
 ## Checks
 

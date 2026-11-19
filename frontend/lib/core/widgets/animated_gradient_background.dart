@@ -7,10 +7,10 @@ class AnimatedGradientBackground extends StatefulWidget {
     super.key,
     required this.child,
     this.colors = const [
-      Color(0xFF6B7C98),
-      Color(0xFFAB978C),
-      Color(0xFF5E5653),
-      Color(0xFF16A34A),
+      Color(0xFF1E3A8A),
+      Color(0xFF2563EB),
+      Color(0xFF0F172A),
+      Color(0xFF059669),
     ],
     this.duration = const Duration(seconds: 8),
   });
