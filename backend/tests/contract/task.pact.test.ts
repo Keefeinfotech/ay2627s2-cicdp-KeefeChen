@@ -1,6 +1,5 @@
-
-/**
- * File Name: tasks.pact.test.ts
+/*
+ * File Name: task.pact.test.ts
  * Description: Consumer-driven Pact contract tests for Auxilia task APIs.
  * Author: Keefe Chen
  *
@@ -13,9 +12,13 @@
  * - Vitest
  *
  * Note:
- * These tests use a Pact mock server.
- * They generate consumer contracts that must subsequently
- * be verified against the actual Express.js backend.
+ * These tests use a Pact mock server. They generate the consumer contract
+ * (backend/pacts/Auxilia-Frontend-Auxilia-API.json) that is subsequently
+ * verified against the real Express backend by
+ * backend/tests/contract/tasks.provider.test.ts. The expectations below
+ * describe the provider as it actually behaves today — the `{ message, data }`
+ * envelope, `_id` primary keys and the `todo` status enum — and are the
+ * source of truth for both directions of the contract.
  */
 
 import { describe, expect, it } from "vitest";
@@ -25,7 +28,7 @@ import { PactV3, MatchersV3 } from "@pact-foundation/pact";
 // 1. PACT MATCHERS
 // ============================================================
 
-const { like, eachLike, string } = MatchersV3;
+const { eachLike, string } = MatchersV3;
 
 // ============================================================
 // 2. PACT CONFIGURATION
@@ -51,7 +54,6 @@ const AUTH_TOKEN = "Bearer example-access-token";
 // ============================================================
 
 describe("Auxilia Task API Consumer Contract", () => {
-
   // ----------------------------------------------------------
   // TEST 1: GET TASKS
   // ----------------------------------------------------------
@@ -61,14 +63,12 @@ describe("Auxilia Task API Consumer Contract", () => {
 
     pact
       .given("the authenticated user has at least one task")
-      .uponReceiving(
-        "a request to retrieve the current user's tasks"
-      )
+      .uponReceiving("a request to retrieve the current user's tasks")
       .withRequest({
         method: "GET",
         path: API_PATH,
         headers: {
-          Authorization: like(AUTH_TOKEN),
+          Authorization: string(AUTH_TOKEN),
           Accept: "application/json",
         },
       })
@@ -77,31 +77,27 @@ describe("Auxilia Task API Consumer Contract", () => {
         headers: {
           "Content-Type": "application/json; charset=utf-8",
         },
-        body: like({
-          success: true,
+        body: {
+          message: string("Tasks retrieved successfully."),
           data: eachLike({
-            id: string("task-123"),
+            _id: string("task-123"),
             title: string("Complete CI/CD assignment"),
             description: string("Finish the deployment report"),
             priority: string("high"),
-            status: string("pending"),
+            status: string("todo"),
           }),
-        }),
+        },
       });
 
     await pact.executeTest(async (mockServer) => {
-
       // Send GET request to Pact mock server
-      const response = await fetch(
-        `${mockServer.url}${API_PATH}`,
-        {
-          method: "GET",
-          headers: {
-            Authorization: AUTH_TOKEN,
-            Accept: "application/json",
-          },
-        }
-      );
+      const response = await fetch(`${mockServer.url}${API_PATH}`, {
+        method: "GET",
+        headers: {
+          Authorization: AUTH_TOKEN,
+          Accept: "application/json",
+        },
+      });
 
       // Verify HTTP status
       expect(response.status).toBe(200);
@@ -110,7 +106,7 @@ describe("Auxilia Task API Consumer Contract", () => {
       const payload = await response.json();
 
       // Verify response structure
-      expect(payload.success).toBe(true);
+      expect(typeof payload.message).toBe("string");
       expect(Array.isArray(payload.data)).toBe(true);
 
       // Verify task properties
@@ -118,12 +114,12 @@ describe("Auxilia Task API Consumer Contract", () => {
 
       expect(payload.data[0]).toEqual(
         expect.objectContaining({
-          id: expect.any(String),
+          _id: expect.any(String),
           title: expect.any(String),
           description: expect.any(String),
           priority: expect.any(String),
           status: expect.any(String),
-        })
+        }),
       );
     });
   });
@@ -135,24 +131,22 @@ describe("Auxilia Task API Consumer Contract", () => {
   it("should create a task using the agreed request and response format", async () => {
     const pact = createPact();
 
-    // Expected request body
+    // Expected request body — matches createTaskSchema exactly (the schema
+    // is .strict(), so no extra keys such as `status` may be sent).
     const requestBody = {
       title: "Complete CI/CD assignment",
       description: "Finish the deployment report",
       priority: "high",
-      status: "pending",
     };
 
     pact
       .given("the authenticated user can create tasks")
-      .uponReceiving(
-        "a valid request to create a task"
-      )
+      .uponReceiving("a valid request to create a task")
       .withRequest({
         method: "POST",
         path: API_PATH,
         headers: {
-          Authorization: like(AUTH_TOKEN),
+          Authorization: string(AUTH_TOKEN),
           Accept: "application/json",
           "Content-Type": "application/json",
         },
@@ -160,7 +154,6 @@ describe("Auxilia Task API Consumer Contract", () => {
           title: string("Complete CI/CD assignment"),
           description: string("Finish the deployment report"),
           priority: string("high"),
-          status: string("pending"),
         },
       })
       .willRespondWith({
@@ -168,33 +161,29 @@ describe("Auxilia Task API Consumer Contract", () => {
         headers: {
           "Content-Type": "application/json; charset=utf-8",
         },
-        body: like({
-          success: true,
+        body: {
+          message: string("Task created successfully."),
           data: {
-            id: string("task-123"),
+            _id: string("task-123"),
             title: string("Complete CI/CD assignment"),
             description: string("Finish the deployment report"),
             priority: string("high"),
-            status: string("pending"),
+            status: string("todo"),
           },
-        }),
+        },
       });
 
     await pact.executeTest(async (mockServer) => {
-
       // Send POST request to Pact mock server
-      const response = await fetch(
-        `${mockServer.url}${API_PATH}`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: AUTH_TOKEN,
-            Accept: "application/json",
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(requestBody),
-        }
-      );
+      const response = await fetch(`${mockServer.url}${API_PATH}`, {
+        method: "POST",
+        headers: {
+          Authorization: AUTH_TOKEN,
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(requestBody),
+      });
 
       // Verify HTTP status
       expect(response.status).toBe(201);
@@ -203,17 +192,17 @@ describe("Auxilia Task API Consumer Contract", () => {
       const payload = await response.json();
 
       // Verify response structure
-      expect(payload.success).toBe(true);
+      expect(typeof payload.message).toBe("string");
 
       // Verify returned task properties
       expect(payload.data).toEqual(
         expect.objectContaining({
-          id: expect.any(String),
+          _id: expect.any(String),
           title: requestBody.title,
           description: requestBody.description,
           priority: requestBody.priority,
-          status: requestBody.status,
-        })
+          status: expect.any(String),
+        }),
       );
     });
   });

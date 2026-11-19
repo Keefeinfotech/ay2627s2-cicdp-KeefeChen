@@ -27,20 +27,23 @@ node scripts/run-all-tests.mjs --perf
 In CI these layers run on every push and pull request; see
 [CI/CD gating](#cicd-gating).
 
-## Coverage today (2026-11-12)
+## Coverage today (2026-11-19)
+
+Verified on `main` with this PR applied (`vitest list` / `flutter test`).
+These numbers drift fast — update them with any PR that adds or removes a
+suite.
 
 | Layer | Suites | Result |
 |---|---|---|
-| Backend (vitest) | 44 files, 340 tests | all pass; coverage ratcheted at 49/39/48/50 |
-| Frontend (flutter_test) | 47 files, 320 tests | all pass; ≥ 60% lines gated |
+| Backend (vitest) | 49 files, 355 tests | all pass; coverage 59.4% statements / 49.7% branches / 60.5% functions / 60.2% lines vs the 58/48/59/58 ratchet in `vitest.config.mts` (measured on `main`, 2026-11-19) |
+| Frontend (flutter_test) | 46 files, 327 tests | all pass; line coverage 62.5% vs 62% gate (`tool/check_coverage.dart`) |
 | Functional (API, in-memory model) | `backend/tests/functional/` | 7 tests |
-| Regression (known incidents) | `backend/tests/regression/` | 7 tests |
-| AI guardrails | `backend/tests/ai/` | 11 tests |
+| Regression (known incidents) | `backend/tests/regression/` | 5 tests (4 blocks + `it.each` expansion) |
+| AI guardrails | `backend/tests/ai/` | 7 tests |
 | E2E (Playwright, real stack) | `e2e/tests/` | smoke, API contract, a11y, first-run auth path; 4 browser projects |
 | Performance (node + k6) | `backend/tests/performance/` | p95 budget 500 ms |
-| Accessibility (guideline tests) | `frontend/test/accessibility/` | 3 tests |
-| Visual (Flutter goldens) | `frontend/test/visual/` | 2 goldens |
-| Contract (Pact) | `backend/tests/contract/` | consumer contract for `/api/tasks` |
+| Visual (Flutter goldens) | `frontend/test/visual/` | 2 goldens — suite restored 2026-11-19 (it had been removed as flaky in f4e5976) |
+| Contract (Pact) | `backend/tests/contract/` | consumer contract + provider verification wired into `npm test` |
 | Smoke (post-deploy) | `scripts/smoke-test.mjs` | runs in `deploy-production.yml` |
 | Manual | `docs/testing/MANUAL_TEST_PLAN.md` | pre-release checklist |
 
@@ -70,6 +73,9 @@ spy verification).
   controller → service against supertest with mocked Mongoose models
   (`tests/helpers/authMocks.ts` provides the shared `queryResult`/model
   stubs).
+- The in-memory Task model used by the functional suite and the Pact provider
+  verification is shared as `backend/tests/helpers/inMemoryTaskModel.ts`
+  (previously copy-pasted into the functional suite).
 - Frontend — `frontend/test/**` widget tests pump real widget trees with
   mocked HTTP (`http/testing.dart`) and platform channels
   (shared_preferences), e.g. home dashboard, login, startup gate.
@@ -161,16 +167,21 @@ staging via the smoke suite and manually.
 
 - Flutter golden tests: `frontend/test/visual/golden_test.dart`
   (`matchesGoldenFile`), baselines in `frontend/test/visual/goldens/`.
+- The suite was removed in f4e5976 as flaky and restored on 2026-11-19 with
+  the flake sources designed out: all timestamps are fixed, neither task is
+  overdue (no time-dependent branch), and `tester.pumpAndSettle()` drains the
+  `AnimatedContainer` before capture. Goldens are generated with
+  Flutter 3.47.8, the exact version pinned in CI (`ci.yml`).
 - Regenerate intentionally:
   ```bash
   flutter test test/visual --update-goldens
   ```
-  The PR that changes goldens must justify each changed PNG.
-- In CI goldens run as part of `flutter test`. Note: goldens are generated on
-  the maintainer's platform (Windows); a font-rendering difference elsewhere
-  may require regenerating baselines in a consistent environment (CI:
-  ubuntu-latest). This is a known limitation — if CI goldens flake, regenerate
-  the baselines inside the CI runner and commit those.
+  The PR that changes goldens must justify each changed PNG. Mismatch
+  artifacts land in `test/visual/failures/` and are git-ignored.
+- In CI goldens run as part of `flutter test`. Goldens are generated on the
+  maintainer's platform (Windows); if the ubuntu-latest runner disagrees,
+  regenerate the baselines inside the CI runner and commit those — do not
+  delete the test again.
 - The E2E layer deliberately does not assert screenshots (Flutter web text is
   canvas/semantics and pixel-diffing it across 3 engines is noise); goldens
   cover this instead.
@@ -236,18 +247,18 @@ silently rot.
 
 **What:** machine-checkable WCAG 2.x conformance for the UI.
 
-- Flutter guideline tests: `frontend/test/accessibility/accessibility_test.dart`
-  — `textContrastGuideline`, `androidTapTargetGuideline`,
-  `iOSTapTargetGuideline`, `labeledTapTargetGuideline` on TaskCard (light),
-  LoginScreen (light and dark).
+- Flutter: semantic assertions at the widget level — e.g.
+  `test/widgets/task_card_test.dart` asserts the semantics label and the
+  checkbox toggle label with `tester.ensureSemantics()`.
+  > Note: the dedicated Flutter accessibility guideline suite
+  > (`test/accessibility/`, `textContrastGuideline` & friends) that this
+  > document previously claimed **does not exist in the repository** — it was
+  > never committed or was dropped during the UI rewrite. Do not cite it until
+  > it is written.
 - Web: `e2e/tests/a11y.spec.ts` — axe-core scan; critical violations fail,
   serious are reported.
 - Manual pass for screen-reader flows: see MANUAL_TEST_PLAN.md
   (VoiceOver/TalkBack items).
-- Two real defects were fixed to make these green: secondary text contrast
-  (#7B7F8A → #5A5F6A), link/accent steel blue (#6B7C98 → #4F5D75), light
-  primary button text (near-black → white), auth screens' hard-coded light
-  background in dark mode, and TaskCard 40px icon buttons → 48px.
 
 ### 13. Smoke Testing & Sanity Testing
 
@@ -300,21 +311,34 @@ flutter drive --driver=test_driver/integration_test.dart --target=integration_te
 
 | Job | Suites enforced | Blocking |
 |---|---|---|
-| `backend` | lint, typecheck, `npm test` (unit+integration+contract+security+functional+regression+ai), build, coverage | yes |
-| `frontend` | format, analyze, `flutter test` (incl. goldens + a11y), 60% line gate, web build | yes |
+| `backend` | lint, typecheck, `npm test` (unit+integration+contract+security+functional+regression+ai), build, coverage ratchet 58/48/59/58 | yes |
+| `frontend` | format, analyze, `flutter test` (incl. goldens), 62% line gate, web build | yes |
 | `e2e` | docker-compose stack health, Playwright smoke/API/a11y/auth (4 browser projects) | yes |
+| `dependency-review` | dependency graph diff scan, fails on high severity | yes (PR only) since the repo is public — enabled 2026-11-19 via repo variable `DEPENDENCY_REVIEW_ENABLED=true`; was previously off because the repo was private without GitHub Advanced Security |
 | `performance` | node load smoke (p95 budget) | manual only (`workflow_dispatch`) |
-| `ci-summary` | aggregates all gates (E2E included) | branch protection |
+| `ci-summary` | aggregates all gates (E2E included) | branch protection (`CI - Final Quality Gate`) |
 | `deploy-production.yml` | post-deploy `smoke-test.mjs` | deployment |
+
+Contract testing runs inside the `backend` job (`tests/contract/`): the Pact
+consumer test generates `pacts/Auxilia-Frontend-Auxilia-API.json` and
+`tasks.provider.test.ts` verifies it against the real Express app (in-memory
+Task store, ephemeral port). Both must stay green together — a contract edit
+in one without the other is an automatic CI failure.
 
 ## Ratcheting and maintenance
 
-- Frontend 60% line gate and backend 49/39/48/50 thresholds must not be
-  lowered (ADR required). Raise them as coverage improves.
+- Frontend 62% line gate and backend 58/48/59/58 thresholds must not be
+  lowered (ADR required). Raise them as coverage improves — the backend
+  gate is green on `main` today (59.4/49.7/60.5/60.2); feature branches that
+  add modules without tests will turn it red, and the fix is tests, not a
+  lower ratchet.
 - Goldens regenerate only via `flutter test test/visual --update-goldens`
   with a justification in the PR.
 - New features: unit + integration tests mandatory; user-facing flows get a
   functional or E2E test; fixed defects get a regression test.
+- GitHub Advanced Security is not needed for Dependency Review now that the
+  repository is public; `Dependency Review` is a required-by-convention PR
+  gate (enforced via `CI - Final Quality Gate`).
 - `docs/planning/TASKS.md` is the product backlog; this file is the testing backlog index.
 
 ## Known gaps and future work
@@ -323,10 +347,33 @@ flutter drive --driver=test_driver/integration_test.dart --target=integration_te
    needs a real or embedded MongoDB; the intended approach is a focused unit
    test around its find-or-create helpers, or running it twice against a
    scratch database in CI.
-2. **Pact provider verification** — contract exists on the consumer side; the
-   API should verify `pacts/Auxilia-Frontend-Auxilia-API.json` in CI.
+2. ~~**Pact provider verification**~~ — **done (2026-11-19).**
+   `backend/tests/contract/tasks.provider.test.ts` boots the real Express app
+   on an ephemeral port against the shared in-memory Task model and verifies
+   `pacts/Auxilia-Frontend-Auxilia-API.json`. It runs in `npm test` /
+   `npm run test:coverage`, so CI enforces it. The consumer contract was also
+   corrected to describe the actual API (`{ message, data }` envelope,
+   `_id` keys, `todo` status enum) — previously it asserted a shape the
+   provider never had.
 3. **Device-farm matrix for Android/iOS** — integration_test on emulators in
-   `integration.yml` (macOS runners for iOS).
+   `integration.yml` (macOS runners for iOS); `integration_test/app_test.dart`
+   still does not run in CI.
 4. **Staging soak** — scheduled k6 run with SLO alerting.
-5. **Visual diff across engines** — Playwright `toHaveScreenshot` behind a
-   dedicated, advisory-only job.
+5. **Coverage must stay green on new modules** — `main` is green today after
+   #107, but any feature branch adding modules without tests will trip the
+   ratchet. No exceptions: new code lands with tests.
+6. **Flutter accessibility guideline suite** — the previously claimed
+   `test/accessibility/` guideline suite does not exist; recreate it (or
+   delete the claim) before the next submission.
+7. **MongoDB-backed integration tests** — everything above the E2E layer
+   still mocks Mongoose; no `mongodb-memory-server`/`testcontainers`.
+
+## Monitoring and alerting (outside the test suite, tracked here)
+
+- Prometheus now loads `monitoring/prometheus-alerts.yml` via `rule_files`
+  (it previously never evaluated the 3 alert rules) and routes through an
+  example `monitoring/alertmanager.yml` wired into the `monitoring` compose
+  profile (`docker compose --profile monitoring up -d`).
+- Alert delivery is a placeholder webhook — point `monitoring/alertmanager.yml`
+  at a real receiver (Slack/Teams/PagerDuty) for production. There is no SLO
+  or error-budget config and no monitoring runbook yet.
