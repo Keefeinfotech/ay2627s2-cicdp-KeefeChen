@@ -345,8 +345,21 @@ jobs:
         # warnings still do.
         run: flutter analyze --no-fatal-infos
 
-      - name: Run tests with coverage
-        run: flutter test --coverage
+      # TEMP(pr-110): regenerate visual goldens on the ubuntu CI runner so
+      # baselines match CI rendering (Windows-generated baselines fail here
+      # by ~0.13%). Remove this in the follow-up commit that commits the
+      # regenerated goldens.
+      - name: Run tests with coverage (update goldens)
+        run: flutter test --coverage --update-goldens
+
+      - name: Upload regenerated visual goldens
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: visual-goldens-ubuntu
+          path: frontend/test/visual/goldens/
+          if-no-files-found: error
+          retention-days: 7
 
       - name: Enforce coverage threshold
         run: dart run tool/check_coverage.dart 62
