@@ -52,7 +52,7 @@ void main() {
 
     final header = find.byType(DashboardHeader);
     expect(
-      find.descendant(of: header, matching: find.text('Total XP')),
+      find.descendant(of: header, matching: find.text('XP')),
       findsOneWidget,
     );
     expect(
