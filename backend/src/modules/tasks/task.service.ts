@@ -9,6 +9,7 @@ import { AppError } from "../../shared/utils/AppError.js";
 import { taskRepository } from "./task.repository.js";
 import { requireGroupMembership } from "../groups/shared/membership.js";
 import { Member } from "../groups/member/member.model.js";
+import { enqueue } from "../../shared/jobs/index.js";
 
 import type {
   CreateTaskInput,
@@ -84,23 +85,28 @@ export const taskService = {
       if (existing) return existing;
     }
 
-    try {
-      return await taskRepository.create(userId, input);
-    } catch (error) {
-      // Two retries can pass the preflight lookup at the same time. The task
-      // UUID's unique index is the final idempotency guard for that race.
-      if (
-        input.id &&
-        typeof error === "object" &&
-        error !== null &&
-        "code" in error &&
-        error.code === 11000
-      ) {
-        const existing = await taskRepository.findByIdForUser(input.id, userId);
-        if (existing) return existing;
+    const created = await (async () => {
+      try {
+        return await taskRepository.create(userId, input);
+      } catch (error) {
+        // Two retries can pass the preflight lookup at the same time. The task
+        // UUID's unique index is the final idempotency guard for that race.
+        if (
+          input.id &&
+          typeof error === "object" &&
+          error !== null &&
+          "code" in error &&
+          error.code === 11000
+        ) {
+          const existing = await taskRepository.findByIdForUser(input.id, userId);
+          if (existing) return existing;
+        }
+        throw error;
       }
-      throw error;
-    }
+    })();
+
+    enqueue("analytics.invalidate", { userId });
+    return created;
   },
 
   /**
@@ -183,6 +189,7 @@ export const taskService = {
       throw new AppError(404, "TASK_NOT_FOUND", "Task was not found.");
     }
 
+    enqueue("analytics.invalidate", { userId });
     return task;
   },
 
@@ -195,5 +202,7 @@ export const taskService = {
     if (!deleted) {
       throw new AppError(404, "TASK_NOT_FOUND", "Task was not found.");
     }
+
+    enqueue("analytics.invalidate", { userId });
   },
 };

@@ -50,6 +50,26 @@ services:
       retries: 5
 
   # ------------------------------------------------------------------
+  # Notification Service (prototype extraction candidate): standalone
+  # delivery service for reminder/notification emails. The backend calls it
+  # at NOTIFICATION_SERVICE_URL; when it is down the backend fails open
+  # (notification logged and dropped). See docs/microservices-prototype.md.
+  # ------------------------------------------------------------------
+  notification-service:
+    build:
+      context: ./backend/prototype/notification-service
+      dockerfile: Dockerfile
+    container_name: auxilia-notification-service
+    restart: unless-stopped
+    ports:
+      - "3100:3100"
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:3100/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  # ------------------------------------------------------------------
   # Backend API
   # ------------------------------------------------------------------
   backend:
@@ -65,6 +85,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      notification-service:
+        condition: service_healthy
     ports:
       - "3000:3000"
     environment:
@@ -72,6 +94,7 @@ services:
       PORT: 3000
       MONGODB_URI: mongodb://mongodb:27017/auxilia
       REDIS_URL: redis://redis:6379
+      NOTIFICATION_SERVICE_URL: http://notification-service:3100
       # Development-only default so a fresh clone works out of the box.
       # REQUIRED in real deployments: set JWT_SECRET (>= 16 chars) in .env or
       # the environment before exposing the stack.

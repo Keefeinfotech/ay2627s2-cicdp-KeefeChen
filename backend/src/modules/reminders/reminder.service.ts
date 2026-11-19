@@ -5,6 +5,9 @@
  */
 
 import { Reminder } from "./reminder.model.js";
+import { User } from "../users/user.model.js";
+import { enqueue } from "../../shared/jobs/index.js";
+import logger from "../../config/logger.js";
 
 export const reminderService = {
   /** Get all reminders for a user */
@@ -24,7 +27,29 @@ export const reminderService = {
       message,
       dueAt,
     });
-    return reminder.save();
+    const saved = await reminder.save();
+
+    // Best-effort notification through the notification-service prototype,
+    // delivered via the background job queue (fail-open).
+    try {
+      const user = await User.findById(userId).select("email").lean();
+      const email = (user as { email?: string } | null)?.email;
+      if (email) {
+        enqueue("notification.send", {
+          to: email,
+          channel: "email",
+          subject: "Reminder created",
+          message: `Reminder: ${message}`,
+        });
+      }
+    } catch (error) {
+      logger.warn("reminder.notification_enqueue_failed", {
+        userId,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+
+    return saved;
   },
 
   /** Mark a reminder as completed */
