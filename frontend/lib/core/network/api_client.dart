@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'latency_monitor.dart';
+
 import 'package:http/http.dart' as http;
 
 /// A failed API call with a message that is safe to show to a user.
@@ -280,13 +282,18 @@ class ApiClient {
   Future<http.Response> _execute(
     Future<http.Response> Function() request,
   ) async {
+    final stopwatch = Stopwatch()..start();
     try {
-      return await request().timeout(_timeout);
+      final response = await request().timeout(_timeout);
+      LatencyMonitor.instance.record(stopwatch.elapsed);
+      return response;
     } on TimeoutException {
+      LatencyMonitor.instance.record(stopwatch.elapsed, failed: true);
       throw ApiException(
         'The server took too long to respond. Please try again.',
       );
     } on http.ClientException {
+      LatencyMonitor.instance.record(stopwatch.elapsed, failed: true);
       throw ApiException(
         'Could not reach the server. Check your connection and try again.',
       );
@@ -324,6 +331,10 @@ class ApiClient {
   }) async {
     final statusCode = response.statusCode;
     final code = data?['code'] as String?;
+
+    if (statusCode >= 500) {
+      LatencyMonitor.instance.recordServerError();
+    }
 
     if (statusCode == 401 && authenticated) {
       final hook = onUnauthorized;

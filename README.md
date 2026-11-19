@@ -1,7 +1,6 @@
 # Auxilia
 
 ![CI](https://github.com/Keefeinfotech/ay2627s2-cicdp-KeefeChen/actions/workflows/ci.yml/badge.svg)
-![Coverage](https://img.shields.io/badge/coverage-62%25-brightgreen)
 ![SonarCloud](https://sonarcloud.io/api/project_badges/measure?project=Keefeinfotech_ay2627s2-cicdp-KeefeChen&metric=alert_status)
 ![Release](https://img.shields.io/github/v/release/Keefeinfotech/ay2627s2-cicdp-KeefeChen)
 
@@ -61,7 +60,7 @@ Flutter app ── local storage (shared_preferences)  -> tasks, offline-first
 ```
 backend/   Express + TypeScript API (auth, AI, groups, sync, health)
 frontend/  Flutter application (core design system, feature modules, local storage)
-docs/      Release gates, release checklist, privacy, dependencies, reports
+docs/      Release gates, release checklist, privacy, dependencies, change management, reports
 scripts/   Non-mutating deployment smoke checks
 .github/   CI and release workflows
 ```
@@ -316,6 +315,8 @@ automatically. Prometheus scrapes the guarded `/metrics` endpoint.
 - [OWASP implementation](docs/compliance/OWASP_IMPLEMENTATION.md)
 - [Release gates](docs/compliance/NFR_RELEASE_GATES.md)
 - [Release checklist](docs/release/RELEASE_CHECKLIST.md)
+- [Change management process](docs/change-management/change-management-process.md)
+- [Change log](docs/change-management/change-log.md)
 - [Privacy notice](docs/compliance/PRIVACY.md)
 - [Dependencies](docs/release/DEPENDENCIES.md)
 - [Security policy](SECURITY.md)

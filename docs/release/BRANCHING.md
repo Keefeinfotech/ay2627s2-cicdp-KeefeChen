@@ -2,7 +2,9 @@
 
 This document is the repository's branch naming standard. It exists so every
 branch makes its purpose obvious, so automation can rely on prefixes, and so
-releases and rollbacks stay predictable.
+releases and rollbacks stay predictable. Changes are proposed and approved
+through GitHub Issues before a branch is cut — see
+[docs/change-management/change-management-process.md](../change-management/change-management-process.md).
 
 ## Prefixes
 

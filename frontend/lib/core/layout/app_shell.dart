@@ -14,6 +14,7 @@ import '../../features/projects/presentation/pages/projects_page.dart';
 import '../../features/reminders/widgets/reminder_host.dart';
 import '../../features/reports/presentation/pages/reports_page.dart';
 import '../../features/sync/data/background_sync_handler.dart';
+import '../widgets/latency_banner.dart';
 import '../../features/sync/widgets/sync_status_banner.dart';
 import '../../features/task_management/presentation/pages/task_management_page.dart';
 import '../widgets/app_navigation.dart';
@@ -319,6 +320,7 @@ class _AppShellState extends State<AppShell> {
     final pages = Column(
       children: <Widget>[
         SyncStatusBanner(store: _store),
+        const LatencyBanner(),
         Expanded(
           child: IndexedStack(
             index: _selected.index,

@@ -21,4 +21,19 @@ labels: bug
 - Browser/Device:
 - App version:
 
+## Severity and regression
+- Severity: Critical | High | Medium | Low
+- Last known good version/commit (if this is a regression):
+
 ## Logs / screenshots
+
+## Impact assessment (quick)
+- Layers touched (frontend / backend / CI-CD / docs):
+- Security implications:
+- Database or API contract changes:
+- Testing required:
+
+<!--
+Production incidents follow the emergency bug-fix procedure in
+docs/change-management/change-management-process.md#emergency-bug-fix-procedure
+-->
