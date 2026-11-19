@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:frontend/core/routing/app_router.dart';
 import 'package:frontend/core/theme/app_theme.dart';
+import 'package:frontend/core/widgets/app_button.dart';
 import 'package:frontend/core/network/api_client.dart';
 import 'package:frontend/features/authentication/data/auth_service.dart';
 import 'package:frontend/features/authentication/data/session_store.dart';
@@ -80,7 +81,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(
-      tester.widget<FilledButton>(find.byType(FilledButton)).onPressed,
+      tester.widget<AppButton>(find.byType(AppButton)).onPressed,
       isNull,
     );
 
@@ -88,7 +89,7 @@ void main() {
     await tester.enterText(find.byType(TextFormField).at(kPassword), 'weak');
     await tester.pumpAndSettle();
     expect(
-      tester.widget<FilledButton>(find.byType(FilledButton)).onPressed,
+      tester.widget<AppButton>(find.byType(AppButton)).onPressed,
       isNull,
     );
   });
@@ -178,7 +179,7 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(
-      tester.widget<FilledButton>(find.byType(FilledButton)).onPressed,
+      tester.widget<AppButton>(find.byType(AppButton)).onPressed,
       isNotNull,
     );
 
