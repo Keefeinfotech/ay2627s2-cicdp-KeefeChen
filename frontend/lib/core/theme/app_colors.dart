@@ -131,6 +131,39 @@ abstract final class AppColors {
   static const Color danger = errorRed;
 
   // ---------------------------------------------------------------------------
+  // Gradients and depth
+  // ---------------------------------------------------------------------------
+
+  /// Signature brand gradient - deep trust blue into vivid azure.
+  static const LinearGradient primaryGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [Color(0xFF1E40AF), Color(0xFF2563EB), Color(0xFF38BDF8)],
+    stops: [0.0, 0.55, 1.0],
+  );
+
+  /// Success gradient for completion moments.
+  static const LinearGradient successGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [Color(0xFF047857), Color(0xFF10B981)],
+  );
+
+  /// Soft ambient shadow for elevated surfaces.
+  static List<BoxShadow> softShadow({Color tint = const Color(0xFF2563EB)}) => [
+        BoxShadow(
+          color: tint.withValues(alpha: 0.10),
+          blurRadius: 24,
+          offset: const Offset(0, 10),
+        ),
+        BoxShadow(
+          color: const Color(0xFF0F172A).withValues(alpha: 0.06),
+          blurRadius: 6,
+          offset: const Offset(0, 2),
+        ),
+      ];
+
+  // ---------------------------------------------------------------------------
   // Dark theme surfaces (deep navy variant)
   // ---------------------------------------------------------------------------
 
