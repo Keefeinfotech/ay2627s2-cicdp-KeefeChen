@@ -15,7 +15,7 @@ Built with Flutter, Express.js, TypeScript, MongoDB, and GitHub Actions.
 - Live API: https://ay2627s2-cicdp-keefechen-1.onrender.com (`/api/health` returns 200; Render free tier)
 - Web build: not currently deployed — deploy with `flutter build web --release --dart-define=API_BASE_URL=https://ay2627s2-cicdp-keefechen-1.onrender.com` to any static host
 - Demo accounts: see `docs/admin/ADMINISTRATION.md`
-- Demo video: not yet published
+- Demo video backup: `docs/assets/auxilia-demo-v1.1.webm` (committed in #114); demo script: `docs/DEMO_SCRIPT.md`; evidence: `docs/reports/RELEASE_EVIDENCE_v1.1.md`
 
 ## Prerequisites
 

@@ -143,3 +143,12 @@ analyze_result.json
 **/pubspec.lock.backup
 **/*.iml
 
+
+# Flutter golden test mismatch artifacts (regenerated on failure)
+test/visual/failures/
+**/test/failures/
+
+# Stryker mutation testing artifacts
+backend/.stryker-tmp/
+backend/reports/mutation/
+**/test/visual/failures/

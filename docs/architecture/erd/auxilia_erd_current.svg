@@ -1,0 +1,429 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2520 2020" width="2520" height="2020" font-family="'Segoe UI','Helvetica Neue',Arial,sans-serif">
+<rect width="2520" height="2020" fill="#fff"/><rect width="2520" height="10" fill="#0f172a"/>
+<text x="60" y="58" font-size="34" font-weight="700" fill="#0f172a">Auxilia – Current MongoDB Data Model (Main Branch, 15 collections)</text>
+<text x="60" y="90" font-size="17" fill="#475569">Committed implementation only; WIP schemas excluded.</text>
+<text x="2460" y="58" font-size="15" text-anchor="end" fill="#64748b">SRS §7.4.2 · A3 landscape</text>
+<rect x="40" y="240" width="370" height="1720" rx="18" fill="#0284c7" fill-opacity="0.045" stroke="#0284c7" stroke-opacity="0.32" stroke-width="2" stroke-dasharray="9 6"/>
+<rect x="58" y="236" width="196" height="30" rx="8" fill="#fff" stroke="#0284c7" stroke-opacity="0.32"/>
+<text x="71" y="257" font-size="17" font-weight="700" fill="#0284c7">Identity &amp; Access</text>
+<rect x="470" y="240" width="800" height="1720" rx="18" fill="#7c3aed" fill-opacity="0.045" stroke="#7c3aed" stroke-opacity="0.32" stroke-width="2" stroke-dasharray="9 6"/>
+<rect x="488" y="236" width="216" height="30" rx="8" fill="#fff" stroke="#7c3aed" stroke-opacity="0.32"/>
+<text x="501" y="257" font-size="17" font-weight="700" fill="#7c3aed">Task &amp; Productivity</text>
+<rect x="1330" y="240" width="1140" height="1720" rx="18" fill="#0d9488" fill-opacity="0.045" stroke="#0d9488" stroke-opacity="0.32" stroke-width="2" stroke-dasharray="9 6"/>
+<rect x="1348" y="236" width="246" height="30" rx="8" fill="#fff" stroke="#0d9488" stroke-opacity="0.32"/>
+<text x="1361" y="257" font-size="17" font-weight="700" fill="#0d9488">Groups &amp; Collaboration</text>
+<rect x="40" y="1240" width="370" height="300" rx="18" fill="#d97706" fill-opacity="0.045" stroke="#d97706" stroke-opacity="0.32" stroke-width="2" stroke-dasharray="9 6"/>
+<rect x="58" y="1236" width="106" height="30" rx="8" fill="#fff" stroke="#d97706" stroke-opacity="0.32"/>
+<text x="71" y="1257" font-size="17" font-weight="700" fill="#d97706">Feedback</text>
+<path d="M 400 450.5 L 424 450.5 L 424 914.5 L 400 914.5" fill="none" stroke="#64748b" stroke-width="2.2" stroke-opacity="0.78"/>
+<g stroke="#64748b" stroke-width="2.2" fill="none"><path d="M434 450.5 L424 450.5"/><path d="M414 904.5 L424 914.5 L414 924.5 M414 914.5 L424 914.5"/></g>
+<rect x="407.4" y="667.5" width="49.2" height="20" rx="6" fill="#fff" fill-opacity="0.93" stroke="#64748b" stroke-opacity="0.25"/>
+<text x="432" y="682.5" font-size="12.5" fill="#64748b" font-style="italic" text-anchor="middle">userId</text>
+<path d="M 400 450.5 L 426 450.5 L 426 116 L 474 116 L 474 450.5 L 500 450.5" fill="none" stroke="#64748b" stroke-width="2.2" stroke-opacity="0.78"/>
+<g stroke="#64748b" stroke-width="2.2" fill="none"><path d="M416 116 L426 116"/><path d="M484 106 L474 116 L484 126 M484 116 L474 116"/></g>
+<rect x="435.1" y="419.5" width="129.8" height="20" rx="6" fill="#fff" fill-opacity="0.93" stroke="#64748b" stroke-opacity="0.25"/>
+<text x="500" y="434.5" font-size="12.5" fill="#64748b" font-style="italic" text-anchor="middle">userId / assigneeId</text>
+<path d="M 400 450.5 L 426 450.5 L 426 128 L 474 128 L 474 909.0 L 500 909.0" fill="none" stroke="#64748b" stroke-width="2.2" stroke-opacity="0.78"/>
+<g stroke="#64748b" stroke-width="2.2" fill="none"><path d="M416 128 L426 128"/><path d="M484 118 L474 128 L484 138 M484 128 L474 128"/></g>
+<rect x="475.4" y="878.0" width="49.2" height="20" rx="6" fill="#fff" fill-opacity="0.93" stroke="#64748b" stroke-opacity="0.25"/>
+<text x="500" y="893.0" font-size="12.5" fill="#64748b" font-style="italic" text-anchor="middle">userId</text>
+<path d="M 400 450.5 L 426 450.5 L 426 140 L 474 140 L 474 1366.0 L 500 1366.0" fill="none" stroke="#dc2626" stroke-width="2.2" stroke-opacity="0.78" stroke-dasharray="8 5"/>
+<g stroke="#dc2626" stroke-width="2.2" fill="none"><path d="M416 140 L426 140"/><path d="M484 130 L474 140 L484 150 M484 140 L474 140"/></g>
+<rect x="432.0" y="1335.0" width="136.0" height="20" rx="6" fill="#fff" fill-opacity="0.93" stroke="#dc2626" stroke-opacity="0.25"/>
+<text x="500" y="1350.0" font-size="12.5" fill="#dc2626" font-style="italic" text-anchor="middle">userId (ID mismatch)</text>
+<path d="M 400 450.5 L 424 450.5 L 424 1397.5 L 400 1397.5" fill="none" stroke="#64748b" stroke-width="2.2" stroke-opacity="0.78"/>
+<g stroke="#64748b" stroke-width="2.2" fill="none"><path d="M434 450.5 L424 450.5"/><path d="M414 1387.5 L424 1397.5 L414 1407.5 M414 1397.5 L424 1397.5"/></g>
+<rect x="407.4" y="909.0" width="49.2" height="20" rx="6" fill="#fff" fill-opacity="0.93" stroke="#64748b" stroke-opacity="0.25"/>
+<text x="432" y="924.0" font-size="12.5" fill="#64748b" font-style="italic" text-anchor="middle">userId</text>
+<path d="M 400 450.5 L 426 450.5 L 426 152 L 1334 152 L 1334 381.5 L 1360 381.5" fill="none" stroke="#64748b" stroke-width="2.2" stroke-opacity="0.78"/>
+<g stroke="#64748b" stroke-width="2.2" fill="none"><path d="M416 152 L426 152"/><path d="M1344 142 L1334 152 L1344 162 M1344 152 L1334 152"/></g>
+<rect x="1332.3" y="350.5" width="55.4" height="20" rx="6" fill="#fff" fill-opacity="0.93" stroke="#64748b" stroke-opacity="0.25"/>
+<text x="1360" y="365.5" font-size="12.5" fill="#64748b" font-style="italic" text-anchor="middle">ownerId</text>
+<path d="M 400 450.5 L 426 450.5 L 426 164 L 1334 164 L 1334 1154.5 L 1360 1154.5" fill="none" stroke="#64748b" stroke-width="2.2" stroke-opacity="0.78"/>
+<g stroke="#64748b" stroke-width="2.2" fill="none"><path d="M416 164 L426 164"/><path d="M1344 154 L1334 164 L1344 174 M1344 164 L1334 164"/></g>
+<rect x="1326.1" y="1123.5" width="67.80000000000001" height="20" rx="6" fill="#fff" fill-opacity="0.93" stroke="#64748b" stroke-opacity="0.25"/>
+<text x="1360" y="1138.5" font-size="12.5" fill="#64748b" font-style="italic" text-anchor="middle">invitedBy</text>
+<path d="M 400 450.5 L 426 450.5 L 426 176 L 1764 176 L 1764 1143.0 L 1790 1143.0" fill="none" stroke="#64748b" stroke-width="2.2" stroke-opacity="0.78"/>
+<g stroke="#64748b" stroke-width="2.2" fill="none"><path d="M416 176 L426 176"/><path d="M1774 166 L1764 176 L1774 186 M1774 176 L1764 176"/></g>
+<rect x="1749.9" y="1112.0" width="80.2" height="20" rx="6" fill="#fff" fill-opacity="0.93" stroke="#64748b" stroke-opacity="0.25"/>
+<text x="1790" y="1127.0" font-size="12.5" fill="#64748b" font-style="italic" text-anchor="middle">requestedBy</text>
+<path d="M 400 450.5 L 426 450.5 L 426 188 L 1334 188 L 1334 1619.0 L 1360 1619.0" fill="none" stroke="#64748b" stroke-width="2.2" stroke-opacity="0.78"/>
+<g stroke="#64748b" stroke-width="2.2" fill="none"><path d="M416 188 L426 188"/><path d="M1344 178 L1334 188 L1344 198 M1344 188 L1334 188"/></g>
+<rect x="1282.7" y="1588.0" width="154.6" height="20" rx="6" fill="#fff" fill-opacity="0.93" stroke="#64748b" stroke-opacity="0.25"/>
+<text x="1360" y="1603.0" font-size="12.5" fill="#64748b" font-style="italic" text-anchor="middle">createdBy / attendeeIds</text>
+<path d="M 400 450.5 L 426 450.5 L 426 200 L 1764 200 L 1764 1601.5 L 1790 1601.5" fill="none" stroke="#64748b" stroke-width="2.2" stroke-opacity="0.78"/>
+<g stroke="#64748b" stroke-width="2.2" fill="none"><path d="M416 200 L426 200"/><path d="M1774 190 L1764 200 L1774 210 M1774 200 L1764 200"/></g>
+<rect x="1756.1" y="1570.5" width="67.80000000000001" height="20" rx="6" fill="#fff" fill-opacity="0.93" stroke="#64748b" stroke-opacity="0.25"/>
+<text x="1790" y="1585.5" font-size="12.5" fill="#64748b" font-style="italic" text-anchor="middle">createdBy</text>
+<path d="M 400 450.5 L 426 450.5 L 426 212 L 1764 212 L 1764 1107.5 L 1790 1107.5" fill="none" stroke="#64748b" stroke-width="2.2" stroke-opacity="0.78"/>
+<g stroke="#64748b" stroke-width="2.2" fill="none"><path d="M416 212 L426 212"/><path d="M1774 202 L1764 212 L1774 222 M1774 212 L1764 212"/></g>
+<rect x="1756.1" y="1076.5" width="67.80000000000001" height="20" rx="6" fill="#fff" fill-opacity="0.93" stroke="#64748b" stroke-opacity="0.25"/>
+<text x="1790" y="1091.5" font-size="12.5" fill="#64748b" font-style="italic" text-anchor="middle">createdBy</text>
+<path d="M 400 450.5 L 426 450.5 L 426 224 L 474 224 L 474 1774.5 L 500 1774.5" fill="none" stroke="#c2740b" stroke-width="2.2" stroke-opacity="0.78" stroke-dasharray="8 5"/>
+<g stroke="#c2740b" stroke-width="2.2" fill="none"><path d="M416 224 L426 224"/><path d="M484 214 L474 224 L484 234 M484 224 L474 224"/></g>
+<rect x="472.3" y="1743.5" width="55.4" height="20" rx="6" fill="#fff" fill-opacity="0.93" stroke="#c2740b" stroke-opacity="0.25"/>
+<text x="500" y="1758.5" font-size="12.5" fill="#c2740b" font-style="italic" text-anchor="middle">actorId</text>
+<path d="M 1360 381.5 L 1334 381.5 L 1334 236 L 856 236 L 856 450.5 L 830 450.5" fill="none" stroke="#c2740b" stroke-width="2.2" stroke-opacity="0.78" stroke-dasharray="8 5"/>
+<g stroke="#c2740b" stroke-width="2.2" fill="none"><path d="M1344 236 L1334 236"/><path d="M846 226 L856 236 L846 246 M846 236 L856 236"/></g>
+<rect x="783.7" y="419.5" width="92.60000000000001" height="20" rx="6" fill="#fff" fill-opacity="0.93" stroke="#c2740b" stroke-opacity="0.25"/>
+<text x="830" y="434.5" font-size="12.5" fill="#c2740b" font-style="italic" text-anchor="middle">tasks.groupId</text>
+<path d="M 1360 381.5 L 1334 381.5 L 1334 248 L 856 248 L 856 909.0 L 830 909.0" fill="none" stroke="#64748b" stroke-width="2.2" stroke-opacity="0.78"/>
+<g stroke="#64748b" stroke-width="2.2" fill="none"><path d="M1344 248 L1334 248"/><path d="M846 238 L856 248 L846 258 M846 248 L856 248"/></g>
+<rect x="755.8" y="878.0" width="148.4" height="20" rx="6" fill="#fff" fill-opacity="0.93" stroke="#64748b" stroke-opacity="0.25"/>
+<text x="830" y="893.0" font-size="12.5" fill="#64748b" font-style="italic" text-anchor="middle">calendarevents.groupId</text>
+<path d="M 1690 381.5 L 1714 381.5 L 1714 750.0 L 1690 750.0" fill="none" stroke="#64748b" stroke-width="2.2" stroke-opacity="0.78"/>
+<g stroke="#64748b" stroke-width="2.2" fill="none"><path d="M1724 381.5 L1714 381.5"/><path d="M1704 740.0 L1714 750.0 L1704 760.0 M1704 750.0 L1714 750.0"/></g>
+<rect x="1669.5" y="550.75" width="105.0" height="20" rx="6" fill="#fff" fill-opacity="0.93" stroke="#64748b" stroke-opacity="0.25"/>
+<text x="1722" y="565.75" font-size="12.5" fill="#64748b" font-style="italic" text-anchor="middle">members.groupId</text>
+<path d="M 1690 381.5 L 1716 381.5 L 1716 260 L 1764 260 L 1764 738.5 L 1790 738.5" fill="none" stroke="#dc2626" stroke-width="2.2" stroke-opacity="0.78" stroke-dasharray="8 5"/>
+<g stroke="#dc2626" stroke-width="2.2" fill="none"><path d="M1706 260 L1716 260"/><path d="M1774 250 L1764 260 L1774 270 M1774 260 L1764 260"/></g>
+<rect x="1722.0" y="707.5" width="136.0" height="20" rx="6" fill="#fff" fill-opacity="0.93" stroke="#dc2626" stroke-opacity="0.25"/>
+<text x="1790" y="722.5" font-size="12.5" fill="#dc2626" font-style="italic" text-anchor="middle">groupmembers.groupId</text>
+<path d="M 1690 381.5 L 1714 381.5 L 1714 1154.5 L 1690 1154.5" fill="none" stroke="#64748b" stroke-width="2.2" stroke-opacity="0.78"/>
+<g stroke="#64748b" stroke-width="2.2" fill="none"><path d="M1724 381.5 L1714 381.5"/><path d="M1704 1144.5 L1714 1154.5 L1704 1164.5 M1704 1154.5 L1714 1154.5"/></g>
+<rect x="1657.1" y="753.0" width="129.8" height="20" rx="6" fill="#fff" fill-opacity="0.93" stroke="#64748b" stroke-opacity="0.25"/>
+<text x="1722" y="768.0" font-size="12.5" fill="#64748b" font-style="italic" text-anchor="middle">invitations.groupId</text>
+<path d="M 1690 381.5 L 1716 381.5 L 1716 272 L 1764 272 L 1764 1143.0 L 1790 1143.0" fill="none" stroke="#64748b" stroke-width="2.2" stroke-opacity="0.78"/>
+<g stroke="#64748b" stroke-width="2.2" fill="none"><path d="M1706 272 L1716 272"/><path d="M1774 262 L1764 272 L1774 282 M1774 272 L1764 272"/></g>
+<rect x="1731.3" y="1112.0" width="117.4" height="20" rx="6" fill="#fff" fill-opacity="0.93" stroke="#64748b" stroke-opacity="0.25"/>
+<text x="1790" y="1127.0" font-size="12.5" fill="#64748b" font-style="italic" text-anchor="middle">batchjobs.groupId</text>
+<path d="M 1690 381.5 L 1714 381.5 L 1714 1619.0 L 1690 1619.0" fill="none" stroke="#64748b" stroke-width="2.2" stroke-opacity="0.78"/>
+<g stroke="#64748b" stroke-width="2.2" fill="none"><path d="M1724 381.5 L1714 381.5"/><path d="M1704 1609.0 L1714 1619.0 L1704 1629.0 M1704 1619.0 L1714 1619.0"/></g>
+<rect x="1650.9" y="985.25" width="142.20000000000002" height="20" rx="6" fill="#fff" fill-opacity="0.93" stroke="#64748b" stroke-opacity="0.25"/>
+<text x="1722" y="1000.25" font-size="12.5" fill="#64748b" font-style="italic" text-anchor="middle">studysessions.groupId</text>
+<path d="M 1690 381.5 L 1716 381.5 L 1716 284 L 1764 284 L 1764 1601.5 L 1790 1601.5" fill="none" stroke="#64748b" stroke-width="2.2" stroke-opacity="0.78"/>
+<g stroke="#64748b" stroke-width="2.2" fill="none"><path d="M1706 284 L1716 284"/><path d="M1774 274 L1764 284 L1774 294 M1774 284 L1764 284"/></g>
+<rect x="1734.4" y="1570.5" width="111.2" height="20" rx="6" fill="#fff" fill-opacity="0.93" stroke="#64748b" stroke-opacity="0.25"/>
+<text x="1790" y="1585.5" font-size="12.5" fill="#64748b" font-style="italic" text-anchor="middle">roadmaps.groupId</text>
+<path d="M 1690 381.5 L 1716 381.5 L 1716 296 L 1764 296 L 1764 1107.5 L 1790 1107.5" fill="none" stroke="#64748b" stroke-width="2.2" stroke-opacity="0.78"/>
+<g stroke="#64748b" stroke-width="2.2" fill="none"><path d="M1706 296 L1716 296"/><path d="M1774 286 L1764 296 L1774 306 M1774 296 L1764 296"/></g>
+<rect x="1737.5" y="1076.5" width="105.0" height="20" rx="6" fill="#fff" fill-opacity="0.93" stroke="#64748b" stroke-opacity="0.25"/>
+<text x="1790" y="1091.5" font-size="12.5" fill="#64748b" font-style="italic" text-anchor="middle">rubrics.groupId</text>
+<path d="M 1360 381.5 L 1334 381.5 L 1334 308 L 856 308 L 856 1774.5 L 830 1774.5" fill="none" stroke="#c2740b" stroke-width="2.2" stroke-opacity="0.78" stroke-dasharray="8 5"/>
+<g stroke="#c2740b" stroke-width="2.2" fill="none"><path d="M1344 308 L1334 308"/><path d="M846 298 L856 308 L846 318 M846 308 L856 308"/></g>
+<rect x="765.1" y="1743.5" width="129.8" height="20" rx="6" fill="#fff" fill-opacity="0.93" stroke="#c2740b" stroke-opacity="0.25"/>
+<text x="830" y="1758.5" font-size="12.5" fill="#c2740b" font-style="italic" text-anchor="middle">auditevents.groupId</text>
+<path d="M 830 450.5 L 854 450.5 L 854 1366.0 L 830 1366.0" fill="none" stroke="#c2740b" stroke-width="2.2" stroke-opacity="0.78" stroke-dasharray="8 5"/>
+<g stroke="#c2740b" stroke-width="2.2" fill="none"><path d="M864 450.5 L854 450.5"/><path d="M844 1356.0 L854 1366.0 L844 1376.0 M844 1366.0 L854 1366.0"/></g>
+<rect x="806.4" y="893.25" width="111.2" height="20" rx="6" fill="#fff" fill-opacity="0.93" stroke="#c2740b" stroke-opacity="0.25"/>
+<text x="862" y="908.25" font-size="12.5" fill="#c2740b" font-style="italic" text-anchor="middle">reminders.taskId</text>
+<path d="M 830 450.5 L 854 450.5 L 854 909.0 L 830 909.0" fill="none" stroke="#64748b" stroke-width="2.2" stroke-opacity="0.78"/>
+<g stroke="#64748b" stroke-width="2.2" fill="none"><path d="M864 450.5 L854 450.5"/><path d="M844 909.0 L854 909.0"/></g>
+<rect x="790.9" y="664.75" width="142.20000000000002" height="20" rx="6" fill="#fff" fill-opacity="0.93" stroke="#64748b" stroke-opacity="0.25"/>
+<text x="862" y="679.75" font-size="12.5" fill="#64748b" font-style="italic" text-anchor="middle">calendarevents.taskId</text>
+<path d="M 2120 1107.5 L 2144 1107.5 L 2144 1601.5 L 2120 1601.5" fill="none" stroke="#c2740b" stroke-width="2.2" stroke-opacity="0.78" stroke-dasharray="8 5"/>
+<g stroke="#c2740b" stroke-width="2.2" fill="none"><path d="M2154 1107.5 L2144 1107.5"/><path d="M2134 1591.5 L2144 1601.5 L2134 1611.5 M2134 1601.5 L2144 1601.5"/></g>
+<rect x="2037.5" y="1339.5" width="229.0" height="20" rx="6" fill="#fff" fill-opacity="0.93" stroke="#c2740b" stroke-opacity="0.25"/>
+<text x="2152" y="1354.5" font-size="12.5" fill="#c2740b" font-style="italic" text-anchor="middle">criteria[].name ⇢ items[].criterion</text>
+<path d="M 400 450.5 L 426 450.5 L 426 152 L 1334 152 L 1334 381.5 L 1360 381.5" fill="none" stroke="#c2740b" stroke-width="2.2" stroke-opacity="0.78" stroke-dasharray="8 5"/>
+<g stroke="#c2740b" stroke-width="2.2" fill="none"><path d="M416 142 L426 152 L416 162 M416 152 L426 152"/><path d="M1344 142 L1334 152 L1344 162 M1344 152 L1334 152"/></g>
+<rect x="1267.2" y="350.5" width="185.6" height="20" rx="6" fill="#fff" fill-opacity="0.93" stroke="#c2740b" stroke-opacity="0.25"/>
+<text x="1360" y="365.5" font-size="12.5" fill="#c2740b" font-style="italic" text-anchor="middle">N:M via Member / GroupMember</text>
+<rect x="70" y="280" width="330" height="341" rx="10" fill="#fff" stroke="#0284c7" stroke-width="2.5"/>
+<path d="M 70 290 a 10 10 0 0 1 10 -10 h 310 a 10 10 0 0 1 10 10 v 36 h -330 z" fill="#0284c7"/>
+<text x="84" y="306" font-size="17" font-weight="700" fill="#fff">User</text>
+<text x="388" y="306" font-size="12.5" fill="#fff" fill-opacity=".9" text-anchor="end" font-family="'Consolas','SF Mono',monospace">users</text>
+<text x="84" y="342" font-size="13.5" font-weight="700" fill="#0284c7" font-family="'Consolas','SF Mono',monospace"><title>String UUID</title>_id</text>
+<text x="386" y="342" font-size="12.5" fill="#64748b" text-anchor="end"><title>String UUID</title>String UUID</text>
+<text x="84" y="365" font-size="13.5" font-weight="500" fill="#334155" font-family="'Consolas','SF Mono',monospace"><title>String (unique active)</title>email</text>
+<text x="386" y="365" font-size="12.5" fill="#64748b" text-anchor="end"><title>String (unique active)</title>String (unique active)</text>
+<text x="84" y="388" font-size="13.5" font-weight="700" fill="#dc2626" font-family="'Consolas','SF Mono',monospace"><title>String</title>passwordHash</text>
+<text x="386" y="388" font-size="12.5" fill="#64748b" text-anchor="end"><title>String</title>String</text>
+<text x="84" y="411" font-size="13.5" font-weight="500" fill="#1e293b" font-family="'Consolas','SF Mono',monospace"><title>String</title>role / status</text>
+<text x="386" y="411" font-size="12.5" fill="#64748b" text-anchor="end"><title>String</title>String</text>
+<text x="84" y="434" font-size="13.5" font-weight="500" fill="#1e293b" font-family="'Consolas','SF Mono',monospace"><title>Number</title>failedLoginAttempts</text>
+<text x="386" y="434" font-size="12.5" fill="#64748b" text-anchor="end"><title>Number</title>Number</text>
+<text x="84" y="457" font-size="13.5" font-weight="500" fill="#1e293b" font-family="'Consolas','SF Mono',monospace"><title>Date</title>lockoutUntil</text>
+<text x="386" y="457" font-size="12.5" fill="#64748b" text-anchor="end"><title>Date</title>Date</text>
+<text x="84" y="480" font-size="13.5" font-weight="700" fill="#dc2626" font-family="'Consolas','SF Mono',monospace"><title>Date (soft delete)</title>deletedAt</text>
+<text x="386" y="480" font-size="12.5" fill="#64748b" text-anchor="end"><title>Date (soft delete)</title>Date (soft delete)</text>
+<text x="84" y="503" font-size="13.5" font-weight="500" fill="#1e293b" font-family="'Consolas','SF Mono',monospace"><title>Boolean</title>mfaEnabled</text>
+<text x="386" y="503" font-size="12.5" fill="#64748b" text-anchor="end"><title>Boolean</title>Boolean</text>
+<text x="84" y="526" font-size="13.5" font-weight="700" fill="#dc2626" font-family="'Consolas','SF Mono',monospace"><title>String</title>mfaSecretEncrypted</text>
+<text x="386" y="526" font-size="12.5" fill="#64748b" text-anchor="end"><title>String</title>String</text>
+<text x="84" y="549" font-size="13.5" font-weight="700" fill="#dc2626" font-family="'Consolas','SF Mono',monospace"><title>Array&lt;String&gt;</title>mfaRecoveryCodeHashes</text>
+<text x="386" y="549" font-size="12.5" fill="#64748b" text-anchor="end"><title>Array&lt;String&gt;</title>Array&lt;String&gt;</text>
+<text x="84" y="572" font-size="13.5" font-weight="500" fill="#1e293b" font-family="'Consolas','SF Mono',monospace"><title>Date</title>createdAt / updatedAt</text>
+<text x="386" y="572" font-size="12.5" fill="#64748b" text-anchor="end"><title>Date</title>Date</text>
+<line x1="80" y1="590" x2="390" y2="590" stroke="#e2e8f0"/>
+<text x="84" y="607" font-size="12" fill="#b45309" font-style="italic">Partial-unique active email; MFA + lockout</text>
+<rect x="70" y="790" width="330" height="249" rx="10" fill="#fff" stroke="#0284c7" stroke-width="2.5"/>
+<path d="M 70 800 a 10 10 0 0 1 10 -10 h 310 a 10 10 0 0 1 10 10 v 36 h -330 z" fill="#0284c7"/>
+<text x="84" y="816" font-size="17" font-weight="700" fill="#fff">AuthSession</text>
+<text x="388" y="816" font-size="12.5" fill="#fff" fill-opacity=".9" text-anchor="end" font-family="'Consolas','SF Mono',monospace">authsessions</text>
+<text x="84" y="852" font-size="13.5" font-weight="700" fill="#0284c7" font-family="'Consolas','SF Mono',monospace"><title>String UUID = JWT jti</title>_id</text>
+<text x="386" y="852" font-size="12.5" fill="#64748b" text-anchor="end"><title>String UUID = JWT jti</title>String UUID = JWT jti</text>
+<text x="84" y="875" font-size="13.5" font-weight="500" fill="#334155" font-family="'Consolas','SF Mono',monospace"><title>→ User._id</title>userId</text>
+<text x="386" y="875" font-size="12.5" fill="#64748b" text-anchor="end"><title>→ User._id</title>→ User._id</text>
+<text x="84" y="898" font-size="13.5" font-weight="700" fill="#dc2626" font-family="'Consolas','SF Mono',monospace"><title>String (select:false)</title>refreshTokenHash</text>
+<text x="386" y="898" font-size="12.5" fill="#64748b" text-anchor="end"><title>String (select:false)</title>String (select:false)</text>
+<text x="84" y="921" font-size="13.5" font-weight="700" fill="#dc2626" font-family="'Consolas','SF Mono',monospace"><title>String (select:false)</title>previousRefreshTokenHash</text>
+<text x="386" y="921" font-size="12.5" fill="#64748b" text-anchor="end"><title>String (select:false)</title>String (select:false)</text>
+<text x="84" y="944" font-size="13.5" font-weight="700" fill="#dc2626" font-family="'Consolas','SF Mono',monospace"><title>Date (TTL)</title>expiresAt</text>
+<text x="386" y="944" font-size="12.5" fill="#64748b" text-anchor="end"><title>Date (TTL)</title>Date (TTL)</text>
+<text x="84" y="967" font-size="13.5" font-weight="500" fill="#1e293b" font-family="'Consolas','SF Mono',monospace"><title>Date</title>revokedAt</text>
+<text x="386" y="967" font-size="12.5" fill="#64748b" text-anchor="end"><title>Date</title>Date</text>
+<text x="84" y="990" font-size="13.5" font-weight="500" fill="#1e293b" font-family="'Consolas','SF Mono',monospace"><title>String / Date</title>userAgent / lastUsedAt</text>
+<text x="386" y="990" font-size="12.5" fill="#64748b" text-anchor="end"><title>String / Date</title>String / Date</text>
+<line x1="80" y1="1008" x2="390" y2="1008" stroke="#e2e8f0"/>
+<text x="84" y="1025" font-size="12" fill="#b45309" font-style="italic">TTL: auto-delete on expiresAt</text>
+<rect x="70" y="1290" width="330" height="215" rx="10" fill="#fff" stroke="#d97706" stroke-width="2.5"/>
+<path d="M 70 1300 a 10 10 0 0 1 10 -10 h 310 a 10 10 0 0 1 10 10 v 36 h -330 z" fill="#d97706"/>
+<text x="84" y="1316" font-size="17" font-weight="700" fill="#fff">Feedback</text>
+<text x="388" y="1316" font-size="12.5" fill="#fff" fill-opacity=".9" text-anchor="end" font-family="'Consolas','SF Mono',monospace">feedbacks</text>
+<text x="84" y="1352" font-size="13.5" font-weight="700" fill="#7c3aed" font-family="'Consolas','SF Mono',monospace"><title>ObjectId</title>_id</text>
+<text x="386" y="1352" font-size="12.5" fill="#64748b" text-anchor="end"><title>ObjectId</title>ObjectId</text>
+<text x="84" y="1375" font-size="13.5" font-weight="500" fill="#334155" font-family="'Consolas','SF Mono',monospace"><title>→ User._id</title>userId</text>
+<text x="386" y="1375" font-size="12.5" fill="#64748b" text-anchor="end"><title>→ User._id</title>→ User._id</text>
+<text x="84" y="1398" font-size="13.5" font-weight="500" fill="#1e293b" font-family="'Consolas','SF Mono',monospace"><title>Enum (4 values)</title>category</text>
+<text x="386" y="1398" font-size="12.5" fill="#64748b" text-anchor="end"><title>Enum (4 values)</title>Enum (4 values)</text>
+<text x="84" y="1421" font-size="13.5" font-weight="500" fill="#1e293b" font-family="'Consolas','SF Mono',monospace"><title>String</title>title / description</text>
+<text x="386" y="1421" font-size="12.5" fill="#64748b" text-anchor="end"><title>String</title>String</text>
+<text x="84" y="1444" font-size="13.5" font-weight="500" fill="#1e293b" font-family="'Consolas','SF Mono',monospace"><title>Number 1..5</title>rating</text>
+<text x="386" y="1444" font-size="12.5" fill="#64748b" text-anchor="end"><title>Number 1..5</title>Number 1..5</text>
+<text x="84" y="1467" font-size="13.5" font-weight="500" fill="#1e293b" font-family="'Consolas','SF Mono',monospace"><title>Enum (4 values)</title>status</text>
+<text x="386" y="1467" font-size="12.5" fill="#64748b" text-anchor="end"><title>Enum (4 values)</title>Enum (4 values)</text>
+<text x="84" y="1490" font-size="13.5" font-weight="500" fill="#64748b" font-family="'Consolas','SF Mono',monospace"><title>Embedded object</title>adminResponse</text>
+<text x="386" y="1490" font-size="12.5" fill="#64748b" text-anchor="end"><title>Embedded object</title>Embedded object</text>
+<rect x="500" y="280" width="330" height="341" rx="10" fill="#fff" stroke="#7c3aed" stroke-width="2.5"/>
+<path d="M 500 290 a 10 10 0 0 1 10 -10 h 310 a 10 10 0 0 1 10 10 v 36 h -330 z" fill="#7c3aed"/>
+<text x="514" y="306" font-size="17" font-weight="700" fill="#fff">Task</text>
+<text x="818" y="306" font-size="12.5" fill="#fff" fill-opacity=".9" text-anchor="end" font-family="'Consolas','SF Mono',monospace">tasks</text>
+<text x="514" y="342" font-size="13.5" font-weight="700" fill="#0284c7" font-family="'Consolas','SF Mono',monospace"><title>String UUID</title>_id</text>
+<text x="816" y="342" font-size="12.5" fill="#64748b" text-anchor="end"><title>String UUID</title>String UUID</text>
+<text x="514" y="365" font-size="13.5" font-weight="500" fill="#334155" font-family="'Consolas','SF Mono',monospace"><title>→ User._id (owner)</title>userId</text>
+<text x="816" y="365" font-size="12.5" fill="#64748b" text-anchor="end"><title>→ User._id (owner)</title>→ User._id (owner)</text>
+<text x="514" y="388" font-size="13.5" font-weight="500" fill="#1e293b" font-family="'Consolas','SF Mono',monospace"><title>String</title>title</text>
+<text x="816" y="388" font-size="12.5" fill="#64748b" text-anchor="end"><title>String</title>String</text>
+<text x="514" y="411" font-size="13.5" font-weight="500" fill="#1e293b" font-family="'Consolas','SF Mono',monospace"><title>String</title>description / course</text>
+<text x="816" y="411" font-size="12.5" fill="#64748b" text-anchor="end"><title>String</title>String</text>
+<text x="514" y="434" font-size="13.5" font-weight="500" fill="#1e293b" font-family="'Consolas','SF Mono',monospace"><title>Array&lt;String&gt;</title>tags</text>
+<text x="816" y="434" font-size="12.5" fill="#64748b" text-anchor="end"><title>Array&lt;String&gt;</title>Array&lt;String&gt;</text>
+<text x="514" y="457" font-size="13.5" font-weight="500" fill="#1e293b" font-family="'Consolas','SF Mono',monospace"><title>Enum todo|in_progress|…</title>status</text>
+<text x="816" y="457" font-size="12.5" fill="#64748b" text-anchor="end"><title>Enum todo|in_progress|…</title>Enum todo|in_progress|…</text>
+<text x="514" y="480" font-size="13.5" font-weight="500" fill="#1e293b" font-family="'Consolas','SF Mono',monospace"><title>Enum low|medium|high|urgent</title>priority</text>
+<text x="816" y="480" font-size="12.5" fill="#64748b" text-anchor="end"><title>Enum low|medium|high|urgent</title>Enum low|medium|high|urgent</text>
+<text x="514" y="503" font-size="13.5" font-weight="500" fill="#1e293b" font-family="'Consolas','SF Mono',monospace"><title>Date</title>dueDate / completedAt</text>
+<text x="816" y="503" font-size="12.5" fill="#64748b" text-anchor="end"><title>Date</title>Date</text>
+<text x="514" y="526" font-size="13.5" font-weight="700" fill="#dc2626" font-family="'Consolas','SF Mono',monospace"><title>Date (soft delete)</title>deletedAt</text>
+<text x="816" y="526" font-size="12.5" fill="#64748b" text-anchor="end"><title>Date (soft delete)</title>Date (soft delete)</text>
+<text x="514" y="549" font-size="13.5" font-weight="500" fill="#334155" font-family="'Consolas','SF Mono',monospace"><title>⇢ Group.groupId</title>groupId</text>
+<text x="816" y="549" font-size="12.5" fill="#64748b" text-anchor="end"><title>⇢ Group.groupId</title>⇢ Group.groupId</text>
+<text x="514" y="572" font-size="13.5" font-weight="500" fill="#334155" font-family="'Consolas','SF Mono',monospace"><title>⇢ User._id</title>assigneeId</text>
+<text x="816" y="572" font-size="12.5" fill="#64748b" text-anchor="end"><title>⇢ User._id</title>⇢ User._id</text>
+<line x1="510" y1="590" x2="820" y2="590" stroke="#e2e8f0"/>
+<text x="514" y="607" font-size="12" fill="#b45309" font-style="italic">strict:&#x27;throw&#x27;; user-scoped text index</text>
+<rect x="500" y="790" width="330" height="238" rx="10" fill="#fff" stroke="#7c3aed" stroke-width="2.5"/>
+<path d="M 500 800 a 10 10 0 0 1 10 -10 h 310 a 10 10 0 0 1 10 10 v 36 h -330 z" fill="#7c3aed"/>
+<text x="514" y="816" font-size="17" font-weight="700" fill="#fff">CalendarEvent</text>
+<text x="818" y="816" font-size="12.5" fill="#fff" fill-opacity=".9" text-anchor="end" font-family="'Consolas','SF Mono',monospace">calendarevents</text>
+<text x="514" y="852" font-size="13.5" font-weight="700" fill="#7c3aed" font-family="'Consolas','SF Mono',monospace"><title>ObjectId</title>_id</text>
+<text x="816" y="852" font-size="12.5" fill="#64748b" text-anchor="end"><title>ObjectId</title>ObjectId</text>
+<text x="514" y="875" font-size="13.5" font-weight="500" fill="#334155" font-family="'Consolas','SF Mono',monospace"><title>→ User._id</title>userId</text>
+<text x="816" y="875" font-size="12.5" fill="#64748b" text-anchor="end"><title>→ User._id</title>→ User._id</text>
+<text x="514" y="898" font-size="13.5" font-weight="500" fill="#1e293b" font-family="'Consolas','SF Mono',monospace"><title>Date</title>startTime / endTime</text>
+<text x="816" y="898" font-size="12.5" fill="#64748b" text-anchor="end"><title>Date</title>Date</text>
+<text x="514" y="921" font-size="13.5" font-weight="500" fill="#334155" font-family="'Consolas','SF Mono',monospace"><title>→ Group.groupId</title>groupId</text>
+<text x="816" y="921" font-size="12.5" fill="#64748b" text-anchor="end"><title>→ Group.groupId</title>→ Group.groupId</text>
+<text x="514" y="944" font-size="13.5" font-weight="500" fill="#334155" font-family="'Consolas','SF Mono',monospace"><title>→ Task._id</title>taskId</text>
+<text x="816" y="944" font-size="12.5" fill="#64748b" text-anchor="end"><title>→ Task._id</title>→ Task._id</text>
+<text x="514" y="967" font-size="13.5" font-weight="500" fill="#64748b" font-family="'Consolas','SF Mono',monospace"><title>Embedded {freq,interval,until}</title>recurrence</text>
+<text x="816" y="967" font-size="12.5" fill="#64748b" text-anchor="end"><title>Embedded {freq,interval,until}</title>Embedded {freq,interval,u…</text>
+<text x="514" y="990" font-size="13.5" font-weight="500" fill="#1e293b" font-family="'Consolas','SF Mono',monospace"><title>Enum</title>priority / status</text>
+<text x="816" y="990" font-size="12.5" fill="#64748b" text-anchor="end"><title>Enum</title>Enum</text>
+<text x="514" y="1013" font-size="13.5" font-weight="500" fill="#1e293b" font-family="'Consolas','SF Mono',monospace"><title>String</title>location</text>
+<text x="816" y="1013" font-size="12.5" fill="#64748b" text-anchor="end"><title>String</title>String</text>
+<rect x="500" y="1230" width="330" height="272" rx="10" fill="#fff" stroke="#7c3aed" stroke-width="2.5"/>
+<path d="M 500 1240 a 10 10 0 0 1 10 -10 h 310 a 10 10 0 0 1 10 10 v 36 h -330 z" fill="#7c3aed"/>
+<text x="514" y="1256" font-size="17" font-weight="700" fill="#fff">Reminder</text>
+<text x="818" y="1256" font-size="12.5" fill="#fff" fill-opacity=".9" text-anchor="end" font-family="'Consolas','SF Mono',monospace">reminders</text>
+<text x="514" y="1292" font-size="13.5" font-weight="700" fill="#7c3aed" font-family="'Consolas','SF Mono',monospace"><title>ObjectId</title>_id</text>
+<text x="816" y="1292" font-size="12.5" fill="#64748b" text-anchor="end"><title>ObjectId</title>ObjectId</text>
+<text x="514" y="1315" font-size="13.5" font-weight="700" fill="#dc2626" font-family="'Consolas','SF Mono',monospace"><title>→ User._id [ObjectId!]</title>userId</text>
+<text x="816" y="1315" font-size="12.5" fill="#64748b" text-anchor="end"><title>→ User._id [ObjectId!]</title>→ User._id [ObjectId!]</text>
+<text x="514" y="1338" font-size="13.5" font-weight="500" fill="#334155" font-family="'Consolas','SF Mono',monospace"><title>⇢ Task._id</title>taskId</text>
+<text x="816" y="1338" font-size="12.5" fill="#64748b" text-anchor="end"><title>⇢ Task._id</title>⇢ Task._id</text>
+<text x="514" y="1361" font-size="13.5" font-weight="500" fill="#1e293b" font-family="'Consolas','SF Mono',monospace"><title>String</title>message</text>
+<text x="816" y="1361" font-size="12.5" fill="#64748b" text-anchor="end"><title>String</title>String</text>
+<text x="514" y="1384" font-size="13.5" font-weight="500" fill="#1e293b" font-family="'Consolas','SF Mono',monospace"><title>Date</title>dueAt</text>
+<text x="816" y="1384" font-size="12.5" fill="#64748b" text-anchor="end"><title>Date</title>Date</text>
+<text x="514" y="1407" font-size="13.5" font-weight="500" fill="#1e293b" font-family="'Consolas','SF Mono',monospace"><title>Enum none|daily|…</title>recurrence</text>
+<text x="816" y="1407" font-size="12.5" fill="#64748b" text-anchor="end"><title>Enum none|daily|…</title>Enum none|daily|…</text>
+<text x="514" y="1430" font-size="13.5" font-weight="500" fill="#1e293b" font-family="'Consolas','SF Mono',monospace"><title>Boolean</title>enabled / completed</text>
+<text x="816" y="1430" font-size="12.5" fill="#64748b" text-anchor="end"><title>Boolean</title>Boolean</text>
+<text x="514" y="1453" font-size="13.5" font-weight="500" fill="#1e293b" font-family="'Consolas','SF Mono',monospace"><title>Date</title>completedAt</text>
+<text x="816" y="1453" font-size="12.5" fill="#64748b" text-anchor="end"><title>Date</title>Date</text>
+<line x1="510" y1="1471" x2="820" y2="1471" stroke="#e2e8f0"/>
+<text x="514" y="1488" font-size="12" fill="#b45309" font-style="italic">⚠ ID mismatch: ObjectId vs User UUID</text>
+<rect x="500" y="1650" width="330" height="249" rx="10" fill="#fff" stroke="#7c3aed" stroke-width="2.5"/>
+<path d="M 500 1660 a 10 10 0 0 1 10 -10 h 310 a 10 10 0 0 1 10 10 v 36 h -330 z" fill="#7c3aed"/>
+<text x="514" y="1676" font-size="17" font-weight="700" fill="#fff">AuditEvent</text>
+<text x="818" y="1676" font-size="12.5" fill="#fff" fill-opacity=".9" text-anchor="end" font-family="'Consolas','SF Mono',monospace">auditevents</text>
+<text x="514" y="1712" font-size="13.5" font-weight="700" fill="#059669" font-family="'Consolas','SF Mono',monospace"><title>String UUID (business key)</title>eventId</text>
+<text x="816" y="1712" font-size="12.5" fill="#64748b" text-anchor="end"><title>String UUID (business key)</title>String UUID (business key)</text>
+<text x="514" y="1735" font-size="13.5" font-weight="700" fill="#7c3aed" font-family="'Consolas','SF Mono',monospace"><title>ObjectId (auto)</title>_id</text>
+<text x="816" y="1735" font-size="12.5" fill="#64748b" text-anchor="end"><title>ObjectId (auto)</title>ObjectId (auto)</text>
+<text x="514" y="1758" font-size="13.5" font-weight="500" fill="#334155" font-family="'Consolas','SF Mono',monospace"><title>⇢ Group.groupId</title>groupId</text>
+<text x="816" y="1758" font-size="12.5" fill="#64748b" text-anchor="end"><title>⇢ Group.groupId</title>⇢ Group.groupId</text>
+<text x="514" y="1781" font-size="13.5" font-weight="500" fill="#334155" font-family="'Consolas','SF Mono',monospace"><title>⇢ User._id</title>actorId</text>
+<text x="816" y="1781" font-size="12.5" fill="#64748b" text-anchor="end"><title>⇢ User._id</title>⇢ User._id</text>
+<text x="514" y="1804" font-size="13.5" font-weight="500" fill="#1e293b" font-family="'Consolas','SF Mono',monospace"><title>String</title>action</text>
+<text x="816" y="1804" font-size="12.5" fill="#64748b" text-anchor="end"><title>String</title>String</text>
+<text x="514" y="1827" font-size="13.5" font-weight="500" fill="#c2740b" font-family="'Consolas','SF Mono',monospace"><title>String</title>targetType / targetId</text>
+<text x="816" y="1827" font-size="12.5" fill="#64748b" text-anchor="end"><title>String</title>String</text>
+<text x="514" y="1850" font-size="13.5" font-weight="500" fill="#1e293b" font-family="'Consolas','SF Mono',monospace"><title>Mixed</title>metadata</text>
+<text x="816" y="1850" font-size="12.5" fill="#64748b" text-anchor="end"><title>Mixed</title>Mixed</text>
+<line x1="510" y1="1868" x2="820" y2="1868" stroke="#e2e8f0"/>
+<text x="514" y="1885" font-size="12" fill="#b45309" font-style="italic">Polymorphic targetType + targetId</text>
+<rect x="1360" y="280" width="330" height="203" rx="10" fill="#fff" stroke="#0d9488" stroke-width="2.5"/>
+<path d="M 1360 290 a 10 10 0 0 1 10 -10 h 310 a 10 10 0 0 1 10 10 v 36 h -330 z" fill="#0d9488"/>
+<text x="1374" y="306" font-size="17" font-weight="700" fill="#fff">Group</text>
+<text x="1678" y="306" font-size="12.5" fill="#fff" fill-opacity=".9" text-anchor="end" font-family="'Consolas','SF Mono',monospace">groups</text>
+<text x="1374" y="342" font-size="13.5" font-weight="700" fill="#7c3aed" font-family="'Consolas','SF Mono',monospace"><title>ObjectId (auto)</title>_id</text>
+<text x="1676" y="342" font-size="12.5" fill="#64748b" text-anchor="end"><title>ObjectId (auto)</title>ObjectId (auto)</text>
+<text x="1374" y="365" font-size="13.5" font-weight="700" fill="#059669" font-family="'Consolas','SF Mono',monospace"><title>String UUID (business key)</title>groupId</text>
+<text x="1676" y="365" font-size="12.5" fill="#64748b" text-anchor="end"><title>String UUID (business key)</title>String UUID (business key)</text>
+<text x="1374" y="388" font-size="13.5" font-weight="500" fill="#1e293b" font-family="'Consolas','SF Mono',monospace"><title>String</title>name</text>
+<text x="1676" y="388" font-size="12.5" fill="#64748b" text-anchor="end"><title>String</title>String</text>
+<text x="1374" y="411" font-size="13.5" font-weight="500" fill="#1e293b" font-family="'Consolas','SF Mono',monospace"><title>Enum</title>visibility / status</text>
+<text x="1676" y="411" font-size="12.5" fill="#64748b" text-anchor="end"><title>Enum</title>Enum</text>
+<text x="1374" y="434" font-size="13.5" font-weight="500" fill="#334155" font-family="'Consolas','SF Mono',monospace"><title>→ User._id</title>ownerId</text>
+<text x="1676" y="434" font-size="12.5" fill="#64748b" text-anchor="end"><title>→ User._id</title>→ User._id</text>
+<line x1="1370" y1="452" x2="1680" y2="452" stroke="#e2e8f0"/>
+<text x="1374" y="469" font-size="12" fill="#b45309" font-style="italic">Joins use Group.groupId, not _id</text>
+<rect x="1360" y="660" width="330" height="180" rx="10" fill="#fff" stroke="#0d9488" stroke-width="2.5"/>
+<path d="M 1360 670 a 10 10 0 0 1 10 -10 h 310 a 10 10 0 0 1 10 10 v 36 h -330 z" fill="#0d9488"/>
+<text x="1374" y="686" font-size="17" font-weight="700" fill="#fff">Member</text>
+<text x="1678" y="686" font-size="12.5" fill="#fff" fill-opacity=".9" text-anchor="end" font-family="'Consolas','SF Mono',monospace">members</text>
+<text x="1374" y="722" font-size="13.5" font-weight="700" fill="#7c3aed" font-family="'Consolas','SF Mono',monospace"><title>ObjectId (auto)</title>_id</text>
+<text x="1676" y="722" font-size="12.5" fill="#64748b" text-anchor="end"><title>ObjectId (auto)</title>ObjectId (auto)</text>
+<text x="1374" y="745" font-size="13.5" font-weight="500" fill="#334155" font-family="'Consolas','SF Mono',monospace"><title>→ Group.groupId</title>groupId</text>
+<text x="1676" y="745" font-size="12.5" fill="#64748b" text-anchor="end"><title>→ Group.groupId</title>→ Group.groupId</text>
+<text x="1374" y="768" font-size="13.5" font-weight="500" fill="#334155" font-family="'Consolas','SF Mono',monospace"><title>→ User._id</title>userId</text>
+<text x="1676" y="768" font-size="12.5" fill="#64748b" text-anchor="end"><title>→ User._id</title>→ User._id</text>
+<text x="1374" y="791" font-size="13.5" font-weight="500" fill="#1e293b" font-family="'Consolas','SF Mono',monospace"><title>Enum</title>role / status</text>
+<text x="1676" y="791" font-size="12.5" fill="#64748b" text-anchor="end"><title>Enum</title>Enum</text>
+<line x1="1370" y1="809" x2="1680" y2="809" stroke="#e2e8f0"/>
+<text x="1374" y="826" font-size="12" fill="#b45309" font-style="italic">UNIQUE (groupId, userId)</text>
+<rect x="1360" y="1030" width="330" height="249" rx="10" fill="#fff" stroke="#0d9488" stroke-width="2.5"/>
+<path d="M 1360 1040 a 10 10 0 0 1 10 -10 h 310 a 10 10 0 0 1 10 10 v 36 h -330 z" fill="#0d9488"/>
+<text x="1374" y="1056" font-size="17" font-weight="700" fill="#fff">Invitation</text>
+<text x="1678" y="1056" font-size="12.5" fill="#fff" fill-opacity=".9" text-anchor="end" font-family="'Consolas','SF Mono',monospace">invitations</text>
+<text x="1374" y="1092" font-size="13.5" font-weight="700" fill="#059669" font-family="'Consolas','SF Mono',monospace"><title>String UUID (biz key)</title>invitationId</text>
+<text x="1676" y="1092" font-size="12.5" fill="#64748b" text-anchor="end"><title>String UUID (biz key)</title>String UUID (biz key)</text>
+<text x="1374" y="1115" font-size="13.5" font-weight="500" fill="#334155" font-family="'Consolas','SF Mono',monospace"><title>→ Group.groupId</title>groupId</text>
+<text x="1676" y="1115" font-size="12.5" fill="#64748b" text-anchor="end"><title>→ Group.groupId</title>→ Group.groupId</text>
+<text x="1374" y="1138" font-size="13.5" font-weight="500" fill="#1e293b" font-family="'Consolas','SF Mono',monospace"><title>String</title>email</text>
+<text x="1676" y="1138" font-size="12.5" fill="#64748b" text-anchor="end"><title>String</title>String</text>
+<text x="1374" y="1161" font-size="13.5" font-weight="500" fill="#1e293b" font-family="'Consolas','SF Mono',monospace"><title>Enum</title>role / status</text>
+<text x="1676" y="1161" font-size="12.5" fill="#64748b" text-anchor="end"><title>Enum</title>Enum</text>
+<text x="1374" y="1184" font-size="13.5" font-weight="500" fill="#334155" font-family="'Consolas','SF Mono',monospace"><title>→ User._id</title>invitedBy</text>
+<text x="1676" y="1184" font-size="12.5" fill="#64748b" text-anchor="end"><title>→ User._id</title>→ User._id</text>
+<text x="1374" y="1207" font-size="13.5" font-weight="700" fill="#dc2626" font-family="'Consolas','SF Mono',monospace"><title>String (select:false)</title>tokenHash</text>
+<text x="1676" y="1207" font-size="12.5" fill="#64748b" text-anchor="end"><title>String (select:false)</title>String (select:false)</text>
+<text x="1374" y="1230" font-size="13.5" font-weight="500" fill="#1e293b" font-family="'Consolas','SF Mono',monospace"><title>Date</title>expiresAt</text>
+<text x="1676" y="1230" font-size="12.5" fill="#64748b" text-anchor="end"><title>Date</title>Date</text>
+<line x1="1370" y1="1248" x2="1680" y2="1248" stroke="#e2e8f0"/>
+<text x="1374" y="1265" font-size="12" fill="#b45309" font-style="italic">Partial-unique pending invite</text>
+<rect x="1360" y="1500" width="330" height="238" rx="10" fill="#fff" stroke="#0d9488" stroke-width="2.5"/>
+<path d="M 1360 1510 a 10 10 0 0 1 10 -10 h 310 a 10 10 0 0 1 10 10 v 36 h -330 z" fill="#0d9488"/>
+<text x="1374" y="1526" font-size="17" font-weight="700" fill="#fff">StudySession</text>
+<text x="1678" y="1526" font-size="12.5" fill="#fff" fill-opacity=".9" text-anchor="end" font-family="'Consolas','SF Mono',monospace">studysessions</text>
+<text x="1374" y="1562" font-size="13.5" font-weight="700" fill="#7c3aed" font-family="'Consolas','SF Mono',monospace"><title>ObjectId</title>_id</text>
+<text x="1676" y="1562" font-size="12.5" fill="#64748b" text-anchor="end"><title>ObjectId</title>ObjectId</text>
+<text x="1374" y="1585" font-size="13.5" font-weight="500" fill="#334155" font-family="'Consolas','SF Mono',monospace"><title>→ Group.groupId</title>groupId</text>
+<text x="1676" y="1585" font-size="12.5" fill="#64748b" text-anchor="end"><title>→ Group.groupId</title>→ Group.groupId</text>
+<text x="1374" y="1608" font-size="13.5" font-weight="500" fill="#1e293b" font-family="'Consolas','SF Mono',monospace"><title>String</title>title</text>
+<text x="1676" y="1608" font-size="12.5" fill="#64748b" text-anchor="end"><title>String</title>String</text>
+<text x="1374" y="1631" font-size="13.5" font-weight="500" fill="#1e293b" font-family="'Consolas','SF Mono',monospace"><title>Date</title>startsAt / endsAt</text>
+<text x="1676" y="1631" font-size="12.5" fill="#64748b" text-anchor="end"><title>Date</title>Date</text>
+<text x="1374" y="1654" font-size="13.5" font-weight="500" fill="#1e293b" font-family="'Consolas','SF Mono',monospace"><title>Number</title>maxAttendees</text>
+<text x="1676" y="1654" font-size="12.5" fill="#64748b" text-anchor="end"><title>Number</title>Number</text>
+<text x="1374" y="1677" font-size="13.5" font-weight="500" fill="#334155" font-family="'Consolas','SF Mono',monospace"><title>Array&lt;→ User._id&gt;</title>attendeeIds</text>
+<text x="1676" y="1677" font-size="12.5" fill="#64748b" text-anchor="end"><title>Array&lt;→ User._id&gt;</title>Array&lt;→ User._id&gt;</text>
+<text x="1374" y="1700" font-size="13.5" font-weight="500" fill="#334155" font-family="'Consolas','SF Mono',monospace"><title>→ User._id</title>createdBy</text>
+<text x="1676" y="1700" font-size="12.5" fill="#64748b" text-anchor="end"><title>→ User._id</title>→ User._id</text>
+<text x="1374" y="1723" font-size="13.5" font-weight="500" fill="#1e293b" font-family="'Consolas','SF Mono',monospace"><title>Enum</title>status</text>
+<text x="1676" y="1723" font-size="12.5" fill="#64748b" text-anchor="end"><title>Enum</title>Enum</text>
+<rect x="1790" y="660" width="330" height="157" rx="10" fill="#fff" stroke="#0d9488" stroke-width="2.5"/>
+<path d="M 1790 670 a 10 10 0 0 1 10 -10 h 310 a 10 10 0 0 1 10 10 v 36 h -330 z" fill="#0d9488"/>
+<text x="1804" y="686" font-size="17" font-weight="700" fill="#fff">GroupMember</text>
+<text x="2108" y="686" font-size="12.5" fill="#fff" fill-opacity=".9" text-anchor="end" font-family="'Consolas','SF Mono',monospace">groupmembers</text>
+<text x="1804" y="722" font-size="13.5" font-weight="700" fill="#7c3aed" font-family="'Consolas','SF Mono',monospace"><title>ObjectId (auto)</title>_id</text>
+<text x="2106" y="722" font-size="12.5" fill="#64748b" text-anchor="end"><title>ObjectId (auto)</title>ObjectId (auto)</text>
+<text x="1804" y="745" font-size="13.5" font-weight="500" fill="#334155" font-family="'Consolas','SF Mono',monospace"><title>→ Group.groupId</title>groupId</text>
+<text x="2106" y="745" font-size="12.5" fill="#64748b" text-anchor="end"><title>→ Group.groupId</title>→ Group.groupId</text>
+<text x="1804" y="768" font-size="13.5" font-weight="500" fill="#334155" font-family="'Consolas','SF Mono',monospace"><title>→ User._id</title>userId</text>
+<text x="2106" y="768" font-size="12.5" fill="#64748b" text-anchor="end"><title>→ User._id</title>→ User._id</text>
+<line x1="1800" y1="786" x2="2110" y2="786" stroke="#e2e8f0"/>
+<text x="1804" y="803" font-size="12" fill="#b45309" font-style="italic">⚠ Duplicate membership model</text>
+<rect x="1790" y="1030" width="330" height="226" rx="10" fill="#fff" stroke="#0d9488" stroke-width="2.5"/>
+<path d="M 1790 1040 a 10 10 0 0 1 10 -10 h 310 a 10 10 0 0 1 10 10 v 36 h -330 z" fill="#0d9488"/>
+<text x="1804" y="1056" font-size="17" font-weight="700" fill="#fff">BatchJob</text>
+<text x="2108" y="1056" font-size="12.5" fill="#fff" fill-opacity=".9" text-anchor="end" font-family="'Consolas','SF Mono',monospace">batchjobs</text>
+<text x="1804" y="1092" font-size="13.5" font-weight="700" fill="#059669" font-family="'Consolas','SF Mono',monospace"><title>String UUID (biz key)</title>jobId</text>
+<text x="2106" y="1092" font-size="12.5" fill="#64748b" text-anchor="end"><title>String UUID (biz key)</title>String UUID (biz key)</text>
+<text x="1804" y="1115" font-size="13.5" font-weight="500" fill="#334155" font-family="'Consolas','SF Mono',monospace"><title>→ Group.groupId</title>groupId</text>
+<text x="2106" y="1115" font-size="12.5" fill="#64748b" text-anchor="end"><title>→ Group.groupId</title>→ Group.groupId</text>
+<text x="1804" y="1138" font-size="13.5" font-weight="500" fill="#1e293b" font-family="'Consolas','SF Mono',monospace"><title>Enum ADD_MEMBERS</title>operationType</text>
+<text x="2106" y="1138" font-size="12.5" fill="#64748b" text-anchor="end"><title>Enum ADD_MEMBERS</title>Enum ADD_MEMBERS</text>
+<text x="1804" y="1161" font-size="13.5" font-weight="500" fill="#1e293b" font-family="'Consolas','SF Mono',monospace"><title>Enum</title>status</text>
+<text x="2106" y="1161" font-size="12.5" fill="#64748b" text-anchor="end"><title>Enum</title>Enum</text>
+<text x="1804" y="1184" font-size="13.5" font-weight="500" fill="#334155" font-family="'Consolas','SF Mono',monospace"><title>→ User._id</title>requestedBy</text>
+<text x="2106" y="1184" font-size="12.5" fill="#64748b" text-anchor="end"><title>→ User._id</title>→ User._id</text>
+<text x="1804" y="1207" font-size="13.5" font-weight="500" fill="#64748b" font-family="'Consolas','SF Mono',monospace"><title>Embedded</title>counts / errors</text>
+<text x="2106" y="1207" font-size="12.5" fill="#64748b" text-anchor="end"><title>Embedded</title>Embedded</text>
+<line x1="1800" y1="1225" x2="2110" y2="1225" stroke="#e2e8f0"/>
+<text x="1804" y="1242" font-size="12" fill="#b45309" font-style="italic">Bulk membership log</text>
+<rect x="1790" y="1500" width="330" height="203" rx="10" fill="#fff" stroke="#0d9488" stroke-width="2.5"/>
+<path d="M 1790 1510 a 10 10 0 0 1 10 -10 h 310 a 10 10 0 0 1 10 10 v 36 h -330 z" fill="#0d9488"/>
+<text x="1804" y="1526" font-size="17" font-weight="700" fill="#fff">Roadmap</text>
+<text x="2108" y="1526" font-size="12.5" fill="#fff" fill-opacity=".9" text-anchor="end" font-family="'Consolas','SF Mono',monospace">roadmaps</text>
+<text x="1804" y="1562" font-size="13.5" font-weight="700" fill="#0284c7" font-family="'Consolas','SF Mono',monospace"><title>String UUID</title>_id</text>
+<text x="2106" y="1562" font-size="12.5" fill="#64748b" text-anchor="end"><title>String UUID</title>String UUID</text>
+<text x="1804" y="1585" font-size="13.5" font-weight="500" fill="#334155" font-family="'Consolas','SF Mono',monospace"><title>→ Group.groupId</title>groupId</text>
+<text x="2106" y="1585" font-size="12.5" fill="#64748b" text-anchor="end"><title>→ Group.groupId</title>→ Group.groupId</text>
+<text x="1804" y="1608" font-size="13.5" font-weight="500" fill="#1e293b" font-family="'Consolas','SF Mono',monospace"><title>String / Enum</title>title / source / status</text>
+<text x="2106" y="1608" font-size="12.5" fill="#64748b" text-anchor="end"><title>String / Enum</title>String / Enum</text>
+<text x="1804" y="1631" font-size="13.5" font-weight="500" fill="#334155" font-family="'Consolas','SF Mono',monospace"><title>→ User._id</title>createdBy</text>
+<text x="2106" y="1631" font-size="12.5" fill="#64748b" text-anchor="end"><title>→ User._id</title>→ User._id</text>
+<text x="1804" y="1654" font-size="13.5" font-weight="500" fill="#64748b" font-family="'Consolas','SF Mono',monospace"><title>Embedded [{itemId,title,criterion,…}]</title>items</text>
+<text x="2106" y="1654" font-size="12.5" fill="#64748b" text-anchor="end"><title>Embedded [{itemId,title,criterion,…}]</title>Embedded [{itemId,title,c…</text>
+<line x1="1800" y1="1672" x2="2110" y2="1672" stroke="#e2e8f0"/>
+<text x="1804" y="1689" font-size="12" fill="#b45309" font-style="italic">items[].criterion ⇢ Rubric.criteria[].name</text>
+<rect x="1790" y="1000" width="330" height="215" rx="10" fill="#fff" stroke="#0d9488" stroke-width="2.5"/>
+<path d="M 1790 1010 a 10 10 0 0 1 10 -10 h 310 a 10 10 0 0 1 10 10 v 36 h -330 z" fill="#0d9488"/>
+<text x="1804" y="1026" font-size="17" font-weight="700" fill="#fff">Rubric</text>
+<text x="2108" y="1026" font-size="12.5" fill="#fff" fill-opacity=".9" text-anchor="end" font-family="'Consolas','SF Mono',monospace">rubrics</text>
+<text x="1804" y="1062" font-size="13.5" font-weight="700" fill="#0284c7" font-family="'Consolas','SF Mono',monospace"><title>String UUID</title>_id</text>
+<text x="2106" y="1062" font-size="12.5" fill="#64748b" text-anchor="end"><title>String UUID</title>String UUID</text>
+<text x="1804" y="1085" font-size="13.5" font-weight="500" fill="#334155" font-family="'Consolas','SF Mono',monospace"><title>→ Group.groupId</title>groupId</text>
+<text x="2106" y="1085" font-size="12.5" fill="#64748b" text-anchor="end"><title>→ Group.groupId</title>→ Group.groupId</text>
+<text x="1804" y="1108" font-size="13.5" font-weight="500" fill="#1e293b" font-family="'Consolas','SF Mono',monospace"><title>String</title>title</text>
+<text x="2106" y="1108" font-size="12.5" fill="#64748b" text-anchor="end"><title>String</title>String</text>
+<text x="1804" y="1131" font-size="13.5" font-weight="500" fill="#1e293b" font-family="'Consolas','SF Mono',monospace"><title>String (30k max)</title>sourceText</text>
+<text x="2106" y="1131" font-size="12.5" fill="#64748b" text-anchor="end"><title>String (30k max)</title>String (30k max)</text>
+<text x="1804" y="1154" font-size="13.5" font-weight="500" fill="#1e293b" font-family="'Consolas','SF Mono',monospace"><title>String / Number</title>checksum / version</text>
+<text x="2106" y="1154" font-size="12.5" fill="#64748b" text-anchor="end"><title>String / Number</title>String / Number</text>
+<text x="1804" y="1177" font-size="13.5" font-weight="500" fill="#64748b" font-family="'Consolas','SF Mono',monospace"><title>Embedded [{name,desc,weight}]</title>criteria</text>
+<text x="2106" y="1177" font-size="12.5" fill="#64748b" text-anchor="end"><title>Embedded [{name,desc,weight}]</title>Embedded [{name,desc,weig…</text>
+<text x="1804" y="1200" font-size="13.5" font-weight="500" fill="#334155" font-family="'Consolas','SF Mono',monospace"><title>→ User._id</title>createdBy</text>
+<text x="2106" y="1200" font-size="12.5" fill="#64748b" text-anchor="end"><title>→ User._id</title>→ User._id</text>
+<rect x="2140" y="200" width="350" height="330" rx="12" fill="#f8fafc" stroke="#cbd5e1" stroke-width="2"/>
+<text x="2158" y="232" font-size="18" font-weight="700" fill="#0f172a">LEGEND</text>
+<line x1="2158" y1="256" x2="2194" y2="256" stroke="#0284c7" stroke-width="3"/>
+<text x="2208" y="260" font-size="14" fill="#334155">String UUID key</text>
+<line x1="2158" y1="288" x2="2194" y2="288" stroke="#7c3aed" stroke-width="3"/>
+<text x="2208" y="292" font-size="14" fill="#334155">ObjectId key</text>
+<line x1="2158" y1="320" x2="2194" y2="320" stroke="#059669" stroke-width="3"/>
+<text x="2208" y="324" font-size="14" fill="#334155">Business UUID key</text>
+<line x1="2158" y1="352" x2="2194" y2="352" stroke="#64748b" stroke-width="3"/>
+<text x="2208" y="356" font-size="14" fill="#334155">Logical reference</text>
+<line x1="2158" y1="384" x2="2194" y2="384" stroke="#dc2626" stroke-width="3" stroke-dasharray="6 4"/>
+<text x="2208" y="388" font-size="14" fill="#334155">ID mismatch ⚠</text>
+<line x1="2158" y1="416" x2="2194" y2="416" stroke="#c2740b" stroke-width="3" stroke-dasharray="6 4"/>
+<text x="2208" y="420" font-size="14" fill="#334155">Polymorphic / indirect</text>
+<rect x="2158" y="439" width="36" height="18" rx="4" fill="#fff" stroke="#7c3aed" stroke-width="2" stroke-dasharray="5 3"/>
+<text x="2208" y="452" font-size="14" fill="#334155">WIP collection</text>
+<text x="2158" y="516" font-size="12" fill="#64748b">| one · crow-foot many · dashed = indirect</text>
+</svg>

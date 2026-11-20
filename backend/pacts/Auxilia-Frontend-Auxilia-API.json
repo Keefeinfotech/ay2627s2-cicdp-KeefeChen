@@ -34,28 +34,20 @@
         "body": {
           "data": [
             {
+              "_id": "task-123",
               "description": "Finish the deployment report",
-              "id": "task-123",
               "priority": "high",
-              "status": "pending",
+              "status": "todo",
               "title": "Complete CI/CD assignment"
             }
           ],
-          "success": true
+          "message": "Tasks retrieved successfully."
         },
         "headers": {
           "Content-Type": "application/json; charset=utf-8"
         },
         "matchingRules": {
           "body": {
-            "$": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
             "$.data": {
               "combine": "AND",
               "matchers": [
@@ -65,7 +57,7 @@
                 }
               ]
             },
-            "$.data[*].description": {
+            "$.data[*]._id": {
               "combine": "AND",
               "matchers": [
                 {
@@ -73,7 +65,7 @@
                 }
               ]
             },
-            "$.data[*].id": {
+            "$.data[*].description": {
               "combine": "AND",
               "matchers": [
                 {
@@ -104,6 +96,14 @@
                   "match": "type"
                 }
               ]
+            },
+            "$.message": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
             }
           }
         },
@@ -121,7 +121,6 @@
         "body": {
           "description": "Finish the deployment report",
           "priority": "high",
-          "status": "pending",
           "title": "Complete CI/CD assignment"
         },
         "headers": {
@@ -140,14 +139,6 @@
               ]
             },
             "$.priority": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
-            "$.status": {
               "combine": "AND",
               "matchers": [
                 {
@@ -181,20 +172,20 @@
       "response": {
         "body": {
           "data": {
+            "_id": "task-123",
             "description": "Finish the deployment report",
-            "id": "task-123",
             "priority": "high",
-            "status": "pending",
+            "status": "todo",
             "title": "Complete CI/CD assignment"
           },
-          "success": true
+          "message": "Task created successfully."
         },
         "headers": {
           "Content-Type": "application/json; charset=utf-8"
         },
         "matchingRules": {
           "body": {
-            "$": {
+            "$.data._id": {
               "combine": "AND",
               "matchers": [
                 {
@@ -203,14 +194,6 @@
               ]
             },
             "$.data.description": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
-            "$.data.id": {
               "combine": "AND",
               "matchers": [
                 {
@@ -235,6 +218,14 @@
               ]
             },
             "$.data.title": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.message": {
               "combine": "AND",
               "matchers": [
                 {

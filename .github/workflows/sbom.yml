@@ -41,7 +41,7 @@ jobs:
           echo "attest=$([[ "$private" == "false" ]] && echo true || echo false)" >> "$GITHUB_OUTPUT"
       - name: Attest SBOM (SLSA)
         if: steps.visibility.outputs.attest == 'true'
-        uses: actions/attest-sbom@v4
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4 (replaces deprecated actions/attest-sbom)
         with:
           subject-path: backend/package.json
           sbom-path: sbom.spdx.json

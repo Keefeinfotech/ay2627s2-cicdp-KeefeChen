@@ -11,6 +11,8 @@
  * Goldens are written to test/goldens/.
  */
 
+import 'dart:io' show Platform;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -20,9 +22,7 @@ import 'package:frontend/features/home/widgets/task_card.dart';
 import '../helpers.dart';
 
 void main() {
-  testWidgets('TaskCard (pending, high priority) matches golden', (
-    tester,
-  ) async {
+  testWidgets('TaskCard (pending, high priority) matches golden', (tester) async {
     await tester.pumpWidget(
       wrapApp(
         Scaffold(
@@ -78,5 +78,4 @@ void main() {
       find.byType(TaskCard),
       matchesGoldenFile('goldens/task_card_completed.png'),
     );
-  });
-}
+  });}

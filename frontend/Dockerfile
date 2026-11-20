@@ -41,8 +41,14 @@ RUN flutter pub get --enforce-lockfile
 # Copy the application source.
 COPY . .
 
-# Build the release web artifact.
-RUN flutter build web --release --dart-define=API_BASE_URL=${API_BASE_URL}
+# Build the release web artifact, then render the CSP placeholder in
+# nginx.conf with the SAME API origin the app was compiled against. Render
+# passes its service env var as a Docker build argument; docker-compose passes
+# the localhost URL. Deriving the origin (scheme + host) keeps paths/trailing
+# slashes out of the CSP connect-src directive.
+RUN flutter build web --release --dart-define=API_BASE_URL=${API_BASE_URL} \
+    && API_ORIGIN="$(printf '%s' "$API_BASE_URL" | sed -E 's#^(https?://[^/]+).*#\1#')" \
+    && sed -i "s|__API_ORIGIN__|${API_ORIGIN}|g" nginx.conf
 
 # ==========================================
 # Stage 2: Nginx runtime
@@ -53,8 +59,8 @@ FROM nginxinc/nginx-unprivileged:1.27.4-alpine AS runtime
 # Copy the compiled Flutter web assets into Nginx's html directory.
 COPY --from=build /app/build/web /usr/share/nginx/html
 
-# SPA routing and API proxy configuration.
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+# SPA routing + security headers, with the API origin substituted at build.
+COPY --from=build /app/nginx.conf /etc/nginx/conf.d/default.conf
 
 # Run the web server as the non-root nginx user.
 USER nginx

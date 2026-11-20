@@ -1,14 +1,16 @@
 /*
  * File Name: accessibility_test.dart
- * Description: Accessibility testing using Flutter's built-in guidelines.
- * Checks the three machine-verifiable guidelines on the most-used surfaces:
- *   - textContrastGuideline   (WCAG 2.x contrast >= 4.5 for body text)
- *   - androidTapTargetGuideline (tap targets >= 48x48, Android)
- *   - iOSTapTargetGuideline     (tap targets >= 44x44, iOS)
- *   - labeledTapTargetGuideline (every tappable control has a label)
+ * Description: Machine-checkable WCAG 2.x accessibility guidelines for the
+ * most stable, highest-traffic surfaces — the TaskCard and the LoginScreen
+ * (light and dark). These were the surfaces the (never-committed) a11y suite
+ * covered before the UI rewrite; this suite recreates that coverage.
  *
- * Contrast is theme-level, so these tests run against both the light and
- * dark themes where relevant.
+ *   textContrastGuideline        – W3C AA contrast for text
+ *   androidTapTargetGuideline    – 48x48 dp touch targets (Android)
+ *   iOSTapTargetGuideline        – 44x44 pt touch targets (iOS)
+ *   labeledTapTargetGuideline    – every tappable control carries a label
+ *
+ * Run:  flutter test test/accessibility
  */
 
 import 'package:flutter/material.dart';
@@ -27,66 +29,66 @@ void main() {
     SharedPreferences.setMockInitialValues(<String, Object>{});
   });
 
-  testWidgets('TaskCard meets all accessibility guidelines', (tester) async {
-    final handle = tester.ensureSemantics();
-
-    await tester.pumpWidget(
-      wrapApp(
-        Scaffold(
-          body: TaskCard(
-            task: makeTask(
-              title: 'Accessible task',
-              priority: TaskPriority.high,
-              dueDate: DateTime(2026, 12, 1, 9),
-            ),
-            onToggle: () {},
-            onEdit: () {},
-            onDelete: () {},
-          ),
-        ),
+  Future<void> pumpLight(WidgetTester tester, Widget child) {
+    return tester.pumpWidget(
+      MaterialApp(
+        theme: AuxiliaTheme.light(),
+        home: Scaffold(body: SizedBox(width: 360, child: child)),
       ),
     );
+  }
 
-    await expectLater(tester, meetsGuideline(textContrastGuideline));
+  testWidgets('TaskCard (light) meets WCAG guidelines', (tester) async {
+    final handle = tester.ensureSemantics();
+    await pumpLight(
+      tester,
+      TaskCard(
+        task: makeTask(
+          title: 'Submit report',
+          course: 'COMP 2101',
+          priority: TaskPriority.high,
+          createdAt: DateTime(2026, 1, 1, 9),
+          updatedAt: DateTime(2026, 1, 1, 9),
+        ),
+        onToggle: () {},
+        onEdit: () {},
+        onDelete: () {},
+      ),
+    );
+    await tester.pumpAndSettle();
+
     await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
     await expectLater(tester, meetsGuideline(iOSTapTargetGuideline));
     await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
-
+    await expectLater(tester, meetsGuideline(textContrastGuideline));
     handle.dispose();
   });
 
-  testWidgets(
-    'Login screen in light theme meets all accessibility guidelines',
-    (tester) async {
-      final handle = tester.ensureSemantics();
-
-      await tester.pumpWidget(
-        MaterialApp(theme: AuxiliaTheme.light(), home: const LoginScreen()),
-      );
-      await tester.pumpAndSettle();
-
-      await expectLater(tester, meetsGuideline(textContrastGuideline));
-      await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
-      await expectLater(tester, meetsGuideline(iOSTapTargetGuideline));
-      await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
-
-      handle.dispose();
-    },
-  );
-
-  testWidgets('Login screen in dark theme meets contrast guideline', (
-    tester,
-  ) async {
+  testWidgets('LoginScreen (light) meets WCAG guidelines', (tester) async {
     final handle = tester.ensureSemantics();
+    await tester.pumpWidget(
+      MaterialApp(theme: AuxiliaTheme.light(), home: const LoginScreen()),
+    );
+    await tester.pumpAndSettle();
 
+    await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
+    await expectLater(tester, meetsGuideline(iOSTapTargetGuideline));
+    await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
+    await expectLater(tester, meetsGuideline(textContrastGuideline));
+    handle.dispose();
+  });
+
+  testWidgets('LoginScreen (dark) meets WCAG guidelines', (tester) async {
+    final handle = tester.ensureSemantics();
     await tester.pumpWidget(
       MaterialApp(theme: AuxiliaTheme.dark(), home: const LoginScreen()),
     );
     await tester.pumpAndSettle();
 
-    await expectLater(tester, meetsGuideline(textContrastGuideline));
+    await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
+    await expectLater(tester, meetsGuideline(iOSTapTargetGuideline));
     await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
-
+    await expectLater(tester, meetsGuideline(textContrastGuideline));
     handle.dispose();
   });
 }

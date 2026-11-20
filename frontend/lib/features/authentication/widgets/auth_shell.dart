@@ -51,6 +51,12 @@ class AuthShell extends StatelessWidget {
 
     final width = MediaQuery.sizeOf(context).width;
     final isWide = width >= 880;
+    // In dark mode the form card follows the dark surface instead of the
+    // hardcoded white, so every label inside it keeps WCAG AA contrast.
+    final Color cardColor = isDark ? AppColors.darkSurface : AppColors.white;
+    final Color cardBorder = isDark
+        ? AppColors.darkBorder
+        : AppColors.borderGrey;
 
     if (isWide) {
       // Wide (web/desktop) layout: brand panel on the left, form on the right.
@@ -105,6 +111,7 @@ class AuthShell extends StatelessWidget {
                       ),
                       child: Card(
                         elevation: 0,
+<<<<<<< HEAD
                         color: isDark ? AppColors.darkSurface : AppColors.white,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(AppRadius.xl),
@@ -113,6 +120,12 @@ class AuthShell extends StatelessWidget {
                                 ? AppColors.darkBorder
                                 : AppColors.borderGrey,
                           ),
+=======
+                        color: cardColor,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.xl),
+                          side: BorderSide(color: cardBorder),
+>>>>>>> 87db222968f078b2126468a4b4e8b3281f035885
                         ),
                         child: Padding(
                           padding: const EdgeInsets.all(AppSpacing.xxl),
@@ -217,6 +230,7 @@ class AuthShell extends StatelessWidget {
                   const SizedBox(height: AppSpacing.xl),
                   Card(
                     elevation: 0,
+<<<<<<< HEAD
                     color: isDark ? AppColors.darkSurface : AppColors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(AppRadius.xl),
@@ -225,6 +239,12 @@ class AuthShell extends StatelessWidget {
                             ? AppColors.darkBorder
                             : AppColors.borderGrey,
                       ),
+=======
+                    color: cardColor,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.xl),
+                      side: BorderSide(color: cardBorder),
+>>>>>>> 87db222968f078b2126468a4b4e8b3281f035885
                     ),
                     child: Padding(
                       padding: const EdgeInsets.all(AppSpacing.xl),

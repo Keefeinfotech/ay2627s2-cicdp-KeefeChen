@@ -177,10 +177,12 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
 
   # ------------------------------------------------------------------
-  # Monitoring (optional): Prometheus + Grafana for the backend.
+  # Monitoring (optional): Prometheus + Alertmanager + Grafana for the backend.
   # Start with:  docker compose --profile monitoring up -d
   # Grafana: http://localhost:3001  (admin / ${GRAFANA_ADMIN_PASSWORD:-admin})
   # Prometheus: http://localhost:9090
+  # Alertmanager: http://localhost:9093  (delivery is a placeholder — see
+  #   monitoring/alertmanager.yml to wire a real webhook/Slack/PagerDuty)
   # Never expose these ports or the METRICS_TOKEN publicly; the scrape
   # token above is a local-demo default, override it for anything real.
   # ------------------------------------------------------------------
@@ -195,7 +197,23 @@ services:
       - "9090:9090"
     volumes:
       - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./monitoring/prometheus-alerts.yml:/etc/prometheus/prometheus-alerts.yml:ro
+      - ./monitoring/prometheus-slo.yml:/etc/prometheus/prometheus-slo.yml:ro
       - prometheus_data:/prometheus
+
+  alertmanager:
+    image: prom/alertmanager:v0.27.0
+    container_name: auxilia-alertmanager
+    profiles: ["monitoring"]
+    restart: unless-stopped
+    ports:
+      - "9093:9093"
+    volumes:
+      - ./monitoring/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - alertmanager_data:/alertmanager
+    command:
+      - --config.file=/etc/alertmanager/alertmanager.yml
+      - --storage.path=/alertmanager
 
   grafana:
     image: grafana/grafana:11.3.0
@@ -218,5 +236,6 @@ services:
 volumes:
   mongodb_data:
   prometheus_data:
+  alertmanager_data:
   grafana_data:
   jenkins_home:
