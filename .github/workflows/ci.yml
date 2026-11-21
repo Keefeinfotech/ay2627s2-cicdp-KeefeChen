@@ -1,5 +1,13 @@
 name: CI
 
+# Enterprise 4-stage pipeline.
+#   Stage 1  Preflight & fast security   (PR-only checks + always-on secret/SAST scans)
+#   Stage 2  Build, test & artifacts     (backend / frontend, parallel)
+#   Stage 3  Deep quality & image CVEs   (SonarQube gate / Trivy, parallel)
+#   Stage 4  Integration & final gate    (E2E + live performance smoke, then one required check)
+#
+# Only "CI - Final Quality Gate" should be required in Branch Protection.
+
 on:
   push:
     branches:
@@ -9,21 +17,17 @@ on:
       - "feat/**"
       - "release/**"
       - "hotfix/**"
-
   pull_request:
     branches:
       - main
       - develop
       - "release/**"
-    # No paths-ignore: the required "CI - Final Quality Gate" check must
-    # report for every PR, including docs-only ones (otherwise docs PRs can
-    # never merge). Jobs that are irrelevant for docs-only diffs all conclude
-    # "skipped", which the quality gate already treats as pass.
-
+    # No paths-ignore: the required Final Quality Gate must report on every PR,
+    # including docs-only ones, or those PRs could never merge.
   workflow_dispatch:
     inputs:
       ref:
-        description: "Branch, tag, or SHA to run against"
+        description: "Branch, tag, or SHA to build (defaults to the triggering ref)"
         required: false
         default: ""
 
@@ -35,147 +39,63 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # ==========================================
-  # STAGE 0: DEPENDENCY REVIEW (PULL REQUESTS)
-  # ==========================================
+  # ==========================================================================
+  # STAGE 1 - PREFLIGHT & FAST SECURITY (parallel)
+  # PR-only jobs are skipped on push by design; Stage 2+ explicitly tolerates
+  # that "skipped" state so pushes never lose their build/test coverage.
+  # ==========================================================================
+
+  pr-conventions:
+    name: "1 · Preflight · PR Conventions"
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          ref: ${{ inputs.ref || github.ref }}
+      - name: Check Conventional Commit title
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: node .github/scripts/check-pr-title.mjs
+      - name: Check branch name convention
+        env:
+          BRANCH_NAME: ${{ github.head_ref }}
+        run: node .github/scripts/check-branch-name.mjs
 
   dependency-review:
-    name: Dependencies - Review
-    # Dependency Review requires the dependency graph over the PR diff, which
-    # is unavailable for this user-owned private repository (it demands
-    # GitHub Advanced Security). It is therefore opt-in: set the repo
-    # variable DEPENDENCY_REVIEW_ENABLED='true' once the repo is eligible.
-    if: github.event_name == 'pull_request' && vars.DEPENDENCY_REVIEW_ENABLED == 'true'
+    name: "1 · Preflight · Dependency Review"
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
       contents: read
       pull-requests: read
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-
-      - name: Review dependency changes
+          ref: ${{ inputs.ref || github.ref }}
+      - name: Review dependency changes in the PR diff
         uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
         with:
           fail-on-severity: high
 
-  pr-conventions:
-    name: Source Control - PR Conventions
-    if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-
-      - name: Check Conventional Commit title
-        run: node .github/scripts/check-pr-title.mjs
-        env:
-          PR_TITLE: ${{ github.event.pull_request.title }}
-
-      - name: Check branch name convention
-        run: node .github/scripts/check-branch-name.mjs
-        env:
-          BRANCH_NAME: ${{ github.head_ref }}
-
-  # ==========================================
-  # STAGE 1: SECURITY VALIDATION
-  # ==========================================
-
-  security-scan:
-    name: Security - Trivy
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-
-    permissions:
-      contents: read
-      security-events: write
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
-
-      - name: Cache Docker layers
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: /tmp/.buildx-cache
-          key: ${{ runner.os }}-buildx-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-buildx-
-
-      - name: Scan filesystem vulnerabilities
-        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
-        with:
-          scan-type: fs
-          scan-ref: .
-          ignore-unfixed: true
-          format: sarif
-          output: trivy-filesystem-results.sarif
-          severity: CRITICAL,HIGH
-          exit-code: "1"
-
-      - name: Build backend container for scanning
-        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
-        with:
-          context: ./backend
-          tags: auxilia-backend:ci
-          cache-from: type=local,src=/tmp/.buildx-cache
-          cache-to: type=local,dest=/tmp/.buildx-cache-new
-          load: true
-
-      - name: Move Docker cache
-        run: |
-          rm -rf /tmp/.buildx-cache
-          mv /tmp/.buildx-cache-new /tmp/.buildx-cache
-
-      - name: Scan backend container image
-        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
-        with:
-          scan-type: image
-          image-ref: auxilia-backend:ci
-          ignore-unfixed: true
-          format: sarif
-          output: trivy-image-results.sarif
-          severity: CRITICAL,HIGH
-          exit-code: "1"
-
-      - name: Upload Trivy filesystem results
-        uses: github/codeql-action/upload-sarif@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
-        if: always()
-        continue-on-error: true
-        with:
-          sarif_file: trivy-filesystem-results.sarif
-
-      - name: Upload Trivy image results
-        uses: github/codeql-action/upload-sarif@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
-        if: always()
-        continue-on-error: true
-        with:
-          sarif_file: trivy-image-results.sarif
-
-  secret-scan:
-    name: Security - Gitleaks
+  gitleaks:
+    name: "1 · Security · Gitleaks"
     runs-on: ubuntu-latest
     timeout-minutes: 10
-
+    permissions:
+      contents: read
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-
-      - name: Scan tracked files with Gitleaks
+          ref: ${{ inputs.ref || github.ref }}
+      - name: Scan tracked files for secrets
         shell: bash
         run: |
           set -euo pipefail
@@ -186,115 +106,119 @@ jobs:
             dir --redact --no-banner --exit-code 1 .
 
   codeql:
-    name: Security - CodeQL
+    name: "1 · Security · CodeQL"
     runs-on: ubuntu-latest
     timeout-minutes: 20
-
     permissions:
       actions: read
       contents: read
       security-events: write
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-
-      - name: Check whether code scanning upload is possible
-        id: codeql_upload
+          ref: ${{ inputs.ref || github.ref }}
+      # Fork PRs have read-only tokens: analyze, but never try to upload SARIF.
+      # On private repos without GHAS, analysis still runs; upload is opt-in.
+      - name: Decide SARIF upload capability
+        id: upload
         env:
           GH_TOKEN: ${{ github.token }}
-        # Fork PRs get read-only tokens: they analyze but never upload.
-        # Same-repo PRs on private repositories cannot upload SARIF unless
-        # code scanning (GitHub Advanced Security) is available, which
-        # depends on the plan. Set the repo variable CODE_SCANNING_ENABLED
-        # to 'true' once it is and SARIF upload turns back on everywhere.
+        shell: bash
         run: |
-          upload=always
+          set -euo pipefail
+          mode=always
           if [[ "${{ github.event_name }}" == "pull_request" && \
                 "${{ github.event.pull_request.head.repo.full_name }}" != "${{ github.repository }}" ]]; then
-            upload=never
-            echo "Fork pull request: SARIF upload disabled."
+            mode=never
+            echo "Fork pull request: analysis runs, SARIF upload disabled."
           elif [[ "$(gh api "repos/${GITHUB_REPOSITORY}" --jq '.private')" == "true" && \
                   "${{ vars.CODE_SCANNING_ENABLED }}" != 'true' ]]; then
-            upload=never
-            echo "Private repository without GitHub Advanced Security: SARIF upload disabled; analysis still runs."
+            mode=never
+            echo "Private repository without GitHub Advanced Security: SARIF upload disabled."
           fi
-          echo "upload=${upload}" >> "$GITHUB_OUTPUT"
-
-      - name: Initialize CodeQL
-        uses: github/codeql-action/init@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
+          echo "mode=${mode}" >> "$GITHUB_OUTPUT"
+      - uses: github/codeql-action/init@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
         with:
           languages: javascript-typescript
           queries: security-extended
-
-      - name: Analyze with CodeQL
-        uses: github/codeql-action/analyze@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
+      - uses: github/codeql-action/analyze@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
         with:
           category: "/language:javascript-typescript"
-          # Fork pull requests have read-only GITHUB_TOKEN permissions. Keep
-          # the analysis job green there, but only upload SARIF when allowed.
-          upload: ${{ steps.codeql_upload.outputs.upload }}
+          upload: ${{ steps.upload.outputs.mode }}
 
-  # ==========================================
-  # STAGE 2: BACKEND VALIDATION
-  # ==========================================
+  # ==========================================================================
+  # STAGE 2 - BUILD, TEST & ARTIFACTS (parallel, after Stage 1)
+  # `always()` keeps the job alive when PR-only Stage 1 jobs are skipped on
+  # push; failure/cancelled of ANY Stage 1 job still stops the build.
+  # ==========================================================================
 
-  backend:
-    name: Backend - Quality & Build
+  backend-build:
+    name: "2 · Build · Backend"
     runs-on: ubuntu-latest
-    timeout-minutes: 20
-    needs: [pr-conventions, secret-scan]
-    # pr-conventions only runs on pull requests; without this guard a push
-    # event skips it and the whole backend/frontend/e2e chain is skipped too,
-    # so pushes to main shipped untested. `failure()` still blocks the chain
-    # when the conventions check genuinely fails.
-    if: ${{ always() && needs.pr-conventions.result != 'failure' && needs.secret-scan.result != 'failure' }}
-
+    timeout-minutes: 25
+    needs: [pr-conventions, dependency-review, gitleaks, codeql]
+    if: >-
+      ${{
+        always() &&
+        needs.pr-conventions.result != 'failure' &&
+        needs.pr-conventions.result != 'cancelled' &&
+        needs.dependency-review.result != 'failure' &&
+        needs.dependency-review.result != 'cancelled' &&
+        needs.gitleaks.result == 'success' &&
+        needs.codeql.result == 'success'
+      }}
+    permissions:
+      contents: read
     defaults:
       run:
         working-directory: backend
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
           fetch-depth: 0
-
-      - name: Setup Node.js
-        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+          ref: ${{ inputs.ref || github.ref }}
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: "22"
           cache: npm
           cache-dependency-path: backend/package-lock.json
-
       - name: Install dependencies
         run: npm ci --ignore-scripts
-
-      - name: Verify Prettier formatting
-        run: npm run format:check
+      - name: Verify Prettier formatting (changed files only)
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
-
-      # Dev-only audit findings (e.g. picomatch GHSA-fc5q-39xc-vjpf, no patched
-      # release) block merges; production dependencies are what we ship.
-      - name: Audit dependencies (production)
+        run: npm run format:check
+      - name: Audit production dependencies
         run: npm audit --omit=dev --audit-level=high
-
       - name: ESLint and TypeScript checks
         run: npm run lint
-
-      - name: Run tests with coverage
+      - name: Unit / integration / contract tests with coverage
         run: npm run test:coverage
-
-      - name: Build backend
+      - name: Compile TypeScript
         run: npm run build
-
-      - name: Upload backend coverage
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      - name: Build backend image (cached, loaded for Stage 3)
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: ./backend
+          tags: auxilia-backend:ci
+          load: true
+          cache-from: type=gha,scope=backend
+          cache-to: type=gha,mode=max,scope=backend
+      - name: Save backend image for the container scan
+        run: docker save auxilia-backend:ci -o /tmp/backend-image.tar
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: backend-image
+          path: /tmp/backend-image.tar
+          if-no-files-found: ignore
+          retention-days: 1
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
           name: backend-coverage
@@ -302,59 +226,69 @@ jobs:
           if-no-files-found: ignore
           retention-days: 7
 
-  # ==========================================
-  # STAGE 2: FRONTEND VALIDATION
-  # ==========================================
-
-  frontend:
-    name: Frontend - Quality & Build
+  frontend-build:
+    name: "2 · Build · Frontend"
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    needs: [pr-conventions, secret-scan]
-    # Push events skip pr-conventions; keep the chain alive but still stop on
-    # a genuine failure of either dependency.
-    if: ${{ always() && needs.pr-conventions.result != 'failure' && needs.secret-scan.result != 'failure' }}
-
+    needs: [pr-conventions, dependency-review, gitleaks, codeql]
+    if: >-
+      ${{
+        always() &&
+        needs.pr-conventions.result != 'failure' &&
+        needs.pr-conventions.result != 'cancelled' &&
+        needs.dependency-review.result != 'failure' &&
+        needs.dependency-review.result != 'cancelled' &&
+        needs.gitleaks.result == 'success' &&
+        needs.codeql.result == 'success'
+      }}
+    permissions:
+      contents: read
     defaults:
       run:
         working-directory: frontend
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-
-      - name: Setup Flutter
-        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
+          ref: ${{ inputs.ref || github.ref }}
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
         with:
           channel: stable
           flutter-version: "3.47.8"
           cache: true
-
       - name: Install dependencies
         run: flutter pub get --enforce-lockfile
-
       - name: Verify formatting
+        # --no-fatal-infos: pre-existing style infos must not fail; errors/warnings do.
         run: dart format --output=none --set-exit-if-changed lib test tool integration_test test_driver
-
       - name: Static analysis
-        # --no-fatal-infos: pre-existing style info lints (e.g.
-        # prefer_initializing_formals) must not fail the job; errors and
-        # warnings still do.
         run: flutter analyze --no-fatal-infos
-
-      - name: Run tests with coverage
+      - name: Unit / widget tests with coverage
         run: flutter test --coverage
-
-      - name: Enforce coverage threshold
+      - name: Enforce 62% line coverage gate
         run: dart run tool/check_coverage.dart 62
-
-      - name: Build Flutter web
+      - name: Build production web bundle
         run: flutter build web --release
-
-      - name: Upload frontend coverage
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      - name: Build frontend image (cached, loaded for Stage 3)
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: ./frontend
+          tags: auxilia-frontend:ci
+          load: true
+          cache-from: type=gha,scope=frontend
+          cache-to: type=gha,mode=max,scope=frontend
+      - name: Save frontend image for the container scan
+        run: docker save auxilia-frontend:ci -o /tmp/frontend-image.tar
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: frontend-image
+          path: /tmp/frontend-image.tar
+          if-no-files-found: ignore
+          retention-days: 1
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
           name: frontend-coverage
@@ -362,186 +296,23 @@ jobs:
           if-no-files-found: ignore
           retention-days: 7
 
-  # ==========================================
-  # STAGE 3: END-TO-END TESTING
-  # ==========================================
+  # ==========================================================================
+  # STAGE 3 - DEEP QUALITY & CONTAINER SECURITY (parallel, after Stage 2)
+  # A single quality gate enforces the SonarCloud analysis that already runs
+  # for every commit. It verifies the posted check run and the project quality
+  # gate via GITHUB_TOKEN, so no scanner token (or duplicate SonarCloud job)
+  # is required.
+  # ==========================================================================
 
-  e2e:
-    name: E2E - Docker Compose + Playwright
+  sonarqube-quality-gate:
+    name: "3 · Quality · SonarQube Quality Gate"
     runs-on: ubuntu-latest
-    timeout-minutes: 45
-    needs: [backend, frontend]
-    # Skip the E2E chain gracefully when upstream jobs were skipped (e.g. a
-    # failed pr-conventions blocks backend/frontend, so e2e would skip too);
-    # only run when both quality jobs succeeded.
-    if: ${{ always() && needs.backend.result == 'success' && needs.frontend.result == 'success' }}
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-
-      - name: Build and start the full stack
-        run: docker compose up -d --build
-
-      - name: Wait for the stack to become healthy
-        shell: bash
-        run: |
-          set -euo pipefail
-          for attempt in {1..90}; do
-            if curl -fsS http://localhost:8080/ > /dev/null 2>&1 \
-               && curl -fsS http://localhost:3000/api/health > /dev/null 2>&1; then
-              echo "Stack is ready after $((attempt * 5))s."
-              exit 0
-            fi
-            sleep 5
-          done
-          echo "::error::Stack did not become ready in time."
-          docker compose ps
-          docker compose logs --tail=200
-          exit 1
-
-      - name: Setup Node.js
-        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
-        with:
-          node-version: "22"
-          cache: npm
-          cache-dependency-path: e2e/package-lock.json
-
-      - name: Install E2E dependencies
-        working-directory: e2e
-        run: npm ci --ignore-scripts
-
-      - name: Install Playwright browsers
-        working-directory: e2e
-        run: ./node_modules/.bin/playwright install --with-deps
-
-      - name: Run Playwright E2E tests
-        working-directory: e2e
-        env:
-          CI: true
-          E2E_BASE_URL: http://localhost:8080
-          E2E_API_URL: http://localhost:3000
-        run: npm test
-
-      - name: Upload Playwright report
-        if: always()
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        with:
-          name: playwright-report
-          path: |
-            e2e/playwright-report/
-            e2e/test-results/
-          if-no-files-found: ignore
-          retention-days: 7
-
-      - name: Tear down the stack
-        if: always()
-        run: docker compose down -v
-
-  performance:
-    name: Performance - API Latency & Error Budget
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-
-    # Opt-in via the Actions tab only; keeps routine CI fast while making the
-    # load smoke a first-class, repeatable check.
-    if: github.event_name == 'workflow_dispatch'
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-
-      - name: Setup Node.js
-        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
-        with:
-          node-version: "22"
-          cache: npm
-          cache-dependency-path: backend/package-lock.json
-
-      - name: Install dependencies
-        working-directory: backend
-        run: npm ci --ignore-scripts
-
-      - name: Run the API performance smoke test
-        working-directory: backend
-        env:
-          PERF_DURATION_S: "20"
-          PERF_CONCURRENCY: "50"
-          PERF_MAX_P95_MS: "500"
-        run: npm run test:performance
-
-  # ==========================================
-  # STAGE 4: CODE QUALITY ANALYSIS
-  # ==========================================
-
-  sonarqube:
-    name: Code Quality - SonarQube (CI Analysis)
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    needs: [backend]
-
-    # SonarCloud Automatic Analysis is enabled for this project. The scanner
-    # cannot run at the same time, so CI analysis is opt-in after switching
-    # the SonarCloud project to CI-based analysis.
-    env:
-      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-
-    # Skip external fork PRs where repository secrets
-    # are not available.
-    if: >-
-      vars.SONAR_ANALYSIS_MODE == 'ci' &&
-      (github.event_name != 'pull_request' ||
-       github.event.pull_request.head.repo.full_name == github.repository)
-
-    steps:
-      - name: Require Sonar token for CI analysis
-        if: ${{ env.SONAR_TOKEN == '' }}
-        run: |
-          echo "::error::SONAR_TOKEN is required when SONAR_ANALYSIS_MODE=ci."
-          exit 1
-
-      - name: Checkout repository
-        if: ${{ env.SONAR_TOKEN != '' }}
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          fetch-depth: 0
-          persist-credentials: false
-
-      - name: Download backend coverage
-        if: ${{ env.SONAR_TOKEN != '' }}
-        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
-        with:
-          name: backend-coverage
-          path: backend/coverage
-
-      - name: SonarQube analysis
-        if: ${{ env.SONAR_TOKEN != '' }}
-        uses: SonarSource/sonarqube-scan-action@59202af334b4ba7b5db01b701b8e79f8b3bef0f4 # v8.5.0
-        with:
-          projectBaseDir: backend
-          args: >
-            -Dsonar.qualitygate.wait=true
-            -Dsonar.qualitygate.timeout=300
-
-  sonarqube-automatic:
-    name: Code Quality - SonarCloud Automatic Analysis
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    needs: [backend]
+    timeout-minutes: 10
+    needs: [backend-build, frontend-build]
+    if: ${{ always() && needs.backend-build.result == 'success' && needs.frontend-build.result == 'success' }}
     permissions:
+      contents: read
       checks: read
-
-    # Read the SonarCloud check already posted for this commit. This keeps the
-    # quality gate in the pipeline without starting a conflicting scanner.
-    if: >-
-      vars.SONAR_ANALYSIS_MODE != 'ci' &&
-      (github.event_name != 'pull_request' ||
-       github.event.pull_request.head.repo.full_name == github.repository)
-
     steps:
       - name: Verify SonarCloud quality gate
         shell: bash
@@ -553,6 +324,9 @@ jobs:
         run: |
           set -euo pipefail
 
+          # SonarCloud Automatic Analysis posts a "SonarCloud Code Analysis"
+          # check run for the analysed commit. Trust its conclusion when it
+          # exists; otherwise fall back to the project's quality gate status.
           conclusion=""
           for attempt in {1..12}; do
             conclusion="$(gh api \
@@ -601,88 +375,239 @@ jobs:
               ;;
           esac
 
-  # ==========================================
-  # STAGE 5: PIPELINE AGGREGATION
-  # ==========================================
+  trivy-container-scan:
+    name: "3 · Security · Trivy Image Scan"
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: [backend-build, frontend-build]
+    if: ${{ always() && needs.backend-build.result == 'success' && needs.frontend-build.result == 'success' }}
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: backend-image
+          path: /tmp/images
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: frontend-image
+          path: /tmp/images
+      - name: Load both images
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker load -i /tmp/images/backend-image.tar
+          docker load -i /tmp/images/frontend-image.tar
+      - name: Scan backend image (HIGH/CRITICAL)
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          scan-type: image
+          image-ref: auxilia-backend:ci
+          ignore-unfixed: true
+          format: sarif
+          output: trivy-backend.sarif
+          severity: CRITICAL,HIGH
+          exit-code: "1"
+      - name: Scan frontend image (HIGH/CRITICAL)
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          scan-type: image
+          image-ref: auxilia-frontend:ci
+          ignore-unfixed: true
+          format: sarif
+          output: trivy-frontend.sarif
+          severity: CRITICAL,HIGH
+          exit-code: "1"
+      - name: Publish scan results
+        if: ${{ always() && hashFiles('trivy-*.sarif') != '' }}
+        continue-on-error: true
+        uses: github/codeql-action/upload-sarif@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
+        with:
+          # Glob picks up both backend and frontend SARIF reports.
+          sarif_file: trivy-*.sarif
 
-  ci-summary:
-    name: CI - Final Quality Gate
+  # ==========================================================================
+  # STAGE 4 - INTEGRATION, PERFORMANCE & FINAL GATE
+  # ==========================================================================
+
+  e2e-docker-compose:
+    name: "4 · Integration · E2E + Performance"
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    needs: [sonarqube-quality-gate, trivy-container-scan]
+    if: ${{ always() && needs.sonarqube-quality-gate.result == 'success' && needs.trivy-container-scan.result == 'success' }}
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          ref: ${{ inputs.ref || github.ref }}
+      - name: Build and start the full stack
+        run: docker compose up -d --build
+      - name: Wait for the stack to become healthy
+        shell: bash
+        run: |
+          set -euo pipefail
+          for attempt in {1..90}; do
+            if curl -fsS http://localhost:8080/ > /dev/null 2>&1 \
+               && curl -fsS http://localhost:3000/api/health > /dev/null 2>&1; then
+              echo "Stack is ready after $((attempt * 5))s."
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "::error::Stack did not become ready in time."
+          docker compose ps
+          docker compose logs --tail=200
+          exit 1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: e2e/package-lock.json
+      - name: Install E2E dependencies
+        working-directory: e2e
+        run: npm ci --ignore-scripts
+      - name: Install Playwright browsers
+        working-directory: e2e
+        run: ./node_modules/.bin/playwright install --with-deps
+      - name: Run Playwright E2E suite
+        working-directory: e2e
+        env:
+          CI: true
+          E2E_BASE_URL: http://localhost:8080
+          E2E_API_URL: http://localhost:3000
+        run: npm test
+      - name: Performance - API latency against the live stack
+        shell: bash
+        run: |
+          set -euo pipefail
+          samples=$(mktemp)
+          for _ in $(seq 1 40); do
+            start=$(date +%s%N)
+            curl -fsS http://localhost:3000/api/health > /dev/null
+            end=$(date +%s%N)
+            echo $(( (end - start) / 1000000 )) >> "$samples"
+          done
+          sort -n "$samples" -o "$samples"
+          index=$(( ($(wc -l < "$samples") * 95 + 99) / 100 ))
+          p95=$(sed -n "${index}p" "$samples")
+          echo "Live /api/health p95 = ${p95} ms (budget 500 ms)"
+          if (( p95 > 500 )); then
+            echo "::error::Live p95 ${p95} ms exceeds the 500 ms budget."
+            exit 1
+          fi
+      - name: Performance - API error budget smoke
+        working-directory: backend
+        env:
+          PERF_DURATION_S: "20"
+          PERF_CONCURRENCY: "50"
+          PERF_MAX_P95_MS: "500"
+        run: |
+          npm ci --ignore-scripts
+          npm run test:performance
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: always()
+        with:
+          name: playwright-report
+          path: |
+            e2e/playwright-report/
+            e2e/test-results/
+          if-no-files-found: ignore
+          retention-days: 7
+      - name: Tear down the stack
+        if: always()
+        run: docker compose down -v
+
+  ci-final-gate:
+    name: "4 · Gate · CI Final Quality Gate"
     runs-on: ubuntu-latest
     timeout-minutes: 5
-
     needs:
-      - dependency-review
       - pr-conventions
-      - security-scan
-      - secret-scan
+      - dependency-review
+      - gitleaks
       - codeql
-      - backend
-      - frontend
-      - e2e
-      - performance
-      - sonarqube
-      - sonarqube-automatic
-
+      - backend-build
+      - frontend-build
+      - sonarqube-quality-gate
+      - trivy-container-scan
+      - e2e-docker-compose
     if: always()
-
+    permissions:
+      contents: read
     steps:
-      - name: Evaluate pipeline results
+      - name: Verify every required stage succeeded
         shell: bash
         env:
-          DEPENDENCY_REVIEW: ${{ needs.dependency-review.result }}
+          EVENT: ${{ github.event_name }}
           PR_CONVENTIONS: ${{ needs.pr-conventions.result }}
-          SECURITY: ${{ needs.security-scan.result }}
-          SECRETS: ${{ needs.secret-scan.result }}
+          DEPENDENCY_REVIEW: ${{ needs.dependency-review.result }}
+          GITLEAKS: ${{ needs.gitleaks.result }}
           CODEQL: ${{ needs.codeql.result }}
-          BACKEND: ${{ needs.backend.result }}
-          FRONTEND: ${{ needs.frontend.result }}
-          E2E: ${{ needs.e2e.result }}
-          PERFORMANCE: ${{ needs.performance.result }}
-          SONAR_CI: ${{ needs.sonarqube.result }}
-          SONAR_AUTOMATIC: ${{ needs.sonarqube-automatic.result }}
-
+          BACKEND: ${{ needs.backend-build.result }}
+          FRONTEND: ${{ needs.frontend-build.result }}
+          SONAR: ${{ needs.sonarqube-quality-gate.result }}
+          TRIVY: ${{ needs.trivy-container-scan.result }}
+          E2E: ${{ needs.e2e-docker-compose.result }}
         run: |
+          set -uo pipefail
           {
-            echo "## Auxilia CI Pipeline Summary"
+            echo "## Auxilia CI - 4 Stage Quality Gate"
             echo ""
-            echo "| Quality Gate | Result |"
-            echo "|---|---|"
-            echo "| Dependency Review | $DEPENDENCY_REVIEW |"
-            echo "| PR Conventions | $PR_CONVENTIONS |"
-            echo "| Security Scan | $SECURITY |"
-            echo "| Gitleaks | $SECRETS |"
-            echo "| CodeQL | $CODEQL |"
-            echo "| Backend | $BACKEND |"
-            echo "| Frontend | $FRONTEND |"
-            echo "| E2E (Docker Compose + Playwright) | $E2E |"
-            echo "| Performance (workflow_dispatch only) | $PERFORMANCE |"
-            echo "| SonarQube CI Analysis | $SONAR_CI |"
-            echo "| SonarCloud Automatic Analysis | $SONAR_AUTOMATIC |"
+            echo "| Stage | Job | Result |"
+            echo "|---|---|---|"
+            echo "| 1 Preflight | PR Conventions | ${PR_CONVENTIONS} |"
+            echo "| 1 Preflight | Dependency Review | ${DEPENDENCY_REVIEW} |"
+            echo "| 1 Security | Gitleaks | ${GITLEAKS} |"
+            echo "| 1 Security | CodeQL | ${CODEQL} |"
+            echo "| 2 Build | Backend | ${BACKEND} |"
+            echo "| 2 Build | Frontend | ${FRONTEND} |"
+            echo "| 3 Quality | SonarQube Quality Gate | ${SONAR} |"
+            echo "| 3 Security | Trivy Images | ${TRIVY} |"
+            echo "| 4 Integration | E2E + Performance | ${E2E} |"
           } >> "$GITHUB_STEP_SUMMARY"
 
           failed=0
+          check() {
+            local name="$1" result="$2" pr_only="$3"
+            case "$result" in
+              success) ;;
+              skipped)
+                # PR-only jobs are legitimately skipped on non-PR events
+                # (push and workflow_dispatch).
+                if [[ "$pr_only" == "true" && "$EVENT" != "pull_request" ]]; then
+                  echo "::notice::${name} skipped (PR-only job on push)."
+                else
+                  echo "::error::${name} was skipped unexpectedly."
+                  failed=1
+                fi
+                ;;
+              failure|cancelled)
+                echo "::error::${name} ${result}."
+                failed=1
+                ;;
+              *)
+                echo "::error::${name} has unknown result '${result}'."
+                failed=1
+                ;;
+            esac
+          }
 
-          for result in \
-            "$DEPENDENCY_REVIEW" \
-            "$PR_CONVENTIONS" \
-            "$SECURITY" \
-            "$SECRETS" \
-            "$CODEQL" \
-            "$BACKEND" \
-            "$FRONTEND" \
-            "$E2E" \
-            "$PERFORMANCE" \
-            "$SONAR_CI" \
-            "$SONAR_AUTOMATIC"; do
+          check "PR Conventions"      "$PR_CONVENTIONS"     true
+          check "Dependency Review"   "$DEPENDENCY_REVIEW"  true
+          check "Gitleaks"            "$GITLEAKS"           false
+          check "CodeQL"              "$CODEQL"             false
+          check "Backend Build"       "$BACKEND"            false
+          check "Frontend Build"      "$FRONTEND"           false
+          check "SonarQube Gate"      "$SONAR"              false
+          check "Trivy Image Scan"    "$TRIVY"              false
+          check "E2E + Performance"   "$E2E"                false
 
-            if [[ "$result" != "success" && "$result" != "skipped" ]]; then
-              failed=1
-            fi
-          done
-
-          if [[ "$failed" -ne 0 ]]; then
-            echo "::error::One or more CI quality gates failed."
+          if (( failed )); then
+            echo "::error::One or more required quality gates did not succeed."
             exit 1
           fi
-
           echo "All required CI quality gates passed."
