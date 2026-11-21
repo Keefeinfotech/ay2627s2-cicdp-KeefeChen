@@ -9,6 +9,23 @@ global:
   scrape_interval: 10s
   evaluation_interval: 15s
 
+# Alerting rules evaluated every `evaluation_interval`. The file is mounted
+# into the container by docker-compose.yml (monitoring profile); when running
+# Prometheus without compose, keep prometheus-alerts.yml next to this file.
+rule_files:
+  - prometheus-alerts.yml
+  - prometheus-slo.yml
+
+# Where to send the alerts those rules fire. Uses the Alertmanager example
+# in this directory (monitoring/alertmanager.yml) with the compose profile;
+# for a real deployment, point this at your managed Alertmanager/Grafana
+# notification pipeline instead.
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+            - alertmanager:9093
+
 scrape_configs:
   - job_name: auxilia-backend
     metrics_path: /metrics

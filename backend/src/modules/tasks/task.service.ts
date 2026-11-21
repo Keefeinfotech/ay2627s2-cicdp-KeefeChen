@@ -16,8 +16,20 @@ import type {
   OffsetPaginationInput,
   OffsetPaginatedTasks,
   TaskRecord,
+  TaskStatus,
   UpdateTaskInput,
 } from "./task.types.js";
+
+export interface BulkFailure {
+  index: number;
+  id: string | null;
+  error: string;
+}
+
+export interface BulkOperationResult {
+  succeeded: unknown[];
+  failed: BulkFailure[];
+}
 
 /**
  * Enforces the group assignment contract on the write path:
@@ -98,7 +110,10 @@ export const taskService = {
           "code" in error &&
           error.code === 11000
         ) {
-          const existing = await taskRepository.findByIdForUser(input.id, userId);
+          const existing = await taskRepository.findByIdForUser(
+            input.id,
+            userId,
+          );
           if (existing) return existing;
         }
         throw error;
@@ -191,6 +206,95 @@ export const taskService = {
 
     enqueue("analytics.invalidate", { userId });
     return task;
+  },
+
+  /**
+   * Bulk-creates tasks. Each task is validated independently and ownership
+   * rules still apply; failures are reported per item.
+   */
+  async bulkCreateTasks(
+    userId: string,
+    inputs: CreateTaskInput[],
+  ): Promise<BulkOperationResult> {
+    const succeeded: unknown[] = [];
+    const failed: BulkFailure[] = [];
+
+    for (const [index, input] of inputs.entries()) {
+      try {
+        const task = await this.createTask(userId, input);
+        succeeded.push(task);
+      } catch (error) {
+        failed.push({
+          index,
+          id: input.id ?? null,
+          error:
+            error instanceof AppError
+              ? error.message
+              : "Failed to create task.",
+        });
+      }
+    }
+
+    return { succeeded, failed };
+  },
+
+  /**
+   * Bulk status update with per-task ownership enforcement.
+   */
+  async bulkUpdateStatus(
+    userId: string,
+    ids: string[],
+    status: TaskStatus,
+  ): Promise<BulkOperationResult> {
+    const succeeded: string[] = [];
+    const failed: BulkFailure[] = [];
+
+    for (const [index, taskId] of ids.entries()) {
+      try {
+        await this.updateTask(userId, taskId, { status });
+        succeeded.push(taskId);
+      } catch (error) {
+        failed.push({
+          index,
+          id: taskId,
+          error:
+            error instanceof AppError
+              ? error.message
+              : "Failed to update task.",
+        });
+      }
+    }
+
+    return { succeeded, failed };
+  },
+
+  /**
+   * Bulk soft-delete with per-task ownership enforcement.
+   */
+  async bulkDeleteTasks(
+    userId: string,
+    ids: string[],
+  ): Promise<BulkOperationResult> {
+    const succeeded: string[] = [];
+    const failed: BulkFailure[] = [];
+
+    for (const [index, taskId] of ids.entries()) {
+      try {
+        await this.deleteTask(userId, taskId);
+        succeeded.push(taskId);
+      } catch (error) {
+        failed.push({
+          index,
+          id: taskId,
+          error:
+            error instanceof AppError
+              ? error.message
+              : "Failed to delete task.",
+        });
+      }
+    }
+
+    return { succeeded, failed };
   },
 
   /**

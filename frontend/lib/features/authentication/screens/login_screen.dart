@@ -112,6 +112,7 @@ class _LoginScreenState extends State<LoginScreen> {
       child: AutofillGroup(
         child: Form(
           key: _formKey,
+          autovalidateMode: AutovalidateMode.onUserInteraction,
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 420),
             child: Column(

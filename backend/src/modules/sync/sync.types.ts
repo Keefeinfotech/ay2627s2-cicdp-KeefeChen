@@ -29,3 +29,35 @@ export interface SyncChangesResult {
   since: Date;
   tasks: TaskChange[];
 }
+
+import type { CreateTaskInput, UpdateTaskInput } from "../tasks/task.types.js";
+
+export type SyncOperationInput =
+  | {
+      opId: string;
+      type: "task.create";
+      payload: CreateTaskInput;
+    }
+  | {
+      opId: string;
+      type: "task.update";
+      payload: UpdateTaskInput & { taskId: string };
+    }
+  | {
+      opId: string;
+      type: "task.delete";
+      payload: { taskId: string };
+    };
+
+export interface SyncOperationResult {
+  opId: string;
+  type: SyncOperationInput["type"];
+  status: "applied" | "failed" | "conflict";
+  detail?: unknown;
+  replayed: boolean;
+}
+
+export interface SyncPushResult {
+  serverTime: Date;
+  results: SyncOperationResult[];
+}

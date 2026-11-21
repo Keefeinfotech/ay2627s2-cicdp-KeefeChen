@@ -22,7 +22,8 @@ export const swaggerDocument: OpenAPIV3.Document = {
   info: {
     title: "Personal Secretary API",
     version: "1.0.0",
-    description: "API documentation for authentication and the AI assistant.",
+    description:
+      "Auxilia API — tasks, reminders, calendar, AI assistant, analytics, notifications, preferences and offline sync. Canonical prefix is /api/v1 (legacy /api alias retained).",
   },
   servers: [
     {
@@ -393,6 +394,493 @@ export const swaggerDocument: OpenAPIV3.Document = {
               "AI provider unavailable or returned an invalid result",
           },
         },
+      },
+    },
+    "/api/v1/health/live": {
+      get: {
+        summary: "Liveness probe",
+        responses: { "200": { description: "Process is up" } },
+      },
+    },
+    "/api/v1/health/ready": {
+      get: {
+        summary: "Readiness probe (database reachable)",
+        responses: {
+          "200": { description: "Ready to serve traffic" },
+          "503": { description: "Not ready (database unavailable)" },
+        },
+      },
+    },
+    "/api/auth/change-password": {
+      post: {
+        summary: "Change password (current session kept; others revoked)",
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["currentPassword", "newPassword"],
+                properties: {
+                  currentPassword: { type: "string" },
+                  newPassword: { type: "string", minLength: 12 },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "200": { description: "Password updated" },
+          "401": {
+            description: "Authentication required or wrong current password",
+          },
+        },
+      },
+    },
+    "/api/auth/logout-all": {
+      post: {
+        summary: "Sign out every device (including this one)",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "204": { description: "All sessions revoked" },
+          "401": { description: "Authentication required" },
+        },
+      },
+    },
+    "/api/users/me/email": {
+      patch: {
+        summary: "Change the account email (requires current password)",
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["email", "currentPassword"],
+                properties: {
+                  email: { type: "string", format: "email" },
+                  currentPassword: { type: "string" },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "200": { description: "Email updated; marked unverified" },
+          "403": { description: "Wrong current password" },
+          "409": { description: "Email already registered" },
+        },
+      },
+    },
+    "/api/tasks/bulk": {
+      post: {
+        summary: "Bulk-create up to 100 tasks",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "201": { description: "Bulk creation result with per-item outcomes" },
+          "400": { description: "Validation failed" },
+        },
+      },
+      delete: {
+        summary: "Bulk soft-delete up to 100 tasks",
+        security: [{ bearerAuth: [] }],
+        responses: { "200": { description: "Bulk delete result" } },
+      },
+    },
+    "/api/tasks/bulk/status": {
+      patch: {
+        summary: "Bulk-update the status of up to 100 tasks",
+        security: [{ bearerAuth: [] }],
+        responses: { "200": { description: "Bulk status update result" } },
+      },
+    },
+    "/api/tasks/{taskId}/complete": {
+      post: {
+        summary: "Mark a task completed",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "200": { description: "Task completed" },
+          "404": { description: "Task not found" },
+        },
+      },
+    },
+    "/api/tasks/{taskId}/reopen": {
+      post: {
+        summary: "Reopen a completed task",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "200": { description: "Task reopened" },
+          "404": { description: "Task not found" },
+        },
+      },
+    },
+    "/api/tasks/{taskId}/status": {
+      patch: {
+        summary: "Set only the task status",
+        security: [{ bearerAuth: [] }],
+        responses: { "200": { description: "Status updated" } },
+      },
+    },
+    "/api/tasks/{taskId}/priority": {
+      patch: {
+        summary: "Set only the task priority",
+        security: [{ bearerAuth: [] }],
+        responses: { "200": { description: "Priority updated" } },
+      },
+    },
+    "/api/tasks/{taskId}/due-date": {
+      patch: {
+        summary: "Set (or clear, with null) the task due date",
+        security: [{ bearerAuth: [] }],
+        responses: { "200": { description: "Due date updated" } },
+      },
+    },
+    "/api/tasks/{taskId}/reminders": {
+      get: {
+        summary: "List reminders attached to a task",
+        security: [{ bearerAuth: [] }],
+        responses: { "200": { description: "Task reminders" } },
+      },
+      post: {
+        summary: "Attach a reminder to a task",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "201": { description: "Reminder created" },
+          "404": { description: "Task not found" },
+        },
+      },
+    },
+    "/api/reminders": {
+      get: {
+        summary: "List own reminders",
+        security: [{ bearerAuth: [] }],
+        responses: { "200": { description: "Own reminders, by dueAt" } },
+      },
+      post: {
+        summary: "Create a reminder (supports recurrence)",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "201": { description: "Reminder created" },
+          "400": { description: "Validation failed" },
+        },
+      },
+      delete: {
+        summary: "Not implemented on the collection; use /{reminderId}",
+        responses: {
+          "405": { description: "Use DELETE /api/reminders/{reminderId}" },
+        },
+      },
+    },
+    "/api/reminders/upcoming": {
+      get: {
+        summary: "Upcoming enabled reminders within ?days= (1-90, default 7)",
+        security: [{ bearerAuth: [] }],
+        responses: { "200": { description: "Upcoming reminders" } },
+      },
+    },
+    "/api/reminders/{reminderId}": {
+      get: {
+        summary: "Get a reminder (owner only)",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "200": { description: "The reminder" },
+          "404": { description: "Reminder not found" },
+        },
+      },
+      patch: {
+        summary: "Update a reminder (message/dueAt/recurrence/enabled)",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "200": { description: "Reminder updated" },
+          "404": { description: "Reminder not found" },
+        },
+      },
+      delete: {
+        summary: "Delete a reminder (owner only)",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "204": { description: "Deleted" },
+          "404": { description: "Reminder not found" },
+        },
+      },
+    },
+    "/api/reminders/{reminderId}/status": {
+      patch: {
+        summary: "Enable/disable/complete-toggle a reminder",
+        security: [{ bearerAuth: [] }],
+        responses: { "200": { description: "Status updated" } },
+      },
+    },
+    "/api/reminders/{reminderId}/complete": {
+      post: {
+        summary:
+          "Mark a reminder completed (recurring reminders spawn the next occurrence)",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "200": { description: "Marked completed" },
+          "404": { description: "Reminder not found" },
+        },
+      },
+    },
+    "/api/analytics/overview": {
+      get: {
+        summary: "Headline task statistics for the current user",
+        security: [{ bearerAuth: [] }],
+        responses: { "200": { description: "Overview counters" } },
+      },
+    },
+    "/api/analytics/daily": {
+      get: {
+        summary: "Per-day created/completed counts (?days=1-90)",
+        security: [{ bearerAuth: [] }],
+        responses: { "200": { description: "Daily buckets" } },
+      },
+    },
+    "/api/analytics/monthly": {
+      get: {
+        summary: "Per-month created/completed counts (?months=1-24)",
+        security: [{ bearerAuth: [] }],
+        responses: { "200": { description: "Monthly buckets" } },
+      },
+    },
+    "/api/analytics/completion-rate": {
+      get: {
+        summary: "Completion rate over the trailing ?weeks=",
+        security: [{ bearerAuth: [] }],
+        responses: { "200": { description: "Completion rate" } },
+      },
+    },
+    "/api/analytics/task-trends": {
+      get: {
+        summary: "Monthly trend with improving/declining/steady signal",
+        security: [{ bearerAuth: [] }],
+        responses: { "200": { description: "Trend buckets + direction" } },
+      },
+    },
+    "/api/analytics/overdue": {
+      get: {
+        summary: "Open tasks past their due date (most overdue first)",
+        security: [{ bearerAuth: [] }],
+        responses: { "200": { description: "Overdue tasks" } },
+      },
+    },
+    "/api/analytics/productivity-summary": {
+      get: {
+        summary: "Overview + streak for the productivity dashboard",
+        security: [{ bearerAuth: [] }],
+        responses: { "200": { description: "Productivity summary" } },
+      },
+    },
+    "/api/analytics/weekly": {
+      get: {
+        summary: "Weekly created/completed buckets + streak",
+        security: [{ bearerAuth: [] }],
+        responses: { "200": { description: "Weekly buckets" } },
+      },
+    },
+    "/api/notifications": {
+      get: {
+        summary: "List in-app notifications (?page&limit&read)",
+        security: [{ bearerAuth: [] }],
+        responses: { "200": { description: "Notifications + pagination" } },
+      },
+      delete: {
+        summary: "Clear all notifications for the current user",
+        security: [{ bearerAuth: [] }],
+        responses: { "200": { description: "Cleared" } },
+      },
+    },
+    "/api/notifications/unread-count": {
+      get: {
+        summary: "Number of unread notifications",
+        security: [{ bearerAuth: [] }],
+        responses: { "200": { description: "Unread count" } },
+      },
+    },
+    "/api/notifications/read-all": {
+      patch: {
+        summary: "Mark every notification as read",
+        security: [{ bearerAuth: [] }],
+        responses: { "200": { description: "Marked" } },
+      },
+    },
+    "/api/notifications/{notificationId}/read": {
+      patch: {
+        summary: "Mark one notification as read",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "200": { description: "Marked" },
+          "404": { description: "Not found" },
+        },
+      },
+    },
+    "/api/notifications/devices": {
+      get: {
+        summary: "List registered push devices",
+        security: [{ bearerAuth: [] }],
+        responses: { "200": { description: "Registered devices" } },
+      },
+      post: {
+        summary: "Register (or refresh) a push device token",
+        security: [{ bearerAuth: [] }],
+        responses: { "201": { description: "Device registered" } },
+      },
+    },
+    "/api/notifications/devices/{deviceId}": {
+      delete: {
+        summary: "Unregister a push device",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "204": { description: "Unregistered" },
+          "404": { description: "Device not found" },
+        },
+      },
+    },
+    "/api/preferences": {
+      get: {
+        summary: "Get (creating defaults if needed) the caller's preferences",
+        security: [{ bearerAuth: [] }],
+        responses: { "200": { description: "Preferences" } },
+      },
+      patch: {
+        summary:
+          "Update any preference sections (notifications/appearance/timezone/locale)",
+        security: [{ bearerAuth: [] }],
+        responses: { "200": { description: "Updated preferences" } },
+      },
+    },
+    "/api/preferences/notifications": {
+      patch: {
+        summary: "Update notification preferences",
+        security: [{ bearerAuth: [] }],
+        responses: { "200": { description: "Updated" } },
+      },
+    },
+    "/api/preferences/appearance": {
+      patch: {
+        summary: "Update appearance preferences (theme/fontScale)",
+        security: [{ bearerAuth: [] }],
+        responses: { "200": { description: "Updated" } },
+      },
+    },
+    "/api/preferences/timezone": {
+      patch: {
+        summary: "Update the user timezone (IANA, validated)",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "200": { description: "Updated" },
+          "400": { description: "Invalid time zone" },
+        },
+      },
+    },
+    "/api/sync/push": {
+      post: {
+        summary:
+          "Push up to 50 idempotent operations (task.create/update/delete)",
+        description:
+          "Each operation carries a client-generated opId (UUID). Replays return the stored result; conflicts are reported per operation.",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "200": {
+            description: "Per-operation results (applied/failed/conflict)",
+          },
+          "400": { description: "Validation failed" },
+        },
+      },
+    },
+    "/api/sync/batch": {
+      post: {
+        summary: "Alias of /api/sync/push",
+        security: [{ bearerAuth: [] }],
+        responses: { "200": { description: "Per-operation results" } },
+      },
+    },
+    "/api/sync/pull": {
+      get: {
+        summary: "Incremental pull (alias of /api/sync/changes)",
+        security: [{ bearerAuth: [] }],
+        responses: { "200": { description: "Changes since cursor" } },
+      },
+    },
+    "/api/sync/status": {
+      get: {
+        summary: "Server sync status (serverTime, supported operations)",
+        security: [{ bearerAuth: [] }],
+        responses: { "200": { description: "Sync status" } },
+      },
+    },
+    "/api/sync/resolve-conflict": {
+      post: {
+        summary:
+          "Resolve a client/server task conflict (server wins, or apply client state)",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "200": { description: "Resolved task" },
+          "404": { description: "Task not found" },
+        },
+      },
+    },
+    "/api/assistant/interpret": {
+      post: {
+        summary:
+          "Interpret a natural-language task request into a pending draft",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "200": { description: "Draft + clarification; nothing is persisted" },
+          "429": { description: "AI rate limit" },
+          "502": { description: "AI provider unavailable" },
+        },
+      },
+    },
+    "/api/assistant/clarify": {
+      post: {
+        summary: "Re-interpret a pending draft with an additional answer",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "200": { description: "Updated draft" },
+          "404": { description: "Draft not found or expired" },
+        },
+      },
+    },
+    "/api/assistant/preview": {
+      post: {
+        summary: "Editable preview of a pending draft (optionally with edits)",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "200": { description: "Preview" },
+          "404": { description: "Draft not found or expired" },
+        },
+      },
+    },
+    "/api/assistant/confirm": {
+      post: {
+        summary:
+          "Create the task from the pending draft (only path to persistence)",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "201": { description: "Task created" },
+          "404": { description: "Draft not found or expired" },
+          "422": { description: "Draft is missing a title" },
+        },
+      },
+    },
+    "/api/assistant/cancel": {
+      post: {
+        summary: "Discard a pending draft",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "200": { description: "Cancelled" },
+          "404": { description: "Draft not found or expired" },
+        },
+      },
+    },
+    "/api/assistant/suggestions": {
+      post: {
+        summary: "Prompt suggestions derived from the caller's open tasks",
+        security: [{ bearerAuth: [] }],
+        responses: { "200": { description: "Suggested prompts" } },
       },
     },
   },

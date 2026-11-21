@@ -27,20 +27,27 @@ node scripts/run-all-tests.mjs --perf
 In CI these layers run on every push and pull request; see
 [CI/CD gating](#cicd-gating).
 
-## Coverage today (2026-11-12)
+## Coverage today (2026-11-19)
+
+Measured on the QA branch the same day (`vitest list` / `flutter test`).
+These numbers drift fast - update them with any PR that adds or removes a
+suite. Full details: `docs/reports/REGRESSION_RUN_2026-11-19.md`.
 
 | Layer | Suites | Result |
 |---|---|---|
-| Backend (vitest) | 44 files, 340 tests | all pass; coverage ratcheted at 49/39/48/50 |
-| Frontend (flutter_test) | 47 files, 320 tests | all pass; ≥ 60% lines gated |
-| Functional (API, in-memory model) | `backend/tests/functional/` | 7 tests |
-| Regression (known incidents) | `backend/tests/regression/` | 7 tests |
-| AI guardrails | `backend/tests/ai/` | 11 tests |
+| Backend (vitest) | 51 files, 378 tests | all pass; coverage 59.8% statements / 50.3% branches / 61.1% functions / 60.7% lines vs the 58/48/59/58 ratchet in `vitest.config.mts` |
+| MongoDB-backed (mongodb-memory-server) | `backend/tests/mongodb/` | 8 tests - real in-memory mongod: schema, pagination, CAS updates, soft-delete, ownership isolation |
+| Frontend (flutter_test) | 46 files, 330 tests | all pass; line coverage 62.5% vs 62% gate (`tool/check_coverage.dart`) |
+| Functional (API) | `backend/tests/functional/` | 7 tests - shared in-memory model (`tests/helpers/inMemoryTaskModel.ts`) |
+| Regression (known incidents) | `backend/tests/regression/` | 5 tests (4 blocks + `it.each` expansion) |
+| AI guardrails | `backend/tests/ai/` | 7 tests |
 | E2E (Playwright, real stack) | `e2e/tests/` | smoke, API contract, a11y, first-run auth path; 4 browser projects |
 | Performance (node + k6) | `backend/tests/performance/` | p95 budget 500 ms |
-| Accessibility (guideline tests) | `frontend/test/accessibility/` | 3 tests |
-| Visual (Flutter goldens) | `frontend/test/visual/` | 2 goldens |
-| Contract (Pact) | `backend/tests/contract/` | consumer contract for `/api/tasks` |
+| Visual (Flutter goldens) | `frontend/test/visual/` | 2 goldens - recreated 2026-11-19; **CI (ubuntu) rendered/gate**, skips off-Linux |
+| Contract (Pact) | `backend/tests/contract/` | consumer contract + provider verification wired into `npm test` |
+| Mutation (Stryker) | `backend/stryker.config.mjs` | `tokens.ts` + `AppError.ts` - 100.00 score (26/26 killed) incl. 3 tests added to kill survivors; nightly/on-demand only, never a per-PR gate |
+| Accessibility (Flutter) | `frontend/test/accessibility/` | 3 guideline tests - recreates the suite earlier doc claimed but never committed; caught 3 real WCAG AA defects in AuthShell dark mode (fixed) |
+| Integration (Flutter) | `integration_test/app_test.dart` + `test_driver/` | passes on a real Android emulator (Android 17); wired into `.github/workflows/integration.yml` (weekly + manual + frontend PRs) |
 | Smoke (post-deploy) | `scripts/smoke-test.mjs` | runs in `deploy-production.yml` |
 | Manual | `docs/testing/MANUAL_TEST_PLAN.md` | pre-release checklist |
 
@@ -70,6 +77,13 @@ spy verification).
   controller → service against supertest with mocked Mongoose models
   (`tests/helpers/authMocks.ts` provides the shared `queryResult`/model
   stubs).
+- MongoDB-backed — `backend/tests/mongodb/tasks.mongodb.test.ts`: the real
+  model + repository against an in-memory `mongod` managed by
+  `mongodb-memory-server` (real schema constraints, indexes, pagination,
+  CAS updates, soft-delete, ownership isolation). Runs in `npm test`.
+- The in-memory Task model used by the functional suite and the Pact provider
+  verification is shared as `backend/tests/helpers/inMemoryTaskModel.ts`
+  (previously copy-pasted into the functional suite).
 - Frontend — `frontend/test/**` widget tests pump real widget trees with
   mocked HTTP (`http/testing.dart`) and platform channels
   (shared_preferences), e.g. home dashboard, login, startup gate.
@@ -161,16 +175,22 @@ staging via the smoke suite and manually.
 
 - Flutter golden tests: `frontend/test/visual/golden_test.dart`
   (`matchesGoldenFile`), baselines in `frontend/test/visual/goldens/`.
-- Regenerate intentionally:
+- The suite was removed in f4e5976 as flaky and restored on 2026-11-19 with
+  the flake sources designed out: all timestamps are fixed, neither task is
+  overdue (no time-dependent branch), and `tester.pumpAndSettle()` drains the
+  `AnimatedContainer` before capture. Goldens are generated with
+  Flutter 3.47.8, the exact version pinned in CI (`ci.yml`).
+- Baselines are **ubuntu-rendered (CI-generated, 2026-11-19)** and the suite
+  **runs on Linux only** — Windows/macOS anti-aliasing differs by ~0.1%,
+  failing `matchesGoldenFile` without any visual change. CI (GitHub
+  ubuntu-latest) is the gate; the suite skips on other platforms. After an
+  intentional UI change, regenerate baselines in a Linux environment (or on
+  the CI runner) with:
   ```bash
   flutter test test/visual --update-goldens
   ```
-  The PR that changes goldens must justify each changed PNG.
-- In CI goldens run as part of `flutter test`. Note: goldens are generated on
-  the maintainer's platform (Windows); a font-rendering difference elsewhere
-  may require regenerating baselines in a consistent environment (CI:
-  ubuntu-latest). This is a known limitation — if CI goldens flake, regenerate
-  the baselines inside the CI runner and commit those.
+  The PR that changes goldens must justify each changed PNG. Mismatch
+  artifacts land in `test/visual/failures/` and are git-ignored.
 - The E2E layer deliberately does not assert screenshots (Flutter web text is
   canvas/semantics and pixel-diffing it across 3 engines is noise); goldens
   cover this instead.
@@ -236,18 +256,20 @@ silently rot.
 
 **What:** machine-checkable WCAG 2.x conformance for the UI.
 
-- Flutter guideline tests: `frontend/test/accessibility/accessibility_test.dart`
+- Flutter: semantic assertions at the widget level — e.g.
+  `test/widgets/task_card_test.dart` asserts the semantics label and the
+  checkbox toggle label with `tester.ensureSemantics()`.
+- Flutter: WCAG guideline suite `test/accessibility/accessibility_test.dart`
   — `textContrastGuideline`, `androidTapTargetGuideline`,
-  `iOSTapTargetGuideline`, `labeledTapTargetGuideline` on TaskCard (light),
-  LoginScreen (light and dark).
-- Web: `e2e/tests/a11y.spec.ts` — axe-core scan; critical violations fail,
+  `iOSTapTargetGuideline`, `labeledTapTargetGuideline` against
+  `TaskCard (light)`, `LoginScreen (light)` and `LoginScreen (dark)`.
+  Recreated 2026-11-19; it immediately caught 3 real WCAG AA failures in
+  AuthShell dark mode (the form card was hardcoded white under dark-theme
+  near-white text, ~2.5:1) — fixed in the same PR.
+- Web: `e2e/tests/a11y.spec.ts` - axe-core scan; critical violations fail,
   serious are reported.
 - Manual pass for screen-reader flows: see MANUAL_TEST_PLAN.md
   (VoiceOver/TalkBack items).
-- Two real defects were fixed to make these green: secondary text contrast
-  (#7B7F8A → #5A5F6A), link/accent steel blue (#6B7C98 → #4F5D75), light
-  primary button text (near-black → white), auth screens' hard-coded light
-  background in dark mode, and TaskCard 40px icon buttons → 48px.
 
 ### 13. Smoke Testing & Sanity Testing
 
@@ -284,7 +306,7 @@ Different applications need different tools. Auxilia has four:
 |---|---|---|
 | Backend API (Express) | vitest + supertest + Pact | unit, integration, functional, regression, security, AI, performance |
 | Flutter web (browser AUT) | flutter_test + Playwright | widget/service tests, golden (visual), a11y, E2E |
-| Flutter Android/iOS/Windows (app AUT) | flutter_test + integration_test | unit/widget tests on device; `frontend/integration_test/app_test.dart` drives the real app on a device/emulator; CI coverage on web |
+| Flutter Android/iOS/Windows (app AUT) | flutter_test + integration_test | unit/widget tests on device; `frontend/integration_test/app_test.dart` drives the real app; **runs in CI** (`integration.yml`, Android emulator, weekly + manual + on frontend PRs); verified locally on a real Android 17 emulator |
 | Docker-compose deployment (stack AUT) | docker compose + Playwright + smoke script | E2E smoke, a11y, black-box API, post-deploy smoke |
 
 To run the Flutter AUT on a device/emulator:
@@ -300,33 +322,79 @@ flutter drive --driver=test_driver/integration_test.dart --target=integration_te
 
 | Job | Suites enforced | Blocking |
 |---|---|---|
-| `backend` | lint, typecheck, `npm test` (unit+integration+contract+security+functional+regression+ai), build, coverage | yes |
-| `frontend` | format, analyze, `flutter test` (incl. goldens + a11y), 60% line gate, web build | yes |
+| `backend` | lint, typecheck, `npm test` (unit+integration+contract+security+functional+regression+ai), build, coverage ratchet 58/48/59/58 | yes |
+| `frontend` | format, analyze, `flutter test` (incl. goldens), 62% line gate, web build | yes |
 | `e2e` | docker-compose stack health, Playwright smoke/API/a11y/auth (4 browser projects) | yes |
+| `dependency-review` | dependency graph diff scan, fails on high severity | yes (PR only) since the repo is public — enabled 2026-11-19 via repo variable `DEPENDENCY_REVIEW_ENABLED=true`; was previously off because the repo was private without GitHub Advanced Security |
+| `integration.yml` | Flutter `integration_test` on an Android emulator (API 34) | no — advisory by design (weekly + `workflow_dispatch` + frontend PRs); not wired into `CI - Final Quality Gate` |
+| `mutation.yml` | Stryker mutation testing, scoped to `tokens.ts` + `AppError.ts` | no — advisory (nightly + `workflow_dispatch`); never a per-PR gate |
 | `performance` | node load smoke (p95 budget) | manual only (`workflow_dispatch`) |
-| `ci-summary` | aggregates all gates (E2E included) | branch protection |
+| `ci-summary` | aggregates all gates (E2E included) | branch protection (`CI - Final Quality Gate`) |
 | `deploy-production.yml` | post-deploy `smoke-test.mjs` | deployment |
+
+Contract testing runs inside the `backend` job (`tests/contract/`): the Pact
+consumer test generates `pacts/Auxilia-Frontend-Auxilia-API.json` and
+`tasks.provider.test.ts` verifies it against the real Express app (in-memory
+Task store, ephemeral port). Both must stay green together — a contract edit
+in one without the other is an automatic CI failure.
 
 ## Ratcheting and maintenance
 
-- Frontend 60% line gate and backend 49/39/48/50 thresholds must not be
-  lowered (ADR required). Raise them as coverage improves.
+- Frontend 62% line gate and backend 58/48/59/58 thresholds must not be
+  lowered (ADR required). Raise them as coverage improves - the backend
+  gate is green today (59.8/50.3/61.1/60.7); feature branches that add
+  modules without tests will turn it red, and the fix is tests, not a
+  lower ratchet.
 - Goldens regenerate only via `flutter test test/visual --update-goldens`
   with a justification in the PR.
 - New features: unit + integration tests mandatory; user-facing flows get a
   functional or E2E test; fixed defects get a regression test.
+- GitHub Advanced Security is not needed for Dependency Review now that the
+  repository is public; `Dependency Review` is a required-by-convention PR
+  gate (enforced via `CI - Final Quality Gate`).
 - `docs/planning/TASKS.md` is the product backlog; this file is the testing backlog index.
 
 ## Known gaps and future work
 
-1. **Seed-script idempotency tests** (open item in `docs/planning/TASKS.md`) — `seed.ts`
-   needs a real or embedded MongoDB; the intended approach is a focused unit
-   test around its find-or-create helpers, or running it twice against a
-   scratch database in CI.
-2. **Pact provider verification** — contract exists on the consumer side; the
-   API should verify `pacts/Auxilia-Frontend-Auxilia-API.json` in CI.
-3. **Device-farm matrix for Android/iOS** — integration_test on emulators in
-   `integration.yml` (macOS runners for iOS).
-4. **Staging soak** — scheduled k6 run with SLO alerting.
-5. **Visual diff across engines** — Playwright `toHaveScreenshot` behind a
-   dedicated, advisory-only job.
+1. **Seed-script idempotency tests** (open item in `docs/planning/TASKS.md`) - `seed.ts`
+   would be an ideal first tenant of `mongodb-memory-server` (the harness
+   now exists — see `tests/mongodb/`).
+2. ~~**Pact provider verification**~~ — **done (2026-11-19).** Runs in
+   `npm test`; consumer contract now describes the actual provider.
+3. **Device-farm / iOS integration coverage** — Android emulator runs in
+   `.github/workflows/integration.yml`; iOS needs macOS runners (free for
+   public repos) — extend the same workflow with an `ios` job.
+4. **Staging soak with SLO alerting** — the SLO burn-rate rules now exist
+   (`monitoring/prometheus-slo.yml`) and the error-budget policy is defined
+   (`docs/operations/MONITORING_RUNBOOK.md`); what does not exist is a
+   *scheduled* soak driving the SLI metrics (k6, `workflow_dispatch` today).
+5. **Coverage must stay green on new modules** — any feature branch adding
+   modules without tests turns the ratchet red. No exceptions: new code
+   lands with tests.
+6. ~~**Flutter accessibility guideline suite**~~ — **done (2026-11-19).**
+   `test/accessibility/` recreates the suite; it caught 3 real WCAG AA
+   defects (AuthShell dark mode) on first run.
+7. ~~**MongoDB-backed integration tests**~~ — **done (2026-11-19) for the
+   tasks module** (`tests/mongodb/`). Every other module's model behaviour
+   is still mocked above the E2E layer; extend coverage module by module.
+8. **Stryker scope is deliberately tiny** — `tokens.ts` + `AppError.ts`
+   only, 100.00 score as of 2026-11-19. Expand to other critical modules
+   (auth service, task service) with the ADR route; never into the
+   per-PR gate.
+
+## Monitoring and alerting (outside the test suite, tracked here)
+
+- Prometheus loads `monitoring/prometheus-alerts.yml` (severity tickets) and
+  `monitoring/prometheus-slo.yml` (error-budget burn-rate rules) via
+  `rule_files`, backed by an example Alertmanager
+  (`monitoring/alertmanager.yml`, local inert default;
+  `monitoring/alertmanager.slack.example.yml` for Slack delivery) wired into
+  the `monitoring` compose profile (`docker compose --profile monitoring up
+  -d`).
+- **Runbook + SLO definitions:** [`docs/operations/MONITORING_RUNBOOK.md`](../operations/MONITORING_RUNBOOK.md)
+  — availability 99.5% / latency 99.0% over 28 days, error-budget policy,
+  alert→action map, Grafana/Prometheus access.
+- Alert delivery is a placeholder in the local profile; a real receiver must
+  be wired before production use (slack example is committed and ready).
+  There is still no external uptime prober — if the process is dead, the
+  SLI measures nothing (that is what `BackendDown` is for).

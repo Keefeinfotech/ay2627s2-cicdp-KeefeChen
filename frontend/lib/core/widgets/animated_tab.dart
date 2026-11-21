@@ -84,6 +84,7 @@ class _AnimatedTabState extends State<AnimatedTab>
         animation: _glow,
         builder: (context, child) {
           final glow = widget.isSelected ? _glow.value : 0.0;
+          final displayAccent = TabWeather.display(widget.accentColor, scheme);
           return GestureDetector(
             onTap: widget.onTap,
             child: Container(
@@ -98,9 +99,9 @@ class _AnimatedTabState extends State<AnimatedTab>
                 borderRadius: BorderRadius.circular(AppRadius.pill),
                 border: Border.all(
                   color: widget.isSelected
-                      ? widget.accentColor.withValues(alpha: 0.9 + glow * 0.1)
+                      ? displayAccent.withValues(alpha: 0.9 + glow * 0.1)
                       : scheme.outlineVariant,
-                  width: 1.5,
+                  width: AppSizes.hairline,
                 ),
                 boxShadow: widget.isSelected
                     ? [
@@ -122,7 +123,7 @@ class _AnimatedTabState extends State<AnimatedTab>
                     widget.label,
                     style: theme.textTheme.labelMedium?.copyWith(
                       color: widget.isSelected
-                          ? widget.accentColor
+                          ? displayAccent
                           : scheme.onSurfaceVariant,
                       fontWeight: widget.isSelected
                           ? FontWeight.w700
@@ -133,8 +134,8 @@ class _AnimatedTabState extends State<AnimatedTab>
                     const SizedBox(width: AppSpacing.xs),
                     Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 6,
-                        vertical: 2,
+                        horizontal: AppSpacing.sm,
+                        vertical: AppSpacing.xxs,
                       ),
                       decoration: BoxDecoration(
                         color: widget.isSelected
@@ -149,7 +150,6 @@ class _AnimatedTabState extends State<AnimatedTab>
                               ? scheme.onPrimary
                               : scheme.onSurface,
                           fontWeight: FontWeight.w700,
-                          fontSize: 11,
                         ),
                       ),
                     ),
@@ -162,13 +162,4 @@ class _AnimatedTabState extends State<AnimatedTab>
       ),
     );
   }
-}
-
-/// Weather-inspired accent colours for each dashboard tab.
-abstract class TabWeather {
-  static const Color all = AppColors.pacific; // teal — ocean
-  static const Color pending = AppColors.moss; // earthy green — forest
-  static const Color overdue = AppColors.persimmon; // warm orange-red — sunset
-  static const Color completed =
-      AppColors.malachite; // vivid green — new growth
 }

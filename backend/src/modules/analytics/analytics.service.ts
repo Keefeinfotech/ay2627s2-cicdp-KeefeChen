@@ -8,8 +8,13 @@ import { Task } from "../tasks/task.model.js";
 import { cacheGetJson, cacheSetJson } from "../../shared/utils/cache.js";
 
 import type {
+  AnalyticsOverview,
+  DayBucket,
+  MonthBucket,
+  OverdueTask,
   PrioritySuggestion,
   PrioritySuggestionResult,
+  ProductivityOverviewSummary,
   ProductivitySummary,
   SuggestedPriority,
   WeeklyBucket,
@@ -34,6 +39,221 @@ function isoDate(date: Date): string {
 }
 
 export const analyticsService = {
+  /** Headline numbers for the user's task list. */
+  async getOverview(userId: string): Promise<AnalyticsOverview> {
+    const now = new Date();
+    const weekAgo = new Date(now.getTime() - 7 * MS_PER_DAY);
+
+    const [
+      totalTasks,
+      completed,
+      overdueOpen,
+      createdThisWeek,
+      completedThisWeek,
+    ] = await Promise.all([
+      Task.countDocuments({ userId }),
+      Task.countDocuments({ userId, status: "completed" }),
+      Task.countDocuments({
+        userId,
+        status: { $in: ["todo", "in_progress"] },
+        dueDate: { $lt: now },
+      }),
+      Task.countDocuments({ userId, createdAt: { $gte: weekAgo } }),
+      Task.countDocuments({ userId, completedAt: { $gte: weekAgo } }),
+    ]);
+
+    const active = totalTasks - completed;
+
+    return {
+      totalTasks,
+      active,
+      completed,
+      overdueOpen,
+      completionRate:
+        totalTasks === 0 ? 0 : Math.round((completed / totalTasks) * 100) / 100,
+      createdThisWeek,
+      completedThisWeek,
+    };
+  },
+
+  /** Per-day created/completed counts over the trailing N days. */
+  async getDaily(userId: string, days: number): Promise<DayBucket[]> {
+    const clamped = Math.min(Math.max(Math.trunc(days) || 14, 1), 90);
+    const start = new Date();
+    start.setHours(0, 0, 0, 0);
+    start.setDate(start.getDate() - (clamped - 1));
+
+    const [created, completed] = await Promise.all([
+      Task.aggregate<{ _id: string; count: number }>([
+        { $match: { userId, createdAt: { $gte: start } } },
+        {
+          $group: {
+            _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+            count: { $sum: 1 },
+          },
+        },
+      ]),
+      Task.aggregate<{ _id: string; count: number }>([
+        { $match: { userId, completedAt: { $gte: start } } },
+        {
+          $group: {
+            _id: {
+              $dateToString: { format: "%Y-%m-%d", date: "$completedAt" },
+            },
+            count: { $sum: 1 },
+          },
+        },
+      ]),
+    ]);
+
+    const createdByDay = new Map(created.map((d) => [d._id, d.count]));
+    const completedByDay = new Map(completed.map((d) => [d._id, d.count]));
+
+    const buckets: DayBucket[] = [];
+    for (let i = 0; i < clamped; i += 1) {
+      const day = new Date(start);
+      day.setDate(day.getDate() + i);
+      const key = isoDate(day);
+      buckets.push({
+        date: key,
+        created: createdByDay.get(key) ?? 0,
+        completed: completedByDay.get(key) ?? 0,
+      });
+    }
+    return buckets;
+  },
+
+  /** Per-month created/completed counts over the trailing N months. */
+  async getMonthly(userId: string, months: number): Promise<MonthBucket[]> {
+    const clamped = Math.min(Math.max(Math.trunc(months) || 6, 1), 24);
+    const now = new Date();
+    const start = new Date(
+      now.getFullYear(),
+      now.getMonth() - (clamped - 1),
+      1,
+    );
+
+    const [created, completed] = await Promise.all([
+      Task.aggregate<{ _id: string; count: number }>([
+        { $match: { userId, createdAt: { $gte: start } } },
+        {
+          $group: {
+            _id: { $dateToString: { format: "%Y-%m", date: "$createdAt" } },
+            count: { $sum: 1 },
+          },
+        },
+      ]),
+      Task.aggregate<{ _id: string; count: number }>([
+        { $match: { userId, completedAt: { $gte: start } } },
+        {
+          $group: {
+            _id: { $dateToString: { format: "%Y-%m", date: "$completedAt" } },
+            count: { $sum: 1 },
+          },
+        },
+      ]),
+    ]);
+
+    const createdByMonth = new Map(created.map((m) => [m._id, m.count]));
+    const completedByMonth = new Map(completed.map((m) => [m._id, m.count]));
+
+    const buckets: MonthBucket[] = [];
+    for (let i = 0; i < clamped; i += 1) {
+      const month = new Date(start.getFullYear(), start.getMonth() + i, 1);
+      const key = `${month.getFullYear()}-${String(month.getMonth() + 1).padStart(2, "0")}`;
+      buckets.push({
+        month: key,
+        created: createdByMonth.get(key) ?? 0,
+        completed: completedByMonth.get(key) ?? 0,
+      });
+    }
+    return buckets;
+  },
+
+  /** Open tasks past their due date, most overdue first. */
+  async getOverdue(userId: string, limit: number): Promise<OverdueTask[]> {
+    const clamped = Math.min(Math.max(Math.trunc(limit) || 50, 1), 100);
+
+    const tasks = await Task.find({
+      userId,
+      status: { $in: ["todo", "in_progress"] },
+      dueDate: { $lt: new Date() },
+    })
+      .select("title priority dueDate")
+      .sort({ dueDate: 1 })
+      .limit(clamped)
+      .lean();
+
+    const now = Date.now();
+    return tasks.map((t) => ({
+      taskId: String(t._id),
+      title: t.title,
+      priority: t.priority,
+      dueDate: new Date(t.dueDate as Date).toISOString(),
+      daysOverdue: Math.floor(
+        (now - new Date(t.dueDate as Date).getTime()) / MS_PER_DAY,
+      ),
+    }));
+  },
+
+  /** Completion rate over the trailing N weeks. */
+  async getCompletionRate(
+    userId: string,
+    weeks: number,
+  ): Promise<{
+    rate: number;
+    completed: number;
+    created: number;
+    weeks: number;
+  }> {
+    const summary = await analyticsService.getWeeklySummary(userId, weeks);
+    return {
+      rate: Math.round(summary.totals.completionRate * 100) / 100,
+      completed: summary.totals.completed,
+      created: summary.totals.created,
+      weeks: summary.weeks.length,
+    };
+  },
+
+  /** Monthly trend with a simple direction signal. */
+  async getTaskTrends(
+    userId: string,
+    months: number,
+  ): Promise<{
+    months: MonthBucket[];
+    direction: "improving" | "declining" | "steady";
+  }> {
+    const buckets = await analyticsService.getMonthly(userId, months);
+
+    if (buckets.length < 2) {
+      return { months: buckets, direction: "steady" };
+    }
+
+    const last = buckets[buckets.length - 1].completed;
+    const prev = buckets[buckets.length - 2].completed;
+
+    const direction =
+      last > prev ? "improving" : last < prev ? "declining" : "steady";
+
+    return { months: buckets, direction };
+  },
+
+  /** Combined overview + streak for the productivity dashboard. */
+  async getProductivitySummary(
+    userId: string,
+  ): Promise<ProductivityOverviewSummary> {
+    const [overview, weekly] = await Promise.all([
+      analyticsService.getOverview(userId),
+      analyticsService.getWeeklySummary(userId, 4),
+    ]);
+
+    return {
+      overview,
+      streakDays: weekly.currentStreakDays,
+      generatedAt: new Date().toISOString(),
+    };
+  },
+
   /**
    * Builds a weekly productivity summary for the given number of weeks
    * (including the current, partial week).
@@ -96,7 +316,11 @@ export const analyticsService = {
         created,
         completed,
         completionRate:
-          created === 0 ? (completed > 0 ? 1 : 0) : Math.min(completed / created, 1),
+          created === 0
+            ? completed > 0
+              ? 1
+              : 0
+            : Math.min(completed / created, 1),
       });
     }
 
@@ -206,7 +430,13 @@ export const analyticsService = {
       }
 
       const suggestedPriority: SuggestedPriority =
-        score >= 85 ? "urgent" : score >= 60 ? "high" : score >= 30 ? "medium" : "low";
+        score >= 85
+          ? "urgent"
+          : score >= 60
+            ? "high"
+            : score >= 30
+              ? "medium"
+              : "low";
 
       if (suggestedPriority !== task.priority) {
         reasons.push(`Currently marked as ${task.priority}`);
@@ -249,7 +479,11 @@ export const analyticsService = {
     await Promise.all(
       changes.map((change) =>
         Task.updateOne(
-          { _id: change.taskId, userId, status: { $in: ["todo", "in_progress"] } },
+          {
+            _id: change.taskId,
+            userId,
+            status: { $in: ["todo", "in_progress"] },
+          },
           { $set: { priority: change.suggestedPriority } },
         ),
       ),

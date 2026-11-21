@@ -7,14 +7,41 @@
 
 import { registerJob } from "./queue.js";
 import { cacheDelByPattern } from "../utils/cache.js";
-import { sendNotification, type NotificationPayload } from "../../services/notification.service.js";
+import {
+  sendNotification,
+  type NotificationPayload,
+} from "../../services/notification.service.js";
+import { notificationService } from "../../modules/notifications/notification.service.js";
 import logger from "../../config/logger.js";
 
+interface NotificationJobPayload extends NotificationPayload {
+  userId?: string;
+  type?: "task" | "reminder" | "assignment" | "system" | "assistant";
+  entityId?: string | null;
+}
+
 /**
- * Delivers a notification through the notification-service. Fail-open:
- * delivery problems are logged by the client and never surface to requests.
+ * Delivers a notification: persists an in-app record when a userId is
+ * present, and hands off to the notification-service for external delivery.
+ * Fail-open throughout; delivery problems never surface to requests.
  */
-registerJob<NotificationPayload>("notification.send", async (payload) => {
+registerJob<NotificationJobPayload>("notification.send", async (payload) => {
+  if (payload.userId) {
+    try {
+      await notificationService.create(payload.userId, {
+        type: payload.type ?? "system",
+        title: payload.subject ?? "Notification",
+        body: payload.message,
+        entityId: payload.entityId ?? null,
+      });
+    } catch (error) {
+      logger.warn("notification.in_app_persist_failed", {
+        userId: payload.userId,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
+
   await sendNotification(payload);
 });
 

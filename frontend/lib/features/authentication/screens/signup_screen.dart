@@ -78,9 +78,9 @@ class _PasswordStrengthChecker {
     return switch (strength) {
       _PasswordStrength.veryWeak => AppColors.errorRed,
       _PasswordStrength.weak => AppColors.warningAmber,
-      _PasswordStrength.moderate => const Color(0xFFD97706),
+      _PasswordStrength.moderate => AppColors.warningAmber,
       _PasswordStrength.strong => AppColors.successGreen,
-      _PasswordStrength.veryStrong => const Color(0xFF15803D),
+      _PasswordStrength.veryStrong => AppColors.successGreen,
     };
   }
 

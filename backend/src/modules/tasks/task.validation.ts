@@ -168,6 +168,65 @@ export const listTasksSchema = z.object({
     .strict(),
 });
 
+/**
+ * POST /api/tasks/bulk
+ */
+export const bulkCreateTasksSchema = z.object({
+  body: z
+    .object({
+      tasks: z
+        .array(createTaskSchema.shape.body)
+        .min(1, "At least one task is required.")
+        .max(100, "A maximum of 100 tasks can be created at once."),
+    })
+    .strict(),
+});
+
+/**
+ * PATCH /api/tasks/bulk/status
+ */
+export const bulkUpdateStatusSchema = z.object({
+  body: z
+    .object({
+      ids: z.array(z.string().uuid()).min(1).max(100),
+      status: z.enum(TASK_STATUSES),
+    })
+    .strict(),
+});
+
+/**
+ * DELETE /api/tasks/bulk
+ */
+export const bulkDeleteTasksSchema = z.object({
+  body: z
+    .object({
+      ids: z.array(z.string().uuid()).min(1).max(100),
+    })
+    .strict(),
+});
+
+/**
+ * PATCH /api/tasks/:taskId/status|priority|due-date
+ */
+export const setTaskStatusSchema = z.object({
+  params: z.object({ taskId: z.string().uuid("Invalid task ID.") }),
+  body: z.object({ status: z.enum(TASK_STATUSES) }).strict(),
+});
+
+export const setTaskPrioritySchema = z.object({
+  params: z.object({ taskId: z.string().uuid("Invalid task ID.") }),
+  body: z.object({ priority: z.enum(TASK_PRIORITIES) }).strict(),
+});
+
+export const setTaskDueDateSchema = z.object({
+  params: z.object({ taskId: z.string().uuid("Invalid task ID.") }),
+  body: z.object({ dueDate: nullableDate }).strict(),
+});
+
+export type BulkCreateBody = z.infer<typeof bulkCreateTasksSchema>["body"];
+export type BulkStatusBody = z.infer<typeof bulkUpdateStatusSchema>["body"];
+export type BulkDeleteBody = z.infer<typeof bulkDeleteTasksSchema>["body"];
+
 export type CreateTaskBody = z.infer<typeof createTaskSchema>["body"];
 
 export type UpdateTaskBody = z.infer<typeof updateTaskSchema>["body"];

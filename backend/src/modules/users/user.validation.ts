@@ -1,4 +1,3 @@
-
 /**
  * File Name: user.validation.ts
  * Description: Defines Zod validation schemas for user requests.
@@ -21,12 +20,31 @@ export const updateOwnProfileSchema = z.object({
         .optional(),
     })
     .strict()
-    .refine(
-      (body) => Object.keys(body).length > 0,
-      {
-        message: "At least one profile field must be provided.",
-      }
-    ),
+    .refine((body) => Object.keys(body).length > 0, {
+      message: "At least one profile field must be provided.",
+    }),
+});
+
+/**
+ * Validates a request to change the authenticated user's email address.
+ * Requires the current password as an additional security check.
+ */
+export const updateOwnEmailSchema = z.object({
+  body: z
+    .object({
+      email: z
+        .string()
+        .trim()
+        .toLowerCase()
+        .min(3, "Email is required.")
+        .max(254, "Email cannot exceed 254 characters.")
+        .email("Enter a valid email address."),
+      currentPassword: z
+        .string()
+        .min(1, "Current password is required.")
+        .max(128, "Password cannot exceed 128 characters."),
+    })
+    .strict(),
 });
 
 /**
@@ -60,6 +78,8 @@ export const deleteOwnAccountSchema = z.object({
 export type UpdateOwnProfileBody = z.infer<
   typeof updateOwnProfileSchema
 >["body"];
+
+export type UpdateOwnEmailBody = z.infer<typeof updateOwnEmailSchema>["body"];
 
 export type DeleteOwnAccountBody = z.infer<
   typeof deleteOwnAccountSchema

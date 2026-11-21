@@ -275,7 +275,7 @@ abstract final class AppTheme {
           foregroundColor: isLight
               ? AppColors.clearBlueText
               : AppColors.darkBlue,
-          minimumSize: const Size(0, 44),
+          minimumSize: const Size(0, AppSizes.touchTarget),
           padding: const EdgeInsets.symmetric(
             horizontal: AppSpacing.md,
             vertical: AppSpacing.sm,
@@ -289,7 +289,7 @@ abstract final class AppTheme {
       iconButtonTheme: IconButtonThemeData(
         style: IconButton.styleFrom(
           foregroundColor: scheme.onSurfaceVariant,
-          minimumSize: const Size(44, 44),
+          minimumSize: const Size(AppSizes.touchTarget, AppSizes.touchTarget),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppRadius.sm),
           ),

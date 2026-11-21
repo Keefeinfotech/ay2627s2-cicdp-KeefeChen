@@ -44,4 +44,22 @@ abstract final class AppSizes {
   static const double iconMd = 20;
   static const double iconLg = 24;
   static const double iconXl = 32;
+
+  /// Icon tile used by dashboard stats and similar compact indicators.
+  static const double iconTile = 36;
+
+  /// Consistent minimum height for dashboard stat cards. Keeps the five KPI
+  /// cards aligned even when values wrap or text scales up.
+  static const double statCardMinHeight = 104;
+
+  /// Progress indicator track height (level bar).
+  static const double progressHeight = 8;
+
+  /// Hairline borders for chips, tabs and compact containers.
+  static const double hairline = 1.5;
+
+  /// Dashboard switches from a five-card row to a wrapped grid below this
+  /// width; below [tightBreakpoint] the grid drops to two columns.
+  static const double compactBreakpoint = 620;
+  static const double tightBreakpoint = 360;
 }
