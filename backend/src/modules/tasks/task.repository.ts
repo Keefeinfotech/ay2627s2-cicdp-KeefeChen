@@ -244,7 +244,8 @@ export const taskRepository = {
     };
 
     if (expectedUpdatedAt) {
-      filter.updatedAt = expectedUpdatedAt;
+      // $eq keeps the client-supplied timestamp a literal value, not a query.
+      filter.updatedAt = { $eq: expectedUpdatedAt };
     }
 
     return Task.findOneAndUpdate(
