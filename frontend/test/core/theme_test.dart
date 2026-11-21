@@ -25,6 +25,6 @@ void main() {
     expect(theme.colorScheme.primary, AppColors.saffron);
     expect(theme.colorScheme.secondary, AppColors.pacific);
     expect(theme.scaffoldBackgroundColor, AppColors.cocoCream);
-    expect(theme.cardTheme.elevation, 2);
+    expect(theme.cardTheme.elevation, 0);
   });
 }

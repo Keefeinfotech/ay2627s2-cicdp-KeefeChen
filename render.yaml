@@ -1,8 +1,8 @@
-# Render Blueprint for the Auxilia production backend.
+# Render Blueprint for the Auxilia production services.
 #
-# Render deploys this service automatically on every push to `main`. The
+# Render deploys these services automatically on every push to `main`. The
 # GitHub Actions workflow in .github/workflows/deploy-production.yml triggers
-# the same deploy hook and then waits for /api/health before smoke-checking;
+# the backend deploy hook and then waits for /api/health before smoke-checking;
 # this keeps a single deploy path instead of two competing pipelines.
 #
 # HOW TO APPLY
@@ -51,8 +51,10 @@ services:
         sync: false
       - key: JWT_SECRET
         sync: false
-      # Exact deployed web origin, e.g. https://auxilia-web.onrender.com
-      # (comma-separated if several). No trailing slash.
+      # Exact deployed web origin of the Flutter frontend, e.g.
+      # https://auxilia-web.onrender.com (comma-separated if several).
+      # No trailing slash. This MUST match the origin the browser sends, or
+      # every API request is rejected with 403 CORS_FORBIDDEN.
       - key: CORS_ORIGIN
         sync: false
       - key: TURNSTILE_SECRET_KEY
@@ -62,3 +64,37 @@ services:
       # - key: SMTP_HOST / SMTP_USER / SMTP_PASS / EMAIL_FROM   # email delivery
       # - key: AI_PROVIDER / AI_BASE_URL / AI_MODEL / AI_API_KEY # non-mock AI
       # - key: API_BASE_URL              # frontend build only
+
+  # ------------------------------------------------------------------
+  # Flutter web frontend (separate free Docker web service).
+  # Uses the same Dockerfile as docker-compose; Render turns env vars into
+  # Docker build arguments, so API_BASE_URL is compiled in via --dart-define
+  # and the Nginx CSP is templated from the same origin. No code hardcodes
+  # localhost: the local default in the Dockerfile only applies to compose.
+  # ------------------------------------------------------------------
+  - type: web
+    name: auxilia-web
+    runtime: docker
+    dockerfilePath: frontend/Dockerfile
+    dockerContext: frontend
+    plan: free
+    region: singapore
+    healthCheckPath: /
+    autoDeploy: true
+    envVars:
+      # Render services route to the port named by PORT. Nginx listens on
+      # 8080 (same as docker-compose), so keep them aligned.
+      - key: PORT
+        value: "8080"
+      # Public, non-secret build configuration. This must be the HTTPS URL of
+      # the backend service above (the deployed service behind
+      # RENDER_API_BASE_URL). Change it if the backend is deployed elsewhere.
+      - key: API_BASE_URL
+        value: https://ay2627s2-cicdp-keefechen-1.onrender.com
+      # Public Cloudflare Turnstile site key. Render passes env vars to Docker
+      # as build args, so this is compiled into the Flutter app via the
+      # --dart-define in frontend/Dockerfile. It must belong to the same widget
+      # as the backend's TURNSTILE_SECRET_KEY, and the widget must allow
+      # auxilia-web.onrender.com as a hostname.
+      - key: TURNSTILE_SITE_KEY
+        sync: false

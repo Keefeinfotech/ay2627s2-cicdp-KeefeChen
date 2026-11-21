@@ -9,7 +9,7 @@
  *   1. Checks out the repository (Jenkins "Pipeline script from SCM" job).
  *   2. Backend  : npm ci -> lint + typecheck -> tests with coverage -> build.
  *   3. Frontend : flutter pub get -> format check -> analyze -> tests with
- *                 coverage -> 60% line-coverage gate -> web release build.
+ *                 coverage -> 62% line-coverage gate -> web release build.
  *   4. Deploy   : rebuilds and restarts the local Docker Compose stack
  *                 (mongo + API + Flutter web), then waits for health checks.
  *                 Requires the host Docker socket (see docker-compose.yml and
@@ -166,11 +166,11 @@ pipeline {
                     }
                 }
 
-                stage('Coverage Gate (60%)') {
+                stage('Coverage Gate (62%)') {
                     steps {
-                        // Fails below the 60% line-coverage threshold.
+                        // Fails below the 62% line-coverage threshold.
                         dir('frontend') {
-                            sh 'dart run tool/check_coverage.dart 60'
+                            sh 'dart run tool/check_coverage.dart 62'
                         }
                     }
                 }
