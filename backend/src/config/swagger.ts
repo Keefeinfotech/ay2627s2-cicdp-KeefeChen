@@ -17,6 +17,30 @@ const userSchema: OpenAPIV3.SchemaObject = {
   },
 };
 
+/** Common shape for read-only, bearer-authenticated endpoints. */
+const readEndpoint = (
+  summary: string,
+  description: string,
+): OpenAPIV3.PathItemObject => ({
+  get: {
+    summary,
+    security: [{ bearerAuth: [] }],
+    responses: { "200": { description } },
+  },
+});
+
+/** Common shape for single-field update endpoints. */
+const updateEndpoint = (
+  summary: string,
+  description: string,
+): OpenAPIV3.PathItemObject => ({
+  patch: {
+    summary,
+    security: [{ bearerAuth: [] }],
+    responses: { "200": { description } },
+  },
+});
+
 export const swaggerDocument: OpenAPIV3.Document = {
   openapi: "3.0.3",
   info: {
@@ -489,13 +513,7 @@ export const swaggerDocument: OpenAPIV3.Document = {
         responses: { "200": { description: "Bulk delete result" } },
       },
     },
-    "/api/tasks/bulk/status": {
-      patch: {
-        summary: "Bulk-update the status of up to 100 tasks",
-        security: [{ bearerAuth: [] }],
-        responses: { "200": { description: "Bulk status update result" } },
-      },
-    },
+    "/api/tasks/bulk/status": updateEndpoint("Bulk-update the status of up to 100 tasks", "Bulk status update result"),
     "/api/tasks/{taskId}/complete": {
       post: {
         summary: "Mark a task completed",
@@ -516,27 +534,9 @@ export const swaggerDocument: OpenAPIV3.Document = {
         },
       },
     },
-    "/api/tasks/{taskId}/status": {
-      patch: {
-        summary: "Set only the task status",
-        security: [{ bearerAuth: [] }],
-        responses: { "200": { description: "Status updated" } },
-      },
-    },
-    "/api/tasks/{taskId}/priority": {
-      patch: {
-        summary: "Set only the task priority",
-        security: [{ bearerAuth: [] }],
-        responses: { "200": { description: "Priority updated" } },
-      },
-    },
-    "/api/tasks/{taskId}/due-date": {
-      patch: {
-        summary: "Set (or clear, with null) the task due date",
-        security: [{ bearerAuth: [] }],
-        responses: { "200": { description: "Due date updated" } },
-      },
-    },
+    "/api/tasks/{taskId}/status": updateEndpoint("Set only the task status", "Status updated"),
+    "/api/tasks/{taskId}/priority": updateEndpoint("Set only the task priority", "Priority updated"),
+    "/api/tasks/{taskId}/due-date": updateEndpoint("Set (or clear, with null) the task due date", "Due date updated"),
     "/api/tasks/{taskId}/reminders": {
       get: {
         summary: "List reminders attached to a task",
@@ -573,13 +573,7 @@ export const swaggerDocument: OpenAPIV3.Document = {
         },
       },
     },
-    "/api/reminders/upcoming": {
-      get: {
-        summary: "Upcoming enabled reminders within ?days= (1-90, default 7)",
-        security: [{ bearerAuth: [] }],
-        responses: { "200": { description: "Upcoming reminders" } },
-      },
-    },
+    "/api/reminders/upcoming": readEndpoint("Upcoming enabled reminders within ?days= (1-90, default 7)", "Upcoming reminders"),
     "/api/reminders/{reminderId}": {
       get: {
         summary: "Get a reminder (owner only)",
@@ -606,13 +600,7 @@ export const swaggerDocument: OpenAPIV3.Document = {
         },
       },
     },
-    "/api/reminders/{reminderId}/status": {
-      patch: {
-        summary: "Enable/disable/complete-toggle a reminder",
-        security: [{ bearerAuth: [] }],
-        responses: { "200": { description: "Status updated" } },
-      },
-    },
+    "/api/reminders/{reminderId}/status": updateEndpoint("Enable/disable/complete-toggle a reminder", "Status updated"),
     "/api/reminders/{reminderId}/complete": {
       post: {
         summary:
@@ -624,62 +612,14 @@ export const swaggerDocument: OpenAPIV3.Document = {
         },
       },
     },
-    "/api/analytics/overview": {
-      get: {
-        summary: "Headline task statistics for the current user",
-        security: [{ bearerAuth: [] }],
-        responses: { "200": { description: "Overview counters" } },
-      },
-    },
-    "/api/analytics/daily": {
-      get: {
-        summary: "Per-day created/completed counts (?days=1-90)",
-        security: [{ bearerAuth: [] }],
-        responses: { "200": { description: "Daily buckets" } },
-      },
-    },
-    "/api/analytics/monthly": {
-      get: {
-        summary: "Per-month created/completed counts (?months=1-24)",
-        security: [{ bearerAuth: [] }],
-        responses: { "200": { description: "Monthly buckets" } },
-      },
-    },
-    "/api/analytics/completion-rate": {
-      get: {
-        summary: "Completion rate over the trailing ?weeks=",
-        security: [{ bearerAuth: [] }],
-        responses: { "200": { description: "Completion rate" } },
-      },
-    },
-    "/api/analytics/task-trends": {
-      get: {
-        summary: "Monthly trend with improving/declining/steady signal",
-        security: [{ bearerAuth: [] }],
-        responses: { "200": { description: "Trend buckets + direction" } },
-      },
-    },
-    "/api/analytics/overdue": {
-      get: {
-        summary: "Open tasks past their due date (most overdue first)",
-        security: [{ bearerAuth: [] }],
-        responses: { "200": { description: "Overdue tasks" } },
-      },
-    },
-    "/api/analytics/productivity-summary": {
-      get: {
-        summary: "Overview + streak for the productivity dashboard",
-        security: [{ bearerAuth: [] }],
-        responses: { "200": { description: "Productivity summary" } },
-      },
-    },
-    "/api/analytics/weekly": {
-      get: {
-        summary: "Weekly created/completed buckets + streak",
-        security: [{ bearerAuth: [] }],
-        responses: { "200": { description: "Weekly buckets" } },
-      },
-    },
+    "/api/analytics/overview": readEndpoint("Headline task statistics for the current user", "Overview counters"),
+    "/api/analytics/daily": readEndpoint("Per-day created/completed counts (?days=1-90)", "Daily buckets"),
+    "/api/analytics/monthly": readEndpoint("Per-month created/completed counts (?months=1-24)", "Monthly buckets"),
+    "/api/analytics/completion-rate": readEndpoint("Completion rate over the trailing ?weeks=", "Completion rate"),
+    "/api/analytics/task-trends": readEndpoint("Monthly trend with improving/declining/steady signal", "Trend buckets + direction"),
+    "/api/analytics/overdue": readEndpoint("Open tasks past their due date (most overdue first)", "Overdue tasks"),
+    "/api/analytics/productivity-summary": readEndpoint("Overview + streak for the productivity dashboard", "Productivity summary"),
+    "/api/analytics/weekly": readEndpoint("Weekly created/completed buckets + streak", "Weekly buckets"),
     "/api/notifications": {
       get: {
         summary: "List in-app notifications (?page&limit&read)",
@@ -692,20 +632,8 @@ export const swaggerDocument: OpenAPIV3.Document = {
         responses: { "200": { description: "Cleared" } },
       },
     },
-    "/api/notifications/unread-count": {
-      get: {
-        summary: "Number of unread notifications",
-        security: [{ bearerAuth: [] }],
-        responses: { "200": { description: "Unread count" } },
-      },
-    },
-    "/api/notifications/read-all": {
-      patch: {
-        summary: "Mark every notification as read",
-        security: [{ bearerAuth: [] }],
-        responses: { "200": { description: "Marked" } },
-      },
-    },
+    "/api/notifications/unread-count": readEndpoint("Number of unread notifications", "Unread count"),
+    "/api/notifications/read-all": updateEndpoint("Mark every notification as read", "Marked"),
     "/api/notifications/{notificationId}/read": {
       patch: {
         summary: "Mark one notification as read",
@@ -751,20 +679,8 @@ export const swaggerDocument: OpenAPIV3.Document = {
         responses: { "200": { description: "Updated preferences" } },
       },
     },
-    "/api/preferences/notifications": {
-      patch: {
-        summary: "Update notification preferences",
-        security: [{ bearerAuth: [] }],
-        responses: { "200": { description: "Updated" } },
-      },
-    },
-    "/api/preferences/appearance": {
-      patch: {
-        summary: "Update appearance preferences (theme/fontScale)",
-        security: [{ bearerAuth: [] }],
-        responses: { "200": { description: "Updated" } },
-      },
-    },
+    "/api/preferences/notifications": updateEndpoint("Update notification preferences", "Updated"),
+    "/api/preferences/appearance": updateEndpoint("Update appearance preferences (theme/fontScale)", "Updated"),
     "/api/preferences/timezone": {
       patch: {
         summary: "Update the user timezone (IANA, validated)",
@@ -797,20 +713,8 @@ export const swaggerDocument: OpenAPIV3.Document = {
         responses: { "200": { description: "Per-operation results" } },
       },
     },
-    "/api/sync/pull": {
-      get: {
-        summary: "Incremental pull (alias of /api/sync/changes)",
-        security: [{ bearerAuth: [] }],
-        responses: { "200": { description: "Changes since cursor" } },
-      },
-    },
-    "/api/sync/status": {
-      get: {
-        summary: "Server sync status (serverTime, supported operations)",
-        security: [{ bearerAuth: [] }],
-        responses: { "200": { description: "Sync status" } },
-      },
-    },
+    "/api/sync/pull": readEndpoint("Incremental pull (alias of /api/sync/changes)", "Changes since cursor"),
+    "/api/sync/status": readEndpoint("Server sync status (serverTime, supported operations)", "Sync status"),
     "/api/sync/resolve-conflict": {
       post: {
         summary:
