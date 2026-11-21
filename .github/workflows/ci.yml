@@ -435,8 +435,11 @@ jobs:
     name: "4 · Integration · E2E + Performance"
     runs-on: ubuntu-latest
     timeout-minutes: 50
-    needs: [sonarqube-quality-gate, trivy-container-scan]
-    if: ${{ always() && needs.sonarqube-quality-gate.result == 'success' && needs.trivy-container-scan.result == 'success' }}
+    # E2E only needs the built images from Stage 2. Depending on Stage 3 instead
+    # would serialise it behind SonarQube and Trivy for no correctness gain;
+    # the final gate below still waits for all nine jobs.
+    needs: [backend-build, frontend-build]
+    if: ${{ always() && needs.backend-build.result == 'success' && needs.frontend-build.result == 'success' }}
     permissions:
       contents: read
     steps:

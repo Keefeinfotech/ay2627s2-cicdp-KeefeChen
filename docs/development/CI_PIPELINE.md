@@ -31,7 +31,7 @@ There is **no Maven/Gradle build in this repository** (Flutter + Node/TypeScript
 | 1 · Preflight & fast security | PR Conventions, Dependency Review (PR only); Gitleaks, CodeQL (all events) | push, PR, dispatch |
 | 2 · Build, test & artifacts | Backend, Frontend (parallel) | all events; `if: always()` tolerates Stage 1 PR-only skips, but fails on any Stage 1 failure/cancelled |
 | 3 · Deep quality & CVEs | SonarQube Quality Gate, Trivy image scan (parallel) | after both Stage 2 jobs succeed; Trivy consumes the image tarballs produced in Stage 2 (no registry/paid infra) |
-| 4 · Integration & final gate | E2E + live performance smoke; Final Gate (`if: always()`) | after both Stage 3 jobs succeed; Final Gate aggregates all 9 jobs |
+| 4 · Integration & final gate | E2E + live performance smoke; Final Gate (`if: always()`) | E2E starts after Stage 2 (parallel with Stage 3); Final Gate aggregates all 9 jobs |
 
 ## Notes on the moved jobs
 
