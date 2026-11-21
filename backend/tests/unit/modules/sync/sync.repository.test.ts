@@ -46,7 +46,10 @@ describe("sync repository", () => {
     mockFind([document]);
     const since = new Date("2026-11-01T00:00:00Z");
 
-    const result = await new SyncRepository().fetchChangesSince("user-2", since);
+    const result = await new SyncRepository().fetchChangesSince(
+      "user-2",
+      since,
+    );
 
     expect(Task.find).toHaveBeenCalledWith({
       $or: [{ userId: "user-2" }, { assigneeId: "user-2" }],
@@ -60,6 +63,23 @@ describe("sync repository", () => {
       assigneeId: "user-2",
       assigneeName: "Asha",
       deletedAt: null,
+      isDeleted: false,
+    });
+  });
+
+  it("communicates soft-deleted tasks with an explicit deletion marker", async () => {
+    const deletedAt = new Date("2026-11-06T10:00:00Z");
+    mockFind([{ ...document, deletedAt }]);
+
+    const result = await new SyncRepository().fetchChangesSince(
+      "user-2",
+      new Date("2026-11-01T00:00:00Z"),
+    );
+
+    expect(result[0]).toMatchObject({
+      id: "task-1",
+      deletedAt,
+      isDeleted: true,
     });
   });
 });

@@ -3,6 +3,13 @@
  * Description: Mongoose schema and model for reminders.
  *              Extended (backwards compatible) with task linkage, recurrence
  *              and an enabled flag.
+ *
+ *              userId is a String UUID to match users._id and tasks.userId.
+ *              The previous ObjectId type could not reference UUID users and
+ *              caused cast failures on create and lookups. See
+ *              scripts/migrate-reminder-user-ids.ts for the data migration.
+ *              _id deliberately stays an ObjectId: reminders are not part of
+ *              the offline sync protocol, so no client-generated id is needed.
  * Author: Keefe Chen
  */
 
@@ -20,15 +27,17 @@ export type ReminderRecurrence = (typeof REMINDER_RECURRENCES)[number];
 const reminderSchema = new Schema(
   {
     userId: {
-      type: Schema.Types.ObjectId,
+      // Must match users._id (String UUID). `ref` is kept so populate() works.
+      type: String,
       ref: "User",
       required: true,
     },
     taskId: {
       // Optional link to a task (task UUIDs are stored as strings).
+      // No single-field index: the compound (taskId, userId) index below
+      // covers every task-scoped lookup with less write overhead.
       type: String,
       default: null,
-      index: true,
     },
     message: {
       type: String,

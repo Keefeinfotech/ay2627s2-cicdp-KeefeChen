@@ -40,6 +40,12 @@ export class SyncService {
    * Applies a batch of client operations with idempotency: an opId that was
    * already processed returns the stored result instead of re-applying.
    * Conflicts are reported per operation, never silently overwritten.
+   *
+   * Outcome rules for a repeated opId:
+   *  - "applied" and "conflict" are terminal. A conflict must be resolved via
+   *    resolveConflict() and retried with a NEW opId.
+   *  - "failed" may be retried with the SAME opId. The retry is guarded by a
+   *    compare-and-swap on updatedAt so two workers cannot both apply it.
    */
   async push(
     userId: string,
@@ -53,7 +59,8 @@ export class SyncService {
         opId: operation.opId,
       }).lean();
 
-      if (existing) {
+      // Terminal outcomes are returned verbatim: no operation is applied twice.
+      if (existing && existing.status !== "failed") {
         results.push({
           opId: operation.opId,
           type: operation.type,
@@ -65,6 +72,49 @@ export class SyncService {
       }
 
       const result = await this.applyOperation(userId, operation);
+
+      // Retry of a previously failed operation: replace its ledger result only
+      // if the entry is unchanged since we read it (CAS on updatedAt).
+      if (existing) {
+        const updated = await SyncOperation.findOneAndUpdate(
+          {
+            userId,
+            opId: operation.opId,
+            status: "failed",
+            updatedAt: existing.updatedAt,
+          },
+          { $set: { status: result.status, detail: result.detail ?? null } },
+          { new: true },
+        ).lean();
+
+        if (!updated) {
+          // Another worker changed the entry first; its stored result wins.
+          const stored = await SyncOperation.findOne({
+            userId,
+            opId: operation.opId,
+          }).lean();
+          if (stored) {
+            results.push({
+              opId: operation.opId,
+              type: operation.type,
+              status: stored.status,
+              detail: stored.detail,
+              replayed: true,
+            });
+            continue;
+          }
+          throw new Error("SYNC_LEDGER_LOST");
+        }
+
+        results.push({
+          ...result,
+          opId: operation.opId,
+          type: operation.type,
+          replayed: false,
+          retried: true,
+        });
+        continue;
+      }
 
       try {
         await SyncOperation.create({
