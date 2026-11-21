@@ -52,6 +52,20 @@ vi.mock("../../../../src/shared/jobs/index.js", () => ({
   enqueue: vi.fn().mockReturnValue(true),
 }));
 
+vi.mock("../../../../src/modules/users/user.model.js", () => ({
+  User: {
+    findById: vi.fn().mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        lean: vi.fn().mockResolvedValue({ email: "user@example.com" }),
+      }),
+    }),
+  },
+}));
+
+vi.mock("../../../../src/shared/jobs/index.js", () => ({
+  enqueue: vi.fn().mockReturnValue(true),
+}));
+
 import { reminderService } from "../../../../src/modules/reminders/reminder.service.js";
 
 const reminder = (overrides: Record<string, unknown> = {}) => ({

@@ -12,9 +12,9 @@ before a change reaches `main` or is released. Automated gates run in
 | G1 | Type safety | No type errors in either codebase | `cd backend && npm run typecheck`; `cd frontend && flutter analyze` | Yes |
 | G2 | Formatting | Dart sources are canonically formatted | `dart format --output=none --set-exit-if-changed lib test tool` | Yes |
 | G3 | Backend tests | All Vitest suites pass | `npm run test:coverage` | Yes |
-| G4 | Backend coverage | Ratchet baseline: statements >= 49%, branches >= 39%, functions >= 48%, lines >= 50%. Target remains 80/60 after the excluded group, roadmap, session, audit and calendar modules gain tests. | `vitest` coverage thresholds in `backend/vitest.config.mts` | Yes |
+| G4 | Backend coverage | Ratchet baseline: statements >= 58%, branches >= 48%, functions >= 59%, lines >= 58%. Target remains 80/60 after the excluded group, roadmap, session, audit and calendar modules gain tests. | `vitest` coverage thresholds in `backend/vitest.config.mts` | Yes |
 | G5 | Frontend tests | All Flutter tests pass, including widget tests for the dashboard, task card, task editor, undo, session restore, and 200% text scaling | `flutter test --coverage` | Yes |
-| G5b | Frontend coverage | Line coverage >= 60% | `dart run tool/check_coverage.dart 60` after `flutter test --coverage` | Yes |
+| G5b | Frontend coverage | Line coverage >= 62% | `dart run tool/check_coverage.dart 62` after `flutter test --coverage` | Yes |
 | G6 | Build | Backend compiles; web release build succeeds | `npm run build`; `flutter build web --release` | Yes |
 | G7 | Dependency scan | Known CRITICAL/HIGH vulnerabilities are surfaced and release pull requests are blocked on high-severity dependency changes; Trivy findings are triaged each release | Trivy filesystem scan with SARIF upload; `dependency-review` job on pull requests | Partial (Trivy report-only, Dependency Review blocking) |
 | G8 | Secrets | No committed secrets; the API refuses to start without a strong JWT secret | `.gitignore` covers `.env`; `assertRuntimeEnv()` exits when `JWT_SECRET` is missing or shorter than 16 characters | Yes |
