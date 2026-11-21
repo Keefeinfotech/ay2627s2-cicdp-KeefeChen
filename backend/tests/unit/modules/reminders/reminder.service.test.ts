@@ -218,4 +218,33 @@ describe("reminder service", () => {
       }),
     );
   });
+
+  it("advances recurring occurrences in UTC regardless of server timezone", async () => {
+    const originalTZ = process.env.TZ;
+    try {
+      // US DST ends on 2027-11-07: a local-time implementation would shift
+      // the next occurrence by one hour when moving to standard time.
+      process.env.TZ = "America/New_York";
+      const dueAt = new Date("2027-11-07T12:00:00Z");
+      const value = reminder({ recurrence: "daily", dueAt });
+
+      mocks.findOne.mockReset();
+      mocks.create.mockReset();
+      mocks.findOne.mockResolvedValueOnce(value);
+      mocks.save.mockResolvedValue(value);
+      mocks.findOne.mockReturnValueOnce({
+        select: vi.fn().mockReturnValue({
+          lean: vi.fn().mockResolvedValue(null),
+        }),
+      });
+
+      await reminderService.complete("reminder-1", "user-1");
+
+      const created = mocks.create.mock.calls[0][0] as { dueAt: Date };
+      expect(created.dueAt.toISOString()).toBe("2027-11-08T12:00:00.000Z");
+    } finally {
+      if (originalTZ === undefined) delete process.env.TZ;
+      else process.env.TZ = originalTZ;
+    }
+  });
 });

@@ -20,6 +20,8 @@ export interface TaskChange {
   dueDate: Date | null;
   completedAt: Date | null;
   deletedAt: Date | null;
+  /** Explicit deletion flag so offline clients need not interpret deletedAt. */
+  isDeleted: boolean;
   updatedAt: Date;
   createdAt: Date;
 }
@@ -55,6 +57,8 @@ export interface SyncOperationResult {
   status: "applied" | "failed" | "conflict";
   detail?: unknown;
   replayed: boolean;
+  /** True when a previously failed operation was re-applied on this push. */
+  retried?: boolean;
 }
 
 export interface SyncPushResult {

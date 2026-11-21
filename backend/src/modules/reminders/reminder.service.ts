@@ -19,12 +19,17 @@ import type {
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
-/** Computes the next occurrence for a recurring reminder. */
+/**
+ * Computes the next occurrence for a recurring reminder in UTC.
+ * MongoDB stores Date values as UTC instants. Using local getters/setters here
+ * would shift a schedule by the server's timezone offset (and across DST),
+ * which is especially harmful for daily reminders.
+ */
 const nextOccurrence = (dueAt: Date, recurrence: ReminderRecurrence): Date => {
   const next = new Date(dueAt);
-  if (recurrence === "daily") next.setDate(next.getDate() + 1);
-  else if (recurrence === "weekly") next.setDate(next.getDate() + 7);
-  else if (recurrence === "monthly") next.setMonth(next.getMonth() + 1);
+  if (recurrence === "daily") next.setUTCDate(next.getUTCDate() + 1);
+  else if (recurrence === "weekly") next.setUTCDate(next.getUTCDate() + 7);
+  else if (recurrence === "monthly") next.setUTCMonth(next.getUTCMonth() + 1);
   else return dueAt;
 
   // If the computed occurrence is still in the past (e.g. completing a stale
@@ -32,9 +37,9 @@ const nextOccurrence = (dueAt: Date, recurrence: ReminderRecurrence): Date => {
   const now = Date.now();
   let guard = 0;
   while (next.getTime() <= now && guard < 400) {
-    if (recurrence === "daily") next.setDate(next.getDate() + 1);
-    else if (recurrence === "weekly") next.setDate(next.getDate() + 7);
-    else next.setMonth(next.getMonth() + 1);
+    if (recurrence === "daily") next.setUTCDate(next.getUTCDate() + 1);
+    else if (recurrence === "weekly") next.setUTCDate(next.getUTCDate() + 7);
+    else next.setUTCMonth(next.getUTCMonth() + 1);
     guard += 1;
   }
   return next;
