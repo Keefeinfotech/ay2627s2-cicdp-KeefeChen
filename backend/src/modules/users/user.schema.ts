@@ -66,6 +66,10 @@ export interface UserRecord {
   deletedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
+
+  // Brute-force protection: consecutive failed logins and the lock expiry.
+  failedLoginAttempts: number;
+  lockoutUntil: Date | null;
 }
 
 export const userSchema = new Schema<UserRecord>(
@@ -142,6 +146,10 @@ export const userSchema = new Schema<UserRecord>(
     passwordResetExpiresAt: { type: Date, default: null },
 
     deletedAt: { type: Date, default: null },
+
+    // Brute-force protection: consecutive failed logins and the lock expiry.
+    failedLoginAttempts: { type: Number, default: 0, min: 0 },
+    lockoutUntil: { type: Date, default: null },
   },
   {
     timestamps: true,
@@ -160,6 +168,8 @@ export const userSchema = new Schema<UserRecord>(
         delete result.mfaRecoveryCodeHashes;
         delete result.mfaLastUsedStep;
         delete result.passwordResetTokenHash;
+        delete result.failedLoginAttempts;
+        delete result.lockoutUntil;
         return result;
       },
     },

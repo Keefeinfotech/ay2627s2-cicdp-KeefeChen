@@ -1,0 +1,54 @@
+# Alertmanager configuration for the Auxilia monitoring profile (EXAMPLE).
+#
+# This is a working-but-inert example: Alertmanager starts and groups/routes
+# alerts, but the receiver URL below is a placeholder you must replace with a
+# real endpoint (Slack/Teams/Discord incoming webhook, PagerDuty, Opsgenie, a
+# ticketing webhook, ...) before alerts reach a human. Until then, firing
+# alerts are visible in the Prometheus UI (:9090/alerts) and Alertmanager UI
+# (:9093) only.
+#
+# Switch delivery on by replacing the `url` in `auxilia-webhook-example`, e.g.
+# for Slack:
+#
+#   receivers:
+#     - name: 'auxilia-slack'
+#       slack_configs:
+#         - api_url: 'https://hooks.slack.com/services/REPLACE_ME'
+#           channel: '#alerts-auxilia'
+#           send_resolved: true
+#           title: '{{ .CommonAnnotations.summary }}'
+#
+# and updating `route.receiver` to match.
+#
+# SECURITY: webhook URLs embed secrets. Mount this file (or a rendered
+# template) as a secret in real deployments instead of committing a live URL.
+
+global:
+  resolve_timeout: 5m
+
+# Group related firing alerts into fewer notifications.
+route:
+  receiver: auxilia-webhook-example
+  group_by: ["alertname", "service"]
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+  routes:
+    # Critical-severity alerts skip the long waits — they page immediately.
+    - matchers:
+        - severity="critical"
+      receiver: auxilia-webhook-example
+      group_wait: 10s
+      repeat_interval: 1h
+
+receivers:
+  - name: auxilia-webhook-example
+    webhook_configs:
+      - url: http://host.docker.internal:5001/alerts
+        send_resolved: true
+        # Optional payload customisation:
+        # max_alerts: 10
+        # http_config:
+        #   authorization:
+        #     type: Bearer
+        #     credentials: REPLACE_WITH_LOCAL_WEBHOOK_TOKEN

@@ -43,6 +43,10 @@ import calendarRoutes from "./modules/calendar/calendar.routes.js";
 import syncRoutes from "./modules/sync/index.js";
 import reminderRoutes from "./modules/reminders/reminder.routes.js";
 import adminRoutes from "./modules/admin/admin.routes.js";
+import analyticsRoutes from "./modules/analytics/analytics.routes.js";
+import notificationRoutes from "./modules/notifications/notification.routes.js";
+import preferenceRoutes from "./modules/preferences/preference.routes.js";
+import assistantRoutes from "./modules/assistant/assistant.routes.js";
 import {
   metricsMiddleware,
   metricsGuard,
@@ -92,15 +96,21 @@ app.get("/", (_req, res) => {
     message: "Auxilia Backend API is running.",
     documentation: "/api-docs",
     health: "/api/health",
+    versionedHealth: "/api/v1/health",
   });
 });
 
-// API information endpoint.
-app.get("/api", (_req, res) => {
+// API information endpoint. Reports supported API versions.
+app.get(["/api", "/api/v1"], (_req, res) => {
   res.status(200).json({
     success: true,
     message: "Welcome to the Auxilia API.",
-    health: "/api/health",
+    version: "v1",
+    versions: {
+      v1: "/api/v1",
+      legacy: "/api",
+    },
+    health: "/api/v1/health",
   });
 });
 
@@ -116,10 +126,15 @@ if (!isProduction()) {
 // 5. Health & Authentication Routes
 // --------------------------------------------------
 
-app.use("/api/health", healthRoutes);
+// All application routes live on a shared router that is mounted at both
+// /api (legacy, unversioned) and /api/v1 (canonical). New clients should
+// use /api/v1; the legacy mount is retained for backward compatibility.
+const apiRouter = express.Router();
 
-app.use(
-  "/api/auth",
+apiRouter.use("/health", healthRoutes);
+
+apiRouter.use(
+  "/auth",
   (_req, res, next) => {
     res.setHeader("Cache-Control", "no-store");
     next();
@@ -131,27 +146,35 @@ app.use(
 // 6. Application API Routes
 // --------------------------------------------------
 
-app.use("/api/ai", aiRoutes);
+apiRouter.use("/ai", aiRoutes);
 
-app.use("/api/users", userRoutes);
-app.use("/api/tasks", taskRoutes);
+apiRouter.use("/users", userRoutes);
+apiRouter.use("/tasks", taskRoutes);
 
 // Nested group resource routes.
-app.use("/api/groups/:groupId/roadmap", roadmapRoutes);
-app.use("/api/groups/:groupId/rubrics", rubricRoutes);
-app.use("/api/groups/:groupId/sessions", sessionRoutes);
-app.use("/api/groups/:groupId/progress", progressRoutes);
-app.use("/api/groups/:groupId/audit", auditRoutes);
+apiRouter.use("/groups/:groupId/roadmap", roadmapRoutes);
+apiRouter.use("/groups/:groupId/rubrics", rubricRoutes);
+apiRouter.use("/groups/:groupId/sessions", sessionRoutes);
+apiRouter.use("/groups/:groupId/progress", progressRoutes);
+apiRouter.use("/groups/:groupId/audit", auditRoutes);
 
 // General group and invitation routes.
-app.use("/api/groups", groupRoutes);
-app.use("/api/invitations", invitationRoutes);
+apiRouter.use("/groups", groupRoutes);
+apiRouter.use("/invitations", invitationRoutes);
 
-app.use("/api/feedback", feedbackRoutes);
-app.use("/api/calendar", calendarRoutes);
-app.use("/api/reminders", reminderRoutes);
-app.use("/api/sync", syncRoutes);
-app.use("/api/admin", adminRoutes);
+apiRouter.use("/feedback", feedbackRoutes);
+apiRouter.use("/calendar", calendarRoutes);
+apiRouter.use("/reminders", reminderRoutes);
+apiRouter.use("/sync", syncRoutes);
+apiRouter.use("/admin", adminRoutes);
+apiRouter.use("/analytics", analyticsRoutes);
+apiRouter.use("/notifications", notificationRoutes);
+apiRouter.use("/preferences", preferenceRoutes);
+apiRouter.use("/assistant", assistantRoutes);
+
+// Mount the shared router at the canonical versioned prefix and the legacy one.
+app.use("/api/v1", apiRouter);
+app.use("/api", apiRouter);
 // Protected Prometheus metrics — outside the /api rate limiter so scrape
 // intervals are not throttled, and guarded by METRICS_TOKEN or admin auth.
 app.get("/metrics", metricsRateLimiter, metricsGuard, metricsHandler);

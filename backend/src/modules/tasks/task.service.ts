@@ -5,18 +5,32 @@
  */
 
 import { AppError } from "../../shared/utils/AppError.js";
+import { literal } from "../../shared/utils/queryGuard.js";
 
 import { taskRepository } from "./task.repository.js";
 import { requireGroupMembership } from "../groups/shared/membership.js";
 import { Member } from "../groups/member/member.model.js";
+import { enqueue } from "../../shared/jobs/index.js";
 
 import type {
   CreateTaskInput,
   OffsetPaginationInput,
   OffsetPaginatedTasks,
   TaskRecord,
+  TaskStatus,
   UpdateTaskInput,
 } from "./task.types.js";
+
+export interface BulkFailure {
+  index: number;
+  id: string | null;
+  error: string;
+}
+
+export interface BulkOperationResult {
+  succeeded: unknown[];
+  failed: BulkFailure[];
+}
 
 /**
  * Enforces the group assignment contract on the write path:
@@ -46,8 +60,8 @@ async function assertValidAssignment(
     }
 
     const membership = await Member.findOne({
-      groupId,
-      userId: assigneeId,
+      groupId: literal(groupId),
+      userId: literal(assigneeId),
       status: "ACTIVE",
     })
       .select("_id")
@@ -84,23 +98,31 @@ export const taskService = {
       if (existing) return existing;
     }
 
-    try {
-      return await taskRepository.create(userId, input);
-    } catch (error) {
-      // Two retries can pass the preflight lookup at the same time. The task
-      // UUID's unique index is the final idempotency guard for that race.
-      if (
-        input.id &&
-        typeof error === "object" &&
-        error !== null &&
-        "code" in error &&
-        error.code === 11000
-      ) {
-        const existing = await taskRepository.findByIdForUser(input.id, userId);
-        if (existing) return existing;
+    const created = await (async () => {
+      try {
+        return await taskRepository.create(userId, input);
+      } catch (error) {
+        // Two retries can pass the preflight lookup at the same time. The task
+        // UUID's unique index is the final idempotency guard for that race.
+        if (
+          input.id &&
+          typeof error === "object" &&
+          error !== null &&
+          "code" in error &&
+          error.code === 11000
+        ) {
+          const existing = await taskRepository.findByIdForUser(
+            input.id,
+            userId,
+          );
+          if (existing) return existing;
+        }
+        throw error;
       }
-      throw error;
-    }
+    })();
+
+    enqueue("analytics.invalidate", { userId });
+    return created;
   },
 
   /**
@@ -183,7 +205,97 @@ export const taskService = {
       throw new AppError(404, "TASK_NOT_FOUND", "Task was not found.");
     }
 
+    enqueue("analytics.invalidate", { userId });
     return task;
+  },
+
+  /**
+   * Bulk-creates tasks. Each task is validated independently and ownership
+   * rules still apply; failures are reported per item.
+   */
+  async bulkCreateTasks(
+    userId: string,
+    inputs: CreateTaskInput[],
+  ): Promise<BulkOperationResult> {
+    const succeeded: unknown[] = [];
+    const failed: BulkFailure[] = [];
+
+    for (const [index, input] of inputs.entries()) {
+      try {
+        const task = await this.createTask(userId, input);
+        succeeded.push(task);
+      } catch (error) {
+        failed.push({
+          index,
+          id: input.id ?? null,
+          error:
+            error instanceof AppError
+              ? error.message
+              : "Failed to create task.",
+        });
+      }
+    }
+
+    return { succeeded, failed };
+  },
+
+  /**
+   * Bulk status update with per-task ownership enforcement.
+   */
+  async bulkUpdateStatus(
+    userId: string,
+    ids: string[],
+    status: TaskStatus,
+  ): Promise<BulkOperationResult> {
+    const succeeded: string[] = [];
+    const failed: BulkFailure[] = [];
+
+    for (const [index, taskId] of ids.entries()) {
+      try {
+        await this.updateTask(userId, taskId, { status });
+        succeeded.push(taskId);
+      } catch (error) {
+        failed.push({
+          index,
+          id: taskId,
+          error:
+            error instanceof AppError
+              ? error.message
+              : "Failed to update task.",
+        });
+      }
+    }
+
+    return { succeeded, failed };
+  },
+
+  /**
+   * Bulk soft-delete with per-task ownership enforcement.
+   */
+  async bulkDeleteTasks(
+    userId: string,
+    ids: string[],
+  ): Promise<BulkOperationResult> {
+    const succeeded: string[] = [];
+    const failed: BulkFailure[] = [];
+
+    for (const [index, taskId] of ids.entries()) {
+      try {
+        await this.deleteTask(userId, taskId);
+        succeeded.push(taskId);
+      } catch (error) {
+        failed.push({
+          index,
+          id: taskId,
+          error:
+            error instanceof AppError
+              ? error.message
+              : "Failed to delete task.",
+        });
+      }
+    }
+
+    return { succeeded, failed };
   },
 
   /**
@@ -195,5 +307,7 @@ export const taskService = {
     if (!deleted) {
       throw new AppError(404, "TASK_NOT_FOUND", "Task was not found.");
     }
+
+    enqueue("analytics.invalidate", { userId });
   },
 };

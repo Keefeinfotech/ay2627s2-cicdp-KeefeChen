@@ -1,4 +1,3 @@
-
 /**
  * File Name: task.model.ts
  * Description: Defines the MongoDB task schema, lifecycle hooks, state transitions, and indexes.
@@ -140,7 +139,7 @@ const taskSchema = new Schema<TaskRecord>(
         return result;
       },
     },
-  }
+  },
 );
 
 // ============================================================================
@@ -155,7 +154,7 @@ taskSchema.index(
   { userId: 1, deletedAt: 1, createdAt: -1 },
   {
     name: "ix_tasks_user_active_created",
-  }
+  },
 );
 
 /**
@@ -166,7 +165,7 @@ taskSchema.index(
   { userId: 1, deletedAt: 1, status: 1, dueDate: 1 },
   {
     name: "ix_tasks_user_active_status_due",
-  }
+  },
 );
 
 /**
@@ -177,7 +176,7 @@ taskSchema.index(
   { userId: 1, deletedAt: 1, priority: 1, createdAt: -1 },
   {
     name: "ix_tasks_user_active_priority_created",
-  }
+  },
 );
 
 /**
@@ -196,7 +195,27 @@ taskSchema.index(
       title: 10,
       description: 2,
     },
-  }
+  },
+);
+
+/**
+ * 5. Offline change feed — owned tasks.
+ * The sync feed queries { userId, updatedAt: { $gt: since } }; without this
+ * index that range scan degrades to a collection scan as tasks accumulate.
+ */
+taskSchema.index(
+  { userId: 1, updatedAt: -1 },
+  { name: "ix_sync_tasks_owner_updated" },
+);
+
+/**
+ * 6. Offline change feed — tasks assigned to the user.
+ * fetchChangesSince() uses $or on owner and assignee; this index lets MongoDB
+ * serve the assignee branch efficiently instead of scanning all tasks.
+ */
+taskSchema.index(
+  { assigneeId: 1, updatedAt: -1 },
+  { name: "ix_sync_tasks_assignee_updated" },
 );
 
 // ============================================================================
@@ -235,13 +254,10 @@ taskSchema.pre("findOneAndUpdate", async function () {
 
   const updateDocument = update as Record<string, unknown>;
 
-  const setUpdate = updateDocument.$set as
-    | Record<string, unknown>
-    | undefined;
+  const setUpdate = updateDocument.$set as Record<string, unknown> | undefined;
 
-  const status = (
-    setUpdate?.status ?? updateDocument.status
-  ) as TaskStatus | undefined;
+  const status = (setUpdate?.status ?? updateDocument.status) as
+    TaskStatus | undefined;
 
   if (!status) {
     return;
@@ -260,7 +276,7 @@ taskSchema.pre("findOneAndUpdate", async function () {
   const completionTimestamp =
     status === "completed"
       ? currentTask.status === "completed"
-        ? currentTask.completedAt ?? new Date()
+        ? (currentTask.completedAt ?? new Date())
         : new Date()
       : null;
 

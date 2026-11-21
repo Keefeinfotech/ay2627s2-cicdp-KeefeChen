@@ -27,10 +27,13 @@ export default defineConfig({
         // Ratchet baseline: the suite currently enforces these values and CI
         // fails if coverage regresses below them. Raise each threshold as the
         // remaining modules are covered. Do not lower these without an ADR.
-        statements: 49,
-        branches: 39,
-        functions: 48,
-        lines: 50,
+        // Raised 2026-11-17 from statements 49 / branches 39 / functions 48 /
+        // lines 50 to statements 58 / branches 48 / functions 59 / lines 58
+        // after measuring the current suite (60.98 / 51.26 / 62.18 / 61.63).
+        statements: 58,
+        branches: 48,
+        functions: 59,
+        lines: 58,
       },
     },
   },

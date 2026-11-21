@@ -6,12 +6,11 @@ import '../../../core/widgets/app_avatar.dart';
 import '../../home/data/task_store.dart';
 import '../../profile/data/avatar_store.dart';
 
-/// Weather-inspired dashboard header.
+/// Dashboard header: brand lockup, five status stats and level progress.
 ///
-/// Each stat card carries its own accent colour — pacific teal for "To do",
-/// moss green for pending, persimmon for overdue, malachite for done,
-/// saffron for XP — so the header reads like a spread of cafe weather rather
-/// than one flat navy surface.
+/// Layout is owned by the parent (HomeScreen): this widget no longer adds its
+/// own outer padding or a second max-width constraint, which previously made
+/// the header sit 16px further in than the search field below it.
 class DashboardHeader extends StatelessWidget {
   const DashboardHeader({
     super.key,
@@ -33,118 +32,149 @@ class DashboardHeader extends StatelessWidget {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
 
-    return ConstrainedBox(
-      constraints: const BoxConstraints(maxWidth: 1120),
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.lg),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        // Brand + name + actions
+        Row(
           children: <Widget>[
-            // Brand + name + actions
-            Row(
-              children: <Widget>[
-                const BrandMark(size: 36),
-                const SizedBox(width: AppSpacing.md),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: <Widget>[
-                      Text(
-                        'Auxilia',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          color: scheme.onSurface,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: -0.4,
-                        ),
-                      ),
-                      Text(
-                        'Workspace · ${_greeting()}',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.labelMedium?.copyWith(
-                          color: scheme.onSurfaceVariant,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                IconButton(
-                  tooltip: 'Achievements',
-                  onPressed: onAchievements,
-                  icon: const Icon(Icons.emoji_events_outlined),
-                  color: TabWeather.completed,
-                ),
-                const SizedBox(width: AppSpacing.xxs),
-                if (avatarStore == null)
-                  AppAvatar(
-                    name: displayName,
-                    tooltip: 'Profile and settings',
-                    onTap: onProfile,
-                  )
-                else
-                  AnimatedBuilder(
-                    animation: avatarStore!,
-                    builder: (context, _) => AppAvatar(
-                      name: displayName,
-                      style: avatarStore!.style,
-                      tooltip: 'Profile and settings',
-                      onTap: onProfile,
+            const BrandMark(size: AppSizes.iconTile),
+            const SizedBox(width: AppSpacing.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  Text(
+                    'Auxilia',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      color: scheme.onSurface,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: -0.4,
                     ),
                   ),
-              ],
+                  Text(
+                    'Workspace · ${_greeting()}',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.labelMedium?.copyWith(
+                      color: scheme.onSurfaceVariant,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
             ),
-            const SizedBox(height: AppSpacing.lg),
-
-            // Weather-inspired stat cards — each with its own colour
-            Row(
-              children: <Widget>[
-                _DashboardStatCard(
-                  label: 'To do',
-                  value: '${store.pendingCount}',
-                  accent: TabWeather.pending,
-                  icon: Icons.radio_button_unchecked_rounded,
-                ),
-                const SizedBox(width: AppSpacing.md),
-                _DashboardStatCard(
-                  label: 'Due today',
-                  value: '${store.dueTodayCount}',
-                  accent: TabWeather.all,
-                  icon: Icons.today_rounded,
-                ),
-                const SizedBox(width: AppSpacing.md),
-                _DashboardStatCard(
-                  label: 'Overdue',
-                  value: '${store.overdueCount}',
-                  accent: TabWeather.overdue,
-                  icon: Icons.warning_amber_rounded,
-                ),
-                const SizedBox(width: AppSpacing.md),
-                _DashboardStatCard(
-                  label: 'Done',
-                  value: '${store.completedCount}',
-                  accent: TabWeather.completed,
-                  icon: Icons.check_circle_rounded,
-                ),
-                const SizedBox(width: AppSpacing.md),
-                _DashboardStatCard(
-                  label: 'Total XP',
-                  value: '${store.levelProgress.totalXp}',
-                  accent: TabWeather.all,
-                  icon: Icons.star_rounded,
-                ),
-              ],
+            IconButton(
+              tooltip: 'Achievements',
+              onPressed: onAchievements,
+              icon: Icon(
+                Icons.emoji_events_outlined,
+                size: AppSizes.iconLg,
+                color: TabWeather.display(TabWeather.completed, scheme),
+              ),
             ),
-            const SizedBox(height: AppSpacing.lg),
-
-            // Level progress bar
-            _LevelProgress(store: store),
+            const SizedBox(width: AppSpacing.xxs),
+            if (avatarStore == null)
+              AppAvatar(
+                name: displayName,
+                tooltip: 'Profile and settings',
+                onTap: onProfile,
+              )
+            else
+              AnimatedBuilder(
+                animation: avatarStore!,
+                builder: (context, _) => AppAvatar(
+                  name: displayName,
+                  style: avatarStore!.style,
+                  tooltip: 'Profile and settings',
+                  onTap: onProfile,
+                ),
+              ),
           ],
         ),
-      ),
+        const SizedBox(height: AppSpacing.lg),
+
+        // Status stats: Trust Blue is the default accent, green only for
+        // completion and red only for genuine overdue urgency. All five
+        // cards share the same neutral border, height and icon tile size.
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final isNarrow = constraints.maxWidth < AppSizes.compactBreakpoint;
+            final columns = constraints.maxWidth < AppSizes.tightBreakpoint
+                ? 2
+                : isNarrow
+                ? 3
+                : 5;
+            final gap = isNarrow ? AppSpacing.xs : AppSpacing.md;
+
+            final cards = <Widget>[
+              _DashboardStatCard(
+                label: 'To do',
+                value: '${store.pendingCount}',
+                accent: TabWeather.pending,
+                icon: Icons.radio_button_unchecked_rounded,
+                compact: isNarrow,
+              ),
+              _DashboardStatCard(
+                label: 'Due today',
+                value: '${store.dueTodayCount}',
+                accent: TabWeather.all,
+                icon: Icons.today_rounded,
+                compact: isNarrow,
+              ),
+              _DashboardStatCard(
+                label: 'Overdue',
+                value: '${store.overdueCount}',
+                accent: TabWeather.overdue,
+                icon: Icons.warning_amber_rounded,
+                compact: isNarrow,
+              ),
+              _DashboardStatCard(
+                label: 'Done',
+                value: '${store.completedCount}',
+                accent: TabWeather.completed,
+                icon: Icons.check_circle_rounded,
+                compact: isNarrow,
+              ),
+              _DashboardStatCard(
+                label: 'XP',
+                value: '${store.levelProgress.totalXp}',
+                accent: TabWeather.all,
+                icon: Icons.star_rounded,
+                compact: isNarrow,
+              ),
+            ];
+
+            if (isNarrow) {
+              final width =
+                  (constraints.maxWidth - (columns - 1) * gap) / columns;
+              return Wrap(
+                spacing: gap,
+                runSpacing: gap,
+                children: <Widget>[
+                  for (final card in cards) SizedBox(width: width, child: card),
+                ],
+              );
+            }
+
+            return Row(
+              children: <Widget>[
+                for (var i = 0; i < cards.length; i++) ...[
+                  if (i > 0) SizedBox(width: gap),
+                  Expanded(child: cards[i]),
+                ],
+              ],
+            );
+          },
+        ),
+        const SizedBox(height: AppSpacing.lg),
+
+        // Level progress
+        _LevelProgress(store: store),
+      ],
     );
   }
 
@@ -162,6 +192,7 @@ class _DashboardStatCard extends StatelessWidget {
     required this.value,
     required this.accent,
     required this.icon,
+    this.compact = false,
   });
 
   final String label;
@@ -169,25 +200,22 @@ class _DashboardStatCard extends StatelessWidget {
   final Color accent;
   final IconData icon;
 
+  /// Tighter typography for narrow phone widths.
+  final bool compact;
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
 
-    return Expanded(
+    return ConstrainedBox(
+      constraints: const BoxConstraints(minHeight: AppSizes.statCardMinHeight),
       child: Container(
-        padding: const EdgeInsets.all(AppSpacing.md),
+        padding: EdgeInsets.all(compact ? AppSpacing.sm : AppSpacing.md),
         decoration: BoxDecoration(
           color: scheme.surface,
           borderRadius: BorderRadius.circular(AppRadius.lg),
-          border: Border.all(color: accent.withValues(alpha: 0.35)),
-          boxShadow: [
-            BoxShadow(
-              color: accent.withValues(alpha: 0.08),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
-          ],
+          border: Border.all(color: scheme.outlineVariant),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -196,12 +224,18 @@ class _DashboardStatCard extends StatelessWidget {
             Align(
               alignment: Alignment.topRight,
               child: Container(
-                padding: const EdgeInsets.all(8),
+                width: AppSizes.iconTile,
+                height: AppSizes.iconTile,
+                alignment: Alignment.center,
                 decoration: BoxDecoration(
                   color: accent.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(AppRadius.sm),
                 ),
-                child: Icon(icon, size: 18, color: accent),
+                child: Icon(
+                  icon,
+                  size: AppSizes.iconMd,
+                  color: TabWeather.display(accent, scheme),
+                ),
               ),
             ),
             const SizedBox(height: AppSpacing.md),
@@ -209,10 +243,14 @@ class _DashboardStatCard extends StatelessWidget {
               value,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: theme.textTheme.headlineSmall?.copyWith(
-                color: scheme.onSurface,
-                fontWeight: FontWeight.w700,
-              ),
+              style:
+                  (compact
+                          ? theme.textTheme.titleLarge
+                          : theme.textTheme.headlineSmall)
+                      ?.copyWith(
+                        color: scheme.onSurface,
+                        fontWeight: FontWeight.w700,
+                      ),
             ),
             const SizedBox(height: AppSpacing.xxs),
             Text(
@@ -282,14 +320,14 @@ class _LevelProgress extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: AppSpacing.xs),
+            const SizedBox(height: AppSpacing.sm),
             ClipRRect(
-              borderRadius: BorderRadius.circular(4),
+              borderRadius: BorderRadius.circular(AppRadius.xs),
               child: LinearProgressIndicator(
                 value: progress.fraction,
-                minHeight: 8,
+                minHeight: AppSizes.progressHeight,
                 backgroundColor: scheme.outlineVariant,
-                color: TabWeather.pending,
+                color: scheme.primary,
               ),
             ),
           ],
@@ -297,45 +335,4 @@ class _LevelProgress extends StatelessWidget {
       ),
     );
   }
-}
-
-/// Fallback BrandMark if not imported elsewhere
-class BrandMark extends StatelessWidget {
-  const BrandMark({super.key, this.size = 36});
-
-  final double size;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: <Color>[
-            AppColors.pacific,
-            AppColors.malachite,
-            AppColors.saffron,
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(AppRadius.md),
-      ),
-      child: Icon(
-        Icons.auto_awesome,
-        size: size * 0.55,
-        color: AppColors.white,
-      ),
-    );
-  }
-}
-
-/// Weather accent colours for dashboard tabs and stats.
-class TabWeather {
-  static const Color all = AppColors.pacific; // teal — ocean
-  static const Color pending = AppColors.moss; // earthy green — forest
-  static const Color overdue = AppColors.persimmon; // warm orange-red — sunset
-  static const Color completed =
-      AppColors.malachite; // vivid green — new growth
 }

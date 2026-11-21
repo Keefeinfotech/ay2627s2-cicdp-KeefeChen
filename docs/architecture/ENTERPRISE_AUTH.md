@@ -56,9 +56,37 @@ frontend : flutter analyze       -> no issues
 frontend : flutter test          -> 58 passed
 ```
 
-## Not done (needs your decision)
+## Token transport: Bearer vs cookies
 
-- Refresh tokens / token rotation (would change the client contract).
-- Email verification and password reset (requires email provider).
-- MFA/TOTP (new dependency and enrolment flow).
-- Server-side session store (Redis) if you scale beyond one API instance.
+**Decision (2026-11-17): keep HTTP `Authorization: Bearer` for all clients;
+do not introduce session cookies.**
+
+Rationale:
+
+- **CSRF immunity by construction.** Bearer tokens are not attached by the
+  browser automatically, so the entire CSRF class does not apply; no
+  double-submit token, SameSite=strict/lax trade-offs, or origin-checking
+  middleware is required.
+- **Mobile-first client.** Flutter native apps cannot use cookies portably;
+  a cookie path would create a second, browser-only auth mode to test and
+  keep in sync. One transport, one security model.
+- **Explicit, testable revocation.** The token carries `jti`; the server
+  validates a revocable session per device (`authenticate.ts` +
+  `session.cache.ts`, 30s bound); logout and refresh-reuse detection revoke
+  server-side. This is the property that matters for theft response, and it
+  does not depend on cookie semantics.
+
+Trade-offs accepted:
+
+- Tokens live in platform-secure storage (`flutter_secure_storage`); XSS on
+  the web build would expose them like any other JS-reachable credential.
+  Mitigated by the strict CSP (`script-src` without `unsafe-inline`), no
+  `localStorage` use, and short-lived access tokens (15m).
+- Cookie-based browser auth (HttpOnly, Secure, SameSite=Lax) remains the
+  industry-standard *alternative*; adopting it later would mean a dual
+  transport with CSRF protection - deferred deliberately, not forgotten.
+
+The refresh-token rotation, reuse detection, session revocation, password
+reset and MFA features listed as "not done" in the original draft of this
+document have since shipped; see `docs/compliance/OWASP_IMPLEMENTATION.md`
+(A04/A07) and `docs/release/RELEASE_NOTES_v1.0.0.md` for the current state.

@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Auxilia · Round 5 — Three Design Directions</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://images.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0B1220;--panel:#111A2C;--line:#22304A;--ink:#E6ECF5;--muted:#8CA0BC;--blue:#60A5FA;--green:#34D399;--amber:#FBBF24}
+*{box-sizing:border-box}body{margin:0;font-family:Roboto,sans-serif;background:var(--bg);color:var(--ink);line-height:1.55}
+.wrap{max-width:1160px;margin:0 auto;padding:48px 24px 80px}
+.eyebrow{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--blue)}
+h1{font-size:clamp(30px,4vw,46px);letter-spacing:-1px;margin:8px 0 6px}
+.lede{color:var(--muted);max-width:70ch}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:36px 0}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden;display:flex;flex-direction:column}
+.swatch{height:96px;display:flex;align-items:flex-end;padding:14px;font-size:12px;font-weight:700;letter-spacing:.5px}
+.a{background:linear-gradient(135deg,#16233B,#1D4ED8)} .b{background:linear-gradient(135deg,#F1F5F9,#E2E8F0);color:#0F172A} .c{background:linear-gradient(135deg,#0B1220,#182338);border-bottom:1px solid var(--line)}
+.body{padding:16px;display:flex;flex-direction:column;flex:1}
+.body h2{margin:0 0 6px;font-size:19px}
+.body p{color:var(--muted);font-size:13px;margin:0 0 12px}
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+.tag{font-size:10.5px;border:1px solid var(--line);color:var(--muted);border-radius:999px;padding:2px 10px;letter-spacing:.4px}
+ul{margin:0 0 16px;padding-left:16px;color:var(--muted);font-size:12.5px;display:grid;gap:5px}
+.btn{margin-top:auto;display:inline-flex;align-items:center;justify-content:center;gap:8px;background:var(--blue);color:#0B1220;border:0;border-radius:8px;padding:12px;font-weight:700;text-decoration:none}
+.btn.secondary{background:transparent;border:1px solid var(--line);color:var(--ink)}
+table{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:8px}
+th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line)}
+th{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted)}
+tbody td:first-child{color:var(--blue);white-space:nowrap}
+.section{margin-top:44px}
+h3{font-size:15px;letter-spacing:.5px}
+.note{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--green);border-radius:10px;padding:14px 16px;color:var(--muted);font-size:13px;margin-top:18px}
+a{color:var(--blue)}
+@media(max-width:900px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="eyebrow">Auxilia · Round 5 · Product Design Research &amp; Development</p>
+  <h1>Three directions, one secretary.</h1>
+  <p class="lede">Auxilia — “Help Anywhere, Learn Together” — is an AI-assisted productivity assistant for students. Round 5 compared six Mobbin references, extracted a design DNA, and expressed it as three genuinely different interfaces. All three are recognisably Auxilia: Trust Blue core, Roboto, green as the completion signal, no purple, no emoji.</p>
+
+  <div class="grid">
+    <article class="card">
+      <div class="swatch a" style="color:#fff">DIRECTION A — SECRETARY'S DESK</div>
+      <div class="body">
+        <h2>Warm editorial productivity</h2>
+        <p>The dependable human secretary: warm ivory paper, deep navy ink, Trust Blue actions, a 264px labelled sidebar. </p>
+        <div class="tags"><span class="tag">Sidebar nav</span><span class="tag">Medium density</span><span class="tag">Warm paper ivory</span><span class="tag">Cards with soft shadow</span></div>
+        <ul><li>Editorial hierarchy, generous 16–24px rhythm</li><li>Best for: students who want calm structure and a sense of a person</li><li>Closest to shipped app (sidebar + stat cards) but warmer and calmer</li></ul>
+        <a class="btn" href="a-secretary-desk/index.html">Open Direction A →</a>
+      </div>
+    </article>
+
+    <article class="card">
+      <div class="swatch b">DIRECTION B — QUIET STUDIO</div>
+      <div class="body">
+        <h2>Radical restraint</h2>
+        <p>One centered column, hairline rules, underline tab navigation, near-zero chrome. The interface disappears; the work remains.</p>
+        <div class="tags"><span class="tag">Top underline tabs</span><span class="tag">Lowest density</span><span class="tag">Cool off-white</span><span class="tag">Hairline dividers, no cards</span></div>
+        <ul><li>Light-weight typography, maximal whitespace</li><li>Best for: focus-first students, reading-heavy weeks</li><li>Takes cues from Notion/Linear minimalism over dashboards</li></ul>
+        <a class="btn" href="b-quiet-studio/index.html">Open Direction B →</a>
+      </div>
+    </article>
+
+    <article class="card">
+      <div class="swatch c">DIRECTION C — COMMAND CENTER</div>
+      <div class="body">
+        <h2>High-density dark deck</h2>
+        <p>Deep navy console: 64px icon rail, 12-column panel grid, mono tabular numerals, status line, Ctrl+K. Everything visible at once.</p>
+        <div class="tags"><span class="tag">Icon rail nav</span><span class="tag">Highest density</span><span class="tag">Deep navy</span><span class="tag">Mono data, 12-col grid</span></div>
+        <ul><li>Power-user framing: sync status, activity log, keyboard-first</li><li>Best for: CS students who live in terminals and dashboards</li><li>Strongest “AI operations” story; heavier cognitive load</li></ul>
+        <a class="btn" href="c-command-center/index.html">Open Direction C →</a>
+      </div>
+    </article>
+  </div>
+
+  <div class="section">
+    <h3>Side-by-side</h3>
+    <table>
+      <thead><tr><th>Dimension</th><th>A · Secretary's Desk</th><th>B · Quiet Studio</th><th>C · Command Center</th></tr></thead>
+      <tbody>
+        <tr><td>Colour distribution</td><td>Warm ivory 70 / white 20 / Trust Blue 10</td><td>Cool off-white 80 / white 15 / ink &amp; blue 5</td><td>Deep navy 75 / slate panels 20 / azure 5</td></tr>
+        <tr><td>Navigation</td><td>256–264px labelled sidebar + bottom bar (mobile)</td><td>Top underline tablist + bottom bar (mobile)</td><td>64px icon rail + Ctrl+K + bottom bar (mobile)</td></tr>
+        <tr><td>Information density</td><td>Medium — cards, sectioned</td><td>Low — single column, one decision per row</td><td>High — multi-panel, tabular, log stream</td></tr>
+        <tr><td>Task presentation</td><td>Checkbox rows in grouped cards</td><td>Divider-ruled list, dot priority</td><td>Data table with tag/priority chips</td></tr>
+        <tr><td>AI assistant</td><td>Chat pane + side panel, preview card</td><td>Inline conversation, preview card</td><td>Terminal-style console, mono, confirm flow</td></tr>
+        <tr><td>Typography</td><td>Roboto 400/500/700, -0.5px tracking on display</td><td>Roboto 400 display, 500 labels, airy leading</td><td>Roboto + Roboto Mono for all numerals/data</td></tr>
+        <tr><td>Suits</td><td>Most students; default ship candidate</td><td>Reading/writing-heavy majors; accessibility win</td><td>Power users, CS students, demo/portfolio wow-factor</td></tr>
+      </tbody>
+    </table>
+    <div class="note"><strong>Recommendation: ship A, borrow B's density discipline and C's keyboard path.</strong> A matches the shipped Flutter app's structure (sidebar + stat grid) with the warmth the brand needs; B's hairline-and-whitespace restraint fixes the “dull” flatness flagged in Round 5 critique; C's Ctrl+K and sync status line are worth porting into A. Full rationale in <a href="NOTES.md">NOTES.md</a>.</div>
+  </div>
+
+  <div class="section">
+    <h3>Research artefacts</h3>
+    <p style="color:var(--muted);font-size:13px"><a href="mobbin/RESEARCH.md">mobbin/RESEARCH.md</a> — 10 queries, 6 downloaded references with source links · <a href="mobbin/DNA.md">mobbin/DNA.md</a> — 8 reusable design principles + rejected anti-patterns · <a href="NOTES.md">NOTES.md</a> — full build log, QA and critique.</p>
+  </div>
+</div>
+</body>
+</html>

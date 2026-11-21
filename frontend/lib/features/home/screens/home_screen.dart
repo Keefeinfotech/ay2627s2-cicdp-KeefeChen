@@ -110,7 +110,10 @@ class _HomeScreenState extends State<HomeScreen> {
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
-      builder: (_) => TaskEditor(existingTags: _store.allTags),
+      builder: (_) => TaskEditor(
+        existingTags: _store.allTags,
+        existingCourses: _store.allCourses,
+      ),
     );
     if (draft == null || !mounted) return;
 
@@ -135,7 +138,11 @@ class _HomeScreenState extends State<HomeScreen> {
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
-      builder: (_) => TaskEditor(initial: task, existingTags: _store.allTags),
+      builder: (_) => TaskEditor(
+        initial: task,
+        existingTags: _store.allTags,
+        existingCourses: _store.allCourses,
+      ),
     );
     if (draft == null || !mounted) return;
 
@@ -352,7 +359,9 @@ class _HomeScreenState extends State<HomeScreen> {
         bottom: false,
         child: Center(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 1120),
+            constraints: const BoxConstraints(
+              maxWidth: AppSizes.maxContentWidth,
+            ),
             child: _buildBody(context),
           ),
         ),
@@ -362,11 +371,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildBody(BuildContext context) {
     if (_store.isLoading && !_store.hasLoaded) {
-      return const Center(
-        child: SingleChildScrollView(
-          padding: EdgeInsets.all(AppSpacing.xl),
-          child: AppLoading(label: 'Loading your tasks...'),
-        ),
+      return const SingleChildScrollView(
+        padding: EdgeInsets.all(AppSpacing.xl),
+        child: DashboardSkeleton(),
       );
     }
 

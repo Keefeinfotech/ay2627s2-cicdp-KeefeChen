@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/Keefeinfotech/ay2627s2-cicdp-KeefeChen/security/policy
+    about: Do not open a public issue for security reports; follow SECURITY.md instead.
+  - name: Change management process
+    url: https://github.com/Keefeinfotech/ay2627s2-cicdp-KeefeChen/blob/main/docs/change-management/change-management-process.md
+    about: How changes are proposed, evaluated, approved, implemented, tested and documented.

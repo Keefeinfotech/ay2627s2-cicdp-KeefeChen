@@ -18,7 +18,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       - name: Generate SBOM (Syft)
-        uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0
+        uses: anchore/sbom-action@66cbf4bc1f1c0d2edc94016e65bc221b6bb0ad6c # v0.24.3
         with:
           path: .
           format: spdx-json
@@ -28,8 +28,23 @@ jobs:
         with:
           name: sbom
           path: sbom.spdx.json
+      # GitHub attestations are only available for public repositories
+      # (and private repos with GitHub Advanced Security). On a private
+      # user-owned repo this call fails with 403 "Feature not available",
+      # so gate it on repository visibility instead of always running it.
+      - name: Check repository visibility
+        id: visibility
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          private="$(gh api "repos/${GITHUB_REPOSITORY}" --jq '.private')"
+          echo "attest=$([[ "$private" == "false" ]] && echo true || echo false)" >> "$GITHUB_OUTPUT"
       - name: Attest SBOM (SLSA)
-        uses: actions/attest-sbom@v2
+        if: steps.visibility.outputs.attest == 'true'
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4 (replaces deprecated actions/attest-sbom)
         with:
           subject-path: backend/package.json
           sbom-path: sbom.spdx.json
+      - name: Note attestation skipped
+        if: steps.visibility.outputs.attest != 'true'
+        run: echo "::notice title=SBOM attestation skipped::Attestations require a public repository; the SBOM is still generated and uploaded as an artifact. Make the repo public (or enable Advanced Security) to sign it."

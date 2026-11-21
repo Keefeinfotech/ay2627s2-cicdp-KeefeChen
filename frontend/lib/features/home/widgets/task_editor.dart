@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/app_button.dart';
+import '../../../core/widgets/app_dialog.dart';
 import '../../../core/widgets/app_text_field.dart';
 import '../data/task_validation.dart';
 import '../models/task.dart';
@@ -18,6 +19,7 @@ class TaskEditor extends StatefulWidget {
     this.initial,
     this.initialCourse,
     this.existingTags = const <String>[],
+    this.existingCourses = const <String>[],
   });
 
   final Task? initial;
@@ -28,6 +30,10 @@ class TaskEditor extends StatefulWidget {
 
   /// Tags already used elsewhere in the workspace, offered as quick picks.
   final List<String> existingTags;
+
+  /// Courses/subjects already used elsewhere, offered as quick picks so the
+  /// user can prioritise a prelist of their own subjects.
+  final List<String> existingCourses;
 
   @override
   State<TaskEditor> createState() => _TaskEditorState();
@@ -55,6 +61,50 @@ class _TaskEditorState extends State<TaskEditor> {
   String? _tagError;
 
   bool get _isEditing => widget.initial != null;
+
+  /// True when the form differs from the initial snapshot; used to guard
+  /// against losing typed input on close.
+  bool get _isDirty {
+    final initial = widget.initial;
+    final initialTitle = initial?.title ?? '';
+    final initialNotes = initial?.notes ?? '';
+    final initialCourse = initial?.course ?? widget.initialCourse ?? '';
+    final initialTags = Task.normalizeTags(initial?.tags ?? const <String>[]);
+
+    if (_title.text != initialTitle) return true;
+    if (_notes.text != initialNotes) return true;
+    if (_course.text != initialCourse) return true;
+    if (_tags.length != initialTags.length ||
+        !_tags.every((tag) => initialTags.contains(tag))) {
+      return true;
+    }
+    if (_priority != (initial?.priority ?? TaskPriority.medium)) return true;
+    if (_dueDate != initial?.dueDate) return true;
+    if (_reminderAt != initial?.reminderAt) return true;
+    return false;
+  }
+
+  /// Closes the editor, asking for confirmation first when there are
+  /// unsaved changes.
+  Future<void> _requestClose() async {
+    if (!_isDirty) {
+      Navigator.of(context).pop();
+      return;
+    }
+
+    final discard = await showAppConfirmDialog(
+      context,
+      title: 'Discard changes?',
+      message: 'Your edits have not been saved yet. Discard them?',
+      confirmLabel: 'Discard',
+      destructive: true,
+      icon: Icons.delete_outline_rounded,
+    );
+
+    if (discard && mounted) {
+      Navigator.of(context).pop();
+    }
+  }
 
   @override
   void dispose() {
@@ -176,339 +226,377 @@ class _TaskEditorState extends State<TaskEditor> {
     final theme = Theme.of(context);
     final double maxHeight = MediaQuery.sizeOf(context).height * 0.92;
 
-    return Padding(
-      padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
-      child: SafeArea(
-        top: false,
-        child: Center(
-          child: ConstrainedBox(
-            constraints: BoxConstraints(maxWidth: 640, maxHeight: maxHeight),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: <Widget>[
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(
-                    AppSpacing.xl,
-                    AppSpacing.md,
-                    AppSpacing.md,
-                    AppSpacing.sm,
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: <Widget>[
-                      Center(
-                        child: Container(
-                          width: 40,
-                          height: 4,
-                          decoration: BoxDecoration(
-                            color: theme.colorScheme.outlineVariant,
-                            borderRadius: BorderRadius.circular(AppRadius.pill),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: AppSpacing.md),
-                      Row(
-                        children: <Widget>[
-                          Expanded(
-                            child: Text(
-                              _isEditing ? 'Edit task' : 'New task',
-                              style: theme.textTheme.titleLarge?.copyWith(
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                          IconButton(
-                            tooltip: 'Close',
-                            onPressed: () => Navigator.of(context).pop(),
-                            icon: const Icon(Icons.close_rounded),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                Flexible(
-                  child: SingleChildScrollView(
+    return PopScope(
+      canPop: !_isDirty,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _requestClose();
+      },
+      child: Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.viewInsetsOf(context).bottom,
+        ),
+        child: SafeArea(
+          top: false,
+          child: Center(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: 640, maxHeight: maxHeight),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: <Widget>[
+                  Padding(
                     padding: const EdgeInsets.fromLTRB(
                       AppSpacing.xl,
-                      0,
-                      AppSpacing.xl,
-                      AppSpacing.lg,
+                      AppSpacing.md,
+                      AppSpacing.md,
+                      AppSpacing.sm,
                     ),
-                    child: Form(
-                      key: _formKey,
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: <Widget>[
-                          AppTextField(
-                            controller: _title,
-                            autofocus: !_isEditing,
-                            maxLength: maxTitleLength,
-                            counterText: '',
-                            textInputAction: TextInputAction.next,
-                            labelText: 'Title',
-                            hintText: 'What needs to be done?',
-                            textCapitalization: TextCapitalization.sentences,
-                            validator: validateTitle,
-                          ),
-                          const SizedBox(height: AppSpacing.sm),
-                          AppTextField(
-                            controller: _course,
-                            maxLength: maxCourseLength,
-                            counterText: '',
-                            textInputAction: TextInputAction.next,
-                            labelText: 'Course or subject (optional)',
-                            hintText: 'e.g. COMP 2101',
-                            prefixIcon: Icons.school_outlined,
-                            textCapitalization: TextCapitalization.characters,
-                            validator: validateCourse,
-                          ),
-                          const SizedBox(height: AppSpacing.md),
-                          Text(
-                            'Tags (optional)',
-                            style: theme.textTheme.labelLarge?.copyWith(
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                          const SizedBox(height: AppSpacing.xs),
-                          if (_tags.isNotEmpty)
-                            Padding(
-                              padding: const EdgeInsets.only(
-                                bottom: AppSpacing.sm,
-                              ),
-                              child: Wrap(
-                                spacing: AppSpacing.xs,
-                                runSpacing: AppSpacing.xs,
-                                children: <Widget>[
-                                  for (final tag in _tags)
-                                    InputChip(
-                                      label: Text(tag),
-                                      onDeleted: () => _removeTag(tag),
-                                      deleteButtonTooltipMessage:
-                                          'Remove tag $tag',
-                                    ),
-                                ],
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: <Widget>[
+                        Center(
+                          child: Container(
+                            width: 40,
+                            height: 4,
+                            decoration: BoxDecoration(
+                              color: theme.colorScheme.outlineVariant,
+                              borderRadius: BorderRadius.circular(
+                                AppRadius.pill,
                               ),
                             ),
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: <Widget>[
-                              Expanded(
-                                child: AppTextField(
-                                  controller: _tag,
-                                  useFormField: false,
-                                  hintText: 'Add a tag, then press Enter',
-                                  prefixIcon: Icons.sell_outlined,
-                                  textInputAction: TextInputAction.done,
-                                  textCapitalization:
-                                      TextCapitalization.sentences,
-                                  maxLength: maxTagLength,
-                                  counterText: '',
-                                  onFieldSubmitted: _addTag,
-                                  errorText: _tagError,
+                          ),
+                        ),
+                        const SizedBox(height: AppSpacing.md),
+                        Row(
+                          children: <Widget>[
+                            Expanded(
+                              child: Text(
+                                _isEditing ? 'Edit task' : 'New task',
+                                style: theme.textTheme.titleLarge?.copyWith(
+                                  fontWeight: FontWeight.w600,
                                 ),
                               ),
-                              const SizedBox(width: AppSpacing.xs),
-                              IconButton.filledTonal(
-                                tooltip: 'Add tag',
-                                onPressed: _addTag,
-                                icon: const Icon(Icons.add_rounded),
-                              ),
-                            ],
-                          ),
-                          if (widget.existingTags.any(
-                            (tag) => !_tags.any(
-                              (selected) =>
-                                  selected.toLowerCase() == tag.toLowerCase(),
                             ),
-                          ))
-                            Padding(
-                              padding: const EdgeInsets.only(
-                                top: AppSpacing.xs,
-                              ),
-                              child: Wrap(
-                                spacing: AppSpacing.xs,
-                                runSpacing: AppSpacing.xs,
-                                children: <Widget>[
-                                  for (final tag
-                                      in widget.existingTags
-                                          .where(
-                                            (tag) => !_tags.any(
-                                              (selected) =>
-                                                  selected.toLowerCase() ==
-                                                  tag.toLowerCase(),
-                                            ),
-                                          )
-                                          .take(6))
-                                    ActionChip(
-                                      label: Text('#$tag'),
-                                      onPressed: () => _addTag(tag),
-                                    ),
-                                ],
-                              ),
+                            IconButton(
+                              tooltip: 'Close',
+                              onPressed: _requestClose,
+                              icon: const Icon(Icons.close_rounded),
                             ),
-                          const SizedBox(height: AppSpacing.sm),
-                          AppTextField(
-                            controller: _notes,
-                            maxLength: maxNotesLength,
-                            counterText: '',
-                            maxLines: 3,
-                            minLines: 2,
-                            labelText: 'Notes (optional)',
-                            hintText: 'Add context, links or a quick plan',
-                            textCapitalization: TextCapitalization.sentences,
-                            validator: validateNotes,
-                          ),
-                          const SizedBox(height: AppSpacing.md),
-                          Text(
-                            'Priority',
-                            style: theme.textTheme.labelLarge?.copyWith(
-                              fontWeight: FontWeight.w700,
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  Flexible(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.fromLTRB(
+                        AppSpacing.xl,
+                        0,
+                        AppSpacing.xl,
+                        AppSpacing.lg,
+                      ),
+                      child: Form(
+                        key: _formKey,
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: <Widget>[
+                            AppTextField(
+                              controller: _title,
+                              autofocus: !_isEditing,
+                              maxLength: maxTitleLength,
+                              counterText: '',
+                              textInputAction: TextInputAction.next,
+                              labelText: 'Title',
+                              hintText: 'What needs to be done?',
+                              textCapitalization: TextCapitalization.sentences,
+                              validator: validateTitle,
                             ),
-                          ),
-                          const SizedBox(height: AppSpacing.xs),
-                          SegmentedButton<TaskPriority>(
-                            segments: TaskPriority.values
-                                .map(
-                                  (priority) => ButtonSegment<TaskPriority>(
-                                    value: priority,
-                                    label: Text(priority.label),
-                                  ),
-                                )
-                                .toList(growable: false),
-                            selected: <TaskPriority>{_priority},
-                            onSelectionChanged: (selection) {
-                              setState(() => _priority = selection.first);
-                            },
-                          ),
-                          const SizedBox(height: AppSpacing.md),
-                          Text(
-                            'Schedule',
-                            style: theme.textTheme.labelLarge?.copyWith(
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                          const SizedBox(height: AppSpacing.xs),
-                          Row(
-                            children: <Widget>[
-                              Expanded(
-                                child: AppButton(
-                                  label: _dueDate == null
-                                      ? 'Set due date'
-                                      : 'Due ${formatTaskDate(_dueDate!)}',
-                                  icon: Icons.event_outlined,
-                                  onPressed: _setDueDate,
-                                  variant: AppButtonVariant.outline,
-                                  expand: true,
-                                ),
-                              ),
-                              const SizedBox(width: AppSpacing.sm),
-                              Expanded(
-                                child: AppButton(
-                                  label: _reminderAt == null
-                                      ? 'Set reminder'
-                                      : 'Remind ${formatTaskDate(_reminderAt!)}',
-                                  icon: Icons.notifications_outlined,
-                                  onPressed: _setReminder,
-                                  variant: AppButtonVariant.outline,
-                                  expand: true,
-                                ),
-                              ),
-                            ],
-                          ),
-                          if (_dueDate != null)
-                            Align(
-                              alignment: Alignment.centerRight,
-                              child: TextButton.icon(
-                                onPressed: () => setState(() {
-                                  _dueDate = null;
-                                  _scheduleError = null;
-                                }),
-                                icon: const Icon(
-                                  Icons.event_busy_outlined,
-                                  size: 18,
-                                ),
-                                label: const Text('Clear due date'),
-                              ),
-                            ),
-                          if (_reminderAt != null)
-                            Align(
-                              alignment: Alignment.centerRight,
-                              child: TextButton.icon(
-                                onPressed: () => setState(() {
-                                  _reminderAt = null;
-                                  _scheduleError = null;
-                                }),
-                                icon: const Icon(
-                                  Icons.notifications_off_outlined,
-                                  size: 18,
-                                ),
-                                label: const Text('Clear reminder'),
-                              ),
-                            ),
-                          if (_scheduleError != null) ...[
                             const SizedBox(height: AppSpacing.sm),
+                            AppTextField(
+                              controller: _course,
+                              maxLength: maxCourseLength,
+                              counterText: '',
+                              textInputAction: TextInputAction.next,
+                              labelText: 'Course or subject (optional)',
+                              hintText: 'e.g. COMP 2101',
+                              prefixIcon: Icons.school_outlined,
+                              textCapitalization: TextCapitalization.characters,
+                              validator: validateCourse,
+                            ),
+                            if (widget.existingCourses.isNotEmpty)
+                              Padding(
+                                padding: const EdgeInsets.only(
+                                  top: AppSpacing.xs,
+                                ),
+                                child: Wrap(
+                                  spacing: AppSpacing.xs,
+                                  runSpacing: AppSpacing.xs,
+                                  children: <Widget>[
+                                    for (final course
+                                        in widget.existingCourses.take(8))
+                                      ActionChip(
+                                        avatar: const Icon(
+                                          Icons.school_outlined,
+                                          size: 16,
+                                        ),
+                                        label: Text(course),
+                                        tooltip: 'Use subject $course',
+                                        onPressed: () => setState(() {
+                                          _course.text = course;
+                                        }),
+                                      ),
+                                  ],
+                                ),
+                              ),
+                            const SizedBox(height: AppSpacing.md),
+                            Text(
+                              'Tags (optional)',
+                              style: theme.textTheme.labelLarge?.copyWith(
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            const SizedBox(height: AppSpacing.xs),
+                            if (_tags.isNotEmpty)
+                              Padding(
+                                padding: const EdgeInsets.only(
+                                  bottom: AppSpacing.sm,
+                                ),
+                                child: Wrap(
+                                  spacing: AppSpacing.xs,
+                                  runSpacing: AppSpacing.xs,
+                                  children: <Widget>[
+                                    for (final tag in _tags)
+                                      InputChip(
+                                        label: Text(tag),
+                                        onDeleted: () => _removeTag(tag),
+                                        deleteButtonTooltipMessage:
+                                            'Remove tag $tag',
+                                      ),
+                                  ],
+                                ),
+                              ),
                             Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: <Widget>[
-                                Icon(
-                                  Icons.error_outline_rounded,
-                                  size: 18,
-                                  color: theme.colorScheme.error,
+                                Expanded(
+                                  child: AppTextField(
+                                    controller: _tag,
+                                    useFormField: false,
+                                    hintText: 'Add a tag, then press Enter',
+                                    prefixIcon: Icons.sell_outlined,
+                                    textInputAction: TextInputAction.done,
+                                    textCapitalization:
+                                        TextCapitalization.sentences,
+                                    maxLength: maxTagLength,
+                                    counterText: '',
+                                    onFieldSubmitted: _addTag,
+                                    errorText: _tagError,
+                                  ),
                                 ),
                                 const SizedBox(width: AppSpacing.xs),
-                                Expanded(
-                                  child: Text(
-                                    _scheduleError!,
-                                    style: theme.textTheme.bodySmall?.copyWith(
-                                      color: theme.colorScheme.error,
+                                IconButton.filledTonal(
+                                  tooltip: 'Add tag',
+                                  onPressed: _addTag,
+                                  icon: const Icon(Icons.add_rounded),
+                                ),
+                              ],
+                            ),
+                            if (widget.existingTags.any(
+                              (tag) => !_tags.any(
+                                (selected) =>
+                                    selected.toLowerCase() == tag.toLowerCase(),
+                              ),
+                            ))
+                              Padding(
+                                padding: const EdgeInsets.only(
+                                  top: AppSpacing.xs,
+                                ),
+                                child: Wrap(
+                                  spacing: AppSpacing.xs,
+                                  runSpacing: AppSpacing.xs,
+                                  children: <Widget>[
+                                    for (final tag
+                                        in widget.existingTags
+                                            .where(
+                                              (tag) => !_tags.any(
+                                                (selected) =>
+                                                    selected.toLowerCase() ==
+                                                    tag.toLowerCase(),
+                                              ),
+                                            )
+                                            .take(6))
+                                      ActionChip(
+                                        label: Text('#$tag'),
+                                        onPressed: () => _addTag(tag),
+                                      ),
+                                  ],
+                                ),
+                              ),
+                            const SizedBox(height: AppSpacing.sm),
+                            AppTextField(
+                              controller: _notes,
+                              maxLength: maxNotesLength,
+                              counterText: '',
+                              maxLines: 3,
+                              minLines: 2,
+                              labelText: 'Notes (optional)',
+                              hintText: 'Add context, links or a quick plan',
+                              textCapitalization: TextCapitalization.sentences,
+                              validator: validateNotes,
+                            ),
+                            const SizedBox(height: AppSpacing.md),
+                            Text(
+                              'Priority',
+                              style: theme.textTheme.labelLarge?.copyWith(
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            const SizedBox(height: AppSpacing.xs),
+                            SegmentedButton<TaskPriority>(
+                              segments: TaskPriority.values
+                                  .map(
+                                    (priority) => ButtonSegment<TaskPriority>(
+                                      value: priority,
+                                      label: Text(priority.label),
                                     ),
+                                  )
+                                  .toList(growable: false),
+                              selected: <TaskPriority>{_priority},
+                              onSelectionChanged: (selection) {
+                                setState(() => _priority = selection.first);
+                              },
+                            ),
+                            const SizedBox(height: AppSpacing.md),
+                            Text(
+                              'Schedule',
+                              style: theme.textTheme.labelLarge?.copyWith(
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            const SizedBox(height: AppSpacing.xs),
+                            Row(
+                              children: <Widget>[
+                                Expanded(
+                                  child: AppButton(
+                                    label: _dueDate == null
+                                        ? 'Set due date'
+                                        : 'Due ${formatTaskDate(_dueDate!)}',
+                                    icon: Icons.event_outlined,
+                                    onPressed: _setDueDate,
+                                    variant: AppButtonVariant.outline,
+                                    expand: true,
+                                  ),
+                                ),
+                                const SizedBox(width: AppSpacing.sm),
+                                Expanded(
+                                  child: AppButton(
+                                    label: _reminderAt == null
+                                        ? 'Set reminder'
+                                        : 'Remind ${formatTaskDate(_reminderAt!)}',
+                                    icon: Icons.notifications_outlined,
+                                    onPressed: _setReminder,
+                                    variant: AppButtonVariant.outline,
+                                    expand: true,
                                   ),
                                 ),
                               ],
                             ),
+                            if (_dueDate != null)
+                              Align(
+                                alignment: Alignment.centerRight,
+                                child: TextButton.icon(
+                                  onPressed: () => setState(() {
+                                    _dueDate = null;
+                                    _scheduleError = null;
+                                  }),
+                                  icon: const Icon(
+                                    Icons.event_busy_outlined,
+                                    size: 18,
+                                  ),
+                                  label: const Text('Clear due date'),
+                                ),
+                              ),
+                            if (_reminderAt != null)
+                              Align(
+                                alignment: Alignment.centerRight,
+                                child: TextButton.icon(
+                                  onPressed: () => setState(() {
+                                    _reminderAt = null;
+                                    _scheduleError = null;
+                                  }),
+                                  icon: const Icon(
+                                    Icons.notifications_off_outlined,
+                                    size: 18,
+                                  ),
+                                  label: const Text('Clear reminder'),
+                                ),
+                              ),
+                            if (_scheduleError != null) ...[
+                              const SizedBox(height: AppSpacing.sm),
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: <Widget>[
+                                  Icon(
+                                    Icons.error_outline_rounded,
+                                    size: 18,
+                                    color: theme.colorScheme.error,
+                                  ),
+                                  const SizedBox(width: AppSpacing.xs),
+                                  Expanded(
+                                    child: Text(
+                                      _scheduleError!,
+                                      style: theme.textTheme.bodySmall
+                                          ?.copyWith(
+                                            color: theme.colorScheme.error,
+                                          ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
                           ],
-                        ],
+                        ),
                       ),
                     ),
                   ),
-                ),
-                Container(
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.surface,
-                    border: Border(
-                      top: BorderSide(color: theme.colorScheme.outlineVariant),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.surface,
+                      border: Border(
+                        top: BorderSide(
+                          color: theme.colorScheme.outlineVariant,
+                        ),
+                      ),
+                    ),
+                    padding: const EdgeInsets.fromLTRB(
+                      AppSpacing.xl,
+                      AppSpacing.md,
+                      AppSpacing.xl,
+                      AppSpacing.lg,
+                    ),
+                    child: Wrap(
+                      alignment: WrapAlignment.end,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      spacing: AppSpacing.sm,
+                      runSpacing: AppSpacing.sm,
+                      children: <Widget>[
+                        TextButton(
+                          onPressed: _requestClose,
+                          child: const Text('Cancel'),
+                        ),
+                        AppButton(
+                          label: _isEditing ? 'Save changes' : 'Create task',
+                          onPressed: _save,
+                          icon: _isEditing
+                              ? Icons.check_rounded
+                              : Icons.add_rounded,
+                        ),
+                      ],
                     ),
                   ),
-                  padding: const EdgeInsets.fromLTRB(
-                    AppSpacing.xl,
-                    AppSpacing.md,
-                    AppSpacing.xl,
-                    AppSpacing.lg,
-                  ),
-                  child: Wrap(
-                    alignment: WrapAlignment.end,
-                    crossAxisAlignment: WrapCrossAlignment.center,
-                    spacing: AppSpacing.sm,
-                    runSpacing: AppSpacing.sm,
-                    children: <Widget>[
-                      TextButton(
-                        onPressed: () => Navigator.of(context).pop(),
-                        child: const Text('Cancel'),
-                      ),
-                      AppButton(
-                        label: _isEditing ? 'Save changes' : 'Create task',
-                        onPressed: _save,
-                        icon: _isEditing
-                            ? Icons.check_rounded
-                            : Icons.add_rounded,
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),

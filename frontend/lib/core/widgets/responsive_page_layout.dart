@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../theme/app_spacing.dart';
+
 /// A layout wrapper that provides consistent responsive behavior across pages.
 /// Handles max-width constraints, padding, and empty state routing.
 class ResponsivePageLayout extends StatelessWidget {
@@ -27,9 +29,14 @@ class ResponsivePageLayout extends StatelessWidget {
       appBar: showAppBar ? _buildAppBar(context) : null,
       body: Center(
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1120),
+          constraints: const BoxConstraints(maxWidth: AppSizes.maxContentWidth),
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 24, 16, 16),
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.lg,
+              AppSpacing.xl,
+              AppSpacing.lg,
+              AppSpacing.lg,
+            ),
             child: child,
           ),
         ),

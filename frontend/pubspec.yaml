@@ -52,8 +52,12 @@ dev_dependencies:
   integration_test:
     sdk: flutter
 
+  flutter_driver:
+    sdk: flutter
+
   # Static analysis and linting.
   flutter_lints: ^6.0.0
+
 
 # Flutter-specific configuration.
 flutter:
@@ -63,14 +67,3 @@ flutter:
   assets:
     - assets/videos/auth_bg.mp4
 
-  fonts:
-    - family: Inter
-      fonts:
-        - asset: assets/fonts/Inter-Regular.ttf
-          weight: 400
-        - asset: assets/fonts/Inter-Medium.ttf
-          weight: 500
-        - asset: assets/fonts/Inter-SemiBold.ttf
-          weight: 600
-        - asset: assets/fonts/Inter-Bold.ttf
-          weight: 700

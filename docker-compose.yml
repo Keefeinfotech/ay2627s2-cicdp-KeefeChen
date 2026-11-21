@@ -50,6 +50,26 @@ services:
       retries: 5
 
   # ------------------------------------------------------------------
+  # Notification Service (prototype extraction candidate): standalone
+  # delivery service for reminder/notification emails. The backend calls it
+  # at NOTIFICATION_SERVICE_URL; when it is down the backend fails open
+  # (notification logged and dropped). See docs/microservices-prototype.md.
+  # ------------------------------------------------------------------
+  notification-service:
+    build:
+      context: ./backend/prototype/notification-service
+      dockerfile: Dockerfile
+    container_name: auxilia-notification-service
+    restart: unless-stopped
+    ports:
+      - "3100:3100"
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:3100/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  # ------------------------------------------------------------------
   # Backend API
   # ------------------------------------------------------------------
   backend:
@@ -65,6 +85,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      notification-service:
+        condition: service_healthy
     ports:
       - "3000:3000"
     environment:
@@ -72,6 +94,7 @@ services:
       PORT: 3000
       MONGODB_URI: mongodb://mongodb:27017/auxilia
       REDIS_URL: redis://redis:6379
+      NOTIFICATION_SERVICE_URL: http://notification-service:3100
       # Development-only default so a fresh clone works out of the box.
       # REQUIRED in real deployments: set JWT_SECRET (>= 16 chars) in .env or
       # the environment before exposing the stack.
@@ -154,10 +177,12 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
 
   # ------------------------------------------------------------------
-  # Monitoring (optional): Prometheus + Grafana for the backend.
+  # Monitoring (optional): Prometheus + Alertmanager + Grafana for the backend.
   # Start with:  docker compose --profile monitoring up -d
   # Grafana: http://localhost:3001  (admin / ${GRAFANA_ADMIN_PASSWORD:-admin})
   # Prometheus: http://localhost:9090
+  # Alertmanager: http://localhost:9093  (delivery is a placeholder — see
+  #   monitoring/alertmanager.yml to wire a real webhook/Slack/PagerDuty)
   # Never expose these ports or the METRICS_TOKEN publicly; the scrape
   # token above is a local-demo default, override it for anything real.
   # ------------------------------------------------------------------
@@ -172,7 +197,23 @@ services:
       - "9090:9090"
     volumes:
       - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./monitoring/prometheus-alerts.yml:/etc/prometheus/prometheus-alerts.yml:ro
+      - ./monitoring/prometheus-slo.yml:/etc/prometheus/prometheus-slo.yml:ro
       - prometheus_data:/prometheus
+
+  alertmanager:
+    image: prom/alertmanager:v0.27.0
+    container_name: auxilia-alertmanager
+    profiles: ["monitoring"]
+    restart: unless-stopped
+    ports:
+      - "9093:9093"
+    volumes:
+      - ./monitoring/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - alertmanager_data:/alertmanager
+    command:
+      - --config.file=/etc/alertmanager/alertmanager.yml
+      - --storage.path=/alertmanager
 
   grafana:
     image: grafana/grafana:11.3.0
@@ -195,5 +236,6 @@ services:
 volumes:
   mongodb_data:
   prometheus_data:
+  alertmanager_data:
   grafana_data:
   jenkins_home:
