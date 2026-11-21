@@ -91,7 +91,12 @@ describe("sync push idempotency and retry", () => {
 
     expect(mocks.createTask).toHaveBeenCalledOnce();
     expect(mocks.findOneAndUpdate).toHaveBeenCalledWith(
-      { userId: "user-1", opId: "op-1", status: "failed", updatedAt },
+      {
+        userId: { $eq: "user-1" },
+        opId: { $eq: "op-1" },
+        status: "failed",
+        updatedAt,
+      },
       { $set: { status: "applied", detail: { taskId: "task-2" } } },
       { new: true },
     );

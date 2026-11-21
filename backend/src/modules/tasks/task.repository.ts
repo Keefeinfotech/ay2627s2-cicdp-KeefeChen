@@ -4,6 +4,8 @@
  * Author: Keefe Chen
  */
 
+import { requireString } from "../../shared/utils/queryGuard.js";
+
 import { Task } from "./task.model.js";
 
 import type {
@@ -14,6 +16,58 @@ import type {
   UpdateTaskInput,
   TaskSortField,
 } from "./task.types.js";
+
+/**
+ * Builds an update document from an allow-list of task fields. Property names
+ * are fixed in code and every value is coerced to a scalar before it reaches
+ * MongoDB, so a client cannot smuggle query operators into `$set`.
+ */
+const taskUpdateFields = (input: UpdateTaskInput): Record<string, unknown> => {
+  const set: Record<string, unknown> = {};
+  if (input.title !== undefined) set.title = requireString(input.title, "title");
+  if (input.description !== undefined) {
+    set.description =
+      input.description === null
+        ? null
+        : requireString(input.description, "description");
+  }
+  if (input.course !== undefined) {
+    set.course = requireString(input.course, "course");
+  }
+  if (input.tags !== undefined) {
+    set.tags = input.tags.map((tag) => requireString(tag, "tag"));
+  }
+  if (input.groupId !== undefined) {
+    set.groupId =
+      input.groupId === null ? null : requireString(input.groupId, "group ID");
+  }
+  if (input.assigneeId !== undefined) {
+    set.assigneeId =
+      input.assigneeId === null
+        ? null
+        : requireString(input.assigneeId, "assignee ID");
+  }
+  if (input.assigneeName !== undefined) {
+    set.assigneeName =
+      input.assigneeName === null
+        ? null
+        : requireString(input.assigneeName, "assignee name");
+  }
+  if (input.reminderAt !== undefined) {
+    set.reminderAt =
+      input.reminderAt === null ? null : new Date(input.reminderAt);
+  }
+  if (input.priority !== undefined) {
+    set.priority = requireString(input.priority, "priority");
+  }
+  if (input.status !== undefined) {
+    set.status = requireString(input.status, "status");
+  }
+  if (input.dueDate !== undefined) {
+    set.dueDate = input.dueDate === null ? null : new Date(input.dueDate);
+  }
+  return set;
+};
 
 export const taskRepository = {
   /**
@@ -195,7 +249,7 @@ export const taskRepository = {
     return Task.findOneAndUpdate(
       filter,
       {
-        $set: fields,
+        $set: taskUpdateFields(fields),
       },
       {
         new: true,

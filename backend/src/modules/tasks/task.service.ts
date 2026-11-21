@@ -5,6 +5,7 @@
  */
 
 import { AppError } from "../../shared/utils/AppError.js";
+import { literal } from "../../shared/utils/queryGuard.js";
 
 import { taskRepository } from "./task.repository.js";
 import { requireGroupMembership } from "../groups/shared/membership.js";
@@ -59,8 +60,8 @@ async function assertValidAssignment(
     }
 
     const membership = await Member.findOne({
-      groupId,
-      userId: assigneeId,
+      groupId: literal(groupId),
+      userId: literal(assigneeId),
       status: "ACTIVE",
     })
       .select("_id")

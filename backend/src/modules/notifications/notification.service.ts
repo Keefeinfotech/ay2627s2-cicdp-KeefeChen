@@ -4,6 +4,8 @@
  * Author: Keefe Chen
  */
 
+import { literal, requireString } from "../../shared/utils/queryGuard.js";
+
 import {
   Notification,
   NotificationDevice,
@@ -106,8 +108,9 @@ export const notificationService = {
     userId: string,
     input: { token: string; platform: "ios" | "android" | "web" },
   ) {
+    const token = requireString(input.token, "device token");
     return NotificationDevice.findOneAndUpdate(
-      { userId, token: input.token },
+      { userId: literal(userId), token: literal(token) },
       { $set: { platform: input.platform } },
       { new: true, upsert: true, setDefaultsOnInsert: true },
     ).lean();

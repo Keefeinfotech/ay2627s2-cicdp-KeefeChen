@@ -4,6 +4,8 @@
  * Author: Keefe Chen
  */
 
+import { requireString } from "../../shared/utils/queryGuard.js";
+
 import { User, type UserRecord } from "./user.model.js";
 
 import type { CreateUserInput, UpdateOwnProfileInput } from "./user.types.js";
@@ -153,7 +155,8 @@ export const userRepository = {
         deletedAt: null,
       },
       {
-        $set: input,
+        // Fixed allow-list: never spread client input into `$set`.
+        $set: { name: requireString(input.name, "name") },
       },
       {
         new: true,

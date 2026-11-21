@@ -12,10 +12,21 @@ import {
 import { createTaskDraft, type ConversationTurn } from "../ai/ai.service.js";
 import { taskService } from "../tasks/task.service.js";
 import { AppError } from "../../shared/utils/AppError.js";
+import { literal, requireString } from "../../shared/utils/queryGuard.js";
 
 import type { DraftEdits } from "./assistant.validation.js";
 
 const DRAFT_TTL_MS = 30 * 60 * 1000;
+
+/** Only these draft fields may be overwritten by a client-supplied edit. */
+const EDITABLE_DRAFT_FIELDS = [
+  "title",
+  "description",
+  "course",
+  "dueDate",
+  "priority",
+  "tags",
+] as const;
 
 interface InterpretInput {
   message: string;
@@ -45,7 +56,9 @@ const applyEdits = (
   const base = { ...(draft ?? {}) };
   if (!edits) return base;
 
-  for (const [key, value] of Object.entries(edits)) {
+  // Allow-list the property names: never write to a key chosen by the client.
+  for (const key of EDITABLE_DRAFT_FIELDS) {
+    const value = edits[key];
     if (value !== undefined) base[key] = value;
   }
   return base;
@@ -160,9 +173,10 @@ export const assistantService = {
 
   /** Discard a pending draft without creating anything. */
   async cancel(userId: string, input: { draftId: string }) {
+    const draftId = requireString(input.draftId, "draft ID");
     const draft = await AssistantDraft.findOne({
-      _id: input.draftId,
-      userId,
+      _id: literal(draftId),
+      userId: literal(userId),
       status: "pending",
     });
     if (!draft) {
@@ -218,9 +232,10 @@ export const assistantService = {
     userId: string,
     draftId: string,
   ): Promise<AssistantDraftRecord & { save: () => Promise<unknown> }> {
+    const id = requireString(draftId, "draft ID");
     const draft = await AssistantDraft.findOne({
-      _id: draftId,
-      userId,
+      _id: literal(id),
+      userId: literal(userId),
       status: "pending",
     });
     if (!draft) {

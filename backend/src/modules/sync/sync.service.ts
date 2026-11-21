@@ -8,6 +8,7 @@ import type { ISyncRepository } from "./sync.repository.js";
 import { SyncOperation } from "./sync-operation.model.js";
 import { taskService } from "../tasks/task.service.js";
 import { AppError } from "../../shared/utils/AppError.js";
+import { literal, requireString } from "../../shared/utils/queryGuard.js";
 
 import type {
   SyncChangesResult,
@@ -54,9 +55,11 @@ export class SyncService {
     const results: SyncOperationResult[] = [];
 
     for (const operation of operations) {
+      const opId = requireString(operation.opId, "operation ID");
+      const owner = literal(userId);
       const existing = await SyncOperation.findOne({
-        userId,
-        opId: operation.opId,
+        userId: owner,
+        opId: literal(opId),
       }).lean();
 
       // Terminal outcomes are returned verbatim: no operation is applied twice.
@@ -78,8 +81,8 @@ export class SyncService {
       if (existing) {
         const updated = await SyncOperation.findOneAndUpdate(
           {
-            userId,
-            opId: operation.opId,
+            userId: owner,
+            opId: literal(opId),
             status: "failed",
             updatedAt: existing.updatedAt,
           },
@@ -90,8 +93,8 @@ export class SyncService {
         if (!updated) {
           // Another worker changed the entry first; its stored result wins.
           const stored = await SyncOperation.findOne({
-            userId,
-            opId: operation.opId,
+            userId: owner,
+            opId: literal(opId),
           }).lean();
           if (stored) {
             results.push({
@@ -134,8 +137,8 @@ export class SyncService {
           (error as { code?: number }).code === 11000
         ) {
           const stored = await SyncOperation.findOne({
-            userId,
-            opId: operation.opId,
+            userId: owner,
+            opId: literal(opId),
           }).lean();
           if (stored) {
             results.push({
