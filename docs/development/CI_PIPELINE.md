@@ -6,8 +6,7 @@
 
 | Name | Type | Where | Purpose | If missing |
 |---|---|---|---|---|
-| `SONAR_TOKEN` | Secret | Settings → Secrets → Actions | Authenticates the single SonarQube-family quality gate | Analysis step is skipped with a warning; the job stays green (needed for fork PRs where secrets are unavailable) |
-| `SONAR_HOST_URL` | Variable (optional) | Settings → Variables → Actions | Sonar server URL; defaults to `https://sonarcloud.io` | Uses SonarCloud automatically |
+| *(none)* | — | — | The Sonar quality gate uses the automatically provided `GITHUB_TOKEN` to read SonarCloud's check run and quality gate | A stale `SONAR_TOKEN` secret is ignored; no secret needs rotating |
 | `CODE_SCANNING_ENABLED` | Variable (optional) | Settings → Variables → Actions | Set to `true` to enable SARIF upload on private repos with GHAS | CodeQL still analyzes; upload disabled |
 | `RENDER_API_BASE_URL` | Variable | Settings → Variables → Actions | Used by `deploy-production.yml`, not by CI itself | Unrelated to this workflow |
 
@@ -38,5 +37,5 @@ There is **no Maven/Gradle build in this repository** (Flutter + Node/TypeScript
 
 - **Trivy** now scans the exact backend/frontend images built in Stage 2, loaded from uploaded tar artifacts. It no longer builds images itself before compilation.
 - **Performance** is no longer a standalone `workflow_dispatch` job. The E2E job runs a curl-based p95 probe against the live `/api/health` endpoint while the compose stack is up, then runs the repo's existing error-budget smoke (`npm run test:performance`). Containers are torn down in `if: always()`.
-- **SonarCloud duplicate removed**: one job named `sonarqube-quality-gate` runs the scanner with `sonar.qualitygate.wait=true`, consuming the backend coverage artifact. `sonarqube-automatic` (the check-run poll) is gone.
+- **SonarCloud duplicate removed**: one job named `sonarqube-quality-gate` enforces the quality gate. It verifies the `SonarCloud Code Analysis` check run posted for the commit (falling back to the project's quality-gate API) using `GITHUB_TOKEN`, so no scanner token is required. The previous scanner-based job and the separate `sonarqube-automatic` poll are both gone.
 - The Final Gate treats `skipped` as success only for the two PR-only jobs on non-PR events; any `failure`, `cancelled`, or unexpected `skipped` fails the gate.
