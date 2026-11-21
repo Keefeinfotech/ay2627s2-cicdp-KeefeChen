@@ -44,6 +44,9 @@ import syncRoutes from "./modules/sync/index.js";
 import reminderRoutes from "./modules/reminders/reminder.routes.js";
 import adminRoutes from "./modules/admin/admin.routes.js";
 import analyticsRoutes from "./modules/analytics/analytics.routes.js";
+import notificationRoutes from "./modules/notifications/notification.routes.js";
+import preferenceRoutes from "./modules/preferences/preference.routes.js";
+import assistantRoutes from "./modules/assistant/assistant.routes.js";
 import {
   metricsMiddleware,
   metricsGuard,
@@ -165,6 +168,9 @@ apiRouter.use("/reminders", reminderRoutes);
 apiRouter.use("/sync", syncRoutes);
 apiRouter.use("/admin", adminRoutes);
 apiRouter.use("/analytics", analyticsRoutes);
+apiRouter.use("/notifications", notificationRoutes);
+apiRouter.use("/preferences", preferenceRoutes);
+apiRouter.use("/assistant", assistantRoutes);
 
 // Mount the shared router at the canonical versioned prefix and the legacy one.
 app.use("/api/v1", apiRouter);

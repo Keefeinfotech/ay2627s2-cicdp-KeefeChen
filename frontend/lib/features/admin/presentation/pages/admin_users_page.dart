@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../../../../core/widgets/app_card.dart';
+import '../../../../core/widgets/app_loading.dart';
+import '../../../../core/widgets/app_dialog.dart';
 import '../../../../core/widgets/app_snackbar.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
@@ -74,6 +76,21 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
 
   Future<void> _toggleStatus(AdminUserSummary user) async {
     final next = user.status == 'active' ? 'disabled' : 'active';
+
+    if (next == 'disabled') {
+      final confirmed = await showAppConfirmDialog(
+        context,
+        title: 'Deactivate ${user.name}?',
+        message:
+            'The user will no longer be able to sign in until reactivated. '
+            'Their tasks and data are kept.',
+        confirmLabel: 'Deactivate',
+        destructive: true,
+        icon: Icons.person_off_outlined,
+      );
+      if (!confirmed || !mounted) return;
+    }
+
     setState(() => _busyUserId = user.id);
     try {
       await _repository.updateUserStatus(user.id, next);
@@ -124,6 +141,7 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
                         ? null
                         : IconButton(
                             icon: const Icon(Icons.clear_rounded),
+                            tooltip: 'Clear search',
                             onPressed: () {
                               _searchController.clear();
                               setState(() {
@@ -156,7 +174,9 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
                     future: _future,
                     builder: (context, snapshot) {
                       if (snapshot.connectionState != ConnectionState.done) {
-                        return const Center(child: CircularProgressIndicator());
+                        return const SingleChildScrollView(
+                          child: TaskListSkeleton(itemCount: 6),
+                        );
                       }
                       if (snapshot.hasError) {
                         final error = snapshot.error;
@@ -353,7 +373,7 @@ class _UserRow extends StatelessWidget {
           'Joined ${_formatDate(user.createdAt)} · '
           'Last login ${_formatDate(user.lastLoginAt)}',
           style: theme.textTheme.bodySmall?.copyWith(
-            fontSize: 11,
+            fontSize: 12,
             color: theme.colorScheme.onSurfaceVariant,
           ),
         ),
@@ -440,7 +460,7 @@ class _Pill extends StatelessWidget {
       child: Text(
         label,
         style: TextStyle(
-          fontSize: 10,
+          fontSize: 12,
           fontWeight: FontWeight.w700,
           color: tone,
           letterSpacing: 0.4,

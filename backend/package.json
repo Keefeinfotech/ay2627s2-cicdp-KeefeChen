@@ -24,6 +24,7 @@
     "validate:collections:dry-run": "tsx scripts/apply-validation-rules.ts --dry-run",
     "seed:demo": "tsx scripts/seed-admin-demo.ts",
     "migrate:user-ids": "tsx scripts/migrate-user-ids.ts",
+    "migrate:reminder-user-ids": "tsx scripts/migrate-reminder-user-ids.ts",
     "test:mongodb": "vitest run tests/mongodb",
     "test:mutate": "stryker run"
   },

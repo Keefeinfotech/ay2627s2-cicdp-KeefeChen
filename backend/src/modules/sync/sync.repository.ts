@@ -57,6 +57,7 @@ export class SyncRepository implements ISyncRepository {
       dueDate: document.dueDate,
       completedAt: document.completedAt,
       deletedAt: document.deletedAt ?? null,
+      isDeleted: Boolean(document.deletedAt),
       updatedAt: document.updatedAt,
       createdAt: document.createdAt,
     }));

@@ -1,0 +1,420 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>Auxilia – Command Center (Round 5 · Direction C)</title>
+<meta name="description" content="Auxilia, Help Anywhere, Learn Together. A high-density dark command interface for students who want their whole week in one glance.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%2360A5FA'/><path d='M28 55l14 14 30-32' stroke='%230B1220' stroke-width='9' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://images.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,400;0,500;0,700;1,400&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0B1220; --surface:#111A2C; --surface-2:#182338; --line:#22304A; --line-2:#2E3F5C;
+  --ink:#E6ECF5; --ink-2:#8CA0BC; --blue:#60A5FA; --blue-strong:#38BDF8; --green:#34D399; --green-tint:rgba(52,211,153,.12);
+  --amber:#FBBF24; --red:#F87171; --red-tint:rgba(248,113,113,.12);
+  --mono:'Roboto Mono',ui-monospace,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:Roboto,system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:13px;line-height:1.45;-webkit-font-smoothing:antialiased}
+:focus-visible{outline:2px solid var(--blue);outline-offset:2px;border-radius:3px}
+button{font-family:inherit;cursor:pointer;color:inherit}
+.icon{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.eyebrow{font-size:10px;letter-spacing:1.6px;text-transform:uppercase;color:var(--ink-2);font-weight:500}
+
+/* ============ AUTH ============ */
+#auth-screen{min-height:100dvh;display:grid;grid-template-columns:1fr 460px}
+.auth-left{padding:48px;display:flex;flex-direction:column;justify-content:space-between;background:radial-gradient(800px 500px at 30% 20%, rgba(96,165,250,.12), transparent 60%)}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:17px;letter-spacing:.2px}
+.brand-badge{width:32px;height:32px;border-radius:8px;background:var(--blue);display:grid;place-items:center}
+.brand-badge .icon{stroke:#0B1220;stroke-width:2.2}
+.terminal{background:#060B16;border:1px solid var(--line);border-radius:12px;padding:18px 20px;max-width:520px;font-family:var(--mono);font-size:12.5px;color:#9FE8C0}
+.terminal .dim{color:var(--ink-2)}
+.terminal .blue{color:var(--blue)}
+.auth-left h1{font-size:40px;font-weight:500;letter-spacing:-1px;line-height:1.15;margin:0 0 14px;max-width:16ch}
+.auth-left h1 em{font-style:normal;color:var(--blue)}
+.auth-right{background:var(--surface);border-left:1px solid var(--line);display:flex;align-items:center;justify-content:center;padding:40px}
+.auth-card{width:100%;max-width:360px}
+.auth-card h2{margin:0 0 4px;font-size:20px;font-weight:500}
+.auth-card .sub{color:var(--ink-2);margin:0 0 24px;font-size:13px}
+.tabs-inline{display:flex;background:var(--surface-2);border-radius:8px;padding:3px;margin-bottom:20px}
+.tabs-inline button{flex:1;border:0;background:transparent;color:var(--ink-2);border-radius:6px;padding:9px;font-size:13px}
+.tabs-inline button[aria-selected="true"]{background:var(--line);color:var(--ink)}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:11px;letter-spacing:.5px;text-transform:uppercase;color:var(--ink-2);margin-bottom:6px}
+.field input{width:100%;background:var(--surface-2);border:1px solid var(--line);color:var(--ink);border-radius:8px;padding:11px 12px;font-size:13px;font-family:var(--mono)}
+.field input:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(96,165,250,.15)}
+.field .err{display:none;color:var(--red);font-size:11px;margin-top:5px}
+.field.invalid input{border-color:var(--red)}
+.field.invalid .err{display:block}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:8px;font-weight:600;font-size:13px;padding:11px 18px;border:1px solid transparent;letter-spacing:.2px}
+.btn-primary{background:var(--blue);color:#0B1220}
+.btn-primary:hover{background:#93C5FD}
+.btn-outline{background:transparent;border-color:var(--line-2);color:var(--ink)}
+.btn-outline:hover{border-color:var(--blue);color:var(--blue)}
+.btn-block{width:100%}
+.form-error{display:none;background:var(--red-tint);color:var(--red);border:1px solid rgba(248,113,113,.35);border-radius:8px;padding:10px 12px;font-size:12px;margin-bottom:12px}
+.fineprint{font-size:11px;color:var(--ink-2);margin-top:16px;text-align:center}
+
+/* ============ SHELL ============ */
+#app{display:none;min-height:100dvh}
+#app.visible{display:grid;grid-template-columns:64px 1fr}
+.rail{background:var(--surface);border-right:1px solid var(--line);display:flex;flex-direction:column;align-items:center;padding:14px 0;gap:4px;position:sticky;top:0;height:100dvh}
+.rail .brand-badge{width:38px;height:38px;margin-bottom:14px}
+.rail button{width:44px;height:44px;border:0;background:transparent;border-radius:10px;color:var(--ink-2);display:grid;place-items:center;position:relative}
+.rail button:hover{background:var(--surface-2);color:var(--ink)}
+.rail button[aria-current="page"]{background:var(--surface-2);color:var(--blue)}
+.rail button[aria-current="page"]::before{content:"";position:absolute;left:-10px;top:10px;bottom:10px;width:3px;border-radius:2px;background:var(--blue)}
+.rail .spacer{flex:1}
+.main{min-width:0}
+.topbar{height:52px;display:flex;align-items:center;gap:16px;padding:0 20px;border-bottom:1px solid var(--line);background:var(--surface)}
+.kbd-search{display:flex;align-items:center;gap:8px;background:var(--surface-2);border:1px solid var(--line);border-radius:6px;color:var(--ink-2);font-size:12px;padding:7px 12px;min-width:230px}
+.kbd-search kbd{background:var(--line);border-radius:4px;padding:1px 6px;font-family:var(--mono);font-size:10.5px;color:var(--ink)}
+.conn{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--green);margin-left:auto}
+.conn i{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green)}
+.content{padding:16px 20px 80px;max-width:1500px}
+.screen{display:none}
+.screen.active{display:block;animation:fade .2s ease-out}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+.workspace{display:grid;grid-template-columns:repeat(12,1fr);gap:12px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px}
+.panel h2{font-size:10px;letter-spacing:1.6px;text-transform:uppercase;color:var(--ink-2);margin:0 0 10px;font-weight:500}
+.span4{grid-column:span 4}.span5{grid-column:span 5}.span6{grid-column:span 6}.span7{grid-column:span 7}.span8{grid-column:span 8}.span12{grid-column:span 12}
+.stat-strip{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:12px}
+.kpi-cell{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.kpi-cell b{font-family:var(--mono);font-size:21px;font-weight:500;display:block}
+.kpi-cell span{font-size:10px;color:var(--ink-2);text-transform:uppercase;letter-spacing:1px}
+.task-row{display:flex;align-items:center;gap:10px;padding:8px 6px;border-radius:6px;border-bottom:1px solid var(--line)}
+.task-row:last-child{border-bottom:0}
+.task-row:hover{background:var(--surface-2)}
+.check{width:16px;height:16px;border-radius:4px;border:1.5px solid var(--line-2);background:transparent;flex:none;display:grid;place-items:center}
+.check[aria-pressed="true"]{background:var(--green);border-color:var(--green)}
+.check[aria-pressed="true"] svg{stroke:#0B1220;stroke-width:3.5}
+.task-row.done .t-title{color:var(--ink-2);text-decoration:line-through}
+.t-title{font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.t-meta{font-size:10.5px;color:var(--ink-2);display:flex;gap:8px;margin-top:1px}
+.tag{font-family:var(--mono);font-size:10px;color:var(--blue);background:rgba(96,165,250,.12);border-radius:4px;padding:0 5px}
+.prio{font-family:var(--mono);font-size:10px;padding:1px 5px;border-radius:3px}
+.p-high{color:var(--red);background:var(--red-tint)}.p-med{color:var(--amber);background:rgba(251,191,36,.12)}.p-low{color:var(--green);background:var(--green-tint)}
+.section-label{font-size:9px;letter-spacing:2px;color:var(--ink-2);text-transform:uppercase;margin:12px 4px 4px}
+.bar-row{display:grid;grid-template-columns:30px 1fr 22px;gap:8px;align-items:center;font-family:var(--mono);font-size:10.5px;color:var(--ink-2);margin:7px 0}
+.bar{height:8px;background:var(--surface-2);border-radius:2px;overflow:hidden}
+.bar>i{display:block;height:100%;background:var(--blue);transition:width .5s}
+.resume{border-color:rgba(96,165,250,.35)}
+.resume h3{margin:2px 0 6px;font-size:15px;font-weight:500}
+.resume p{margin:0;color:var(--ink-2);font-size:11.5px}
+.chip{border:1px solid var(--line-2);background:transparent;border-radius:4px;padding:3px 9px;font-family:var(--mono);font-size:10.5px;color:var(--ink-2)}
+.chip[aria-pressed="true"]{background:var(--blue);border-color:var(--blue);color:#0B1220;font-weight:500}
+.empty{text-align:center;padding:36px 16px;color:var(--ink-2)}
+.kpi{display:flex;justify-content:space-between;font-size:12px;padding:8px 2px;border-bottom:1px solid var(--line)}
+.kpi:last-child{border:0}
+.kpi span:last-child{font-family:var(--mono)}
+.table{width:100%;border-collapse:collapse;font-size:11.5px}
+.table th{text-align:left;font-size:9.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink-2);padding:6px 8px;border-bottom:1px solid var(--line-2)}
+.table td{padding:7px 8px;border-bottom:1px solid var(--line)}
+.table tr:hover td{background:var(--surface-2)}
+.log{font-family:var(--mono);font-size:10.5px;color:var(--ink-2);max-height:120px;overflow:auto}
+.log div{padding:2px 0}
+.log b{color:var(--blue)}
+
+/* assistant */
+.cli{display:grid;grid-template-columns:1fr 300px;gap:12px;height:calc(100dvh - 52px - 32px);min-height:520px}
+.chat{background:#060B16;border:1px solid var(--line);border-radius:10px;display:flex;flex-direction:column;overflow:hidden}
+.chat-log{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px;font-family:var(--mono);font-size:12px}
+.ml-user{color:var(--blue)} .ml-user::before{content:"you › ";color:var(--ink-2)}
+.ml-ai{color:#C8F0D4} .ml-ai::before{content:"aux › ";color:var(--ink-2)}
+.suggest{display:flex;flex-direction:column;gap:6px;margin-top:6px}
+.suggest button{background:transparent;border:1px solid var(--line-2);color:var(--blue);border-radius:6px;padding:6px 10px;font-family:var(--mono);font-size:11px;text-align:left}
+.suggest button:hover{background:var(--surface-2)}
+.preview-card{border:1px solid var(--blue);border-radius:8px;padding:12px;margin-top:8px;background:rgba(96,165,250,.05)}
+.preview-grid{display:grid;grid-template-columns:auto 1fr;gap:3px 12px;margin:8px 0;font-size:11px}
+.preview-grid span{color:var(--ink-2)}
+.chat-input{display:flex;border-top:1px solid var(--line)}
+.chat-input span{padding:14px 0 14px 16px;color:var(--ink-2);font-family:var(--mono)}
+.chat-input input{flex:1;background:transparent;border:0;color:#C8F0D4;font-family:var(--mono);font-size:12px;padding:14px 10px}
+.chat-input input:focus{outline:2px solid var(--blue);outline-offset:-2px;border-radius:4px}
+.side-note{font-size:11px;color:var(--ink-2)}
+
+#toast{position:fixed;bottom:24px;right:24px;background:var(--surface-2);border:1px solid var(--line-2);color:var(--ink);padding:10px 16px;border-radius:8px;font-size:12px;opacity:0;transform:translateY(8px);pointer-events:none;transition:all .22s;z-index:60}
+#toast.show{opacity:1;transform:none}
+
+#onboarding{position:fixed;inset:0;background:rgba(6,11,22,.85);z-index:50;display:none;align-items:center;justify-content:center;padding:20px}
+#onboarding.visible{display:flex}
+.ob-card{background:var(--surface);border:1px solid var(--line-2);border-radius:14px;max-width:440px;width:100%;padding:28px;text-align:center}
+.ob-card h2{margin:0 0 8px;font-weight:500}
+.ob-dots{display:flex;gap:6px;justify-content:center;margin:18px 0}
+.ob-dots i{width:14px;height:4px;border-radius:2px;background:var(--line-2)}
+.ob-dots i.on{background:var(--blue)}
+.ob-actions{display:flex;justify-content:space-between}
+
+.mobile-only{display:none}
+@media (max-width:1100px){.span4,.span5,.span6,.span7,.span8{grid-column:span 6}.cli{grid-template-columns:1fr}.cli .panel{display:none}.stat-strip{grid-template-columns:repeat(3,1fr)}}
+@media (max-width:860px){
+  #auth-screen{grid-template-columns:1fr}.auth-left{display:none}
+  #app.visible{grid-template-columns:1fr}.rail{display:none}.kbd-search{display:none}
+  .span4,.span5,.span6,.span7,.span8,.span12{grid-column:span 12}
+  .stat-strip{grid-template-columns:repeat(2,1fr);gap:8px}.content{padding:12px}
+  .mobile-only{display:flex;position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--line);height:56px;z-index:40}
+  .mobile-only button{flex:1;border:0;background:transparent;color:var(--ink-2);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:9px;gap:2px}
+  .mobile-only button[aria-current="page"]{color:var(--blue)}
+  body{padding-bottom:56px}
+}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+
+<!-- AUTH -->
+<main id="auth-screen" aria-label="Sign in to Auxilia">
+  <div class="auth-left">
+    <div class="brand"><span class="brand-badge"><svg class="icon" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg></span>AUXILIA</div>
+    <div>
+      <h1>One screen.<br>Whole semester.<br><em>Help Anywhere, Learn Together.</em></h1>
+      <div class="terminal" aria-hidden="true">
+        <div><span class="dim">$</span> auxilia status</div>
+        <div><span class="blue">›</span> 2 tasks due today · 1 overdue</div>
+        <div><span class="blue">›</span> COMP1511 A3 — 60% complete, due Fri 17:00</div>
+        <div><span class="blue">›</span> streak: 6 days · next: STAT2010 quiz Sat 09:00</div>
+      </div>
+    </div>
+    <p style="color:var(--ink-2);font-size:11px">AUXILIA v1.0 · TRUST BLUE BUILD · STUDENT EDITION</p>
+  </div>
+  <div class="auth-right">
+    <div class="auth-card">
+      <h2>Authenticate</h2>
+      <p class="sub">Access your command deck.</p>
+      <div class="tabs-inline" role="tablist">
+        <button role="tab" id="tab-login" aria-selected="true" onclick="setAuthMode('login')">Log in</button>
+        <button role="tab" id="tab-signup" aria-selected="false" onclick="setAuthMode('signup')">Sign up</button>
+      </div>
+      <div class="form-error" id="form-error" role="alert"></div>
+      <form id="auth-form" novalidate>
+        <div class="field" id="f-name" hidden><label for="name">Full name</label><input id="name" placeholder="Keefe Chen" autocomplete="name"><p class="err">Required.</p></div>
+        <div class="field" id="f-email"><label for="email">Student email</label><input id="email" type="email" required placeholder="you@university.edu" autocomplete="email"><p class="err">Valid email required.</p></div>
+        <div class="field" id="f-password"><label for="password">Password</label><input id="password" type="password" required minlength="8" placeholder="••••••••" autocomplete="current-password"><p class="err">Min 8 characters.</p></div>
+        <button class="btn btn-primary btn-block" id="auth-submit" type="submit" style="margin-top:6px">Authenticate</button>
+      </form>
+      <p class="fineprint">AUTH ENCRYPTED IN TRANSIT · DATA NEVER SOLD</p>
+    </div>
+  </div>
+</main>
+
+<!-- ONBOARDING -->
+<div id="onboarding" role="dialog" aria-modal="true" aria-labelledby="ob-title">
+  <div class="ob-card">
+    <div class="eyebrow" id="ob-step">Step 1 / 3</div>
+    <h2 id="ob-title">Deadline radar</h2>
+    <p id="ob-text" style="color:var(--ink-2);margin:0">Every course, every deadline, one prioritized board. Overdue items surface first.</p>
+    <div class="ob-dots" id="ob-dots"><i class="on"></i><i></i><i></i></div>
+    <div class="ob-actions"><button class="btn btn-outline" onclick="finishOnboarding()">Skip</button><button class="btn btn-primary" id="ob-next" onclick="nextOnboarding()">Next</button></div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <nav class="rail" aria-label="Primary navigation">
+    <span class="brand-badge"><svg class="icon" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg></span>
+    <button aria-current="page" data-nav="dashboard" aria-label="Dashboard" title="Dashboard"><svg class="icon" viewBox="0 0 24 24"><path d="M3 13h8V3H3zM13 21h8v-6h-8zM13 11h8V3h-8zM3 21h8v-4H3z"/></svg></button>
+    <button data-nav="tasks" aria-label="Tasks" title="Tasks"><svg class="icon" viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01"/></svg></button>
+    <button data-nav="assistant" aria-label="Assistant" title="Assistant (Ctrl+K)"><svg class="icon" viewBox="0 0 24 24"><path d="M12 3a4 4 0 0 0-4 4v1a4 4 0 0 0 8 0V7a4 4 0 0 0-4-4zM5 21v-2a5 5 0 0 1 5-5h4a5 5 0 0 1 5 5v2"/></svg></button>
+    <button data-nav="reminders" aria-label="Reminders" title="Reminders"><svg class="icon" viewBox="0 0 24 24"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 8-3 8h18s-3-1-3-8M13.7 21a2 2 0 0 1-3.4 0"/></svg></button>
+    <button data-nav="insights" aria-label="Insights" title="Insights"><svg class="icon" viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></button>
+    <div class="spacer"></div>
+    <button data-nav="profile" aria-label="Profile and settings" title="Settings"><svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
+  </nav>
+
+  <div class="main">
+    <header class="topbar">
+      <button class="kbd-search" onclick="showScreen('assistant')" aria-label="Search or command"><svg class="icon" viewBox="0 0 24 24" style="width:14px;height:14px"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>Command or ask anything…<kbd>CTRL K</kbd></button>
+      <span class="conn"><i></i>SYNCED · LOCAL QUEUE CLEAR</span>
+    </header>
+
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <section class="screen active" id="screen-dashboard" aria-label="Dashboard">
+        <div class="stat-strip" aria-label="Key metrics">
+          <div class="kpi-cell"><b class="num" id="st-todo">4</b><span>Open</span></div>
+          <div class="kpi-cell"><b class="num" id="st-today">2</b><span>Due today</span></div>
+          <div class="kpi-cell"><b class="num" style="color:var(--red)">1</b><span>Overdue</span></div>
+          <div class="kpi-cell"><b class="num" style="color:var(--green)">12</b><span>Done / wk</span></div>
+          <div class="kpi-cell"><b class="num" style="color:var(--blue)">78%</b><span>On-time</span></div>
+        </div>
+        <div class="workspace">
+          <div class="panel span7 resume"><h2>Resume</h2><h3>COMP1511 — Assignment 3 report</h3><p>60% complete · due Fri 17:00 · est. 3h remaining</p><button class="btn btn-primary" style="margin-top:10px;padding:8px 14px" onclick="toast('Opening task…')">Resume →</button></div>
+          <div class="panel span5"><h2>AI standby</h2><p style="margin:0 0 8px;color:var(--ink-2)">Try: “Remind me to submit A3 tomorrow at 4pm”</p><button class="btn btn-outline" style="padding:8px 12px" onclick="showScreen('assistant')">Open assistant</button></div>
+          <div class="panel span7"><h2>Today's queue</h2><div id="today-list"></div>
+            <form id="quick-add" style="display:flex;gap:8px;margin-top:10px"><input id="quick-input" placeholder="quick add…" aria-label="Quick add a task" style="flex:1;background:var(--surface-2);border:1px solid var(--line);color:var(--ink);border-radius:6px;padding:9px 10px;font-family:var(--mono);font-size:11px"><button class="btn btn-primary" type="submit" style="padding:8px 12px">ADD</button></form>
+          </div>
+          <div class="panel span5"><h2>Upcoming</h2>
+            <div class="kpi"><span>COMP1511 A3 report</span><span style="color:var(--red)">FRI 17:00</span></div>
+            <div class="kpi"><span>STAT2010 quiz 5</span><span style="color:var(--amber)">SAT 09:00</span></div>
+            <div class="kpi"><span>Internship application</span><span style="color:var(--green)">MON 28 NOV</span></div>
+            <h2 style="margin-top:14px">7-day throughput</h2>
+            <div id="mini-bars"></div>
+          </div>
+          <div class="panel span12"><h2>Activity log</h2><div class="log" id="activity-log"><div><b>09:12</b> completed “Buy groceries” (+10 XP)</div><div><b>YESTERDAY</b> completed “STAT2010 tut 6” (+10 XP)</div><div><b>YESTERDAY</b> streak extended to 6 days</div></div></div>
+        </div>
+      </section>
+
+      <!-- TASKS -->
+      <section class="screen" id="screen-tasks" aria-label="Tasks">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:12px;flex-wrap:wrap"><h1 style="margin:0;font-size:18px;font-weight:500">Task board</h1>
+          <div style="display:flex;gap:6px" id="tag-filters" role="group" aria-label="Filter by course">
+            <button class="chip" aria-pressed="true" data-tag="all">ALL</button>
+            <button class="chip" aria-pressed="false" data-tag="COMP1511">COMP1511</button>
+            <button class="chip" aria-pressed="false" data-tag="STAT2010">STAT2010</button>
+            <button class="chip" aria-pressed="false" data-tag="Internship">INTERNSHIP</button>
+            <button class="chip" aria-pressed="false" data-tag="Personal">PERSONAL</button>
+          </div>
+        </div>
+        <table class="table" id="task-table" aria-label="Task list"><thead><tr><th></th><th>Task</th><th>Tag</th><th>Pri</th><th>Due</th></tr></thead><tbody id="task-rows"></tbody></table>
+        <div class="empty" id="tasks-empty" hidden><b>QUEUE EMPTY</b><p>Nothing matches that filter.</p></div>
+      </section>
+
+      <!-- ASSISTANT -->
+      <section class="screen" id="screen-assistant" aria-label="Assistant">
+        <div class="cli">
+          <div class="chat" role="region" aria-label="Assistant console">
+            <div class="chat-log" id="chat-log" aria-live="polite"></div>
+            <form class="chat-input" id="chat-form"><span>&gt;</span><input id="chat-text" autocomplete="off" placeholder="remind me to submit A3 tomorrow at 4pm" aria-label="Command"></form>
+          </div>
+          <div class="panel">
+            <h2>Protocol</h2>
+            <ol class="side-note" style="margin:0;padding-left:16px;display:grid;gap:6px"><li>State intent in plain English.</li><li>Assistant clarifies missing data.</li><li>Preview → you confirm → task created.</li></ol>
+            <h2 style="margin-top:14px">Backend</h2>
+            <p class="side-note" style="margin:0">Production: <code>POST /api/v1/assistant/parse</code> then <code>POST /api/v1/tasks</code> on confirm. This demo parses locally; no network calls are made.</p>
+            <h2 style="margin-top:14px">Suggestions</h2>
+            <div class="suggest"><button onclick="suggest(this)">what’s due today?</button><button onclick="suggest(this)">remind me to revise STAT2010 tomorrow at 8am</button><button onclick="suggest(this)">add a task to email my tutor on friday</button></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- REMINDERS -->
+      <section class="screen" id="screen-reminders" aria-label="Reminders">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><h1 style="margin:0;font-size:18px;font-weight:500">Reminder schedule</h1><span class="conn" style="margin:0"><i></i>2 RECURRING ACTIVE</span></div>
+        <table class="table" id="reminder-table" aria-label="Reminders"><thead><tr><th>Reminder</th><th>Type</th><th>Next fire</th><th></th></tr></thead><tbody></tbody></table>
+        <div class="panel" style="margin-top:12px"><h2>Notification preferences</h2>
+          <div class="kpi"><span>Morning digest · 07:30</span><input type="checkbox" checked aria-label="Morning digest"></div>
+          <div class="kpi"><span>Deadline heads-up · 09:00</span><input type="checkbox" checked aria-label="Deadline heads-up"></div>
+          <div class="kpi"><span>Overdue alerts · immediate</span><input type="checkbox" checked aria-label="Overdue alerts"></div>
+          <div class="kpi"><span>Week-ahead review · Sun 18:00</span><input type="checkbox" aria-label="Week ahead review"></div>
+        </div>
+      </section>
+
+      <!-- INSIGHTS -->
+      <section class="screen" id="screen-insights" aria-label="Insights">
+        <h1 style="margin:0 0 10px;font-size:18px;font-weight:500">Throughput · last 7 days</h1>
+        <div class="workspace">
+          <div class="panel span7"><h2>Completions / day</h2><div id="insight-bars"></div></div>
+          <div class="panel span5"><h2>Aggregate</h2>
+            <div class="kpi"><span>CREATED</span><span>14</span></div>
+            <div class="kpi"><span>COMPLETED</span><span>12</span></div>
+            <div class="kpi"><span>COMPLETION RATE</span><span>86%</span></div>
+            <div class="kpi"><span>ON-TIME</span><span>10 / 12</span></div>
+            <div class="kpi"><span>STREAK</span><span>6 DAYS</span></div>
+            <div class="kpi"><span>BEST WINDOW</span><span>08:00–11:00</span></div>
+          </div>
+          <div class="panel span12"><h2>Secretary's note</h2><p style="margin:0;color:var(--ink-2)">Mornings are your peak (8/12 completions before 11:00). Schedule COMP1511 deep work before lectures; batch admin after lunch.</p></div>
+        </div>
+      </section>
+
+      <!-- PROFILE -->
+      <section class="screen" id="screen-profile" aria-label="Profile and settings">
+        <h1 style="margin:0 0 10px;font-size:18px;font-weight:500">Operator profile</h1>
+        <div class="workspace">
+          <form class="panel span7" onsubmit="event.preventDefault();toast('PROFILE SAVED')"><h2>Identity</h2>
+            <div class="field"><label for="p-name">Name</label><input id="p-name" value="Keefe Chen"></div>
+            <div class="field"><label for="p-email">Email</label><input id="p-email" type="email" value="keefe@university.edu"></div>
+            <div class="field"><label for="p-uni">Institution</label><input id="p-uni" value="UNSW — CS Year 2"></div>
+            <button class="btn btn-primary" type="submit" style="margin-top:6px">SAVE</button>
+          </form>
+          <div class="span5" style="display:grid;gap:12px;align-content:start">
+            <div class="panel"><h2>Preferences</h2>
+              <div class="kpi"><span>Week starts Monday</span><input type="checkbox" checked aria-label="Week starts Monday"></div>
+              <div class="kpi"><span>Reduce motion</span><input type="checkbox" id="pref-motion" aria-label="Reduce motion"></div>
+              <div class="kpi"><span>Weekly email digest</span><input type="checkbox" aria-label="Weekly email digest"></div>
+            </div>
+            <div class="panel"><h2>Account</h2>
+              <button class="btn btn-outline btn-block" style="margin-bottom:8px" onclick="toast('RESET LINK SENT')">Change password</button>
+              <button class="btn btn-outline btn-block" style="color:var(--red);border-color:var(--red)" onclick="toast('SIGNED OUT');setTimeout(signOut,800)">Log out</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+
+  <nav class="mobile-only" aria-label="Mobile navigation">
+    <button aria-current="page" data-nav="dashboard"><svg class="icon" viewBox="0 0 24 24"><path d="M3 13h8V3H3zM13 21h8v-6h-8z"/></svg>Home</button>
+    <button data-nav="tasks"><svg class="icon" viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11"/></svg>Tasks</button>
+    <button data-nav="assistant"><svg class="icon" viewBox="0 0 24 24"><path d="M12 3a4 4 0 0 0-4 4v1a4 4 0 0 0 8 0V7a4 4 0 0 0-4-4z"/></svg>AI</button>
+    <button data-nav="insights"><svg class="icon" viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7"/></svg>Stats</button>
+    <button data-nav="profile"><svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/></svg>Me</button>
+  </nav>
+</div>
+
+<div id="toast" role="status" aria-live="polite"></div>
+<script>
+const TASKS=[
+  {id:1,title:'COMP1511 A3 — finish report draft',tag:'COMP1511',prio:'high',due:'FRI 17:00',done:false},
+  {id:2,title:'STAT2010 — revise hypothesis testing',tag:'STAT2010',prio:'med',due:'SAT 09:00',done:false},
+  {id:3,title:'Email tutor about lab 4 marks',tag:'COMP1511',prio:'med',due:'TODAY',done:false},
+  {id:4,title:'Internship application — personal statement',tag:'INTERNSHIP',prio:'high',due:'MON 28 NOV',done:false},
+  {id:5,title:'Buy groceries for the week',tag:'PERSONAL',prio:'low',due:'TODAY',done:true},
+  {id:6,title:'Read STAT2010 chapter 6',tag:'STAT2010',prio:'low',due:'SUN',done:false}];
+const REMINDERS=[
+  {title:'Submit COMP1511 A3',type:'DEADLINE',next:'FRI 17:00',recurring:false},
+  {title:'STAT2010 quiz 5 prep block',type:'PREP',next:'SAT 08:30',recurring:true},
+  {title:'Weekly review & next-week plan',type:'RECURRING',next:'SUN 18:00',recurring:true}];
+const DAYS=[['MO',9],['TU',6],['WE',11],['TH',4],['FR',0],['SA',0],['SU',0]];
+const store={tasks:[...TASKS],tag:'all'};
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const esc=s=>s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const toast=m=>{const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('show'),3200)};
+const pClass=p=>p==='high'?'p-high':p==='med'?'p-med':'p-low';
+let mode='login';
+function setAuthMode(m){mode=m;$('#tab-login').setAttribute('aria-selected',m==='login');$('#tab-signup').setAttribute('aria-selected',m==='signup');$('#f-name').hidden=m!=='signup';$('#auth-submit').textContent=m==='login'?'AUTHENTICATE':'CREATE ACCOUNT';$('#form-error').style.display='none'}
+$('#auth-form').addEventListener('submit',e=>{e.preventDefault();const em=$('#email'),pw=$('#password');const mark=(el,bad)=>el.closest('.field').classList.toggle('invalid',bad);mark(em,!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em.value));mark(pw,pw.value.length<8);if(mode==='signup')mark($('#name'),!$('#name').value.trim());if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em.value)||pw.value.length<8||(mode==='signup'&&!$('#name').value.trim())){const err=$('#form-error');err.textContent='FIX HIGHLIGHTED FIELDS';err.style.display='block';return}$('#auth-screen').style.display='none';$('#app').classList.add('visible');openOnboarding()});
+const OB=[{t:'Deadline radar',x:'Every course, every deadline, one prioritized board. Overdue surfaces first.'},{t:'Natural language tasking',x:'“Submit A3 tomorrow at 4pm” → structured, confirmable task. Never silent.'},{t:'Throughput telemetry',x:'Completions, on-time rate, streaks. Numbers you can act on.'}];
+let obIdx=0;
+function openOnboarding(){if(localStorage.getItem('aux-r5c-onboarded'))return;$('#onboarding').classList.add('visible');renderOb()}
+function renderOb(){$('#ob-title').textContent=OB[obIdx].t;$('#ob-text').textContent=OB[obIdx].x;$('#ob-step').textContent='Step '+(obIdx+1)+' / 3';$('#ob-next').textContent=obIdx===2?'ENGAGE':'NEXT';$$('#ob-dots i').forEach((d,i)=>d.classList.toggle('on',i===obIdx))}
+function nextOnboarding(){if(obIdx<2){obIdx++;renderOb()}else finishOnboarding()}
+function finishOnboarding(){localStorage.setItem('aux-r5c-onboarded','1');$('#onboarding').classList.remove('visible');toast('AUXILIA ONLINE')}
+function signOut(){$('#app').classList.remove('visible');$('#auth-screen').style.display='grid'}
+function showScreen(n){$$('.screen').forEach(s=>s.classList.toggle('active',s.id==='screen-'+n));$$('[data-nav]').forEach(b=>b.dataset.nav===n?b.setAttribute('aria-current','page'):b.removeAttribute('aria-current'));window.scrollTo({top:0})}
+$$('[data-nav]').forEach(b=>b.addEventListener('click',()=>showScreen(b.dataset.nav)));
+document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){e.preventDefault();showScreen('assistant')}});
+function rowHTML(t){return `<div class="task-row ${t.done?'done':''}"><button class="check" aria-pressed="${t.done}" aria-label="Toggle ${esc(t.title)}" onclick="toggleTask(${t.id})"><svg class="icon" viewBox="0 0 24 24" style="width:10px;height:10px;stroke:transparent"><path d="M5 13l4 4L19 7"/></svg></button><div style="min-width:0;flex:1"><div class="t-title">${esc(t.title)}</div><div class="t-meta"><span class="tag">${esc(t.tag)}</span><span class="prio ${pClass(t.prio)}">${t.prio.toUpperCase()}</span><span>${esc(t.due)}</span></div></div></div>`}
+function renderTasks(){
+  const list=store.tasks.filter(t=>store.tag==='all'||t.tag===store.tag.toUpperCase()||t.tag===store.tag);
+  $('#tasks-empty').hidden=list.length!==0;
+  $('#task-rows').innerHTML=list.map(t=>`<tr class="${t.done?'done':''}"><td><button class="check" aria-pressed="${t.done}" aria-label="Toggle ${esc(t.title)}" onclick="toggleTask(${t.id})"><svg class="icon" viewBox="0 0 24 24" style="width:10px;height:10px;stroke:transparent"><path d="M5 13l4 4L19 7"/></svg></button></td><td style="${t.done?'text-decoration:line-through;color:var(--ink-2)':''}">${esc(t.title)}</td><td><span class="tag">${esc(t.tag)}</span></td><td><span class="prio ${pClass(t.prio)}">${t.prio.toUpperCase()}</span></td><td class="num">${esc(t.due)}</td></tr>`).join('');
+  $('#today-list').innerHTML=store.tasks.filter(t=>!t.done).slice(0,4).map(rowHTML).join('');
+  $('#st-todo').textContent=store.tasks.filter(t=>!t.done).length;
+}
+function toggleTask(id){const t=store.tasks.find(t=>t.id===id);if(t){t.done=!t.done;renderTasks();toast(t.done?'TASK COMPLETE +10 XP':'TASK REOPENED')}}
+$('#tag-filters').addEventListener('click',e=>{const b=e.target.closest('[data-tag]');if(!b)return;store.tag=b.dataset.tag;$$('#tag-filters .chip').forEach(c=>c.setAttribute('aria-pressed',c===b));renderTasks()});
+$('#quick-add').addEventListener('submit',e=>{e.preventDefault();const i=$('#quick-input'),v=i.value.trim();if(!v)return;store.tasks.unshift({id:Date.now(),title:v,tag:'PERSONAL',prio:'med',due:'TODAY',done:false});i.value='';renderTasks();toast('TASK QUEUED')});
+const barsHTML=DAYS.map(([d,v])=>`<div class="bar-row"><span>${d}</span><div class="bar"><i style="width:${Math.min(100,v/12*100)}%"></i></div><span>${v}</span></div>`).join('');
+$('#insight-bars').innerHTML=barsHTML;$('#mini-bars').innerHTML=barsHTML;
+$('#reminder-table').querySelector('tbody').innerHTML=REMINDERS.map(r=>`<tr><td>${esc(r.title)}</td><td class="num">${esc(r.type)}</td><td class="num">${esc(r.next)}</td><td><button class="chip" onclick="toast('SNOOZED 1H')">SNOOZE 1H</button></td></tr>`).join('');
+const chatLog=$('#chat-log');
+function line(html,who){const d=document.createElement('div');d.className=who==='user'?'ml-user':'ml-ai';d.innerHTML=html;chatLog.appendChild(d);chatLog.scrollTop=chatLog.scrollHeight}
+function greet(){line('assistant online. awaiting input.<div class="suggest"><button onclick="suggest(this)">what’s due today?</button><button onclick="suggest(this)">remind me to revise STAT2010 tomorrow at 8am</button></div>','ai')}
+function suggest(b){sendChat(b.textContent)}
+function tryParseTask(text){const t=text.toLowerCase();const m=t.match(/(?:remind me to|add (?:a )?task to|task:)\s+(.+?)(?:\s+(?:tomorrow|today|on|at|by)\b.*)?$/);if(!m)return null;const title=m[1].trim().replace(/[.?!]$/,'');const when=(t.match(/(tomorrow|today|tonight|monday|tuesday|wednesday|thursday|friday|saturday|sunday)/i)||[null])[0];const time=(t.match(/(\d{1,2}(:\d{2})?\s*(am|pm))/i)||[null])[0];return{title:title.charAt(0).toUpperCase()+title.slice(1),when:when?when+(time?' · '+time:''):null}}
+function renderPreview(p){const d=document.createElement('div');d.className='ml-ai';d.innerHTML=`<div class="preview-card"><b>PREVIEW — CONFIRM?</b><div class="preview-grid"><span>title</span><strong>${esc(p.title)}</strong><span>due</span><strong>${esc(p.when||'UNSET')}</strong><span>tag</span><strong>PERSONAL</strong></div><button class="btn btn-primary" style="padding:7px 14px;margin-right:6px" onclick="confirmTask(this)">CONFIRM</button><button class="btn btn-outline" style="padding:7px 14px" onclick="this.closest('.preview-card').innerHTML='discarded.'">CANCEL</button></div>`;chatLog.appendChild(d);chatLog.scrollTop=chatLog.scrollHeight}
+function confirmTask(btn){const card=btn.closest('.preview-card');const title=card.querySelector('.preview-grid strong').textContent;store.tasks.unshift({id:Date.now(),title,tag:'PERSONAL',prio:'med',due:'TODAY',done:false});card.innerHTML='task committed to queue.';renderTasks();toast('TASK CREATED')}
+function sendChat(text){line(esc(text),'user');const t=text.toLowerCase();if(t.includes('due today')){setTimeout(()=>line('2 open today: lab-4 email (COMP1511), groceries (done). suggest 45m focus block 19:00?','ai'),280);return}const p=tryParseTask(text);if(p){if(!p.when){setTimeout(()=>line('parsed: “'+esc(p.title)+'” — need a due time.','ai'),280);return}setTimeout(()=>renderPreview(p),280);return}setTimeout(()=>line('unrecognized. try: “remind me to … tomorrow at 8am”','ai'),280)}
+$('#chat-form').addEventListener('submit',e=>{e.preventDefault();const i=$('#chat-text'),v=i.value.trim();if(!v)return;i.value='';sendChat(v)});
+$('#pref-motion').addEventListener('change',e=>{document.documentElement.style.scrollBehavior=e.target.checked?'auto':'smooth';toast(e.target.checked?'MOTION REDUCED':'MOTION RESTORED')});
+greet();renderTasks();
+</script>
+</body>
+</html>

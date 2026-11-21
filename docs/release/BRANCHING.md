@@ -14,6 +14,7 @@ through GitHub Issues before a branch is cut — see
 | `bugfix/` | Non-critical bug fixes | `bugfix/fix-null-pointer-edit` | Broken but not production-fatal behaviour |
 | `hotfix/` | Emergency production fixes directly off `main` | `hotfix/db-connection-leak` | Urgent fixes that skip the normal release train |
 | `refactor/` | Code maintenance without functional changes | `refactor/cleanup-jdbc-scriptlet` | Restructuring with no behaviour change |
+| `wip/` | Draft or exploratory work still being scoped | `wip/auxilia-extended-schemas` | Open PRs that are not ready for final review |
 
 Rules:
 
@@ -29,6 +30,8 @@ Rules:
 5. Bot branches (`dependabot/*`, `renovate/*`) and `release/*` branches are
    allowed for their automation and release semantics respectively and are
    exempt from rule 1.
+6. `wip/` branches are for draft work whose final scope is not yet settled.
+   Re-cut them as `feature/`, `bugfix/` or `refactor/` before the final review.
 
 ## Why this helps branching strategy
 

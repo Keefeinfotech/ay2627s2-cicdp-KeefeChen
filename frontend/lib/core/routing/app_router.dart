@@ -61,6 +61,26 @@ class AdminArgs {
   final Session session;
 }
 
+/// Subtle cross-fade between screens. Keeps the Trust Blue identity calm and
+/// avoids abrupt jumps for navigation that is not tabbed.
+Route<void> _fadeRoute({
+  required RouteSettings settings,
+  required WidgetBuilder builder,
+}) {
+  return PageRouteBuilder<void>(
+    settings: settings,
+    transitionDuration: const Duration(milliseconds: 220),
+    reverseTransitionDuration: const Duration(milliseconds: 180),
+    pageBuilder: (context, animation, secondaryAnimation) => builder(context),
+    transitionsBuilder: (context, animation, secondaryAnimation, child) {
+      return FadeTransition(
+        opacity: CurvedAnimation(parent: animation, curve: Curves.easeOut),
+        child: child,
+      );
+    },
+  );
+}
+
 /// Resolves the reset token from a route argument (in-app navigation) or the
 /// `token` query parameter (an emailed link such as `/reset-password?token=…`).
 String? _resetTokenFrom(RouteSettings settings) {
@@ -89,13 +109,13 @@ class AppRouter {
   static Route<dynamic> onGenerateRoute(RouteSettings settings) {
     switch (settings.name) {
       case AppRoutes.startup:
-        return MaterialPageRoute<void>(
+        return _fadeRoute(
           settings: settings,
           builder: (_) => const StartupGate(),
         );
       case AppRoutes.onboarding:
         final args = settings.arguments;
-        return MaterialPageRoute<void>(
+        return _fadeRoute(
           settings: settings,
           builder: (context) => OnboardingScreen(
             onComplete: args is OnboardingArgs && args.returnToPrevious
@@ -104,27 +124,27 @@ class AppRouter {
           ),
         );
       case AppRoutes.welcome:
-        return MaterialPageRoute<void>(
+        return _fadeRoute(
           settings: settings,
           builder: (_) => const WelcomeScreen(),
         );
       case AppRoutes.login:
-        return MaterialPageRoute<void>(
+        return _fadeRoute(
           settings: settings,
           builder: (_) => const LoginScreen(),
         );
       case AppRoutes.signup:
-        return MaterialPageRoute<void>(
+        return _fadeRoute(
           settings: settings,
           builder: (_) => const SignupScreen(),
         );
       case AppRoutes.forgotPassword:
-        return MaterialPageRoute<void>(
+        return _fadeRoute(
           settings: settings,
           builder: (_) => const ForgotPasswordScreen(),
         );
       case AppRoutes.resetPassword:
-        return MaterialPageRoute<void>(
+        return _fadeRoute(
           settings: settings,
           builder: (_) => ResetPasswordScreen(token: _resetTokenFrom(settings)),
         );
@@ -133,7 +153,7 @@ class AppRouter {
         final homeArgs = args is HomeArgs
             ? args
             : const HomeArgs(ownerId: AppConstants.guestOwnerId);
-        return MaterialPageRoute<void>(
+        return _fadeRoute(
           settings: settings,
           builder: (_) => AppShell(
             ownerId: homeArgs.ownerId,
@@ -144,7 +164,7 @@ class AppRouter {
       case AppRoutes.assistant:
         final args = settings.arguments;
         final session = args is AssistantArgs ? args.session : null;
-        return MaterialPageRoute<void>(
+        return _fadeRoute(
           settings: settings,
           builder: (_) => AssistantPage(
             ownerId: session?.email ?? AppConstants.guestOwnerId,
@@ -152,12 +172,12 @@ class AppRouter {
           ),
         );
       case AppRoutes.reminders:
-        return MaterialPageRoute<void>(
+        return _fadeRoute(
           settings: settings,
           builder: (_) => const RemindersScreen(),
         );
       case AppRoutes.groups:
-        return MaterialPageRoute<void>(
+        return _fadeRoute(
           settings: settings,
           builder: (_) => GroupsPage(
             store: TaskStore(
@@ -170,17 +190,17 @@ class AppRouter {
       case AppRoutes.admin:
         final args = settings.arguments;
         if (args is AdminArgs) {
-          return MaterialPageRoute<void>(
+          return _fadeRoute(
             settings: settings,
             builder: (_) => AdminDashboardPage(session: args.session),
           );
         }
-        return MaterialPageRoute<void>(
+        return _fadeRoute(
           settings: settings,
           builder: (_) => const StartupGate(),
         );
       default:
-        return MaterialPageRoute<void>(
+        return _fadeRoute(
           settings: settings,
           builder: (_) => const StartupGate(),
         );

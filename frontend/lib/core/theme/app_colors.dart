@@ -176,4 +176,36 @@ abstract final class AppColors {
   static const Color darkPrimary = Color(0xFF60A5FA);
   static const Color darkBlue = Color(0xFF60A5FA);
   static const Color darkTeal = malachite;
+
+  /// Light semantic accents for icon tiles/text on dark surfaces.
+  static const Color darkOverdue = Color(0xFFFCA5A5);
+  static const Color darkCompleted = Color(0xFF6EE7B7);
+}
+
+/// Semantic accents shared by the dashboard stat cards, filter tabs and
+/// anywhere else status is communicated. Trust Blue is the default; green is
+/// reserved for completion, red for overdue, both used sparingly.
+///
+/// Single source of truth — do not redeclare this class in feature widgets.
+abstract final class TabWeather {
+  /// Neutral/primary — all tasks, XP, progress.
+  static const Color all = AppColors.trustBlue;
+
+  /// Open tasks — deep trust blue (a shade of the primary, not a new hue).
+  static const Color pending = AppColors.saffron;
+
+  /// Overdue — error red, used only for genuine urgency.
+  static const Color overdue = AppColors.errorRed;
+
+  /// Completed — subtle success green accent.
+  static const Color completed = AppColors.successGreen;
+
+  /// The accent to use for text/icons on a surface of the given colour
+  /// scheme. Dark surfaces need lighter variants to stay WCAG-legible.
+  static Color display(Color accent, ColorScheme scheme) {
+    if (scheme.brightness == Brightness.light) return accent;
+    if (accent == overdue) return AppColors.darkOverdue;
+    if (accent == completed) return AppColors.darkCompleted;
+    return AppColors.darkPrimary;
+  }
 }

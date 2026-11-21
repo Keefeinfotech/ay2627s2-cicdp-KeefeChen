@@ -38,6 +38,7 @@ class AnnouncementBanner extends StatelessWidget {
           if (onDismiss != null)
             IconButton(
               icon: const Icon(Icons.close, color: Colors.white),
+              tooltip: 'Dismiss announcement',
               onPressed: onDismiss,
             ),
         ],

@@ -172,6 +172,53 @@ export const resetPassword = async (
   }
 };
 
+export const changePassword = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const { currentPassword, newPassword } = req.body as {
+      currentPassword: string;
+      newPassword: string;
+    };
+    const result = await authService.changePassword({
+      userId: requireUserId(req),
+      currentSessionId: requireSessionId(req),
+      currentPassword,
+      newPassword,
+    });
+    logSecurityEvent("password_changed", {
+      requestId: req.requestId,
+      ip: req.ip,
+      path: req.path,
+      userId: requireUserId(req),
+    });
+    res.status(200).json(result);
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const logoutAll = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    await authService.logoutAll(requireUserId(req));
+    logSecurityEvent("sessions_revoked_all", {
+      requestId: req.requestId,
+      ip: req.ip,
+      path: req.path,
+      userId: requireUserId(req),
+    });
+    res.status(204).send();
+  } catch (err) {
+    next(err);
+  }
+};
+
 export const me = async (
   req: Request,
   res: Response,
