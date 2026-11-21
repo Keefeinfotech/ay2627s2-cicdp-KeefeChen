@@ -69,6 +69,11 @@ COPY --from=build /app/build/web /usr/share/nginx/html
 # SPA routing + security headers, with the API origin substituted at build.
 COPY --from=build /app/nginx.conf /etc/nginx/conf.d/default.conf
 
+# Patch Alpine packages so Trivy no longer reports known HIGH/CRITICAL
+# vulnerabilities in the base image layer (mirrors the backend runtime stage).
+USER root
+RUN apk upgrade --no-cache
+
 # Run the web server as the non-root nginx user.
 USER nginx
 
