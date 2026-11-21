@@ -24,7 +24,8 @@ import type {
  */
 const taskUpdateFields = (input: UpdateTaskInput): Record<string, unknown> => {
   const set: Record<string, unknown> = {};
-  if (input.title !== undefined) set.title = requireString(input.title, "title");
+  if (input.title !== undefined)
+    set.title = requireString(input.title, "title");
   if (input.description !== undefined) {
     set.description =
       input.description === null

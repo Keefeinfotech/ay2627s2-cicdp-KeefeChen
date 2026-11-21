@@ -42,9 +42,8 @@ vi.mock("../../src/modules/auth/session.model.js", async () => {
 });
 
 vi.mock("../../src/modules/tasks/task.model.js", async () => {
-  const { createInMemoryTaskModel } = await import(
-    "../helpers/inMemoryTaskModel.js"
-  );
+  const { createInMemoryTaskModel } =
+    await import("../helpers/inMemoryTaskModel.js");
   return createInMemoryTaskModel(store);
 });
 
@@ -150,38 +149,34 @@ afterAll(async () => {
 });
 
 describe("Auxilia-API provider verification (Pact)", () => {
-  it(
-    "satisfies the Auxilia-Frontend consumer contract",
-    async () => {
-      const pactPath = path.resolve(
-        process.cwd(),
-        "pacts/Auxilia-Frontend-Auxilia-API.json",
-      );
+  it("satisfies the Auxilia-Frontend consumer contract", async () => {
+    const pactPath = path.resolve(
+      process.cwd(),
+      "pacts/Auxilia-Frontend-Auxilia-API.json",
+    );
 
-      const verifier = new Verifier({
-        provider: "Auxilia-API",
-        providerBaseUrl,
-        pactUrls: [pactPath],
-        logLevel: "warn",
-        stateHandlers: {
-          "the authenticated user has at least one task": async () => {
-            vi.resetAllMocks();
-            sessionCache.clear();
-            seedAuthenticatedSession();
-            seedOneTask();
-          },
-          "the authenticated user can create tasks": async () => {
-            vi.resetAllMocks();
-            sessionCache.clear();
-            seedAuthenticatedSession();
-            store.tasks.length = 0;
-          },
+    const verifier = new Verifier({
+      provider: "Auxilia-API",
+      providerBaseUrl,
+      pactUrls: [pactPath],
+      logLevel: "warn",
+      stateHandlers: {
+        "the authenticated user has at least one task": async () => {
+          vi.resetAllMocks();
+          sessionCache.clear();
+          seedAuthenticatedSession();
+          seedOneTask();
         },
-      });
+        "the authenticated user can create tasks": async () => {
+          vi.resetAllMocks();
+          sessionCache.clear();
+          seedAuthenticatedSession();
+          store.tasks.length = 0;
+        },
+      },
+    });
 
-      // Rejects with the mismatch report when the contract is not met.
-      await verifier.verifyProvider();
-    },
-    120_000,
-  );
+    // Rejects with the mismatch report when the contract is not met.
+    await verifier.verifyProvider();
+  }, 120_000);
 });

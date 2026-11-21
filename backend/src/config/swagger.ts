@@ -513,7 +513,10 @@ export const swaggerDocument: OpenAPIV3.Document = {
         responses: { "200": { description: "Bulk delete result" } },
       },
     },
-    "/api/tasks/bulk/status": updateEndpoint("Bulk-update the status of up to 100 tasks", "Bulk status update result"),
+    "/api/tasks/bulk/status": updateEndpoint(
+      "Bulk-update the status of up to 100 tasks",
+      "Bulk status update result",
+    ),
     "/api/tasks/{taskId}/complete": {
       post: {
         summary: "Mark a task completed",
@@ -534,9 +537,18 @@ export const swaggerDocument: OpenAPIV3.Document = {
         },
       },
     },
-    "/api/tasks/{taskId}/status": updateEndpoint("Set only the task status", "Status updated"),
-    "/api/tasks/{taskId}/priority": updateEndpoint("Set only the task priority", "Priority updated"),
-    "/api/tasks/{taskId}/due-date": updateEndpoint("Set (or clear, with null) the task due date", "Due date updated"),
+    "/api/tasks/{taskId}/status": updateEndpoint(
+      "Set only the task status",
+      "Status updated",
+    ),
+    "/api/tasks/{taskId}/priority": updateEndpoint(
+      "Set only the task priority",
+      "Priority updated",
+    ),
+    "/api/tasks/{taskId}/due-date": updateEndpoint(
+      "Set (or clear, with null) the task due date",
+      "Due date updated",
+    ),
     "/api/tasks/{taskId}/reminders": {
       get: {
         summary: "List reminders attached to a task",
@@ -573,7 +585,10 @@ export const swaggerDocument: OpenAPIV3.Document = {
         },
       },
     },
-    "/api/reminders/upcoming": readEndpoint("Upcoming enabled reminders within ?days= (1-90, default 7)", "Upcoming reminders"),
+    "/api/reminders/upcoming": readEndpoint(
+      "Upcoming enabled reminders within ?days= (1-90, default 7)",
+      "Upcoming reminders",
+    ),
     "/api/reminders/{reminderId}": {
       get: {
         summary: "Get a reminder (owner only)",
@@ -600,7 +615,10 @@ export const swaggerDocument: OpenAPIV3.Document = {
         },
       },
     },
-    "/api/reminders/{reminderId}/status": updateEndpoint("Enable/disable/complete-toggle a reminder", "Status updated"),
+    "/api/reminders/{reminderId}/status": updateEndpoint(
+      "Enable/disable/complete-toggle a reminder",
+      "Status updated",
+    ),
     "/api/reminders/{reminderId}/complete": {
       post: {
         summary:
@@ -612,14 +630,38 @@ export const swaggerDocument: OpenAPIV3.Document = {
         },
       },
     },
-    "/api/analytics/overview": readEndpoint("Headline task statistics for the current user", "Overview counters"),
-    "/api/analytics/daily": readEndpoint("Per-day created/completed counts (?days=1-90)", "Daily buckets"),
-    "/api/analytics/monthly": readEndpoint("Per-month created/completed counts (?months=1-24)", "Monthly buckets"),
-    "/api/analytics/completion-rate": readEndpoint("Completion rate over the trailing ?weeks=", "Completion rate"),
-    "/api/analytics/task-trends": readEndpoint("Monthly trend with improving/declining/steady signal", "Trend buckets + direction"),
-    "/api/analytics/overdue": readEndpoint("Open tasks past their due date (most overdue first)", "Overdue tasks"),
-    "/api/analytics/productivity-summary": readEndpoint("Overview + streak for the productivity dashboard", "Productivity summary"),
-    "/api/analytics/weekly": readEndpoint("Weekly created/completed buckets + streak", "Weekly buckets"),
+    "/api/analytics/overview": readEndpoint(
+      "Headline task statistics for the current user",
+      "Overview counters",
+    ),
+    "/api/analytics/daily": readEndpoint(
+      "Per-day created/completed counts (?days=1-90)",
+      "Daily buckets",
+    ),
+    "/api/analytics/monthly": readEndpoint(
+      "Per-month created/completed counts (?months=1-24)",
+      "Monthly buckets",
+    ),
+    "/api/analytics/completion-rate": readEndpoint(
+      "Completion rate over the trailing ?weeks=",
+      "Completion rate",
+    ),
+    "/api/analytics/task-trends": readEndpoint(
+      "Monthly trend with improving/declining/steady signal",
+      "Trend buckets + direction",
+    ),
+    "/api/analytics/overdue": readEndpoint(
+      "Open tasks past their due date (most overdue first)",
+      "Overdue tasks",
+    ),
+    "/api/analytics/productivity-summary": readEndpoint(
+      "Overview + streak for the productivity dashboard",
+      "Productivity summary",
+    ),
+    "/api/analytics/weekly": readEndpoint(
+      "Weekly created/completed buckets + streak",
+      "Weekly buckets",
+    ),
     "/api/notifications": {
       get: {
         summary: "List in-app notifications (?page&limit&read)",
@@ -632,8 +674,14 @@ export const swaggerDocument: OpenAPIV3.Document = {
         responses: { "200": { description: "Cleared" } },
       },
     },
-    "/api/notifications/unread-count": readEndpoint("Number of unread notifications", "Unread count"),
-    "/api/notifications/read-all": updateEndpoint("Mark every notification as read", "Marked"),
+    "/api/notifications/unread-count": readEndpoint(
+      "Number of unread notifications",
+      "Unread count",
+    ),
+    "/api/notifications/read-all": updateEndpoint(
+      "Mark every notification as read",
+      "Marked",
+    ),
     "/api/notifications/{notificationId}/read": {
       patch: {
         summary: "Mark one notification as read",
@@ -679,8 +727,14 @@ export const swaggerDocument: OpenAPIV3.Document = {
         responses: { "200": { description: "Updated preferences" } },
       },
     },
-    "/api/preferences/notifications": updateEndpoint("Update notification preferences", "Updated"),
-    "/api/preferences/appearance": updateEndpoint("Update appearance preferences (theme/fontScale)", "Updated"),
+    "/api/preferences/notifications": updateEndpoint(
+      "Update notification preferences",
+      "Updated",
+    ),
+    "/api/preferences/appearance": updateEndpoint(
+      "Update appearance preferences (theme/fontScale)",
+      "Updated",
+    ),
     "/api/preferences/timezone": {
       patch: {
         summary: "Update the user timezone (IANA, validated)",
@@ -713,8 +767,14 @@ export const swaggerDocument: OpenAPIV3.Document = {
         responses: { "200": { description: "Per-operation results" } },
       },
     },
-    "/api/sync/pull": readEndpoint("Incremental pull (alias of /api/sync/changes)", "Changes since cursor"),
-    "/api/sync/status": readEndpoint("Server sync status (serverTime, supported operations)", "Sync status"),
+    "/api/sync/pull": readEndpoint(
+      "Incremental pull (alias of /api/sync/changes)",
+      "Changes since cursor",
+    ),
+    "/api/sync/status": readEndpoint(
+      "Server sync status (serverTime, supported operations)",
+      "Sync status",
+    ),
     "/api/sync/resolve-conflict": {
       post: {
         summary:

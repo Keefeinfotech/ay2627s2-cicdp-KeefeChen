@@ -21,7 +21,9 @@ import reports from "istanbul-reports";
 
 const args = process.argv.slice(2);
 if (args.length !== 2) {
-  console.error("Usage: node scripts/lcov-to-html.mjs <lcov.info> <output-dir>");
+  console.error(
+    "Usage: node scripts/lcov-to-html.mjs <lcov.info> <output-dir>",
+  );
   process.exit(1);
 }
 

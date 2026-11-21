@@ -166,10 +166,7 @@ export const createInMemoryTaskModel = (store: InMemoryTaskStore) => {
           doc.updatedAt = new Date();
           return { ...doc };
         }),
-      updateOne: (
-        filter: Record<string, any>,
-        update: Record<string, any>,
-      ) =>
+      updateOne: (filter: Record<string, any>, update: Record<string, any>) =>
         chainable(() => {
           const doc = store.tasks.find((item) => matchesFilter(item, filter));
           if (!doc) return { modifiedCount: 0 };

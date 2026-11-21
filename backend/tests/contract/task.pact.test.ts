@@ -54,7 +54,6 @@ const AUTH_TOKEN = "Bearer example-access-token";
 // ============================================================
 
 describe("Auxilia Task API Consumer Contract", () => {
-
   // ----------------------------------------------------------
   // TEST 1: GET TASKS
   // ----------------------------------------------------------
@@ -64,9 +63,7 @@ describe("Auxilia Task API Consumer Contract", () => {
 
     pact
       .given("the authenticated user has at least one task")
-      .uponReceiving(
-        "a request to retrieve the current user's tasks"
-      )
+      .uponReceiving("a request to retrieve the current user's tasks")
       .withRequest({
         method: "GET",
         path: API_PATH,
@@ -93,18 +90,14 @@ describe("Auxilia Task API Consumer Contract", () => {
       });
 
     await pact.executeTest(async (mockServer) => {
-
       // Send GET request to Pact mock server
-      const response = await fetch(
-        `${mockServer.url}${API_PATH}`,
-        {
-          method: "GET",
-          headers: {
-            Authorization: AUTH_TOKEN,
-            Accept: "application/json",
-          },
-        }
-      );
+      const response = await fetch(`${mockServer.url}${API_PATH}`, {
+        method: "GET",
+        headers: {
+          Authorization: AUTH_TOKEN,
+          Accept: "application/json",
+        },
+      });
 
       // Verify HTTP status
       expect(response.status).toBe(200);
@@ -126,7 +119,7 @@ describe("Auxilia Task API Consumer Contract", () => {
           description: expect.any(String),
           priority: expect.any(String),
           status: expect.any(String),
-        })
+        }),
       );
     });
   });
@@ -148,9 +141,7 @@ describe("Auxilia Task API Consumer Contract", () => {
 
     pact
       .given("the authenticated user can create tasks")
-      .uponReceiving(
-        "a valid request to create a task"
-      )
+      .uponReceiving("a valid request to create a task")
       .withRequest({
         method: "POST",
         path: API_PATH,
@@ -183,20 +174,16 @@ describe("Auxilia Task API Consumer Contract", () => {
       });
 
     await pact.executeTest(async (mockServer) => {
-
       // Send POST request to Pact mock server
-      const response = await fetch(
-        `${mockServer.url}${API_PATH}`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: AUTH_TOKEN,
-            Accept: "application/json",
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(requestBody),
-        }
-      );
+      const response = await fetch(`${mockServer.url}${API_PATH}`, {
+        method: "POST",
+        headers: {
+          Authorization: AUTH_TOKEN,
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(requestBody),
+      });
 
       // Verify HTTP status
       expect(response.status).toBe(201);
@@ -215,7 +202,7 @@ describe("Auxilia Task API Consumer Contract", () => {
           description: requestBody.description,
           priority: requestBody.priority,
           status: expect.any(String),
-        })
+        }),
       );
     });
   });
