@@ -26,7 +26,7 @@ Design rules applied throughout:
 
 | Collection       | Purpose                                                       | Primary identifier              | Owner reference                           | Cardinality per user |
 | ---------------- | ------------------------------------------------------------- | ------------------------------- | ----------------------------------------- | -------------------- |
-| `users`          | Identity, credentials, verification/MFA state, account status | String UUID `_id`               | self                                      | 1                    |
+| `users`          | Identity, sign-in credentials, multi-factor verification state, account status | String UUID `_id`               | self                                      | 1                    |
 | `authsessions`   | Signed-in device; JWT `jti` and refresh-token rotation        | String UUID `_id` (= JWT `jti`) | `userId`                                  | 0..n devices         |
 | `tasks`          | Personal and assigned tasks, deadlines, status, priority      | String UUID `_id`               | `userId` (owner), `assigneeId` (optional) | 0..n                 |
 | `reminders`      | In-app reminder schedule, optionally linked to a task         | ObjectId `_id`                  | `userId` (String UUID, corrected)         | 0..n                 |

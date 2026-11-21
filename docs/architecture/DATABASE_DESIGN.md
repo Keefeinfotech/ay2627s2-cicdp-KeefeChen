@@ -22,7 +22,7 @@ Adjacent collections that exist in the wider Auxilia system (groups, members, in
 
 | # | Collection | Purpose | Primary identifier | Ownership | Approx. cardinality per user |
 |---|---|---|---|---|---|
-| 1 | `users` | Identity, credentials, MFA/verification state, account status | String UUID (`_id`) | Self | 1 |
+| 1 | `users` | Identity, sign-in credentials, multi-factor verification state, account status | String UUID (`_id`) | Self | 1 |
 | 2 | `authsessions` | One signed-in device; JWT `jti` and refresh-token rotation state | String UUID (`_id`, = JWT `jti`) | `userId` → `users._id` | 0..n devices |
 | 3 | `tasks` | Personal and assigned tasks, deadlines, status, priority | String UUID (`_id`) | `userId` (owner), optional `assigneeId` | 0..n |
 | 4 | `reminders` | In-app reminder schedule, optionally linked to a task | ObjectId (`_id`, legacy) | `userId`, optional `taskId` | 0..n |

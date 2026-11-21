@@ -1,5 +1,5 @@
 // Enforce the repository's branch naming standard (see docs/release/BRANCHING.md).
-// Allowed: feature/ bugfix/ hotfix/ refactor/ release/ bot branches.
+// Allowed: feature/ bugfix/ hotfix/ refactor/ release/ wip/ bot branches.
 const branch = process.env.BRANCH_NAME?.trim() ?? "";
 
 if (branch === "main" || branch === "develop") {
@@ -20,12 +20,13 @@ if (botBranch.test(branch)) {
   process.exit(0);
 }
 
+// `wip/` is allowed for draft branches whose scope is still being explored.
 const allowed =
-  /^(feature|bugfix|hotfix|refactor|release)\/[a-z0-9][a-z0-9._/-]*$/;
+  /^(feature|bugfix|hotfix|refactor|release|wip)\/[a-z0-9][a-z0-9._/-]*$/;
 
 if (!allowed.test(branch)) {
   console.error(
-    `Branch "${branch}" does not follow the naming convention. Use one of: feature/<slug>, bugfix/<slug>, hotfix/<slug>, refactor/<slug>, or a dependabot/renovate/ bot branch (see docs/release/BRANCHING.md).`,
+    `Branch "${branch}" does not follow the naming convention. Use one of: feature/<slug>, bugfix/<slug>, hotfix/<slug>, refactor/<slug>, wip/<slug>, or a dependabot/renovate/ bot branch (see docs/release/BRANCHING.md).`,
   );
   process.exit(1);
 }
