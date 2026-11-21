@@ -91,7 +91,11 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
-      builder: (_) => TaskEditor(initial: task, existingTags: _store.allTags),
+      builder: (_) => TaskEditor(
+        initial: task,
+        existingTags: _store.allTags,
+        existingCourses: _store.allCourses,
+      ),
     );
     if (draft == null || !mounted) return;
     try {

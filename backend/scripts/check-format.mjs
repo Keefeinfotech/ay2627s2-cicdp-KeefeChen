@@ -57,6 +57,9 @@ const changedFiles = diffOutput
   .filter((file) => !file.split("/").includes("node_modules"))
   .filter((file) => !file.split("/").includes("coverage"))
   .filter((file) => !file.split("/").includes("dist"))
+  // Pact files are generated artifacts rewritten by every `npm run test:contract`
+  // (same class as package-lock.json); gating them on hand-formatting is noise.
+  .filter((file) => !file.split("/").includes("pacts"))
   .filter((file) => path.basename(file) !== "package-lock.json");
 
 if (changedFiles.length === 0) {

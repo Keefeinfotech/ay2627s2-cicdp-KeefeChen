@@ -275,3 +275,59 @@ health-walk artifact; deploy v1.0.0 beforehand so the demo runs against the
 - Everything else — pipeline rigour, testing breadth, security posture,
   documentation volume, and genuinely broad independent learning — is unusually
   strong for a Stage-2 individual CA.
+
+---
+
+## v1.1 update — 2026-11-19 (post-#110, post-#113)
+
+State at the time of this update, measured on 2026-11-19; all claims below point at
+in-repo artefacts. The v1.0.0 scores above were honest for v1.0.0; several of the
+"to raise the score" items have since shipped.
+
+**v1.1 release (tag `v1.1` → `b90d82b`) shipped with the full pipeline green:**
+
+- CI push run 44491730340 (main): backend, frontend, E2E (compose+Playwright),
+  CodeQL, Trivy, Gitleaks — all success; `CI - Final Quality Gate` success.
+- Production deployment verified live 2026-11-19: `GET /api/health` →
+  `{"status":"ok"}`; CSP/HSTS/frame-options headers present; post-deploy
+  smoke (`scripts/smoke-test.mjs`) **3/3 PASS**.
+- Release evidence: `docs/reports/RELEASE_EVIDENCE_v1.1.md` (filled, with run URLs);
+  `docs/reports/REGRESSION_RUN_2026-11-19.md` (378 backend / 330 frontend).
+- Backend suite: 378 tests / 51 files; coverage 59.84 / 50.34 / 61.09 / 60.66 vs
+  ratchet 58/48/59/58. Contract layer 3/3 (consumer + provider verification).
+  MongoDB-backed integration 8/8 against a real in-memory mongod. Stryker
+  mutation testing: **100.00** on `tokens.ts` + `AppError.ts` (26/26 killed).
+- Frontend: 330 tests; coverage 62.5% ≥ 62 gate. Visual goldens recreated with
+  flake sources removed. Accessibility suite recreated; it **found and fixed 3 real
+  WCAG AA contrast defects** in the dark-theme auth shell.
+- Dependency Review enabled (repo now public; previously off due to GHAS plan
+  limit). Develop branch now requires `CI - Final Quality Gate` (strict policy,
+  enforce_admins). `main` classic protection has `enforce_admins` on.
+- Observation-driven release: v1.0.0 tagged and shipped 2026-11-15; v1.1 tagged
+  and shipped 2026-11-19, both with release notes and changelogs.
+
+**Re-scored (v1.1, honest — not 10s)**
+
+| # | Criterion | Before (v1.0.0) | v1.1 | What changed |
+|---|-----------|-----------------|------|--------------|
+| 1 | Project Management (10%) | 8.0 | 8.5 | Two shipped releases on cadence; evidence docs filled and live; docs re-synced to measured reality |
+| 2 | Quality Assurance (20%) | 8.0 | 9.0 | Mongo-backed tests, Stryker 100%, Pact both halves, goldens restored, a11y suite with live WCAG fixes, honest measured docs |
+| 3 | Integration and Delivery Pipeline (20%) | 9.0 | 9.5 | Release executed twice end-to-end and proven against production; Dependency Review on; develop gate enforced; documented SLO burn-rate alerts + runbook |
+| 4 | Software Development and Deployment (20%) | 8.0 | 8.5 | Live deploy evidenced (health, headers, smoke 3/3); responsive desktop/rail shell; offline sync shipped; seeded demo verified end-to-end |
+| 5 | Independent Research and Learning (20%) | 9.0 | 9.0 | No new research depth this round; hold |
+| 6 | Presentation and Demonstration (10%) | 7.5 | 8.0 | Demo script now verified and reproducible; backup recording attached to v1.1; deploy is real — but delivery itself is unevidenced |
+
+**Weighted v1.1 estimate: ~89% (≈ A-).** Not 10/10, and pretending otherwise would
+be dishonest:
+
+- The live presentation still cannot be assessed from a repo (criterion 6).
+- Manual gates remain unexecuted or unverified: rollback rehearsal on production,
+  DB backup (mongodump), 200% text-scale on a physical device, screen-reader run.
+- Mongo-backed coverage is task-module-only; groups/audit/roadmaps remain mocked.
+- Stryker 100% is on 2 critical files, not the codebase.
+- Required approving review count is 0 by design (solo assessor project) — noted
+  here rather than hidden.
+
+The two artefacts a marker can open first: `docs/reports/RELEASE_EVIDENCE_v1.1.md`
+and `docs/reports/REGRESSION_RUN_2026-11-19.md`.
+

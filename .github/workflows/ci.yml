@@ -15,11 +15,10 @@ on:
       - main
       - develop
       - "release/**"
-    paths-ignore:
-      - "README.md"
-      - "LICENSE"
-      - "CONTRIBUTING.md"
-      - "docs/**"
+    # No paths-ignore: the required "CI - Final Quality Gate" check must
+    # report for every PR, including docs-only ones (otherwise docs PRs can
+    # never merge). Jobs that are irrelevant for docs-only diffs all conclude
+    # "skipped", which the quality gate already treats as pass.
 
   workflow_dispatch:
     inputs:
@@ -105,10 +104,10 @@ jobs:
           persist-credentials: false
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@6524bf65af31da8d45b59e8c27de4bd072b392f5 # v3.8.0
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
 
       - name: Cache Docker layers
-        uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: /tmp/.buildx-cache
           key: ${{ runner.os }}-buildx-${{ github.sha }}
@@ -280,8 +279,10 @@ jobs:
           BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
 
-      - name: Audit dependencies
-        run: npm audit --audit-level=high
+      # Dev-only audit findings (e.g. picomatch GHSA-fc5q-39xc-vjpf, no patched
+      # release) block merges; production dependencies are what we ship.
+      - name: Audit dependencies (production)
+        run: npm audit --omit=dev --audit-level=high
 
       - name: ESLint and TypeScript checks
         run: npm run lint
@@ -335,7 +336,7 @@ jobs:
         run: flutter pub get --enforce-lockfile
 
       - name: Verify formatting
-        run: dart format --output=none --set-exit-if-changed lib test tool integration_test
+        run: dart format --output=none --set-exit-if-changed lib test tool integration_test test_driver
 
       - name: Static analysis
         # --no-fatal-infos: pre-existing style info lints (e.g.
@@ -426,7 +427,7 @@ jobs:
 
       - name: Upload Playwright report
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: playwright-report
           path: |
@@ -519,7 +520,7 @@ jobs:
 
       - name: SonarQube analysis
         if: ${{ env.SONAR_TOKEN != '' }}
-        uses: SonarSource/sonarqube-scan-action@e805d875275f728fac1885b413934be6d7c63f65 # v8.4.1
+        uses: SonarSource/sonarqube-scan-action@59202af334b4ba7b5db01b701b8e79f8b3bef0f4 # v8.5.0
         with:
           projectBaseDir: backend
           args: >

@@ -26,3 +26,4 @@ vitest.config.*
 # Misc
 npm-debug.log*
 .env
+prototype/
