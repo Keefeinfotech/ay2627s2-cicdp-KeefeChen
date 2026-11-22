@@ -95,10 +95,10 @@ services:
       MONGODB_URI: mongodb://mongodb:27017/auxilia
       REDIS_URL: redis://redis:6379
       NOTIFICATION_SERVICE_URL: http://notification-service:3100
-      # Development-only default so a fresh clone works out of the box.
-      # REQUIRED in real deployments: set JWT_SECRET (>= 16 chars) in .env or
-      # the environment before exposing the stack.
-      JWT_SECRET: ${JWT_SECRET:-auxilia-local-development-secret-change-me}
+      # No development fallback: set JWT_SECRET (>= 16 chars) in .env or the
+      # environment before starting the stack. CI/Jenkins supply an explicit
+      # test-only value; Render injects the real secret in production.
+      JWT_SECRET: ${JWT_SECRET}
       JWT_EXPIRES_IN: 15m
       REFRESH_TOKEN_EXPIRES_IN: 30d
       SESSION_CACHE_TTL_MS: 30000

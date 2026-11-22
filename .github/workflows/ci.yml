@@ -436,6 +436,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 50
     needs: [sonarqube-quality-gate, trivy-container-scan]
+    env:
+      # Explicit test-only secret: compose no longer supplies a fallback.
+      JWT_SECRET: ci-test-only-jwt-secret
     # The Playwright suite is the slowest gate (~4m). Reserve it for PRs and
     # manual full runs; Stages 1-3 still run on every push, and the Final
     # Quality Gate treats this job's "skipped" result as pass on non-PR events.
@@ -508,6 +511,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 50
     needs: [sonarqube-quality-gate, trivy-container-scan]
+    env:
+      # Explicit test-only secret: compose no longer supplies a fallback.
+      JWT_SECRET: ci-test-only-jwt-secret
     # Same policy as E2E: the live-stack load smoke (~4m) runs on PRs and
     # manual dispatch only. Every push still gets Stages 1-3.
     if: >-

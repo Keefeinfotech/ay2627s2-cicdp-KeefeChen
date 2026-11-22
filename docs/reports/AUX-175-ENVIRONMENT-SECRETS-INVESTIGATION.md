@@ -24,11 +24,11 @@ for the backend configuration module.
    with validation/clamping for port, bcrypt rounds, token TTLs, rate limits,
    session cache TTL and AI settings. No module reads secrets ad hoc except the
    accessor module.
-4. **One low-severity residual risk (R-1):** `docker-compose.yml` still carries
-   a *development-only* fallback for `JWT_SECRET`. It cannot affect production
-   (Render injects the real value), but it was reintroduced after an earlier
-   cleanup and may be flagged by SonarCloud rule S2068. Recommended follow-up
-   is documented below; it does not block closing this investigation.
+4. **One low-severity residual risk (R-1) — resolved 23 November 2026:** `docker-compose.yml` previously carried
+   a *development-only* fallback for `JWT_SECRET`. It could not affect
+   production (Render injects the real value), but had been reintroduced after an earlier
+   cleanup and was flagged by SonarCloud rule S2068. The resolution
+   is documented below; it did not block closing this investigation.
 
 ## Current design
 
@@ -51,7 +51,7 @@ for the backend configuration module.
 | F-2 | Secrets are dashboard/GitHub Secrets injected; `render.yaml` commits no literal secret values and uses `sync: false` for all four sensitive keys | High | Verified — no action |
 | F-3 | Fail-fast startup validation aggregates all missing/invalid values; `.env.example` uses obvious placeholders | Medium | Verified — no action |
 | F-4 | Public vs secret values are separated correctly (Turnstile site key is public, secret key server-side; `API_BASE_URL` is a public build argument) | Medium | Verified — no action |
-| F-5 | `docker-compose.yml` line 101 uses `${JWT_SECRET:-auxilia-local-development-secret-change-me}` so a fresh clone boots without setup. Commit `5813d36` (10 Nov) removed the hard-coded dev default, but `81c0b86` (15 Nov) reintroduced one as a shell fallback. Production is unaffected, but the value is a literal credential-shaped string in a tracked file | Low | Residual risk R-1 — recommended follow-up |
+| F-5 | `docker-compose.yml` line 101 uses `${JWT_SECRET:-auxilia-local-development-secret-change-me}` so a fresh clone boots without setup. Commit `5813d36` (10 Nov) removed the hard-coded dev default, but `81c0b86` (15 Nov) reintroduced one as a shell fallback. Production is unaffected, but the value is a literal credential-shaped string in a tracked file | Low | R-1 — resolved by issue #125 (23 Nov 2026) |
 
 ## Verification performed
 
@@ -73,20 +73,21 @@ into one error; requires `TURNSTILE_SECRET_KEY` when CAPTCHA is enabled;
 requires `AI_API_KEY` for a non-mock AI provider. `restoreEnv()` helper ensures
 each test restores every variable it touches.
 
-## Residual risk R-1 and recommendation
+## Residual risk R-1 — RESOLVED (23 November 2026)
 
-Remove the development fallback in `docker-compose.yml` (line 101):
+R-1 was closed by issue #125 (branch `bugfix/compose-explicit-jwt-secret`).
+`docker-compose.yml` now declares `JWT_SECRET: ${JWT_SECRET}` with no fallback.
+The local `.env` must supply a value of at least 16 characters; CI's
+`e2e-suite` and `performance-smoke` jobs and Jenkins' `Deploy (Local)` stage
+supply an explicit `ci-test-only-jwt-secret`, matching the existing `dast.yml`
+convention. README documents the setup step, and `CHANGELOG.md` /
+`change-log.md` record the change. Production was already correct: Render
+injects the real secret and the blueprint declares it `sync: false`.
 
-```yaml
-JWT_SECRET: ${JWT_SECRET}
-```
-
-and document that `JWT_SECRET` must be set in the local `.env` before
-`docker compose up`. This restores the intent of `5813d36` and avoids
-SonarCloud S2068 findings. It is deliberately **not** applied in this change
-set: it alters the fresh-clone developer experience and belongs in a separate
-compose-hygiene PR with a README update. Production is already correct because
-Render injects a real secret and the blueprint declares it `sync: false`.
+Verification: no credential-shaped literal remains in `docker-compose.yml`
+(`git grep -n "auxilia-local-development-secret-change-me" -- docker-compose.yml`
+returns nothing; the string survives only as a historical quote in this
+report). Gitleaks and SonarCloud S2068 should remain green.
 
 ## Ticket mapping / closure recommendation
 
