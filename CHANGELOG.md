@@ -38,7 +38,7 @@ Entries focus on meaningful, user-facing or system-level changes; see
 - Production deployment health gate: the Render health check polled a non-existent hostname (`x-render-routing: no-server`); the `production` environment variable `RENDER_API_BASE_URL` was corrected to the live service on 2026-11-16.
 
 ### Security
-- _No entries yet._
+- Removed the development `JWT_SECRET` fallback from `docker-compose.yml`. Local, CI and Jenkins stacks must now supply an explicit secret; production was already correct because Render injects the real value. (#125)
 
 ### Deprecated
 - _None._

@@ -102,6 +102,11 @@ npm run dev
 Set a `JWT_SECRET` of at least 16 characters in `.env`. The API refuses to
 start without it.
 
+For the full Docker Compose stack, export `JWT_SECRET` in your shell (or set it
+in a root `.env`) before `docker compose up -d --build` — the compose file no
+longer supplies a development fallback, so the stack fails fast when it is
+missing. CI and Jenkins supply an explicit test-only value.
+
 - API: http://localhost:3000
 - Health: http://localhost:3000/api/health
 - Swagger UI (development only): http://localhost:3000/api-docs
