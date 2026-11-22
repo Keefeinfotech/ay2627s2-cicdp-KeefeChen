@@ -63,9 +63,14 @@ abstract final class AppTheme {
     primary: AppColors.darkPrimary,
     onPrimary: AppColors.darkestNavy,
     primaryContainer: AppColors.darkSurfaceAlt,
+    // ColorScheme falls back to `onPrimary` (near-black) when these are omitted.
+    // That is unreadable on a dark container and breaks the selected
+    // navigation item, so pin high-contrast light text explicitly.
+    onPrimaryContainer: AppColors.darkOnSurface,
     secondary: AppColors.darkPrimary,
     onSecondary: AppColors.darkestNavy,
     secondaryContainer: AppColors.darkSurfaceAlt,
+    onSecondaryContainer: AppColors.darkOnSurface,
     tertiary: AppColors.malachite,
     onTertiary: AppColors.white,
     tertiaryContainer: Color(0xFF0F3E34),
@@ -430,7 +435,10 @@ abstract final class AppTheme {
         labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
         iconTheme: WidgetStateProperty.resolveWith<IconThemeData>((states) {
           if (states.contains(WidgetState.selected)) {
-            return IconThemeData(color: scheme.primary, size: AppSizes.iconMd);
+            return IconThemeData(
+              color: scheme.onPrimaryContainer,
+              size: AppSizes.iconMd,
+            );
           }
           return IconThemeData(
             color: scheme.onSurfaceVariant,
@@ -440,7 +448,7 @@ abstract final class AppTheme {
         labelTextStyle: WidgetStateProperty.resolveWith<TextStyle?>((states) {
           if (states.contains(WidgetState.selected)) {
             return textTheme.labelSmall?.copyWith(
-              color: scheme.primary,
+              color: scheme.onPrimaryContainer,
               fontWeight: FontWeight.w600,
             );
           }
@@ -450,10 +458,10 @@ abstract final class AppTheme {
       navigationRailTheme: NavigationRailThemeData(
         backgroundColor: scheme.surface,
         indicatorColor: scheme.primaryContainer,
-        selectedIconTheme: IconThemeData(color: scheme.primary),
+        selectedIconTheme: IconThemeData(color: scheme.onPrimaryContainer),
         unselectedIconTheme: IconThemeData(color: scheme.onSurfaceVariant),
         selectedLabelTextStyle: textTheme.labelMedium?.copyWith(
-          color: scheme.primary,
+          color: scheme.onPrimaryContainer,
           fontWeight: FontWeight.w700,
         ),
         unselectedLabelTextStyle: textTheme.labelMedium?.copyWith(

@@ -22,6 +22,11 @@ jobs:
     name: Deploy - Render Production
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    # Scoped here (not workflow-wide) so only the deploy job can write
+    # LAST_GOOD_SHA / trigger rollback.
+    permissions:
+      contents: read
+      actions: write
     environment:
       name: production
       url: ${{ vars.RENDER_API_BASE_URL }}
@@ -39,21 +44,34 @@ jobs:
         with:
           node-version: "22"
 
-      - name: Trigger Render deploy
+      - name: Trigger Render deploy for the exact CI commit
         shell: bash
         env:
+          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+          RENDER_SERVICE_ID: ${{ vars.RENDER_SERVICE_ID }}
           RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+          DEPLOYED_COMMIT: ${{ github.sha }}
         run: |
           set -euo pipefail
-          # Render deploys automatically on push to main when the service is
-          # connected to this repository (see render.yaml). If a deploy hook
-          # secret is configured, trigger it explicitly so the deploy is
-          # certain; otherwise fall through and rely on the Blueprint.
-          if [[ -n "$RENDER_DEPLOY_HOOK_URL" ]]; then
+          # Preferred path: Deploy API pins the exact SHA that passed CI, so a
+          # newer push racing this workflow cannot change what gets deployed.
+          if [[ -n "$RENDER_API_KEY" && -n "$RENDER_SERVICE_ID" ]]; then
+            status="$(curl --proto "=https" -sS -o /dev/null -w '%{http_code}' \
+              -X POST \
+              -H "Authorization: Bearer $RENDER_API_KEY" \
+              -H "Content-Type: application/json" \
+              -d "{\"commit\":{\"id\":\"$DEPLOYED_COMMIT\"}}" \
+              "https://api.render.com/v1/services/$RENDER_SERVICE_ID/deploys")"
+            if [[ "$status" != "201" && "$status" != "200" ]]; then
+              echo "::error::Render deploy API returned HTTP $status"
+              exit 1
+            fi
+            echo "Requested Render deploy of $DEPLOYED_COMMIT."
+          elif [[ -n "$RENDER_DEPLOY_HOOK_URL" ]]; then
             curl --proto "=https" -fsSL -X POST "$RENDER_DEPLOY_HOOK_URL"
-            echo "Render deploy hook triggered."
+            echo "Render deploy hook triggered (fallback: deploys the connected branch HEAD)."
           else
-            echo "::notice::RENDER_DEPLOY_HOOK_URL is not set; relying on the Render service's auto-deploy from this push to main."
+            echo "::notice::No RENDER_API_KEY/RENDER_SERVICE_ID or RENDER_DEPLOY_HOOK_URL configured; relying on Render auto-deploy from this push to main."
           fi
 
       - name: Wait for the backend to become healthy
@@ -108,10 +126,39 @@ jobs:
             echo "- Workflow: $GITHUB_WORKFLOW"
           } >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Record rollback instructions on failure
-        if: failure()
+      - name: Persist last good SHA
+        if: success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DEPLOYED_COMMIT: ${{ github.sha }}
         run: |
+          set -euo pipefail
+          gh variable set LAST_GOOD_SHA --body "$DEPLOYED_COMMIT" --repo "$GITHUB_REPOSITORY"
+          echo "Recorded $DEPLOYED_COMMIT as LAST_GOOD_SHA."
+
+      - name: Auto-rollback on failed deploy or smoke check
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          LAST_GOOD_SHA: ${{ vars.LAST_GOOD_SHA }}
+          DEPLOYED_COMMIT: ${{ github.sha }}
+        run: |
+          set -euo pipefail
           {
             echo ""
-            echo "Smoke validation or deployment failed. Review the Render deploy logs for this service, then roll back to the previous successful deploy from Render's Deploys page (or revert the offending commit on main) before retrying."
+            echo "Deployment or smoke validation failed for $DEPLOYED_COMMIT."
+          } >> "$GITHUB_STEP_SUMMARY"
+          if [[ -z "$LAST_GOOD_SHA" || "$LAST_GOOD_SHA" == "$DEPLOYED_COMMIT" ]]; then
+            echo "::error::No earlier LAST_GOOD_SHA is recorded. Roll back manually via Render's Deploys page and set the LAST_GOOD_SHA variable."
+            exit 1
+          fi
+          echo "Triggering rollback to $LAST_GOOD_SHA."
+          gh workflow run rollback.yml \
+            --repo "$GITHUB_REPOSITORY" \
+            --field commit_sha="$LAST_GOOD_SHA" \
+            --field environment=production \
+            --field reason="Automatic rollback after failed deploy of $DEPLOYED_COMMIT"
+          {
+            echo ""
+            echo "Automatic rollback to $LAST_GOOD_SHA requested. Verify with the Rollback Production run and the smoke suite."
           } >> "$GITHUB_STEP_SUMMARY"

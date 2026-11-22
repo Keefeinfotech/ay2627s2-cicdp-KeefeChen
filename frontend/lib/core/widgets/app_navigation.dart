@@ -185,8 +185,12 @@ class _SidebarItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
+    // One colour for the whole item: the filled pill, the icon and the label
+    // must read as a single state. A separate accent for each element (or a
+    // trailing dot) communicates the same thing three times and unbalances
+    // the row.
     final Color foreground = selected
-        ? scheme.primary
+        ? scheme.onPrimaryContainer
         : scheme.onSurfaceVariant;
 
     return Padding(
@@ -204,7 +208,8 @@ class _SidebarItem extends StatelessWidget {
             child: Padding(
               padding: const EdgeInsets.symmetric(
                 horizontal: AppSpacing.md,
-                vertical: AppSpacing.md,
+                // 16 + 20 icon + 16 keeps the tap target >= 48dp.
+                vertical: AppSpacing.lg,
               ),
               child: Row(
                 children: <Widget>[
@@ -220,24 +225,13 @@ class _SidebarItem extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: theme.textTheme.labelLarge?.copyWith(
-                        color: selected
-                            ? scheme.onPrimaryContainer
-                            : foreground,
+                        color: foreground,
                         fontWeight: selected
                             ? FontWeight.w700
                             : FontWeight.w500,
                       ),
                     ),
                   ),
-                  if (selected)
-                    Container(
-                      width: 6,
-                      height: 6,
-                      decoration: BoxDecoration(
-                        color: scheme.primary,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
                 ],
               ),
             ),
@@ -326,6 +320,7 @@ class _RailItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
+    // Match the sidebar: the pill, icon and label share one legible colour.
     final Color foreground = selected
         ? scheme.onPrimaryContainer
         : scheme.onSurfaceVariant;
@@ -356,7 +351,7 @@ class _RailItem extends StatelessWidget {
                     Icon(
                       selected ? destination.selectedIcon : destination.icon,
                       size: AppSizes.iconMd,
-                      color: selected ? scheme.primary : foreground,
+                      color: foreground,
                     ),
                     const SizedBox(height: AppSpacing.xxs),
                     Text(
