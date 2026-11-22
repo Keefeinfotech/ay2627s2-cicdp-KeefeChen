@@ -12,8 +12,6 @@ on:
 
 permissions:
   contents: read
-  # Needed to persist/consume LAST_GOOD_SHA for automatic rollback.
-  actions: write
 
 concurrency:
   group: render-production-backend
@@ -24,6 +22,11 @@ jobs:
     name: Deploy - Render Production
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    # Scoped here (not workflow-wide) so only the deploy job can write
+    # LAST_GOOD_SHA / trigger rollback.
+    permissions:
+      contents: read
+      actions: write
     environment:
       name: production
       url: ${{ vars.RENDER_API_BASE_URL }}
