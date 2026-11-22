@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../features/admin/presentation/pages/admin_dashboard_page.dart';
@@ -311,8 +312,16 @@ class _AppShellState extends State<AppShell> {
   @override
   Widget build(BuildContext context) {
     final width = MediaQuery.sizeOf(context).width;
+    // Desktop browsers never get the phone frame: a narrow window (or docked
+    // DevTools) must not collapse the whole shell to a bottom navigation bar.
+    // Mobile web/native keep the responsive phone behaviour.
+    final bool isDesktopTarget =
+        defaultTargetPlatform != TargetPlatform.android &&
+        defaultTargetPlatform != TargetPlatform.iOS &&
+        defaultTargetPlatform != TargetPlatform.fuchsia;
     final bool showSidebar = width >= _sidebarBreakpoint;
-    final bool showRail = !showSidebar && width >= _railBreakpoint;
+    final bool showRail =
+        !showSidebar && (width >= _railBreakpoint || isDesktopTarget);
     final bool compactPhones = width < _compactPhoneBreakpoint;
 
     // The sync strip sits above every page so a queued or conflicted change is

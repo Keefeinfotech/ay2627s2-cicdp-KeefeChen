@@ -444,7 +444,7 @@ class _WarningBanner extends StatelessWidget {
         children: <Widget>[
           const Icon(
             Icons.cloud_off_outlined,
-            color: Color(0xFFD97706),
+            color: AppColors.warningAmber,
             size: 20,
           ),
           const SizedBox(width: AppSpacing.sm),

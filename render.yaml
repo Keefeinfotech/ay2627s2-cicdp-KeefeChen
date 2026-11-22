@@ -96,6 +96,13 @@ services:
       # RENDER_API_BASE_URL). Change it if the backend is deployed elsewhere.
       - key: API_BASE_URL
         value: https://ay2627s2-cicdp-keefechen-1.onrender.com
+      # Public Cloudflare Turnstile site key. Render passes env vars to Docker
+      # as build args, so this is compiled into the Flutter app via the
+      # --dart-define in frontend/Dockerfile. It must belong to the same widget
+      # as the backend's TURNSTILE_SECRET_KEY, and the widget must allow
+      # auxilia-web.onrender.com as a hostname.
+      - key: TURNSTILE_SITE_KEY
+        sync: false
 
   # ------------------------------------------------------------------
   # Staging (isolated): not auto-deployed. `promote.yml` targets it with

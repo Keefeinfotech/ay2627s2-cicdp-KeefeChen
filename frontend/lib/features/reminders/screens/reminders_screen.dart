@@ -6,6 +6,8 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/widgets/app_loading.dart';
+import '../../../core/widgets/app_snackbar.dart';
 import '../data/reminder_store.dart';
 
 class RemindersScreen extends ConsumerWidget {
@@ -21,7 +23,11 @@ class RemindersScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('Reminders')),
       body: isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(
+              child: SingleChildScrollView(
+                child: TaskListSkeleton(itemCount: 4),
+              ),
+            )
           : Column(
               children: [
                 // Pending reminders section
@@ -54,17 +60,22 @@ class RemindersScreen extends ConsumerWidget {
                             trailing: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Checkbox(
-                                  value: reminder.completed,
-                                  onChanged: (bool? value) async {
-                                    await completeReminder(ref, reminder.id);
-                                    ref.invalidate(remindersProvider);
-                                    ref.invalidate(pendingRemindersProvider);
-                                  },
+                                Semantics(
+                                  label:
+                                      'Mark "${reminder.message}" as completed',
+                                  child: Checkbox(
+                                    value: reminder.completed,
+                                    onChanged: (bool? value) async {
+                                      await completeReminder(ref, reminder.id);
+                                      ref.invalidate(remindersProvider);
+                                      ref.invalidate(pendingRemindersProvider);
+                                    },
+                                  ),
                                 ),
                                 if (!reminder.completed)
                                   IconButton(
                                     icon: const Icon(Icons.delete),
+                                    tooltip: 'Delete reminder',
                                     onPressed: () {
                                       ref
                                           .watch(reminderRepositoryProvider)
@@ -81,11 +92,14 @@ class RemindersScreen extends ConsumerWidget {
                     ),
                   ),
                 ] else ...[
-                  const Padding(
-                    padding: EdgeInsets.all(16.0),
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
                     child: Text(
                       'No pending reminders.',
-                      style: TextStyle(fontSize: 16, color: Colors.grey),
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
                     ),
                   ),
                 ],
@@ -101,12 +115,9 @@ class RemindersScreen extends ConsumerWidget {
                       title: const Text('Add New Reminder'),
                       onTap: () {
                         // TODO: Show dialog to create reminder
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text(
-                              'Add reminder functionality coming soon',
-                            ),
-                          ),
+                        AppSnackBar.info(
+                          context,
+                          'Adding reminders from this screen is coming soon.',
                         );
                       },
                     ),

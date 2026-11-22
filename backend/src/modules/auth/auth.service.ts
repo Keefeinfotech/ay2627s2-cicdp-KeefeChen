@@ -51,6 +51,7 @@ import {
   createUser,
   findUserByEmail,
   findUserById,
+  findUserByIdWithPassword,
   findUserByResetTokenHash,
   saveUser,
 } from "./auth.repository.js";
@@ -450,6 +451,39 @@ export const resetPassword = async (input: {
   sessionCache.invalidateUser(String(user._id));
 
   return { message: "Password updated. Sign in with your new password." };
+};
+
+/** Changes the caller's password after verifying the current one. All other
+ *  sessions are revoked; the current session is kept alive. */
+export const changePassword = async (input: {
+  userId: string;
+  currentSessionId: string;
+  currentPassword: string;
+  newPassword: string;
+}): Promise<{ message: string }> => {
+  const user = await findUserByIdWithPassword(input.userId);
+
+  const valid =
+    user?.passwordHash &&
+    (await bcrypt.compare(input.currentPassword, user.passwordHash));
+
+  if (!user || !valid) {
+    throw unauthorized("Current password is incorrect");
+  }
+
+  user.passwordHash = await bcrypt.hash(input.newPassword, getBcryptRounds());
+  await saveUser(user);
+
+  await revokeOtherSessions(String(user._id), input.currentSessionId);
+  sessionCache.invalidateUser(String(user._id));
+
+  return { message: "Password updated. Other devices have been signed out." };
+};
+
+/** Revokes every session for the user, including the current one. */
+export const logoutAll = async (userId: string): Promise<void> => {
+  await revokeAllSessions(userId);
+  sessionCache.invalidateUser(userId);
 };
 
 // --------------------------------------------------

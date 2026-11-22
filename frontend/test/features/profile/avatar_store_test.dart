@@ -6,6 +6,10 @@ import 'package:frontend/core/models/avatar_style.dart';
 import 'package:frontend/core/widgets/app_avatar.dart';
 import 'package:frontend/features/profile/data/avatar_store.dart';
 
+// A valid 1x1 PNG, small enough to keep widget tests fast.
+const String tinyPng =
+    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR4nGP4z8AAAAMBAQDJ/pLvAAAAAElFTkSuQmCC';
+
 void main() {
   setUp(() {
     SharedPreferences.setMockInitialValues(<String, Object>{});
@@ -34,6 +38,28 @@ void main() {
     await otherOwner.load();
     expect(otherOwner.style.accent, AvatarAccent.trustBlue);
     expect(otherOwner.style.glyph, isNull);
+  });
+
+  test('saves and reloads an uploaded photo', () async {
+    final store = AvatarStore(ownerId: 'owner');
+    await store.save(
+      const AvatarStyle(accent: AvatarAccent.emerald, imageData: tinyPng),
+    );
+
+    final reloaded = AvatarStore(ownerId: 'owner');
+    await reloaded.load();
+
+    expect(reloaded.style.usesImage, isTrue);
+    expect(reloaded.style.imageData, tinyPng);
+    expect(reloaded.style.usesGlyph, isFalse);
+  });
+
+  test('oversized photo data is rejected', () {
+    final style = const AvatarStyle().copyWith(
+      imageData: 'x' * (AvatarStyle.maxImageDataLength + 1),
+    );
+    expect(style.imageData, isNull);
+    expect(style.usesImage, isFalse);
   });
 
   test('a malformed preference falls back to the default avatar', () async {
@@ -96,5 +122,24 @@ void main() {
     expect(find.text('🌱'), findsOneWidget);
     final avatar = tester.widget<CircleAvatar>(find.byType(CircleAvatar));
     expect(avatar.backgroundColor, AvatarAccent.emerald.background);
+  });
+
+  testWidgets('AppAvatar renders a saved photo instead of initials', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: AppAvatar(
+            name: 'Sam Lee',
+            style: AvatarStyle(imageData: tinyPng),
+          ),
+        ),
+      ),
+    );
+
+    final avatar = tester.widget<CircleAvatar>(find.byType(CircleAvatar));
+    expect(avatar.backgroundImage, isA<MemoryImage>());
+    expect(find.text('SL'), findsNothing);
   });
 }

@@ -420,14 +420,20 @@ class ProfilePage extends StatelessWidget {
               value: '${store.levelProgress.totalXp}',
             ),
           ),
-          const VerticalDivider(width: 1, color: Color(0xFFE2E8F0)),
+          VerticalDivider(
+            width: 1,
+            color: Theme.of(context).colorScheme.outlineVariant,
+          ),
           Expanded(
             child: _ProfileStat(
               label: 'Completed',
               value: '${store.completedCount}',
             ),
           ),
-          const VerticalDivider(width: 1, color: Color(0xFFE2E8F0)),
+          VerticalDivider(
+            width: 1,
+            color: Theme.of(context).colorScheme.outlineVariant,
+          ),
           Expanded(
             child: _ProfileStat(
               label: 'Achievements',

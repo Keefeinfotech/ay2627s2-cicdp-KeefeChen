@@ -17,7 +17,11 @@ import {
 } from "./task.validation.js";
 
 import type { CreateTaskBody, UpdateTaskBody } from "./task.validation.js";
-import type { OffsetPaginationInput } from "./task.types.js";
+import type {
+  OffsetPaginationInput,
+  TaskPriority,
+  TaskStatus,
+} from "./task.types.js";
 
 /**
  * Ensures the request has an authenticated user ID.
@@ -142,6 +146,211 @@ export const taskController = {
       res.status(200).json({
         message: "Task updated successfully.",
         data: task,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  /**
+   * PATCH /api/tasks/:taskId/status
+   */
+  async setStatus(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
+    try {
+      const userId = requireUserId(req, res);
+      if (!userId) return;
+
+      const { taskId } = req.params as { taskId: string };
+      const { status } = req.body as { status: TaskStatus };
+
+      const task = await taskService.updateTask(userId, taskId, { status });
+
+      res.status(200).json({
+        message: "Task status updated successfully.",
+        data: task,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  /**
+   * PATCH /api/tasks/:taskId/priority
+   */
+  async setPriority(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
+    try {
+      const userId = requireUserId(req, res);
+      if (!userId) return;
+
+      const { taskId } = req.params as { taskId: string };
+      const { priority } = req.body as { priority: TaskPriority };
+
+      const task = await taskService.updateTask(userId, taskId, { priority });
+
+      res.status(200).json({
+        message: "Task priority updated successfully.",
+        data: task,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  /**
+   * PATCH /api/tasks/:taskId/due-date
+   */
+  async setDueDate(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
+    try {
+      const userId = requireUserId(req, res);
+      if (!userId) return;
+
+      const { taskId } = req.params as { taskId: string };
+      const { dueDate } = req.body as { dueDate: Date | null };
+
+      const task = await taskService.updateTask(userId, taskId, { dueDate });
+
+      res.status(200).json({
+        message: "Task due date updated successfully.",
+        data: task,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  /**
+   * POST /api/tasks/:taskId/complete
+   */
+  async complete(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
+    try {
+      const userId = requireUserId(req, res);
+      if (!userId) return;
+
+      const { taskId } = req.params as { taskId: string };
+
+      const task = await taskService.updateTask(userId, taskId, {
+        status: "completed",
+      });
+
+      res.status(200).json({
+        message: "Task completed successfully.",
+        data: task,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  /**
+   * POST /api/tasks/:taskId/reopen
+   */
+  async reopen(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const userId = requireUserId(req, res);
+      if (!userId) return;
+
+      const { taskId } = req.params as { taskId: string };
+
+      const task = await taskService.updateTask(userId, taskId, {
+        status: "todo",
+      });
+
+      res.status(200).json({
+        message: "Task reopened successfully.",
+        data: task,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  /**
+   * POST /api/tasks/bulk
+   */
+  async bulkCreate(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
+    try {
+      const userId = requireUserId(req, res);
+      if (!userId) return;
+
+      const { tasks } = req.body as {
+        tasks: Parameters<typeof taskService.createTask>[1][];
+      };
+
+      const result = await taskService.bulkCreateTasks(userId, tasks);
+
+      res.status(201).json({
+        message: "Bulk task creation completed.",
+        data: result,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  /**
+   * PATCH /api/tasks/bulk/status
+   */
+  async bulkSetStatus(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
+    try {
+      const userId = requireUserId(req, res);
+      if (!userId) return;
+
+      const { ids, status } = req.body as { ids: string[]; status: TaskStatus };
+
+      const result = await taskService.bulkUpdateStatus(userId, ids, status);
+
+      res.status(200).json({
+        message: "Bulk status update completed.",
+        data: result,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  /**
+   * DELETE /api/tasks/bulk
+   */
+  async bulkDelete(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
+    try {
+      const userId = requireUserId(req, res);
+      if (!userId) return;
+
+      const { ids } = req.body as { ids: string[] };
+
+      const result = await taskService.bulkDeleteTasks(userId, ids);
+
+      res.status(200).json({
+        message: "Bulk delete completed.",
+        data: result,
       });
     } catch (error) {
       next(error);

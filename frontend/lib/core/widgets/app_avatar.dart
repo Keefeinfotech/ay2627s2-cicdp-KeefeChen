@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 
 import '../constants/app_constants.dart';
@@ -5,8 +8,8 @@ import '../models/avatar_style.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
 
-/// User avatar with initials or a chosen glyph and a consistent 48px touch
-/// target.
+/// User avatar with a chosen photo, initials (or a legacy glyph), and a
+/// consistent 48px touch target.
 class AppAvatar extends StatelessWidget {
   const AppAvatar({
     super.key,
@@ -56,10 +59,24 @@ class AppAvatar extends StatelessWidget {
     final String initials = _initials;
     final String? glyph = style?.usesGlyph == true ? style!.glyph : null;
 
+    // A corrupted preference should never break the shell; fall back to the
+    // initials instead.
+    Uint8List? imageBytes;
+    if (style?.usesImage == true) {
+      try {
+        imageBytes = base64Decode(style!.imageData!);
+      } on FormatException {
+        imageBytes = null;
+      }
+    }
+
     final Widget avatar = CircleAvatar(
       radius: size / 2,
       backgroundColor: background,
-      child: glyph != null
+      backgroundImage: imageBytes != null ? MemoryImage(imageBytes) : null,
+      child: imageBytes != null
+          ? null
+          : glyph != null
           ? Text(glyph, style: TextStyle(fontSize: size * 0.42, height: 1))
           : initials.isEmpty
           ? Icon(

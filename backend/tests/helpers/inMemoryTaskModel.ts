@@ -31,7 +31,14 @@ const matchesFilter = (
     ) {
       for (const [op, operand] of Object.entries(condition)) {
         if (op === "$eq") {
-          if (value !== operand) return false;
+          // Mirror MongoDB: equal instants match even when the two sides are
+          // Date objects created separately (or an ISO string).
+          const equal =
+            value instanceof Date || operand instanceof Date
+              ? new Date(value as string | Date).getTime() ===
+                new Date(operand as string | Date).getTime()
+              : value === operand;
+          if (!equal) return false;
           continue;
         }
         if (op === "$in") {
