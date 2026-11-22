@@ -36,8 +36,9 @@ Development tooling: `flutter_test`, `flutter_lints`.
 
 ## Update policy
 
-- Dependencies are updated deliberately, not automatically; there is no bot
-  configuration in the repository at present.
+- Dependencies are updated deliberately. Dependabot is configured in
+  `.github/dependabot.yml` for npm, Pub and GitHub Actions; its PRs still
+  require the full gate set before merge.
 - Run `npm outdated` / `flutter pub outdated` before a release and review
   available updates.
 - After any update, rerun the full gate set:
