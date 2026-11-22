@@ -431,15 +431,12 @@ jobs:
   # STAGE 4 - INTEGRATION, PERFORMANCE & FINAL GATE
   # ==========================================================================
 
-  e2e-docker-compose:
-    name: "4 · Integration · E2E + Performance"
+  e2e-suite:
+    name: "4 · Integration · Playwright E2E"
     runs-on: ubuntu-latest
     timeout-minutes: 50
-    # E2E only needs the built images from Stage 2. Depending on Stage 3 instead
-    # would serialise it behind SonarQube and Trivy for no correctness gain;
-    # the final gate below still waits for all nine jobs.
-    needs: [backend-build, frontend-build]
-    if: ${{ always() && needs.backend-build.result == 'success' && needs.frontend-build.result == 'success' }}
+    needs: [sonarqube-quality-gate, trivy-container-scan]
+    if: ${{ always() && needs.sonarqube-quality-gate.result == 'success' && needs.trivy-container-scan.result == 'success' }}
     permissions:
       contents: read
     steps:
@@ -483,6 +480,50 @@ jobs:
           E2E_BASE_URL: http://localhost:8080
           E2E_API_URL: http://localhost:3000
         run: npm test
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: always()
+        with:
+          name: playwright-report
+          path: |
+            e2e/playwright-report/
+            e2e/test-results/
+          if-no-files-found: ignore
+          retention-days: 7
+      - name: Tear down the stack
+        if: always()
+        run: docker compose down -v
+
+  performance-smoke:
+    name: "4 · Performance · API Latency & Load"
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    needs: [sonarqube-quality-gate, trivy-container-scan]
+    if: ${{ always() && needs.sonarqube-quality-gate.result == 'success' && needs.trivy-container-scan.result == 'success' }}
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          ref: ${{ inputs.ref || github.ref }}
+      - name: Build and start the full stack
+        run: docker compose up -d --build
+      - name: Wait for the stack to become healthy
+        shell: bash
+        run: |
+          set -euo pipefail
+          for attempt in {1..90}; do
+            if curl -fsS http://localhost:8080/ > /dev/null 2>&1 \
+               && curl -fsS http://localhost:3000/api/health > /dev/null 2>&1; then
+              echo "Stack is ready after $((attempt * 5))s."
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "::error::Stack did not become ready in time."
+          docker compose ps
+          docker compose logs --tail=200
+          exit 1
       - name: Performance - API latency against the live stack
         shell: bash
         run: |
@@ -511,15 +552,6 @@ jobs:
         run: |
           npm ci --ignore-scripts
           npm run test:performance
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-        if: always()
-        with:
-          name: playwright-report
-          path: |
-            e2e/playwright-report/
-            e2e/test-results/
-          if-no-files-found: ignore
-          retention-days: 7
       - name: Tear down the stack
         if: always()
         run: docker compose down -v
@@ -537,7 +569,8 @@ jobs:
       - frontend-build
       - sonarqube-quality-gate
       - trivy-container-scan
-      - e2e-docker-compose
+      - e2e-suite
+      - performance-smoke
     if: always()
     permissions:
       contents: read
@@ -554,7 +587,8 @@ jobs:
           FRONTEND: ${{ needs.frontend-build.result }}
           SONAR: ${{ needs.sonarqube-quality-gate.result }}
           TRIVY: ${{ needs.trivy-container-scan.result }}
-          E2E: ${{ needs.e2e-docker-compose.result }}
+          E2E_SUITE: ${{ needs.e2e-suite.result }}
+          PERFORMANCE: ${{ needs.performance-smoke.result }}
         run: |
           set -uo pipefail
           {
@@ -570,7 +604,8 @@ jobs:
             echo "| 2 Build | Frontend | ${FRONTEND} |"
             echo "| 3 Quality | SonarQube Quality Gate | ${SONAR} |"
             echo "| 3 Security | Trivy Images | ${TRIVY} |"
-            echo "| 4 Integration | E2E + Performance | ${E2E} |"
+            echo "| 4 Integration | Playwright E2E | ${E2E_SUITE} |"
+            echo "| 4 Performance | API Latency & Load | ${PERFORMANCE} |"
           } >> "$GITHUB_STEP_SUMMARY"
 
           failed=0
@@ -607,7 +642,8 @@ jobs:
           check "Frontend Build"      "$FRONTEND"           false
           check "SonarQube Gate"      "$SONAR"              false
           check "Trivy Image Scan"    "$TRIVY"              false
-          check "E2E + Performance"   "$E2E"                false
+          check "Playwright E2E"      "$E2E_SUITE"          false
+          check "Performance Smoke"   "$PERFORMANCE"        false
 
           if (( failed )); then
             echo "::error::One or more required quality gates did not succeed."
