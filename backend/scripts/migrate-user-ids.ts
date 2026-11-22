@@ -10,9 +10,9 @@
  *  - Only documents whose `_id` is an ObjectId are migrated.
  *  - Originals are first copied into `users_backup_pre_string_ids` (kept for
  *    audit/rollback; drop it manually after verification).
- *  - References elsewhere were ALWAYS written as String(user._id)
- *    (sessions.userId, tasks.userId, ...), so no other collections need
- *    changes.
+ *  - References elsewhere were written as String(user._id)
+ *    (sessions.userId, tasks.userId, ...). Reminders are the exception: their
+ *    userId was an ObjectId, so run migrate-reminder-user-ids.ts afterwards.
  *  - In production this refuses to apply unless ALLOW_USER_ID_MIGRATION=true
  *    is set. It defaults to a dry run there.
  *

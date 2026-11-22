@@ -190,6 +190,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
       child: AutofillGroup(
         child: Form(
           key: _formKey,
+          autovalidateMode: AutovalidateMode.onUserInteraction,
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 420),
             child: Column(

@@ -1,0 +1,409 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>Auxilia – Quiet Studio (Round 5 · Direction B)</title>
+<meta name="description" content="Auxilia, Help Anywhere, Learn Together. Quiet, focused productivity for students: one column, honest numbers, no noise.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%232563EB'/><path d='M28 55l14 14 30-32' stroke='white' stroke-width='9' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://images.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#FAFBFC; --surface:#FFFFFF; --ink:#0F172A; --ink-2:#64748B; --line:#E7EAEE; --line-2:#D5DBE3;
+  --blue:#2563EB; --blue-dark:#1D4ED8; --blue-tint:#EFF4FE; --green:#059669; --green-tint:#ECF8F2;
+  --red:#DC2626; --red-tint:#FDECEC; --amber:#D97706; --amber-tint:#FDF3E3;
+  --maxw:880px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;font-family:Roboto,system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased}
+:focus-visible{outline:2px solid var(--blue);outline-offset:2px;border-radius:2px}
+button{font-family:inherit;cursor:pointer}
+.icon{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.eyebrow{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--ink-2);font-weight:500}
+
+/* ============ AUTH ============ */
+#auth-screen{min-height:100dvh;display:flex;align-items:center;justify-content:center;padding:32px 20px;background:radial-gradient(1100px 500px at 50% -10%, #EDF3FE 0%, var(--bg) 60%)}
+.auth-card{width:100%;max-width:380px}
+.wordmark{display:flex;align-items:center;justify-content:center;gap:10px;font-weight:700;font-size:20px;letter-spacing:-.2px;margin-bottom:40px}
+.wordmark .dot{width:32px;height:32px;border-radius:9px;background:var(--blue);display:grid;place-items:center}
+.wordmark .dot .icon{stroke:#fff;width:17px;height:17px}
+.auth-card h1{font-size:30px;font-weight:400;letter-spacing:-.6px;text-align:center;margin:0 0 6px}
+.auth-card .sub{text-align:center;color:var(--ink-2);margin:0 0 32px;font-size:14px}
+.tabs-inline{display:flex;gap:24px;justify-content:center;margin-bottom:24px;border-bottom:1px solid var(--line)}
+.tabs-inline button{border:0;background:transparent;padding:0 4px 12px;font-size:14px;color:var(--ink-2);border-bottom:2px solid transparent;margin-bottom:-1px}
+.tabs-inline button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--ink);font-weight:500}
+.field{margin-bottom:16px}
+.field label{display:block;font-size:12px;font-weight:500;color:var(--ink-2);margin-bottom:6px}
+.field input{width:100%;padding:12px 4px;border:0;border-bottom:1.5px solid var(--line-2);background:transparent;font-size:16px;font-family:inherit;border-radius:0;transition:border-color .2s}
+.field input:focus{outline:none;border-bottom-color:var(--blue)}
+.field .err{display:none;color:var(--red);font-size:12px;margin-top:5px}
+.field.invalid input{border-bottom-color:var(--red)}
+.field.invalid .err{display:block}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:8px;font-weight:500;font-size:14px;padding:12px 20px;border:1px solid transparent;transition:opacity .15s,background .15s}
+.btn-primary{background:var(--ink);color:#fff}
+.btn-primary:hover{background:#000}
+.btn-text{background:transparent;color:var(--blue-dark);padding-left:4px;padding-right:4px}
+.btn-text:hover{text-decoration:underline}
+.btn-outline{background:transparent;border-color:var(--line-2);color:var(--ink)}
+.btn-outline:hover{border-color:var(--ink)}
+.btn-block{width:100%}
+.form-error{display:none;color:var(--red);font-size:13px;margin-bottom:12px}
+.fineprint{text-align:center;font-size:12px;color:var(--ink-2);margin-top:20px}
+
+/* ============ APP ============ */
+#app{display:none;min-height:100dvh}
+#app.visible{display:block}
+.topnav{position:sticky;top:0;z-index:30;background:rgba(250,251,252,.9);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.topnav-inner{max-width:var(--maxw);margin:0 auto;padding:0 24px;height:60px;display:flex;align-items:center;gap:28px}
+.logo{display:flex;align-items:center;gap:8px;font-weight:700;font-size:17px;letter-spacing:-.2px;text-decoration:none;color:var(--ink)}
+.logo .dot{width:26px;height:26px;border-radius:7px;background:var(--blue);display:grid;place-items:center}
+.logo .dot .icon{stroke:#fff;width:15px;height:15px}
+.tablist{display:flex;gap:2px;height:100%;overflow-x:auto;scrollbar-width:none}
+.tablist::-webkit-scrollbar{display:none}
+.tablist button{border:0;background:transparent;height:100%;padding:0 14px;font-size:13.5px;color:var(--ink-2);border-bottom:2px solid transparent;display:flex;align-items:center;gap:6px;white-space:nowrap}
+.tablist button[aria-current="page"]{color:var(--ink);border-bottom-color:var(--blue);font-weight:500}
+.top-actions{margin-left:auto;display:flex;align-items:center;gap:10px}
+.avatar{width:32px;height:32px;border-radius:50%;border:0;background:var(--ink);color:#fff;font-size:12px;font-weight:500}
+.bell{background:transparent;border:0;color:var(--ink-2);width:36px;height:36px;border-radius:8px;display:grid;place-items:center;position:relative}
+.bell:hover{background:var(--surface);color:var(--ink)}
+.bell .dot{position:absolute;top:7px;right:8px;width:7px;height:7px;border-radius:50%;background:var(--red)}
+.page{max-width:var(--maxw);margin:0 auto;padding:40px 24px 120px}
+.screen{display:none}
+.screen.active{display:block;animation:rise .32s ease-out}
+@keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.mega{font-size:clamp(28px,4vw,38px);font-weight:400;letter-spacing:-.8px;margin:0}
+.meta{color:var(--ink-2);margin:6px 0 0;font-size:14px}
+hr.rule{border:0;border-top:1px solid var(--line);margin:28px 0}
+.hero-row{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;flex-wrap:wrap}
+.level-chip{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--ink-2)}
+.level-chip b{color:var(--ink)}
+
+/* resumable */
+.resume{display:flex;justify-content:space-between;align-items:center;gap:24px;padding:22px 24px;border:1px solid var(--line);border-radius:12px;background:#fff}
+.resume h3{margin:2px 0 6px;font-size:19px;font-weight:500;letter-spacing:-.3px}
+.resume p{margin:0;color:var(--ink-2);font-size:13px}
+.resume .btn-primary{background:var(--blue)}
+
+/* lists */
+.task-row{display:flex;align-items:center;gap:12px;padding:11px 4px;border-bottom:1px solid var(--line)}
+.task-row:last-child{border-bottom:0}
+.check{width:20px;height:20px;border-radius:50%;border:1.5px solid var(--line-2);background:#fff;flex:none;display:grid;place-items:center;transition:all .18s}
+.check[aria-pressed="true"]{background:var(--green);border-color:var(--green)}
+.check[aria-pressed="true"] svg{stroke:#fff;stroke-width:3}
+.task-row.done .t-title{color:var(--ink-2);text-decoration:line-through}
+.t-title{font-size:14.5px}
+.t-meta{font-size:12px;color:var(--ink-2);margin-top:1px;display:flex;gap:8px}
+.tag{color:var(--blue-dark);background:var(--blue-tint);border-radius:4px;padding:0 6px;font-size:11px;font-weight:500}
+.section-label{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--ink-2);margin:28px 0 8px;font-weight:500}
+.chip{border:1px solid var(--line-2);background:#fff;border-radius:999px;padding:5px 13px;font-size:12px;color:var(--ink-2)}
+.chip[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:#fff}
+.empty{text-align:center;padding:56px 20px;color:var(--ink-2)}
+.empty .icon{width:40px;height:40px;stroke:var(--line-2);margin-bottom:10px}
+.row{display:flex;gap:12px;align-items:center}
+.split{display:grid;grid-template-columns:1.5fr 1fr;gap:32px}
+.quiet-card{border:1px solid var(--line);border-radius:12px;padding:20px;background:#fff}
+.kpi{display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--line);font-size:14px}
+.kpi:last-child{border:0}
+.kpi span:last-child{font-weight:500}
+.bar-row{display:grid;grid-template-columns:36px 1fr 24px;gap:10px;align-items:center;font-size:12px;color:var(--ink-2);margin:10px 0}
+.bar{height:6px;background:var(--line);border-radius:3px;overflow:hidden}
+.bar>i{display:block;height:100%;background:var(--ink);border-radius:3px;transition:width .6s}
+.ring-num b{font-size:24px;font-weight:400}
+.reminder{display:flex;align-items:center;gap:14px;padding:16px 0;border-bottom:1px solid var(--line)}
+.reminder:last-child{border:0}
+.reminder .when{margin-left:auto;text-align:right;font-size:12px;color:var(--ink-2);white-space:nowrap}
+.switch{position:relative;width:40px;height:22px;appearance:none;background:var(--line-2);border-radius:999px;outline-offset:2px;transition:background .2s;cursor:pointer}
+.switch:checked{background:var(--green)}
+.switch::after{content:"";position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#fff;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.switch:checked::after{transform:translateX(18px)}
+
+/* assistant */
+.chat-log{display:flex;flex-direction:column;gap:18px;margin:24px 0;min-height:260px}
+.msg{max-width:85%;font-size:14.5px}
+.msg-user{align-self:flex-end;background:var(--ink);color:#fff;border-radius:16px 16px 4px 16px;padding:11px 16px}
+.msg-ai{align-self:flex-start;padding:2px 0}
+.suggest{display:flex;flex-direction:column;gap:8px;margin-top:12px;align-items:flex-start}
+.suggest button{border:1px solid var(--line-2);background:#fff;border-radius:999px;padding:7px 14px;font-size:13px;color:var(--ink)}
+.suggest button:hover{border-color:var(--blue);color:var(--blue-dark)}
+.preview-card{border:1px solid var(--line-2);border-left:3px solid var(--blue);border-radius:10px;padding:16px;margin-top:10px;background:#fff}
+.preview-card b{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink-2)}
+.preview-grid{display:grid;grid-template-columns:auto 1fr;gap:4px 16px;margin:10px 0;font-size:13.5px}
+.preview-grid span{color:var(--ink-2)}
+.chat-input{display:flex;border:1px solid var(--line-2);border-radius:12px;overflow:hidden;background:#fff}
+.chat-input input{flex:1;border:0;padding:14px 16px;font-size:15px;font-family:inherit}
+.chat-input input:focus{outline:2px solid var(--blue);outline-offset:-2px}
+.chat-input button{border:0;background:var(--ink);color:#fff;padding:0 20px}
+
+#toast{position:fixed;bottom:28px;left:50%;transform:translate(-50%,12px);background:var(--ink);color:#fff;padding:11px 20px;border-radius:8px;font-size:13px;opacity:0;pointer-events:none;transition:all .25s;z-index:60}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+
+#onboarding{position:fixed;inset:0;background:var(--bg);z-index:50;display:none;align-items:center;justify-content:center;padding:24px}
+#onboarding.visible{display:flex}
+.ob-card{max-width:460px;text-align:center}
+.ob-glyph{font-size:0;margin-bottom:28px}
+.ob-glyph .ring{width:96px;height:96px;border-radius:50%;border:1.5px solid var(--line-2);display:grid;place-items:center;margin:0 auto}
+.ob-glyph .ring .icon{width:40px;height:40px;stroke:var(--blue)}
+.ob-dots{display:flex;gap:6px;justify-content:center;margin:28px 0}
+.ob-dots i{width:6px;height:6px;border-radius:50%;background:var(--line-2)}
+.ob-dots i.on{background:var(--blue)}
+.ob-actions{display:flex;justify-content:space-between}
+
+.bottom-nav{display:none}
+@media (max-width:900px){.split{grid-template-columns:1fr}.page{padding:28px 18px 110px}.tablist{display:none}.bottom-nav{display:flex;position:fixed;bottom:0;left:0;right:0;background:rgba(255,255,255,.95);backdrop-filter:blur(10px);border-top:1px solid var(--line);height:62px;z-index:40}.bottom-nav button{flex:1;border:0;background:transparent;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:9.5px;letter-spacing:.5px;color:var(--ink-2);text-transform:uppercase}.bottom-nav button[aria-current="page"]{color:var(--blue-dark)}}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+
+<!-- AUTH -->
+<main id="auth-screen" aria-label="Sign in to Auxilia">
+  <div class="auth-card">
+    <div class="wordmark"><span class="dot"><svg class="icon" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg></span>Auxilia</div>
+    <h1>Help Anywhere,<br>Learn Together.</h1>
+    <p class="sub">The quiet personal secretary for student life.</p>
+    <div class="tabs-inline" role="tablist">
+      <button role="tab" id="tab-login" aria-selected="true" onclick="setAuthMode('login')">Log in</button>
+      <button role="tab" id="tab-signup" aria-selected="false" onclick="setAuthMode('signup')">Sign up</button>
+    </div>
+    <div class="form-error" id="form-error" role="alert"></div>
+    <form id="auth-form" novalidate>
+      <div class="field" id="f-name" hidden><label for="name">Name</label><input id="name" placeholder="Keefe Chen" autocomplete="name"><p class="err">Your name, please.</p></div>
+      <div class="field" id="f-email"><label for="email">Email</label><input id="email" type="email" required placeholder="you@university.edu" autocomplete="email"><p class="err">Enter a valid email.</p></div>
+      <div class="field" id="f-password"><label for="password">Password</label><input id="password" type="password" required minlength="8" placeholder="8+ characters" autocomplete="current-password"><p class="err">At least 8 characters.</p></div>
+      <button class="btn btn-primary btn-block" id="auth-submit" type="submit" style="margin-top:8px">Log in</button>
+    </form>
+    <p class="fineprint">By continuing you agree to the Terms &amp; Privacy Policy.</p>
+  </div>
+</main>
+
+<!-- ONBOARDING -->
+<div id="onboarding" role="dialog" aria-modal="true" aria-labelledby="ob-title">
+  <div class="ob-card">
+    <div class="ob-glyph"><div class="ring"><svg class="icon" viewBox="0 0 24 24" id="ob-icon"><path d="M5 13l4 4L19 7"/></svg></div></div>
+    <h2 id="ob-title" style="font-weight:400;letter-spacing:-.4px;margin:0 0 10px">Deadlines, handled calmly</h2>
+    <p id="ob-text" style="color:var(--ink-2);margin:0;min-height:44px">Auxilia watches your workload and surfaces what matters today — nothing else.</p>
+    <div class="ob-dots" id="ob-dots"><i class="on"></i><i></i><i></i></div>
+    <div class="ob-actions"><button class="btn btn-text" onclick="finishOnboarding()">Skip</button><button class="btn btn-primary" id="ob-next" onclick="nextOnboarding()">Continue</button></div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <header class="topnav">
+    <div class="topnav-inner">
+      <a class="logo" href="#" onclick="showScreen('dashboard');return false"><span class="dot"><svg class="icon" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg></span>Auxilia</a>
+      <nav class="tablist" aria-label="Primary">
+        <button aria-current="page" data-nav="dashboard">Overview</button>
+        <button data-nav="tasks">Tasks</button>
+        <button data-nav="assistant">Assistant</button>
+        <button data-nav="reminders">Reminders</button>
+        <button data-nav="insights">Insights</button>
+      </nav>
+      <div class="top-actions">
+        <button class="bell" aria-label="Notifications" onclick="showScreen('reminders')"><svg class="icon" viewBox="0 0 24 24"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 8-3 8h18s-3-1-3-8M13.7 21a2 2 0 0 1-3.4 0"/></svg><span class="dot"></span></button>
+        <button class="avatar" onclick="showScreen('profile')" aria-label="Profile">KC</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="page">
+
+    <!-- DASHBOARD -->
+    <section class="screen active" id="screen-dashboard" aria-label="Overview">
+      <div class="hero-row">
+        <div><p class="eyebrow" id="today-line">Thursday, 19 November</p><h1 class="mega" id="greeting">Good afternoon, Keefe.</h1></div>
+        <div class="level-chip">Level <b>4</b> · <b>640 XP</b> · <b>6</b>-day streak</div>
+      </div>
+      <hr class="rule">
+
+      <div class="resume"><div><p class="eyebrow">Pick up where you left off</p><h3>COMP1511 — Assignment 3 report</h3><p>60% complete · due Friday, 5:00 pm</p></div><button class="btn btn-primary" onclick="toast('Opening the task editor…')">Continue</button></div>
+
+      <div class="split" style="margin-top:32px">
+        <div>
+          <p class="eyebrow">Due today · 2</p>
+          <div id="today-list"></div>
+          <p class="eyebrow" style="margin-top:24px">This week</p>
+          <div id="week-list"></div>
+          <form id="quick-add" style="display:flex;gap:12px;margin-top:20px">
+            <input id="quick-input" placeholder="Quick add — “email tutor about lab 4”" aria-label="Quick add a task" style="flex:1;border:0;border-bottom:1.5px solid var(--line-2);padding:10px 4px;font-size:15px;font-family:inherit;background:transparent">
+            <button class="btn btn-text" type="submit">Add task</button>
+          </form>
+        </div>
+        <div>
+          <p class="eyebrow">Progress</p>
+          <div class="quiet-card" style="text-align:center">
+            <div style="position:relative;display:inline-block">
+              <svg width="120" height="120" viewBox="0 0 120 120" role="img" aria-label="12 of 15 tasks done this week"><circle cx="60" cy="60" r="50" stroke="var(--line)" stroke-width="8" fill="none"/><circle cx="60" cy="60" r="50" stroke="var(--blue)" stroke-width="8" fill="none" stroke-linecap="round" stroke-dasharray="314" stroke-dashoffset="63" transform="rotate(-90 60 60)"/></svg>
+              <div class="ring-num" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center"><b>12/15</b><span class="eyebrow">this week</span></div>
+            </div>
+            <p style="color:var(--ink-2);font-size:13px;margin:12px 0 0">On pace. 3 tasks to Sunday's goal.</p>
+          </div>
+          <p class="eyebrow" style="margin-top:24px">Deadlines</p>
+          <div class="quiet-card">
+            <div class="kpi"><span>COMP1511 A3 report</span><span style="color:var(--red)">Fri 5pm</span></div>
+            <div class="kpi"><span>STAT2010 quiz 5</span><span style="color:var(--amber)">Sat 9am</span></div>
+            <div class="kpi"><span>Internship application</span><span style="color:var(--green)">Mon 28 Nov</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TASKS -->
+    <section class="screen" id="screen-tasks" aria-label="Tasks">
+      <p class="eyebrow">Tasks</p><h1 class="mega" style="margin-bottom:18px">What needs doing,<br>in order.</h1>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px" id="tag-filters" role="group" aria-label="Filter by course">
+        <button class="chip" aria-pressed="true" data-tag="all">All</button>
+        <button class="chip" aria-pressed="false" data-tag="COMP1511">COMP1511</button>
+        <button class="chip" aria-pressed="false" data-tag="STAT2010">STAT2010</button>
+        <button class="chip" aria-pressed="false" data-tag="Internship">Internship</button>
+        <button class="chip" aria-pressed="false" data-tag="Personal">Personal</button>
+      </div>
+      <div id="task-groups"></div>
+      <div class="empty" id="tasks-empty" hidden><svg class="icon" viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11"/></svg><p><b>All clear.</b></p><p>Nothing matches that filter.</p></div>
+    </section>
+
+    <!-- ASSISTANT -->
+    <section class="screen" id="screen-assistant" aria-label="Assistant">
+      <p class="eyebrow">Assistant</p><h1 class="mega" style="margin-bottom:6px">Just tell me.</h1>
+      <p class="meta" style="margin-bottom:8px">Natural language in, structured task out — with your confirmation. Prototype uses a local heuristic; production calls <code>/api/v1/assistant</code>.</p>
+      <div id="chat-log" class="chat-log" aria-live="polite"></div>
+      <form class="chat-input" id="chat-form">
+        <input id="chat-text" autocomplete="off" placeholder="“Remind me to submit A3 tomorrow at 4pm”" aria-label="Message the assistant">
+        <button type="submit" aria-label="Send">Send</button>
+      </form>
+    </section>
+
+    <!-- REMINDERS -->
+    <section class="screen" id="screen-reminders" aria-label="Reminders">
+      <p class="eyebrow">Reminders</p><h1 class="mega" style="margin-bottom:24px">Nudges, not nags.</h1>
+      <div id="reminder-list"></div>
+      <p class="eyebrow" style="margin-top:28px">Notifications</p>
+      <div class="quiet-card">
+        <div class="kpi"><span>Morning digest · 7:30 am</span><input class="switch" type="checkbox" checked aria-label="Morning digest"></div>
+        <div class="kpi"><span>Deadline day heads-up · 9:00 am</span><input class="switch" type="checkbox" checked aria-label="Deadline day heads-up"></div>
+        <div class="kpi"><span>Overdue alerts · immediate</span><input class="switch" type="checkbox" checked aria-label="Overdue alerts"></div>
+        <div class="kpi"><span>Sunday week-ahead · 6:00 pm</span><input class="switch" type="checkbox" aria-label="Week ahead review"></div>
+      </div>
+    </section>
+
+    <!-- INSIGHTS -->
+    <section class="screen" id="screen-insights" aria-label="Insights">
+      <p class="eyebrow">Insights · last 7 days</p><h1 class="mega">Honest progress.</h1><hr class="rule">
+      <div class="split">
+        <div><p class="eyebrow">Completed per day</p><div id="insight-bars"></div></div>
+        <div>
+          <p class="eyebrow">Summary</p>
+          <div class="quiet-card">
+            <div class="kpi"><span>Created</span><span>14</span></div>
+            <div class="kpi"><span>Completed</span><span>12</span></div>
+            <div class="kpi"><span>Completion rate</span><span>86%</span></div>
+            <div class="kpi"><span>On-time</span><span>10 of 12</span></div>
+            <div class="kpi"><span>Streak</span><span>6 days</span></div>
+          </div>
+          <p class="eyebrow" style="margin-top:20px">Secretary's note</p>
+          <p style="color:var(--ink-2);font-size:14px;margin:0">8 of your 12 completions happen before 11 am. Protect your mornings for deep work; leave admin for after lunch.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- PROFILE -->
+    <section class="screen" id="screen-profile" aria-label="Profile and settings">
+      <p class="eyebrow">Profile</p><h1 class="mega" style="margin-bottom:24px">Keefe Chen</h1>
+      <div class="split">
+        <form class="quiet-card" onsubmit="event.preventDefault();toast('Saved.')">
+          <div class="field"><label for="p-name">Name</label><input id="p-name" value="Keefe Chen"></div>
+          <div class="field"><label for="p-email">Email</label><input id="p-email" type="email" value="keefe@university.edu"></div>
+          <div class="field"><label for="p-uni">University</label><input id="p-uni" value="UNSW — Computer Science, Year 2"></div>
+          <button class="btn btn-primary" type="submit" style="margin-top:4px">Save</button>
+        </form>
+        <div>
+          <div class="quiet-card">
+            <p class="eyebrow" style="margin:0 0 10px">Preferences</p>
+            <div class="kpi"><span>Week starts Monday</span><input class="switch" type="checkbox" checked aria-label="Week starts Monday"></div>
+            <div class="kpi"><span>Reduce motion</span><input class="switch" type="checkbox" id="pref-motion" aria-label="Reduce motion"></div>
+            <div class="kpi"><span>Weekly email summary</span><input class="switch" type="checkbox" aria-label="Weekly email summary"></div>
+          </div>
+          <div class="quiet-card" style="margin-top:16px">
+            <button class="btn btn-outline" style="width:100%;margin-bottom:8px" onclick="toast('Reset link sent.')">Change password</button>
+            <button class="btn btn-outline" style="width:100%;color:var(--red);border-color:var(--red)" onclick="toast('Signed out (prototype).');setTimeout(signOut,900)">Log out</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <nav class="bottom-nav" aria-label="Mobile navigation">
+    <button aria-current="page" data-nav="dashboard">Overview</button>
+    <button data-nav="tasks">Tasks</button>
+    <button data-nav="assistant">AI</button>
+    <button data-nav="insights">Insights</button>
+    <button data-nav="profile">Me</button>
+  </nav>
+</div>
+
+<div id="toast" role="status" aria-live="polite"></div>
+<script>
+const TASKS=[
+  {id:1,title:'COMP1511 A3 — finish report draft',tag:'COMP1511',prio:'high',due:'Fri 5:00 pm',done:false},
+  {id:2,title:'STAT2010 — revise hypothesis testing',tag:'STAT2010',prio:'med',due:'Sat 9:00 am',done:false},
+  {id:3,title:'Email tutor about lab 4 marks',tag:'COMP1511',prio:'med',due:'Today',done:false},
+  {id:4,title:'Internship application — personal statement',tag:'Internship',prio:'high',due:'Mon 28 Nov',done:false},
+  {id:5,title:'Buy groceries for the week',tag:'Personal',prio:'low',due:'Today',done:true},
+  {id:6,title:'Read STAT2010 chapter 6',tag:'STAT2010',prio:'low',due:'Sun',done:false}];
+const REMINDERS=[
+  {title:'Submit COMP1511 A3',when:'Fri 5:00 pm',recurring:false},
+  {title:'STAT2010 quiz 5 prep block',when:'Sat 8:30 am',recurring:true},
+  {title:'Weekly review & next-week plan',when:'Sun 6:00 pm',recurring:true}];
+const DAYS=[['Mon',9],['Tue',6],['Wed',11],['Thu',4],['Fri',0],['Sat',0],['Sun',0]];
+const store={tasks:[...TASKS],tag:'all'};
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const esc=s=>s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const toast=m=>{const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('show'),3200)};
+const dot=p=>`<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${p==='high'?'var(--red)':p==='med'?'var(--amber)':'var(--green)'};margin-right:6px"></span>`;
+let mode='login';
+function setAuthMode(m){mode=m;$('#tab-login').setAttribute('aria-selected',m==='login');$('#tab-signup').setAttribute('aria-selected',m==='signup');$('#f-name').hidden=m!=='signup';$('#auth-submit').textContent=m==='login'?'Log in':'Create account';$('#form-error').style.display='none'}
+$('#auth-form').addEventListener('submit',e=>{e.preventDefault();const em=$('#email'),pw=$('#password');let ok=true;const mark=(el,bad)=>el.closest('.field').classList.toggle('invalid',bad);mark(em,!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em.value));mark(pw,pw.value.length<8);if(mode==='signup')mark($('#name'),!$('#name').value.trim());if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em.value)||pw.value.length<8||(mode==='signup'&&!$('#name').value.trim())){const err=$('#form-error');err.textContent='Please fix the highlighted fields.';err.style.display='block';ok=false}if(!ok)return;$('#auth-screen').style.display='none';$('#app').classList.add('visible');openOnboarding()});
+const OB=[{t:'Deadlines, handled calmly',x:'Auxilia watches your workload and surfaces what matters today — nothing else.',i:'<path d="M5 13l4 4L19 7"/>'},{t:'Just say it',x:'“Remind me to submit A3 tomorrow at 4” — out comes a structured task, yours to confirm.',i:'<path d="M12 3a4 4 0 0 0-4 4v1a4 4 0 0 0 8 0V7a4 4 0 0 0-4-4zM5 21v-2a5 5 0 0 1 5-5h4a5 5 0 0 1 5 5v2"/>'},{t:'See your week clearly',x:'Daily and weekly summaries, streaks and on-time rates — honest progress.',i:'<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>'}];
+let obIdx=0;
+function openOnboarding(){if(localStorage.getItem('aux-r5b-onboarded'))return;$('#onboarding').classList.add('visible');renderOb()}
+function renderOb(){$('#ob-title').textContent=OB[obIdx].t;$('#ob-text').textContent=OB[obIdx].x;$('#ob-icon').innerHTML=OB[obIdx].i;$('#ob-next').textContent=obIdx===2?'Begin':'Continue';$$('#ob-dots i').forEach((d,i)=>d.classList.toggle('on',i===obIdx))}
+function nextOnboarding(){if(obIdx<2){obIdx++;renderOb()}else finishOnboarding()}
+function finishOnboarding(){localStorage.setItem('aux-r5b-onboarded','1');$('#onboarding').classList.remove('visible');toast('Welcome to Auxilia.')}
+function signOut(){$('#app').classList.remove('visible');$('#auth-screen').style.display='flex'}
+function showScreen(n){$$('.screen').forEach(s=>s.classList.toggle('active',s.id==='screen-'+n));$$('[data-nav]').forEach(b=>b.dataset.nav===n?b.setAttribute('aria-current','page'):b.removeAttribute('aria-current'));window.scrollTo({top:0})}
+$$('[data-nav]').forEach(b=>b.addEventListener('click',()=>showScreen(b.dataset.nav)));
+function rowHTML(t){return `<div class="task-row ${t.done?'done':''}"><button class="check" aria-pressed="${t.done}" aria-label="Toggle ${esc(t.title)}" onclick="toggleTask(${t.id})"><svg class="icon" viewBox="0 0 24 24" style="width:12px;height:12px;stroke:transparent"><path d="M5 13l4 4L19 7"/></svg></button><div style="min-width:0"><div class="t-title">${dot(t.prio)}${esc(t.title)}</div><div class="t-meta"><span class="tag">${esc(t.tag)}</span><span>${esc(t.due)}</span></div></div></div>`}
+function renderTasks(){
+  const list=store.tasks.filter(t=>store.tag==='all'||t.tag===store.tag);
+  const B={Overdue:[],'Due today':[],'This week':[],Later:[]};
+  for(const t of list){if(/overdue/i.test(t.due))B.Overdue.push(t);else if(t.due==='Today')B['Due today'].push(t);else if(/Fri|Sat|Sun/.test(t.due))B['This week'].push(t);else B.Later.push(t)}
+  $('#tasks-empty').hidden=list.length!==0;
+  $('#task-groups').innerHTML=Object.entries(B).filter(([,v])=>v.length).map(([k,v])=>`<p class="section-label">${k}</p>${v.map(rowHTML).join('')}`).join('');
+  $('#today-list').innerHTML=store.tasks.filter(t=>!t.done&&t.due==='Today').map(rowHTML).join('')||'<p class="meta">Nothing due today.</p>';
+  $('#week-list').innerHTML=store.tasks.filter(t=>!t.done&&/Fri|Sat|Sun|Mon/.test(t.due)).slice(0,3).map(rowHTML).join('');
+}
+function toggleTask(id){const t=store.tasks.find(t=>t.id===id);if(t){t.done=!t.done;renderTasks();toast(t.done?'Done.':'Reopened.')}}
+$('#tag-filters').addEventListener('click',e=>{const b=e.target.closest('[data-tag]');if(!b)return;store.tag=b.dataset.tag;$$('#tag-filters .chip').forEach(c=>c.setAttribute('aria-pressed',c===b));renderTasks()});
+$('#quick-add').addEventListener('submit',e=>{e.preventDefault();const i=$('#quick-input'),v=i.value.trim();if(!v)return;store.tasks.unshift({id:Date.now(),title:v,tag:'Personal',prio:'med',due:'Today',done:false});i.value='';renderTasks();toast('Added to today.')});
+$('#insight-bars').innerHTML=DAYS.map(([d,v])=>`<div class="bar-row"><span>${d}</span><div class="bar"><i style="width:${Math.min(100,v/12*100)}%"></i></div><span>${v}</span></div>`).join('');
+$('#reminder-list').innerHTML=REMINDERS.map(r=>`<div class="reminder"><div style="min-width:0"><div class="t-title">${esc(r.title)}</div><div class="t-meta">${r.recurring?'Recurring · ':''}${esc(r.when)}</div></div><div class="when"><button class="btn btn-text" style="font-size:13px" onclick="toast('Snoozed 1 hour.')">Snooze 1h</button></div></div>`).join('');
+const chatLog=$('#chat-log');
+function bubble(html,who){const d=document.createElement('div');d.className='msg msg-'+who;d.innerHTML=html;chatLog.appendChild(d);chatLog.scrollTop=chatLog.scrollHeight}
+function greet(){bubble('Good afternoon. What shall we sort out?<div class="suggest"><button onclick="suggest(this)">What’s due today?</button><button onclick="suggest(this)">Remind me to revise STAT2010 tomorrow at 8am</button><button onclick="suggest(this)">Add a task to email my tutor on Friday</button></div>','ai')}
+function suggest(b){sendChat(b.textContent)}
+function tryParseTask(text){const t=text.toLowerCase();const m=t.match(/(?:remind me to|add (?:a )?task to|task:)\s+(.+?)(?:\s+(?:tomorrow|today|on|at|by)\b.*)?$/);if(!m)return null;const title=m[1].trim().replace(/[.?!]$/,'');const when=(t.match(/(tomorrow|today|tonight|monday|tuesday|wednesday|thursday|friday|saturday|sunday)/i)||[null])[0];const time=(t.match(/(\d{1,2}(:\d{2})?\s*(am|pm))/i)||[null])[0];return{title:title.charAt(0).toUpperCase()+title.slice(1),when:when?when+(time?' · '+time:''):null}}
+function renderPreview(p){const d=document.createElement('div');d.className='msg msg-ai';d.innerHTML=`<div class="preview-card"><b>Preview</b><div class="preview-grid"><span>Task</span><strong>${esc(p.title)}</strong><span>Due</span><strong>${esc(p.when||'Not set')}</strong><span>Tag</span><strong>Personal</strong></div><button class="btn btn-primary" style="padding:8px 16px;margin-right:8px" onclick="confirmTask(this)">Confirm</button><button class="btn btn-text" onclick="this.closest('.preview-card').innerHTML='<b>Discarded.</b>'">Cancel</button></div>`;chatLog.appendChild(d);chatLog.scrollTop=chatLog.scrollHeight}
+function confirmTask(btn){const card=btn.closest('.preview-card');const title=card.querySelector('.preview-grid strong').textContent;store.tasks.unshift({id:Date.now(),title,tag:'Personal',prio:'med',due:'Today',done:false});card.innerHTML='<b>Created.</b><p style="margin:6px 0 0;font-size:13px;color:var(--ink-2)">It’s on your overview now.</p>';renderTasks();toast('Task created.')}
+function sendChat(text){bubble(esc(text),'user');const t=text.toLowerCase();if(t.includes('due today')){setTimeout(()=>bubble('Two things: email your tutor about lab 4 marks, and groceries (done). Want a 45-minute focus block tonight?','ai'),320);return}const p=tryParseTask(text);if(p){if(!p.when){setTimeout(()=>bubble('Of course — “'+esc(p.title)+'”. When?','ai'),320);return}setTimeout(()=>renderPreview(p),320);return}setTimeout(()=>bubble('Try: “remind me to … tomorrow at 8am”, or “what’s due today?”','ai'),320)}
+$('#chat-form').addEventListener('submit',e=>{e.preventDefault();const i=$('#chat-text'),v=i.value.trim();if(!v)return;i.value='';sendChat(v)});
+$('#pref-motion').addEventListener('change',e=>{document.documentElement.style.scrollBehavior=e.target.checked?'auto':'smooth';toast(e.target.checked?'Motion reduced.':'Motion restored.')});
+(function(){const h=new Date().getHours();$('#greeting').textContent=(h<12?'Good morning':h<17?'Good afternoon':'Good evening')+', Keefe.';$('#today-line').textContent=new Date().toLocaleDateString('en-AU',{weekday:'long',day:'numeric',month:'long'})})();
+greet();renderTasks();
+</script>
+</body>
+</html>

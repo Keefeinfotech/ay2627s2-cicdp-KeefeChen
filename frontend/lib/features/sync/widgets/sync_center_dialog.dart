@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
+import '../../../core/widgets/app_dialog.dart';
 import '../../../core/widgets/app_snackbar.dart';
 import '../../home/data/task_store.dart';
 import '../models/sync_conflict.dart';
@@ -49,6 +50,18 @@ class _SyncCenterDialogState extends State<SyncCenterDialog> {
   }
 
   Future<void> _discard(SyncOperation operation) async {
+    final confirmed = await showAppConfirmDialog(
+      context,
+      title: 'Discard this change?',
+      message:
+          'This queued change will not be sent to the server. It cannot be '
+          'undone.',
+      confirmLabel: 'Discard',
+      destructive: true,
+      icon: Icons.delete_outline_rounded,
+    );
+    if (!confirmed || !mounted) return;
+
     await widget.store.discardPendingOperation(operation.id);
     if (!mounted) return;
     AppSnackBar.success(context, 'Queued change discarded.');

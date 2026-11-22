@@ -4,10 +4,12 @@ import { authRateLimiter } from "../../middleware/rateLimiter.js";
 import { validateRequest } from "../../middleware/validateRequest.js";
 import { authenticate } from "../../middleware/authenticate.js";
 import {
+  changePassword,
   forgotPassword,
   listSessions,
   login,
   logout,
+  logoutAll,
   me,
   refresh,
   resetPassword,
@@ -15,6 +17,7 @@ import {
   signup,
 } from "./auth.controller.js";
 import {
+  changePasswordSchema,
   forgotPasswordSchema,
   loginSchema,
   refreshSchema,
@@ -60,6 +63,14 @@ router.post(
 
 router.get("/me", authenticate, me);
 router.post("/logout", authenticate, logout);
+router.post("/logout-all", authenticate, logoutAll);
+router.post(
+  "/change-password",
+  authenticate,
+  authRateLimiter,
+  validateRequest(changePasswordSchema),
+  changePassword,
+);
 router.get("/sessions", authenticate, listSessions);
 router.delete("/sessions/:id", authenticate, revokeSession);
 

@@ -58,23 +58,47 @@ class _AnimatedGradientBackgroundState extends State<AnimatedGradientBackground>
 
   @override
   Widget build(BuildContext context) {
+    // Honour the OS "reduce motion" accessibility setting: show a static
+    // diagonal gradient sampled from the middle of the cycle.
+    final reduceMotion = MediaQuery.disableAnimationsOf(context);
+
+    if (reduceMotion) {
+      if (_controller.isAnimating) {
+        _controller.stop();
+      }
+      final c = widget.colors;
+      return Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [c[0], c[2]],
+          ),
+        ),
+        child: widget.child,
+      );
+    }
+
     return AnimatedBuilder(
       animation: _controller,
-      builder: (context, _) {
+      child: widget.child,
+      builder: (context, child) {
         final t = _controller.value;
         final c = widget.colors;
-        return Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                Color.lerp(c[0], c[1], (sin(t * 2 * pi) + 1) / 2)!,
-                Color.lerp(c[2], c[3], (cos(t * 2 * pi) + 1) / 2)!,
-              ],
+        return RepaintBoundary(
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Color.lerp(c[0], c[1], (sin(t * 2 * pi) + 1) / 2)!,
+                  Color.lerp(c[2], c[3], (cos(t * 2 * pi) + 1) / 2)!,
+                ],
+              ),
             ),
+            child: child,
           ),
-          child: widget.child,
         );
       },
     );

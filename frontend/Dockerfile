@@ -10,6 +10,11 @@ FROM debian:bookworm-slim AS build
 ARG FLUTTER_VERSION=3.47.8
 ARG API_BASE_URL=http://localhost:3000
 ENV API_BASE_URL=${API_BASE_URL}
+# Public Cloudflare Turnstile site key. Compiled into the app via --dart-define
+# below so AuthService.requiresCaptcha is true and the invisible widget runs.
+# Empty by default so local docker-compose builds stay CAPTCHA-free.
+ARG TURNSTILE_SITE_KEY=
+ENV TURNSTILE_SITE_KEY=${TURNSTILE_SITE_KEY}
 ENV PATH="/opt/flutter/bin:${PATH}"
 
 RUN apt-get update \
@@ -46,7 +51,9 @@ COPY . .
 # passes its service env var as a Docker build argument; docker-compose passes
 # the localhost URL. Deriving the origin (scheme + host) keeps paths/trailing
 # slashes out of the CSP connect-src directive.
-RUN flutter build web --release --dart-define=API_BASE_URL=${API_BASE_URL} \
+RUN flutter build web --release \
+    --dart-define=API_BASE_URL=${API_BASE_URL} \
+    --dart-define=TURNSTILE_SITE_KEY=${TURNSTILE_SITE_KEY} \
     && API_ORIGIN="$(printf '%s' "$API_BASE_URL" | sed -E 's#^(https?://[^/]+).*#\1#')" \
     && sed -i "s|__API_ORIGIN__|${API_ORIGIN}|g" nginx.conf
 
@@ -61,6 +68,11 @@ COPY --from=build /app/build/web /usr/share/nginx/html
 
 # SPA routing + security headers, with the API origin substituted at build.
 COPY --from=build /app/nginx.conf /etc/nginx/conf.d/default.conf
+
+# Patch Alpine packages so Trivy no longer reports known HIGH/CRITICAL
+# vulnerabilities in the base image layer (mirrors the backend runtime stage).
+USER root
+RUN apk upgrade --no-cache
 
 # Run the web server as the non-root nginx user.
 USER nginx

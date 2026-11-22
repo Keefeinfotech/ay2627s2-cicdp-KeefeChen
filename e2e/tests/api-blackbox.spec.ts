@@ -1,7 +1,7 @@
 /**
  * File Name: api-blackbox.spec.ts
  * Description: Black-box API contract checks through the public HTTP
- * surface. The suite has no knowledge of internals — it asserts on status
+ * surface. The suite has no knowledge of internals - it asserts on status
  * codes, response bodies and headers only. Mirrors the contract enforced by
  * the backend suite, but against the real deployed stack (not mocks).
  *
@@ -11,9 +11,8 @@
  * unchanged against both the local compose stack and production. Set
  * E2E_CAPTCHA_ENABLED=true/false to override detection manually.
  *
- * A global precheck (global-setup.ts) also warms up a cold-starting service
- * (Render free tier) and fails fast with instructions when the stack is
- * unreachable instead of timing out every test.
+ * Production may also accept a valid test token via E2E_CAPTCHA_TOKEN to
+ * exercise downstream auth validation contracts.
  */
 
 import { expect, test } from "@playwright/test";
@@ -22,17 +21,8 @@ import path from "node:path";
 
 const API_URL = process.env.E2E_API_URL ?? "http://localhost:3000";
 
-/**
- * The compose stack runs with CAPTCHA_ENABLED=false, but the deployed Render
- * environment runs with it enabled (Turnstile). In that case the auth routes
- * reject unverifiable requests with a captcha error before credentials are
- * evaluated, which is the correct production behaviour. The assertions below
- * therefore accept either the underlying contract or the captcha gate, and
- * always check that account enumeration is impossible.
- *
- * Resolution order: E2E_CAPTCHA_ENABLED env var (explicit override) >
- * detection by the global precheck (writes .e2e-state.json) > false.
- */
+// Resolution order: E2E_CAPTCHA_ENABLED env var (explicit override) >
+// detection by the global precheck (writes .e2e-state.json) > false.
 const STATE_PATH = path.resolve(process.cwd(), ".e2e-state.json");
 
 function resolveCaptchaEnabled(): boolean {
@@ -50,6 +40,18 @@ function resolveCaptchaEnabled(): boolean {
 }
 
 const CAPTCHA_ENABLED = resolveCaptchaEnabled();
+// Production enables Cloudflare Turnstile, so tokenless auth requests are
+// rejected with CAPTCHA_REQUIRED before validation/auth logic runs. Supply a
+// valid test token to exercise the downstream contract against production.
+const CAPTCHA_TOKEN = process.env.E2E_CAPTCHA_TOKEN?.trim();
+const captchaHeaders = CAPTCHA_TOKEN
+  ? { "X-Captcha-Token": CAPTCHA_TOKEN }
+  : {};
+
+interface ErrorBody {
+  code?: string;
+  error?: string;
+}
 
 test.describe("API black-box contract", () => {
   test("unknown routes return a structured 404", async ({ request }) => {
@@ -82,11 +84,19 @@ test.describe("API black-box contract", () => {
   test("signup rejects malformed payloads", async ({ request }) => {
     const response = await request.post(`${API_URL}/api/auth/signup`, {
       data: { email: "not-an-email", password: "short" },
+      headers: captchaHeaders,
     });
-    const body = await response.json();
+    const body: ErrorBody = await response.json();
 
-    if (CAPTCHA_ENABLED) {
-      // Production: Turnstile rejects the request before schema validation.
+    if (body.code === "CAPTCHA_REQUIRED" && !CAPTCHA_TOKEN) {
+      // CAPTCHA is on (production): the gate contract is verified here; the
+      // validation contract is covered by local runs or with a test token.
+      expect(response.status()).toBe(400);
+      expect(body.error).toMatch(/captcha/i);
+      return;
+    }
+
+    if (CAPTCHA_ENABLED && !CAPTCHA_TOKEN) {
       expect(response.status()).toBe(400);
       expect(body.code).toBe("CAPTCHA_REQUIRED");
       return;
@@ -102,17 +112,27 @@ test.describe("API black-box contract", () => {
         email: "definitely-not-registered@example.com",
         password: "WrongP@ss1234",
       },
+      headers: captchaHeaders,
     });
-    const body = await response.json();
+    const body: ErrorBody = await response.json();
 
-    if (CAPTCHA_ENABLED) {
-      // Production: Turnstile rejects the request before the credential check.
+    if (body.code === "CAPTCHA_REQUIRED" && !CAPTCHA_TOKEN) {
+      // Same reasoning as the signup test: verify the CAPTCHA gate instead
+      // of the (unreachable) auth branch when no token is configured.
+      expect(response.status()).toBe(400);
+      expect(JSON.stringify(body)).not.toMatch(/no account|user not found/i);
+      return;
+    }
+
+    if (CAPTCHA_ENABLED && !CAPTCHA_TOKEN) {
       expect(response.status()).toBe(400);
       expect(body.code).toBe("CAPTCHA_REQUIRED");
-    } else {
-      expect(response.status()).toBe(401);
-      expect(body.code).toBe("UNAUTHORIZED");
+      expect(JSON.stringify(body)).not.toMatch(/no account|user not found/i);
+      return;
     }
+
+    expect(response.status()).toBe(401);
+    expect(body.code).toBe("UNAUTHORIZED");
     expect(JSON.stringify(body)).not.toMatch(/no account|user not found/i);
   });
 

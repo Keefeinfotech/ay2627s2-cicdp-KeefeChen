@@ -28,8 +28,13 @@ export default defineConfig({
   },
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 1 : 0,
-  workers: process.env.CI ? 2 : undefined,
+  // A deployed free-tier service can return a transient 503 while waking up;
+  // one retry absorbs that without masking real failures. Keep local runs
+  // strict so CI and developer machines fail fast on genuine regressions.
+  retries: process.env.CI || process.env.E2E_BASE_URL ? 1 : 0,
+  // Eleven parallel workers overwhelm a sleeping Render service. Cap external
+  // runs at two workers; local compose and CI keep their existing settings.
+  workers: process.env.CI || process.env.E2E_BASE_URL ? 2 : undefined,
   reporter: process.env.CI
     ? [
         ["line"],

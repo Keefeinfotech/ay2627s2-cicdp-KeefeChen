@@ -29,6 +29,11 @@ dependencies:
   shared_preferences: ^2.5.6
   flutter_secure_storage: ^11.2.0
 
+  # Custom avatar photos. Picked images are downscaled and stored as a data
+  # string in SharedPreferences, so the app stays offline-first and works on
+  # both mobile and web without an upload bucket.
+  image_picker: ^1.2.0
+
   # Web support.
   web: ^1.1.2
   flutter_web_plugins:

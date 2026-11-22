@@ -20,6 +20,7 @@ const task: TaskChange = {
   dueDate: null,
   completedAt: null,
   deletedAt: null,
+  isDeleted: false,
   createdAt: new Date("2026-11-01T09:00:00Z"),
   updatedAt: new Date("2026-11-05T09:00:00Z"),
 };

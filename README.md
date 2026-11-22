@@ -13,7 +13,7 @@ Built with Flutter, Express.js, TypeScript, MongoDB, and GitHub Actions.
 ## Demo
 
 - Live API: https://ay2627s2-cicdp-keefechen-1.onrender.com (`/api/health` returns 200; Render free tier)
-- Web build: not currently deployed — deploy with `flutter build web --release --dart-define=API_BASE_URL=https://ay2627s2-cicdp-keefechen-1.onrender.com` to any static host
+- Web app: https://auxilia-web.onrender.com (Flutter web on Render free tier; compiled `API_BASE_URL` is the live API above. First request may take a few seconds while the free service wakes up.)
 - Demo accounts: see `docs/admin/ADMINISTRATION.md`
 - Demo video backup: `docs/assets/auxilia-demo-v1.1.webm` (committed in #114); demo script: `docs/DEMO_SCRIPT.md`; evidence: `docs/reports/RELEASE_EVIDENCE_v1.1.md`
 
@@ -183,8 +183,8 @@ docker-compose stack and Playwright, `--perf` for the API load smoke).
 ```bash
 cd backend
 npm run typecheck
-npm run test:coverage     # 347 tests in 47 files (unit, integration, contract, security,
-                          #  functional, regression, AI guardrails)
+npm run test:coverage     # 378 tests (unit, integration, contract, security,
+                          #  functional, regression, AI guardrails, MongoDB)
 npm run test:functional   # API journeys (black box, in-memory store)
 npm run test:regression   # incident-pinning regression tests
 npm run test:ai           # AI guardrails: injection, output schema, provider failures
@@ -194,8 +194,8 @@ npm run build
 cd ../frontend
 dart format --output=none --set-exit-if-changed lib test tool integration_test
 flutter analyze
-flutter test --coverage  # 326 tests, incl. accessibility guidelines and goldens
-dart run tool/check_coverage.dart 60
+flutter test --coverage  # 330 tests, incl. accessibility guidelines and goldens
+dart run tool/check_coverage.dart 62
 flutter build web --release
 
 cd ../e2e                 # after: docker compose up -d --build
@@ -221,14 +221,14 @@ faked in tests, so no emulator is required.
 | `security-scan` | Trivy filesystem scan (CRITICAL/HIGH), SARIF uploaded to code scanning (report-only) |
 | `secret-scan` | High-confidence committed-secret patterns fail the build |
 | `backend` | `npm ci`, production audit, typecheck, tests with coverage, build; coverage artifact |
-| `frontend` | Flutter 3.47.8, `pub get`, format check, `flutter analyze`, tests with coverage, 60% line-coverage gate, web release build; coverage artifact |
+| `frontend` | Flutter 3.47.8, `pub get`, format check, `flutter analyze`, tests with coverage, 62% line-coverage gate, web release build; coverage artifact |
 | `e2e` | `docker compose up --build` (mongo + API + nginx/Flutter web), waits for health, then Playwright across Chromium/Firefox/WebKit/mobile-chrome: smoke, black-box API contract, axe a11y scan, first-run auth path |
 | `performance` | API load smoke (`npm run test:performance`) — opt-in via manual `workflow_dispatch` |
 | `sonarqube` / `sonarqube-automatic` | SonarCloud quality gate, using CI-based analysis or Automatic Analysis |
 | `ci-summary` | Single gate for branch protection and PR review |
 
 `Jenkinsfile` at the repository root runs the same backend and frontend gates
-(npm ci, lint, tests with coverage, build; Flutter format/analyze/test, 60%
+(npm ci, lint, tests with coverage, build; Flutter format/analyze/test, 62%
 coverage gate, web build) on a local Jenkins server, and can rebuild and
 restart the local Docker Compose stack behind a manual approval. See
 [docs/development/jenkins.md](docs/development/jenkins.md) for setup.
@@ -245,9 +245,9 @@ package versions, reruns backend and frontend checks, packages the web build,
 attests build provenance, and publishes the GitHub release. A read-only API
 smoke script is available at `scripts/smoke-test.mjs`.
 
-Backend coverage is ratcheted at 49% statements, 39% branches, 48% functions
-and 50% lines; the target remains 80/60 after the excluded modules gain tests.
-Frontend coverage is gated at 60% lines by `frontend/tool/check_coverage.dart`.
+Backend coverage is ratcheted at 58% statements, 48% branches, 59% functions
+and 58% lines; the target remains 80/60 after the excluded modules gain tests.
+Frontend coverage is gated at 62% lines by `frontend/tool/check_coverage.dart`.
 Full gate definitions are in
 [docs/compliance/NFR_RELEASE_GATES.md](docs/compliance/NFR_RELEASE_GATES.md); use
 [docs/release/RELEASE_CHECKLIST.md](docs/release/RELEASE_CHECKLIST.md) before
