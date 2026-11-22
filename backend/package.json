@@ -25,7 +25,10 @@
     "seed:demo": "tsx scripts/seed-admin-demo.ts",
     "migrate:user-ids": "tsx scripts/migrate-user-ids.ts",
     "test:mongodb": "vitest run tests/mongodb",
-    "test:mutate": "stryker run"
+    "test:mutate": "stryker run",
+    "migrate:status": "node scripts/migrate.mjs status",
+    "migrate:up": "node scripts/migrate.mjs up",
+    "migrate:down": "node scripts/migrate.mjs down"
   },
   "keywords": [],
   "author": "",

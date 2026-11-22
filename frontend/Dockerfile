@@ -5,9 +5,13 @@
 # the exact stable Linux SDK release from Google's release bucket. This keeps
 # `docker compose up --build` self-contained and matches the version used by
 # CI (subosito/flutter-action with flutter-version: "3.47.8") and local dev.
-FROM debian:bookworm-slim AS build
+# Digest-pinned multi-arch manifests so a moving tag cannot change the build
+# inputs. Dependabot's docker ecosystem keeps these digests current.
+FROM debian:bookworm-slim@sha256:734a72b3d6142a71993b4bc580ca01d8ca687f77a2c422d96a961d3376b179bc AS build
 
 ARG FLUTTER_VERSION=3.47.8
+# Official SHA256 from Google's releases_linux.json manifest for 3.47.8.
+ARG FLUTTER_SHA256=baf7dcc5a3dbba60fe863bf493a6cf203195621f7786eaa5a1bba02cd0d87dd2
 ARG API_BASE_URL=http://localhost:3000
 ENV API_BASE_URL=${API_BASE_URL}
 ENV PATH="/opt/flutter/bin:${PATH}"
@@ -25,7 +29,10 @@ RUN apt-get update \
 
 RUN curl --proto '=https' --tlsv1.2 -fSL \
       "https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_${FLUTTER_VERSION}-stable.tar.xz" \
-      | tar -xJ -C /opt \
+      -o /tmp/flutter.tar.xz \
+  && printf '%s  %s\n' "$FLUTTER_SHA256" /tmp/flutter.tar.xz | sha256sum -c - \
+  && tar -xJf /tmp/flutter.tar.xz -C /opt \
+  && rm -f /tmp/flutter.tar.xz \
   # Flutter refuses to run from a git repository owned by another user.
   && git config --global --add safe.directory /opt/flutter \
   && flutter --version
@@ -54,7 +61,7 @@ RUN flutter build web --release --dart-define=API_BASE_URL=${API_BASE_URL} \
 # Stage 2: Nginx runtime
 # ==========================================
 # The unprivileged image runs as a non-root user and listens on port 8080.
-FROM nginxinc/nginx-unprivileged:1.27.4-alpine AS runtime
+FROM nginxinc/nginx-unprivileged:1.27.4-alpine@sha256:62a904036bfc0e4a4f2b556e34cbf17bc136b47fde8cdb4628762725f48c5782 AS runtime
 
 # Copy the compiled Flutter web assets into Nginx's html directory.
 COPY --from=build /app/build/web /usr/share/nginx/html
