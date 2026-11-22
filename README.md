@@ -320,3 +320,8 @@ automatically. Prometheus scrapes the guarded `/metrics` endpoint.
 - [Privacy notice](docs/compliance/PRIVACY.md)
 - [Dependencies](docs/release/DEPENDENCIES.md)
 - [Security policy](SECURITY.md)
+- [SQA & Change Governance Audit](docs/reports/SQA_GOVERNANCE_AUDIT.md)
+- [Syllabus → Evidence Mapping](docs/reports/SYLLABUS_OUTCOMES_MAPPING.md)
+- [Master Test Plan](docs/testing/TEST_PLAN.md) and [Test Case Catalogue](docs/testing/TEST_CASE_CATALOGUE.md)
+- [Requirements Traceability Matrix](docs/quality/RTM.md), [Defect Log](docs/quality/DEFECT_LOG.md), [Quality Metrics](docs/quality/QUALITY_METRICS.md)
+- [Change Governance (CCB/CAB)](docs/change-management/GOVERNANCE.md), [Code Review Policy](docs/development/CODE_REVIEW_POLICY.md), [CMDB](docs/operations/CMDB.md)
