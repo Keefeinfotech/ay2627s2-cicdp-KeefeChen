@@ -27,8 +27,17 @@ const walk = (dir) => {
 walk(path.join(root, ".github", "workflows"));
 
 function gh(args) {
+  // S4036: pin PATH to trusted, non-writable directories instead of inheriting it.
+  const safeEnv = {
+    ...process.env,
+    PATH: "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+  };
   return JSON.parse(
-    execFileSync("gh", args, { encoding: "utf8", stdio: ["ignore", "pipe", "inherit"] }),
+    execFileSync("gh", args, {
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "inherit"],
+      env: safeEnv,
+    }),
   );
 }
 
@@ -37,13 +46,18 @@ function resolveSha(repo, ref) {
   try {
     const r = gh(["api", `repos/${repo}/git/refs/tags/${ref}`]);
     let sha = r.object.sha;
-    if (r.object.type === "tag") sha = gh(["api", `repos/${repo}/git/tags/${sha}`]).object.sha;
+    if (r.object.type === "tag")
+      sha = gh(["api", `repos/${repo}/git/tags/${sha}`]).object.sha;
     return sha;
-  } catch { /* not a tag */ }
+  } catch {
+    /* not a tag */
+  }
   try {
     const r = gh(["api", `repos/${repo}/git/refs/heads/${ref}`]);
     if (r.object.type === "commit") return r.object.sha;
-  } catch { /* not a branch */ }
+  } catch {
+    /* not a branch */
+  }
   return null;
 }
 
@@ -61,7 +75,9 @@ for (const file of files) {
         const sha = resolveSha(repo, ref);
         if (sha) {
           pinnedFix++;
-          console.log(`  pinned: ${repo}@${ref} -> ${sha} (${path.relative(root, file)})`);
+          console.log(
+            `  pinned: ${repo}@${ref} -> ${sha} (${path.relative(root, file)})`,
+          );
           return `${a}${b}${sha}`;
         }
         console.error(`  could not resolve SHA for ${repo}@${ref} in ${file}`);
