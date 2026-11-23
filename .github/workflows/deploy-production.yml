@@ -192,3 +192,25 @@ jobs:
             echo ""
             echo "Automatic rollback to $LAST_GOOD_SHA requested. Verify with the Rollback Production run and the smoke suite."
           } >> "$GITHUB_STEP_SUMMARY"
+
+  zap-baseline:
+    name: DAST - OWASP ZAP (production, advisory)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: [deploy-backend]
+    if: ${{ needs.deploy-backend.result == 'success' }}
+    continue-on-error: true
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Run ZAP baseline against the deployed API
+        uses: zaproxy/action-baseline@de8ad967d3548d44ef623df22cf95c3b0baf8b25 # v0.15.0
+        with:
+          target: ${{ vars.RENDER_API_BASE_URL }}/api/health
+          rules_file_name: .zap/rules.tsv
+          cmd_options: '-a -i'
+          allow_issue_writing: false
+        continue-on-error: true
