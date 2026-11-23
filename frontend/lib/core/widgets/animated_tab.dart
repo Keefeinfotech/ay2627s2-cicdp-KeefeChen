@@ -1,14 +1,12 @@
 import 'package:flutter/material.dart';
 
-import '../theme/app_colors.dart';
+import '../design_system/ds_tokens.dart';
 import '../theme/app_spacing.dart';
 
-/// A single animated tab pill that pulses, slides and scales when selected.
+/// A compact filter tab used across list screens.
 ///
-/// Each tab carries its own [accentColor] so the dashboard reads like a spread
-/// of weather patterns rather than one flat surface. When active the tab
-/// expands slightly, its border brightens, and a subtle glow radiates outward
-/// — like a cafe window catching the light.
+/// The active tab is marked by a coloured border and subtle background tint,
+/// using the same [accentColor] semantics as the rest of the design system.
 class AnimatedTab extends StatefulWidget {
   const AnimatedTab({
     super.key,
@@ -164,11 +162,10 @@ class _AnimatedTabState extends State<AnimatedTab>
   }
 }
 
-/// Weather-inspired accent colours for each dashboard tab.
+/// Semantic accent colours for dashboard filter tabs.
 abstract class TabWeather {
-  static const Color all = AppColors.pacific; // teal — ocean
-  static const Color pending = AppColors.moss; // earthy green — forest
-  static const Color overdue = AppColors.persimmon; // warm orange-red — sunset
-  static const Color completed =
-      AppColors.malachite; // vivid green — new growth
+  static const Color all = Ds.trustBlue;
+  static const Color pending = Ds.warningAmber;
+  static const Color overdue = Ds.dangerRed;
+  static const Color completed = Ds.accentGreen;
 }

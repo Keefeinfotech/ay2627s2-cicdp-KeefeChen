@@ -4,8 +4,8 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/widgets/animated_tab.dart';
 import '../data/task_store.dart';
 
-/// Animated filter tabs where each tab carries its own weather-inspired colour
-/// and pulse animation. Selecting a tab makes it glow and expand slightly.
+/// Compact status filter tabs using the canonical semantic colours:
+/// Trust Blue for all, amber for pending, red for overdue and green for done.
 class TaskFilterBar extends StatelessWidget {
   const TaskFilterBar({super.key, required this.store});
 

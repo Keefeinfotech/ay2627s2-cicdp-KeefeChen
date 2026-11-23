@@ -186,10 +186,9 @@ class Ds {
 
   // ---------------------------------------------------------- Input/Focus
   static const double inputBorderRadius = rLg;
-  static const BoxBorder inputBorder = Border.fromBorderSide(BorderSide(
-    color: border,
-    width: 1,
-  ));
+  static const BoxBorder inputBorder = Border.fromBorderSide(
+    BorderSide(color: border, width: 1),
+  );
   static const Color inputFocusedBorder = trustBlue;
   static const List<BoxShadow> inputFocusShadow = elevation2;
 

@@ -1,17 +1,16 @@
 import 'package:flutter/material.dart';
 
+import '../design_system/ds_tokens.dart';
 import 'app_colors.dart';
 import 'app_spacing.dart';
 import 'app_typography.dart';
 
-/// Builds the light and dark Material 3 themes from Auxilia's design tokens.
+/// Builds the light and dark Material 3 themes from the canonical [Ds] tokens.
 ///
-/// The palette is Trust Blue: trust blue primary actions,
-/// pacific blue, moss slate, malachite emerald, lichen and persimmon,
-/// cream. The app feels like sitting in a cosy cafe on a rainy day — warm,
-/// grounded and alive. Each tab and stat card carries its own accent colour so
-/// the dashboard reads like a spread of weather patterns rather than one flat
-/// navy surface.
+/// The palette is deliberately restrained: Trust Blue for primary actions,
+/// a subtle green for positive states, and neutral greys for surfaces and
+/// text. Radii and elevation stay compact so the app reads as a professional
+/// SaaS product rather than a decorative consumer interface.
 abstract final class AppTheme {
   const AppTheme._();
 
@@ -157,7 +156,7 @@ abstract final class AppTheme {
             ? const Color(0xFF2563EB).withValues(alpha: 0.10)
             : Colors.black.withValues(alpha: 0.4),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadius.lg),
+          borderRadius: BorderRadius.circular(Ds.rLg),
           side: BorderSide(color: scheme.outlineVariant),
         ),
       ),
