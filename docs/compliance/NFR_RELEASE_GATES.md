@@ -42,6 +42,23 @@ must be listed here and paired with a follow-up test issue.
 - Database backup taken before migrations or destructive changes.
 - Trivy findings triaged; accepted risks recorded in the release notes.
 
+## Security gate policy (DevSecOps)
+
+Severity-driven escalation matrix and remediation tracking live in
+[SECURITY_GOVERNANCE.md](SECURITY_GOVERNANCE.md). Summary:
+
+| Severity | Policy | Enforcement |
+|---|---|---|
+| Critical (vuln / secret) | Block merge and release | Trivy `exit-code: 1`, Gitleaks, secret scanning |
+| High | Block unless a documented, CAB-approved exception with expiry | Trivy `exit-code: 1`, Dependency Review |
+| Medium / Low | Triage per release; accepted risk recorded in release notes | Report-only SARIF |
+| Unpinned third-party Action | Block merge | `actions-security` job (check-action-pins.mjs) |
+| SonarCloud / CodeQL gate fail | Block merge | `sonarqube-automatic`, CodeQL jobs |
+
+Exceptions follow the change-management process and are recorded in
+`docs/quality/DEFECT_LOG.md`. Security and privacy gates (G8, G9, G10) cannot
+be waived.
+
 ## Exceptions
 
 Any gate that cannot be met must be recorded in the pull request with the
