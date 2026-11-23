@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../core/theme/app_colors.dart';
+import '../../../core/design_system/ds_tokens.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/widgets/app_avatar.dart';
 import '../../home/data/task_store.dart';
@@ -214,15 +214,9 @@ class _DashboardStatCard extends StatelessWidget {
       padding: EdgeInsets.all(compact ? AppSpacing.sm : AppSpacing.md),
       decoration: BoxDecoration(
         color: scheme.surface,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: accent.withValues(alpha: 0.35)),
-        boxShadow: [
-          BoxShadow(
-            color: accent.withValues(alpha: 0.08),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(Ds.rLg),
+        border: Border.all(color: accent),
+        boxShadow: Ds.elevation2,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -234,7 +228,7 @@ class _DashboardStatCard extends StatelessWidget {
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
                 color: accent.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(AppRadius.sm),
+                borderRadius: BorderRadius.circular(Ds.rSm),
               ),
               child: Icon(icon, size: 18, color: accent),
             ),
@@ -291,7 +285,7 @@ class _LevelProgress extends StatelessWidget {
         decoration: BoxDecoration(
           color: scheme.surface,
           borderRadius: BorderRadius.circular(AppRadius.lg),
-          border: Border.all(color: scheme.outlineVariant),
+          border: Border.all(color: Ds.border),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -324,7 +318,7 @@ class _LevelProgress extends StatelessWidget {
             ),
             const SizedBox(height: AppSpacing.xs),
             ClipRRect(
-              borderRadius: BorderRadius.circular(4),
+              borderRadius: BorderRadius.circular(Ds.rSm),
               child: LinearProgressIndicator(
                 value: progress.fraction,
                 minHeight: 8,
@@ -351,13 +345,13 @@ class BrandMark extends StatelessWidget {
       width: size,
       height: size,
       decoration: BoxDecoration(
-        gradient: AppColors.primaryGradient,
-        borderRadius: BorderRadius.circular(AppRadius.md),
+        color: Ds.trustBlue,
+        borderRadius: BorderRadius.circular(Ds.rMd),
       ),
       child: Icon(
-        Icons.auto_awesome,
+        Icons.dashboard_rounded,
         size: size * 0.55,
-        color: AppColors.white,
+        color: Ds.onPrimary,
       ),
     );
   }
@@ -365,9 +359,8 @@ class BrandMark extends StatelessWidget {
 
 /// Weather accent colours for dashboard tabs and stats.
 class TabWeather {
-  static const Color all = AppColors.pacific; // teal — ocean
-  static const Color pending = AppColors.moss; // earthy green — forest
-  static const Color overdue = AppColors.persimmon; // warm orange-red — sunset
-  static const Color completed =
-      AppColors.malachite; // vivid green — new growth
+  static const Color all = Ds.trustBlue;
+  static const Color pending = Ds.warningAmber;
+  static const Color overdue = Ds.dangerRed;
+  static const Color completed = Ds.accentGreen;
 }

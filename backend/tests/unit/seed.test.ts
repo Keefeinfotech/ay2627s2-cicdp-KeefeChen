@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import seedData from "../../scripts/seed-data.json";
+import seedData from "../../scripts/seed/seed-data.json";
 
 describe("seed data", () => {
   it("has non-empty collections", () => {
