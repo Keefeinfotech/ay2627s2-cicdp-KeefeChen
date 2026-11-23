@@ -27,7 +27,10 @@
 
 import bcrypt from "bcryptjs";
 
-import { connectDatabase, disconnectDatabase } from "../../src/config/database.js";
+import {
+  connectDatabase,
+  disconnectDatabase,
+} from "../../src/config/database.js";
 import { getBcryptRounds, isProduction } from "../../src/config/environment.js";
 import { User } from "../../src/modules/users/user.model.js";
 import { Task } from "../../src/modules/tasks/task.model.js";

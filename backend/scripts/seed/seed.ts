@@ -12,7 +12,10 @@
  */
 
 import "dotenv/config";
-import { connectDatabase, disconnectDatabase } from "../../src/config/database.js";
+import {
+  connectDatabase,
+  disconnectDatabase,
+} from "../../src/config/database.js";
 import { getBcryptRounds } from "../../src/config/environment.js";
 import { randomUUID } from "node:crypto";
 
