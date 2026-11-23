@@ -26,15 +26,29 @@ const walk = (dir) => {
 };
 walk(path.join(root, ".github", "workflows"));
 
+const GH_DIRS = ["/usr/local/bin", "/usr/bin", "/bin", "/opt/homebrew/bin"];
+
+function resolveGh() {
+  for (const dir of GH_DIRS) {
+    const candidate = path.join(dir, "gh");
+    try {
+      if (fs.statSync(candidate).isFile()) return candidate;
+    } catch {
+      /* not present */
+    }
+  }
+  return "gh";
+}
+
 function gh(args) {
-  // S4036: pin PATH to trusted, non-writable directories instead of inheriting it.
+  // S4036: invoke gh via an absolute path resolved from trusted dirs; do not
+  // rely on (or inherit) a writable PATH.
+  const ghBin = resolveGh();
   const safeEnv = {
-    ...process.env,
     PATH: "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
   };
   return JSON.parse(
-    execFileSync("gh", args, {
-      // NOSONAR
+    execFileSync(ghBin, args, {
       encoding: "utf8",
       stdio: ["ignore", "pipe", "inherit"],
       env: safeEnv,
