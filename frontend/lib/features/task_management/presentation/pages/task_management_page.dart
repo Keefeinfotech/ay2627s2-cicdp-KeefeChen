@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
-import '../../../../core/utils/formatters.dart';
 import '../../../../core/widgets/app_app_bar.dart';
 import '../../../../core/widgets/app_dialog.dart';
 import '../../../../core/widgets/app_empty_state.dart';
@@ -16,6 +15,7 @@ import 'package:frontend/features/home/data/api_task_repository.dart';
 import 'package:frontend/features/home/data/task_store.dart';
 import 'package:frontend/features/home/data/task_validation.dart';
 import 'package:frontend/features/home/models/task.dart';
+import 'package:frontend/features/home/widgets/task_card.dart';
 import 'package:frontend/features/home/widgets/task_editor.dart';
 import 'package:frontend/features/task_management/data/models/task_breakdown.dart';
 import 'package:frontend/features/task_management/data/repositories/task_management_repository.dart';
@@ -515,21 +515,15 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
         padding: const EdgeInsets.all(AppSpacing.lg),
         child: Column(
           children: <Widget>[
-            for (
-              var index = 0;
-              index < _store.visibleTasks.length;
-              index++
-            ) ...[
-              if (index > 0) const Divider(height: 1),
-              _SwipeTaskRow(
-                key: ValueKey<String>(_store.visibleTasks[index].id),
-                task: _store.visibleTasks[index],
-                onToggle: () => _toggle(_store.visibleTasks[index]),
-                onEdit: () => _edit(_store.visibleTasks[index]),
-                onDelete: () => _confirmDelete(_store.visibleTasks[index]),
-                onBreakdown: () => _breakDown(_store.visibleTasks[index]),
+            for (final task in _store.visibleTasks)
+              TaskCard(
+                key: ValueKey<String>('task-${task.id}'),
+                task: task,
+                onToggle: () => _toggle(task),
+                onEdit: () => _edit(task),
+                onDelete: () => _confirmDelete(task),
+                onBreakdown: () => _breakDown(task),
               ),
-            ],
           ],
         ),
       ),
@@ -558,231 +552,6 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
         ),
       ],
     ];
-  }
-}
-
-class _SwipeTaskRow extends StatelessWidget {
-  const _SwipeTaskRow({
-    super.key,
-    required this.task,
-    required this.onToggle,
-    required this.onEdit,
-    required this.onDelete,
-    required this.onBreakdown,
-  });
-
-  final Task task;
-  final VoidCallback onToggle;
-  final VoidCallback onEdit;
-  final Future<bool> Function() onDelete;
-  final VoidCallback onBreakdown;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
-    final bool completed = task.isCompleted;
-    final Color priorityColor = switch (task.priority) {
-      TaskPriority.low => AppColors.trustBlue,
-      TaskPriority.medium => AppColors.warningAmber,
-      TaskPriority.high => AppColors.errorRed,
-    };
-
-    return Dismissible(
-      key: ValueKey<String>('swipe-${task.id}'),
-      background: _SwipeBackground(
-        color: completed ? AppColors.warningAmber : AppColors.successGreen,
-        icon: completed ? Icons.undo_rounded : Icons.check_rounded,
-        label: completed ? 'Reopen' : 'Complete',
-        alignment: Alignment.centerLeft,
-      ),
-      secondaryBackground: _SwipeBackground(
-        color: scheme.error,
-        icon: Icons.delete_outline_rounded,
-        label: 'Delete',
-        alignment: Alignment.centerRight,
-      ),
-      confirmDismiss: (direction) async {
-        if (direction == DismissDirection.startToEnd) {
-          onToggle();
-        } else {
-          await onDelete();
-        }
-        return false;
-      },
-      child: InkWell(
-        onTap: onEdit,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.md,
-            vertical: AppSpacing.sm,
-          ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Padding(
-                padding: const EdgeInsets.only(top: AppSpacing.xs),
-                child: Checkbox(value: completed, onChanged: (_) => onToggle()),
-              ),
-              const SizedBox(width: AppSpacing.xs),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Text(
-                      task.title,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w600,
-                        decoration: completed
-                            ? TextDecoration.lineThrough
-                            : null,
-                        color: completed ? scheme.onSurfaceVariant : null,
-                      ),
-                    ),
-                    if (task.notes.trim().isNotEmpty) ...[
-                      const SizedBox(height: AppSpacing.xxs),
-                      Text(
-                        task.notes.trim(),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: scheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
-                    const SizedBox(height: AppSpacing.sm),
-                    Wrap(
-                      spacing: AppSpacing.xs,
-                      runSpacing: AppSpacing.xs,
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      children: <Widget>[
-                        PriorityBadge(
-                          label: '${task.priority.label} priority',
-                          color: priorityColor,
-                        ),
-                        StatusBadge(
-                          label: task.isCompleted
-                              ? 'Completed'
-                              : task.isOverdue
-                              ? 'Overdue'
-                              : task.dueDate == null
-                              ? 'No due date'
-                              : 'Due ${formatTaskDate(task.dueDate!)}',
-                          color: task.isCompleted
-                              ? AppColors.successGreen
-                              : task.isOverdue
-                              ? scheme.error
-                              : scheme.onSurfaceVariant,
-                          icon: task.isCompleted
-                              ? Icons.check_circle_outline_rounded
-                              : Icons.schedule_rounded,
-                        ),
-                        if (task.course.isNotEmpty)
-                          StatusBadge(
-                            label: task.course,
-                            color: scheme.primary,
-                            icon: Icons.workspaces_outline,
-                          ),
-                        if (task.assigneeName != null)
-                          StatusBadge(
-                            label: task.assigneeName!,
-                            color: scheme.tertiary,
-                            icon: Icons.person_outline_rounded,
-                          ),
-                        for (final tag in task.tags.take(3))
-                          StatusBadge(
-                            label: '#$tag',
-                            color: scheme.onSurfaceVariant,
-                            icon: Icons.sell_outlined,
-                          ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              PopupMenuButton<String>(
-                tooltip: 'Task actions for ${task.title}',
-                icon: const Icon(Icons.more_vert_rounded),
-                onSelected: (value) {
-                  switch (value) {
-                    case 'edit':
-                      onEdit();
-                    case 'breakdown':
-                      onBreakdown();
-                    case 'delete':
-                      onDelete();
-                  }
-                },
-                itemBuilder: (context) => const <PopupMenuEntry<String>>[
-                  PopupMenuItem<String>(
-                    value: 'edit',
-                    child: ListTile(
-                      leading: Icon(Icons.edit_outlined),
-                      title: Text('Edit task'),
-                      contentPadding: EdgeInsets.zero,
-                    ),
-                  ),
-                  PopupMenuItem<String>(
-                    value: 'breakdown',
-                    child: ListTile(
-                      leading: Icon(Icons.account_tree_outlined),
-                      title: Text('Break into steps'),
-                      contentPadding: EdgeInsets.zero,
-                    ),
-                  ),
-                  PopupMenuDivider(),
-                  PopupMenuItem<String>(
-                    value: 'delete',
-                    child: ListTile(
-                      leading: Icon(Icons.delete_outline_rounded),
-                      title: Text('Delete task'),
-                      contentPadding: EdgeInsets.zero,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _SwipeBackground extends StatelessWidget {
-  const _SwipeBackground({
-    required this.color,
-    required this.icon,
-    required this.label,
-    required this.alignment,
-  });
-
-  final Color color;
-  final IconData icon;
-  final String label;
-  final Alignment alignment;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      color: color,
-      alignment: alignment,
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          Icon(icon, color: Colors.white, size: AppSizes.iconMd),
-          const SizedBox(width: AppSpacing.sm),
-          Text(
-            label,
-            style: Theme.of(context).textTheme.labelLarge
-                ?.copyWith(color: Colors.white, fontWeight: FontWeight.w700),
-          ),
-        ],
-      ),
-    );
   }
 }
 

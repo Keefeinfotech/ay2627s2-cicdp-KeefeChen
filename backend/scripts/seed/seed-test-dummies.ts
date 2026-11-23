@@ -25,14 +25,13 @@
 
 import "dotenv/config";
 
-import bcrypt from "bcryptjs";
-
 import {
   connectDatabase,
   disconnectDatabase,
 } from "../../src/config/database.js";
 import { getBcryptRounds, isProduction } from "../../src/config/environment.js";
 import { User } from "../../src/modules/users/user.model.js";
+import { createSeedLogger, ensureSeedAccount } from "./seed-account.helper.js";
 
 // NOSONAR — public test credentials for local exploration only; see header.
 const ADMIN_EMAIL = "test-admin@auxilia.test";
@@ -45,13 +44,7 @@ const PARTICIPANTS = [
   { name: "Test Participant Three", email: "test-participant-3@auxilia.test" },
 ] as const;
 
-const log = (message: string): void => {
-  console.log(`[seed:test-dummies] ${message}`);
-};
-
-const error = (message: string): void => {
-  console.error(`[seed:test-dummies] ERROR: ${message}`);
-};
+const { log, error } = createSeedLogger("seed:test-dummies");
 
 const main = async (): Promise<void> => {
   if (isProduction() && process.env.ALLOW_DEMO_SEED !== "true") {
@@ -66,42 +59,34 @@ const main = async (): Promise<void> => {
   await connectDatabase();
 
   try {
+    const context = { rounds, log, error };
+
     // ---------------------------------------------------------- administrator
-    const adminHash = await bcrypt.hash(ADMIN_PASSWORD, rounds);
-    const admin = await User.findOne({ email: ADMIN_EMAIL }).lean();
-    if (admin) {
-      log(`skip ${ADMIN_EMAIL}: already exists`);
-    } else {
-      await User.create({
+    await ensureSeedAccount(
+      {
         name: "Test Admin",
         email: ADMIN_EMAIL,
-        passwordHash: adminHash,
+        password: ADMIN_PASSWORD,
         role: "admin",
-        status: "active",
-        emailVerifiedAt: new Date(),
-      });
-      log(`created administrator: ${ADMIN_EMAIL}`);
-    }
+        extraFields: { emailVerifiedAt: new Date() },
+      },
+      context,
+      "administrator",
+    );
 
     // --------------------------------------------------------- participants
-    const userHash = await bcrypt.hash(USER_PASSWORD, rounds);
     for (const participant of PARTICIPANTS) {
-      const existing = await User.findOne({
-        email: participant.email,
-      }).lean();
-      if (existing) {
-        log(`skip ${participant.email}: already exists`);
-        continue;
-      }
-      await User.create({
-        name: participant.name,
-        email: participant.email,
-        passwordHash: userHash,
-        role: "user",
-        status: "active",
-        emailVerifiedAt: new Date(),
-      });
-      log(`created participant: ${participant.email}`);
+      await ensureSeedAccount(
+        {
+          name: participant.name,
+          email: participant.email,
+          password: USER_PASSWORD,
+          role: "user",
+          extraFields: { emailVerifiedAt: new Date() },
+        },
+        context,
+        "participant",
+      );
     }
 
     const count = await User.countDocuments({ email: { $regex: "^test-" } });

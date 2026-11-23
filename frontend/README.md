@@ -80,6 +80,6 @@ is reserved for success states. Primary actions use Trust Blue.
 dart format --output=none --set-exit-if-changed lib test tool
 flutter analyze
 flutter test --coverage
-dart run tool/check_coverage.dart 60
+dart run tool/check_coverage.dart 62
 flutter build web --release
 ```

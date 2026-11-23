@@ -233,6 +233,33 @@ class _CardBody extends StatelessWidget {
                           fontWeight: FontWeight.w600,
                         ),
                       ),
+                      if (onEdit != null || onDelete != null)
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: <Widget>[
+                            if (onEdit != null)
+                              _actionButton(
+                                tooltip: 'Edit ${task.title}',
+                                onPressed: onEdit!,
+                                icon: Icons.edit_outlined,
+                                accent: accent,
+                              ),
+                            if (onBreakdown != null)
+                              _actionButton(
+                                tooltip: 'Break into steps',
+                                onPressed: onBreakdown!,
+                                icon: Icons.account_tree_outlined,
+                                accent: accent,
+                              ),
+                            if (onDelete != null)
+                              _actionButton(
+                                tooltip: 'Delete ${task.title}',
+                                onPressed: onDelete!,
+                                icon: Icons.delete_outline_rounded,
+                                accent: AppColors.persimmon,
+                              ),
+                          ],
+                        ),
                       if (task.notes.trim().isNotEmpty) ...[
                         const SizedBox(height: AppSpacing.xs),
                         Text(
@@ -283,7 +310,7 @@ class _CardBody extends StatelessWidget {
                           ),
                           if (dueToday)
                             StatusBadge(
-                              label: 'Due today',
+                              label: 'Today',
                               color: accent,
                               icon: Icons.today_rounded,
                             ),
@@ -319,54 +346,25 @@ class _CardBody extends StatelessWidget {
                     ],
                   ),
                 ),
-                PopupMenuButton<String>(
-                  tooltip: 'Task actions for ${task.title}',
-                  icon: const Icon(Icons.more_vert_rounded),
-                  onSelected: (value) {
-                    switch (value) {
-                      case 'edit':
-                        onEdit?.call();
-                      case 'breakdown':
-                        onBreakdown?.call();
-                      case 'delete':
-                        onDelete?.call();
-                    }
-                  },
-                  itemBuilder: (context) => <PopupMenuEntry<String>>[
-                    if (onEdit != null)
-                      const PopupMenuItem<String>(
-                        value: 'edit',
-                        child: ListTile(
-                          leading: Icon(Icons.edit_outlined),
-                          title: Text('Edit task'),
-                          contentPadding: EdgeInsets.zero,
-                        ),
-                      ),
-                    if (onBreakdown != null)
-                      const PopupMenuItem<String>(
-                        value: 'breakdown',
-                        child: ListTile(
-                          leading: Icon(Icons.account_tree_outlined),
-                          title: Text('Break into steps'),
-                          contentPadding: EdgeInsets.zero,
-                        ),
-                      ),
-                    if (onDelete != null)
-                      const PopupMenuItem<String>(
-                        value: 'delete',
-                        child: ListTile(
-                          leading: Icon(Icons.delete_outline_rounded),
-                          title: Text('Delete task'),
-                          contentPadding: EdgeInsets.zero,
-                        ),
-                      ),
-                  ],
-                ),
               ],
             ),
           ),
         ),
       ),
+    );
+  }
+
+  Widget _actionButton({
+    required String tooltip,
+    required VoidCallback onPressed,
+    required IconData icon,
+    required Color accent,
+  }) {
+    return IconButton(
+      tooltip: tooltip,
+      onPressed: onPressed,
+      splashRadius: 18,
+      icon: Icon(icon, size: 18, color: accent),
     );
   }
 }

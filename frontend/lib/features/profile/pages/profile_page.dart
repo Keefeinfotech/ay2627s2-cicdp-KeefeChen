@@ -11,6 +11,7 @@ import '../../../core/widgets/app_avatar.dart';
 import '../../../core/widgets/app_dialog.dart';
 import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/widgets/app_status_badge.dart';
+import '../../../core/widgets/progress_ring.dart';
 import '../../authentication/data/auth_service.dart';
 import '../../authentication/data/session_store.dart';
 import '../../home/widgets/achievements_dialog.dart';
@@ -382,16 +383,23 @@ class ProfilePage extends StatelessWidget {
                   color: scheme.primaryContainer.withValues(alpha: 0.5),
                   borderRadius: BorderRadius.circular(AppRadius.md),
                 ),
-                child: Column(
+                child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: <Widget>[
-                    Text(
-                      '${(store.levelProgress.fraction * 100).round()}%',
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w700,
-                        color: scheme.onPrimaryContainer,
+                    ProgressRing(
+                      value: store.levelProgress.fraction,
+                      diameter: 44,
+                      strokeWidth: 8,
+                      color: scheme.onPrimaryContainer,
+                      center: Text(
+                        '${(store.levelProgress.fraction * 100).round()}%',
+                        style: theme.textTheme.labelMedium?.copyWith(
+                          color: scheme.onPrimaryContainer,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                     ),
+                    const SizedBox(width: AppSpacing.sm),
                     Text(
                       'to level ${level + 1}',
                       style: theme.textTheme.labelSmall?.copyWith(

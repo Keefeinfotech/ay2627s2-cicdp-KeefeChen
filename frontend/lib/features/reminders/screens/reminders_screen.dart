@@ -6,6 +6,7 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/widgets/app_snackbar.dart';
 import '../data/reminder_store.dart';
 
 class RemindersScreen extends ConsumerWidget {
@@ -101,12 +102,9 @@ class RemindersScreen extends ConsumerWidget {
                       title: const Text('Add New Reminder'),
                       onTap: () {
                         // TODO: Show dialog to create reminder
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text(
-                              'Add reminder functionality coming soon',
-                            ),
-                          ),
+                        AppSnackBar.info(
+                          context,
+                          'Add reminder functionality coming soon',
                         );
                       },
                     ),

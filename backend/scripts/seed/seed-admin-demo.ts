@@ -25,15 +25,13 @@
  *   daniel@auxilia.demo / DemoUser!2026
  */
 
-import bcrypt from "bcryptjs";
-
 import {
   connectDatabase,
   disconnectDatabase,
 } from "../../src/config/database.js";
 import { getBcryptRounds, isProduction } from "../../src/config/environment.js";
-import { User } from "../../src/modules/users/user.model.js";
 import { Task } from "../../src/modules/tasks/task.model.js";
+import { createSeedLogger, ensureSeedAccount } from "./seed-account.helper.js";
 
 // NOSONAR — public demonstration credentials, not secrets. They exist only
 // to run the local demo seed (see docs/admin/ADMINISTRATION.md §6); the seed
@@ -172,13 +170,7 @@ const TASK_TEMPLATES: ReadonlyArray<{
 const DAY_MS = 24 * 60 * 60 * 1000;
 const daysAgo = (days: number): Date => new Date(Date.now() - days * DAY_MS);
 
-const log = (message: string): void => {
-  console.log(`[seed:demo] ${message}`);
-};
-
-const error = (message: string): void => {
-  console.error(`[seed:demo] ERROR: ${message}`);
-};
+const { log, error } = createSeedLogger("seed:demo");
 
 const main = async (): Promise<void> => {
   if (isProduction() && process.env.ALLOW_DEMO_SEED !== "true") {
@@ -194,49 +186,40 @@ const main = async (): Promise<void> => {
 
   try {
     // ---------------------------------------------------------- admin account
-    const adminHash = await bcrypt.hash(ADMIN_PASSWORD, rounds);
-    const admin = await User.findOne({ email: ADMIN_EMAIL }).lean();
-    if (admin) {
-      log(`skip ${ADMIN_EMAIL}: already exists`);
-    } else {
-      await User.create({
+    await ensureSeedAccount(
+      {
         name: "Auxilia Demo Admin",
         email: ADMIN_EMAIL,
-        passwordHash: adminHash,
+        password: ADMIN_PASSWORD,
         role: "admin",
-        status: "active",
-        lastLoginAt: daysAgo(0),
-      });
-      log(`created administrator: ${ADMIN_EMAIL}`);
-    }
+        extraFields: { lastLoginAt: daysAgo(0) },
+      },
+      { log, error, rounds },
+      "administrator",
+    );
 
     // ------------------------------------------------------- standard accounts
-    const userHash = await bcrypt.hash(USER_PASSWORD, rounds);
     const createdIds: string[] = [];
     for (const demo of DEMO_USERS) {
-      const existing = await User.findOne({ email: demo.email })
-        .select("_id")
-        .lean();
-      if (existing) {
-        log(`skip ${demo.email}: already exists`);
-        createdIds.push(String((existing as { _id: string })._id));
-        continue;
-      }
-
-      const user = await User.create({
-        name: demo.name,
-        email: demo.email,
-        passwordHash: userHash,
-        role: "user",
-        status: demo.status,
-        createdAt: daysAgo(demo.daysAgoRegistered),
-        lastLoginAt:
-          demo.daysAgoLastLogin === null
-            ? null
-            : daysAgo(demo.daysAgoLastLogin),
-      });
-      createdIds.push(String(user._id));
-      log(`created standard user: ${demo.email} (${demo.status})`);
+      const id = await ensureSeedAccount(
+        {
+          name: demo.name,
+          email: demo.email,
+          password: USER_PASSWORD,
+          role: "user",
+          status: demo.status,
+          extraFields: {
+            createdAt: daysAgo(demo.daysAgoRegistered),
+            lastLoginAt:
+              demo.daysAgoLastLogin === null
+                ? null
+                : daysAgo(demo.daysAgoLastLogin),
+          },
+        },
+        { log, error, rounds },
+        `standard user (${demo.status})`,
+      );
+      createdIds.push(id);
     }
 
     // ------------------------------------------------------------------- tasks
