@@ -12,6 +12,7 @@ import '../../../../core/widgets/app_app_bar.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_empty_state.dart';
 import '../../../../core/widgets/app_status_badge.dart';
+import '../../../../core/widgets/progress_ring.dart';
 import '../../../../core/widgets/responsive_page_layout.dart';
 import '../widgets/report_charts.dart';
 
@@ -232,6 +233,7 @@ class _ReportsPageState extends State<ReportsPage> {
           value: '${(rate * 100).round()}%',
           caption: 'of ${snapshot.totalTasks} in view',
           color: rateColor,
+          ringValue: rate,
         ),
         _ReportKpiCard(
           icon: Icons.task_alt_outlined,
@@ -513,6 +515,7 @@ class _ReportKpiCard extends StatelessWidget {
     required this.value,
     required this.caption,
     this.color,
+    this.ringValue,
   });
 
   final IconData icon;
@@ -521,11 +524,40 @@ class _ReportKpiCard extends StatelessWidget {
   final String caption;
   final Color? color;
 
+  /// When set, the card's icon tile becomes a progress ring showing this
+  /// value (Mobbin-style summary cards).
+  final double? ringValue;
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final Color accent = color ?? scheme.primary;
+    final bool hasRing = ringValue != null;
+
+    final Widget leading = hasRing
+        ? ProgressRing(
+            value: ringValue!,
+            diameter: 72,
+            strokeWidth: 9,
+            color: accent,
+            center: Text(
+              '${(ringValue! * 100).round()}%',
+              style: theme.textTheme.labelMedium?.copyWith(
+                color: accent,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          )
+        : Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              color: accent.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+            ),
+            child: Icon(icon, size: AppSizes.iconSm, color: accent),
+          );
 
     return Container(
       padding: const EdgeInsets.all(AppSpacing.md),
@@ -540,15 +572,7 @@ class _ReportKpiCard extends StatelessWidget {
         children: <Widget>[
           Row(
             children: <Widget>[
-              Container(
-                width: 32,
-                height: 32,
-                decoration: BoxDecoration(
-                  color: accent.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(AppRadius.sm),
-                ),
-                child: Icon(icon, size: AppSizes.iconSm, color: accent),
-              ),
+              Expanded(child: leading),
               const SizedBox(width: AppSpacing.sm),
               Expanded(
                 child: Text(
@@ -638,6 +662,13 @@ class _ProjectReportRow extends StatelessWidget {
                 color: accent,
                 fontWeight: FontWeight.w700,
               ),
+            ),
+            const SizedBox(width: AppSpacing.sm),
+            ProgressRing(
+              value: project.rate,
+              diameter: 36,
+              strokeWidth: 6,
+              color: accent,
             ),
           ],
         ),

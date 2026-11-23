@@ -90,12 +90,19 @@ class CalendarEventCard extends StatelessWidget {
                 if (!compact &&
                     (event.location != null ||
                         event.groupId != null ||
-                        hasConflict)) ...<Widget>[
+                        hasConflict ||
+                        _isToday(event.startTime))) ...<Widget>[
                   const SizedBox(height: AppSpacing.sm),
                   Wrap(
                     spacing: AppSpacing.xs,
                     runSpacing: AppSpacing.xs,
                     children: <Widget>[
+                      if (_isToday(event.startTime))
+                        StatusBadge(
+                          label: 'Today',
+                          color: scheme.primary,
+                          icon: Icons.today_rounded,
+                        ),
                       if (hasConflict)
                         StatusBadge(
                           label: 'Overlap',
@@ -168,5 +175,12 @@ class CalendarEventCard extends StatelessWidget {
     final hour = date.hour.toString().padLeft(2, '0');
     final minute = date.minute.toString().padLeft(2, '0');
     return '$hour:$minute';
+  }
+
+  static bool _isToday(DateTime date) {
+    final now = DateTime.now();
+    return date.year == now.year &&
+        date.month == now.month &&
+        date.day == now.day;
   }
 }

@@ -3,12 +3,10 @@ import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
 
-/// A single animated tab pill that pulses, slides and scales when selected.
+/// A compact filter tab used across list screens.
 ///
-/// Each tab carries its own [accentColor] so the dashboard reads like a spread
-/// of weather patterns rather than one flat surface. When active the tab
-/// expands slightly, its border brightens, and a subtle glow radiates outward
-/// — like a cafe window catching the light.
+/// The active tab is marked by a coloured border and subtle background tint,
+/// using the semantic [accentColor] semantics shared with the rest of the app.
 class AnimatedTab extends StatefulWidget {
   const AnimatedTab({
     super.key,
@@ -33,23 +31,18 @@ class _AnimatedTabState extends State<AnimatedTab>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
   late final Animation<double> _scale;
-  late final Animation<double> _glow;
 
   @override
   void initState() {
     super.initState();
     _controller = AnimationController(
-      duration: const Duration(milliseconds: 450),
+      duration: const Duration(milliseconds: 300),
       vsync: this,
     );
     _scale = Tween<double>(
       begin: 1.0,
-      end: 1.06,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutBack));
-    _glow = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
+      end: 1.03,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
     if (widget.isSelected) {
       _controller.value = 1.0;
     }
@@ -77,88 +70,70 @@ class _AnimatedTabState extends State<AnimatedTab>
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
+    final displayAccent = TabWeather.display(widget.accentColor, scheme);
 
     return ScaleTransition(
       scale: _scale,
-      child: AnimatedBuilder(
-        animation: _glow,
-        builder: (context, child) {
-          final glow = widget.isSelected ? _glow.value : 0.0;
-          final displayAccent = TabWeather.display(widget.accentColor, scheme);
-          return GestureDetector(
-            onTap: widget.onTap,
-            child: Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.md,
-                vertical: AppSpacing.sm,
-              ),
-              decoration: BoxDecoration(
-                color: widget.isSelected
-                    ? widget.accentColor.withValues(alpha: 0.18)
-                    : scheme.surfaceContainerHighest.withValues(alpha: 0.5),
-                borderRadius: BorderRadius.circular(AppRadius.pill),
-                border: Border.all(
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.md,
+            vertical: AppSpacing.sm,
+          ),
+          decoration: BoxDecoration(
+            color: widget.isSelected
+                ? widget.accentColor.withValues(alpha: 0.12)
+                : scheme.surfaceContainerHighest.withValues(alpha: 0.5),
+            borderRadius: BorderRadius.circular(AppRadius.pill),
+            border: Border.all(
+              color: widget.isSelected
+                  ? displayAccent.withValues(alpha: 0.9)
+                  : scheme.outlineVariant,
+              width: 1.5,
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              Text(
+                widget.label,
+                style: theme.textTheme.labelMedium?.copyWith(
                   color: widget.isSelected
-                      ? displayAccent.withValues(alpha: 0.9 + glow * 0.1)
-                      : scheme.outlineVariant,
-                  width: AppSizes.hairline,
+                      ? displayAccent
+                      : scheme.onSurfaceVariant,
+                  fontWeight: widget.isSelected
+                      ? FontWeight.w700
+                      : FontWeight.w500,
                 ),
-                boxShadow: widget.isSelected
-                    ? [
-                        BoxShadow(
-                          color: widget.accentColor.withValues(
-                            alpha: 0.12 + glow * 0.08,
-                          ),
-                          blurRadius: 8 + glow * 6,
-                          spreadRadius: 2 + glow * 2,
-                          offset: const Offset(0, 2),
-                        ),
-                      ]
-                    : null,
               ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: <Widget>[
-                  Text(
-                    widget.label,
-                    style: theme.textTheme.labelMedium?.copyWith(
+              if (widget.count != null && widget.count! > 0) ...[
+                const SizedBox(width: AppSpacing.xs),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.sm,
+                    vertical: AppSpacing.xxs,
+                  ),
+                  decoration: BoxDecoration(
+                    color: widget.isSelected
+                        ? displayAccent
+                        : scheme.onSurfaceVariant.withValues(alpha: 0.5),
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
+                  ),
+                  child: Text(
+                    '${widget.count}',
+                    style: theme.textTheme.labelSmall?.copyWith(
                       color: widget.isSelected
-                          ? displayAccent
-                          : scheme.onSurfaceVariant,
-                      fontWeight: widget.isSelected
-                          ? FontWeight.w700
-                          : FontWeight.w500,
+                          ? scheme.onPrimary
+                          : scheme.onSurface,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
-                  if (widget.count != null && widget.count! > 0) ...[
-                    const SizedBox(width: AppSpacing.xs),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppSpacing.sm,
-                        vertical: AppSpacing.xxs,
-                      ),
-                      decoration: BoxDecoration(
-                        color: widget.isSelected
-                            ? widget.accentColor
-                            : scheme.onSurfaceVariant.withValues(alpha: 0.5),
-                        borderRadius: BorderRadius.circular(AppRadius.pill),
-                      ),
-                      child: Text(
-                        '${widget.count}',
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          color: widget.isSelected
-                              ? scheme.onPrimary
-                              : scheme.onSurface,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-          );
-        },
+                ),
+              ],
+            ],
+          ),
+        ),
       ),
     );
   }

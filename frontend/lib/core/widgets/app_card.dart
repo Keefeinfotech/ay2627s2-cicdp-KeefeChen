@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../design_system/ds_tokens.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
 
@@ -32,7 +33,7 @@ class AppCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final radius = borderRadius ?? AppRadius.lg;
+    final radius = borderRadius ?? Ds.rLg;
 
     final (Color background, Color border) = switch (variant) {
       AppCardVariant.surface => (scheme.surface, scheme.outlineVariant),
@@ -62,7 +63,7 @@ class AppCard extends StatelessWidget {
           boxShadow:
               variant == AppCardVariant.surface &&
                   Theme.of(context).brightness == Brightness.light
-              ? AppColors.softShadow()
+              ? Ds.elevation1
               : null,
         ),
         clipBehavior: Clip.antiAlias,

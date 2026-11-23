@@ -12,6 +12,7 @@ import '../../../../core/widgets/app_error_state.dart';
 import '../../../../core/widgets/app_loading.dart';
 import '../../../../core/widgets/app_snackbar.dart';
 import '../../../../core/widgets/app_status_badge.dart';
+import '../../../../core/widgets/progress_ring.dart';
 import '../../../../core/widgets/responsive_page_layout.dart';
 import '../../../authentication/data/session_store.dart';
 import '../../../home/data/task_store.dart';
@@ -440,6 +441,8 @@ class _GroupsPageState extends State<GroupsPage> {
         .where((task) => task.groupId == group.id)
         .toList(growable: false);
     final assigned = groupTasks.where((task) => task.isAssigned).length;
+    final totalTasks = groupTasks.length;
+    final progress = totalTasks == 0 ? 0.0 : assigned / totalTasks;
 
     return Container(
       padding: const EdgeInsets.all(AppSpacing.lg),
@@ -525,6 +528,20 @@ class _GroupsPageState extends State<GroupsPage> {
             spacing: AppSpacing.xs,
             runSpacing: AppSpacing.xs,
             children: <Widget>[
+              if (totalTasks > 0)
+                ProgressRing(
+                  value: progress,
+                  diameter: 44,
+                  strokeWidth: 8,
+                  color: scheme.primary,
+                  center: Text(
+                    '${(progress * 100).round()}%',
+                    style: theme.textTheme.labelMedium?.copyWith(
+                      color: scheme.onPrimary,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
               StatusBadge(
                 label: group.isPublic ? 'Public' : 'Private',
                 color: group.isPublic

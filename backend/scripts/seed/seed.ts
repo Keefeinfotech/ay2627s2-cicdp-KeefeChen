@@ -12,21 +12,24 @@
  */
 
 import "dotenv/config";
-import { connectDatabase, disconnectDatabase } from "../src/config/database.js";
-import { getBcryptRounds } from "../src/config/environment.js";
+import {
+  connectDatabase,
+  disconnectDatabase,
+} from "../../src/config/database.js";
+import { getBcryptRounds } from "../../src/config/environment.js";
 import { randomUUID } from "node:crypto";
 
 import seedData from "./seed-data.json";
 
-import { User } from "../src/modules/users/user.model.js";
-import { Group } from "../src/modules/groups/core/group.model.js";
-import { Member } from "../src/modules/groups/member/member.model.js";
-import { Task } from "../src/modules/tasks/task.model.js";
-import { Roadmap } from "../src/modules/roadmaps/roadmap.model.js";
-import { Rubric } from "../src/modules/rubrics/rubric.model.js";
-import { FeedbackModel } from "../src/modules/feedback/feedback.model.js";
-import { CalendarEventModel } from "../src/modules/calendar/calendar.model.js";
-import { StudySession } from "../src/modules/sessions/session.model.js";
+import { User } from "../../src/modules/users/user.model.js";
+import { Group } from "../../src/modules/groups/core/group.model.js";
+import { Member } from "../../src/modules/groups/member/member.model.js";
+import { Task } from "../../src/modules/tasks/task.model.js";
+import { Roadmap } from "../../src/modules/roadmaps/roadmap.model.js";
+import { Rubric } from "../../src/modules/rubrics/rubric.model.js";
+import { FeedbackModel } from "../../src/modules/feedback/feedback.model.js";
+import { CalendarEventModel } from "../../src/modules/calendar/calendar.model.js";
+import { StudySession } from "../../src/modules/sessions/session.model.js";
 
 import bcrypt from "bcryptjs";
 

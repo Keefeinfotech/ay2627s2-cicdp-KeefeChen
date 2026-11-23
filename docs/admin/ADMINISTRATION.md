@@ -18,7 +18,7 @@ evidence, known limitations and future enhancements.
 | Aggregated platform statistics | `GET /api/admin/stats` |
 | Administrative UI (Flutter) | `frontend/lib/features/admin/` — dashboard, user management, analytics charts |
 | Backend observability | `modules/metrics/metrics.ts`, `/metrics`, Prometheus + Grafana compose profile |
-| Demo data | `backend/scripts/seed-admin-demo.ts` (`npm run seed:demo`) |
+| Demo data | `backend/scripts/seed/seed-admin-demo.ts` (`npm run seed:demo`) |
 
 **Guiding rule:** administrative users can see *aggregate platform metrics* and
 *account metadata* (name, email, status, registration date, last login). They
@@ -282,7 +282,7 @@ reserved for local development and demonstration.
 
 ### 6.1 Seed script
 
-`backend/scripts/seed-admin-demo.ts` — creates demo users, an administrator
+`backend/scripts/seed/seed-admin-demo.ts` — creates demo users, an administrator
 and task data with a 30-day activity spread. Usage:
 
 ```bash

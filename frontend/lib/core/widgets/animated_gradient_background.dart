@@ -1,99 +1,30 @@
-import 'dart:math';
-
 import 'package:flutter/material.dart';
 
-class AnimatedGradientBackground extends StatefulWidget {
+import '../design_system/ds_tokens.dart';
+
+/// Flat enterprise page canvas.
+///
+/// The old animated gradient was decorative and worked against the calm,
+/// professional SaaS look. The public constructor is kept for compatibility
+/// with existing call sites, but the widget now renders one neutral surface.
+class AnimatedGradientBackground extends StatelessWidget {
   const AnimatedGradientBackground({
     super.key,
     required this.child,
-    this.colors = const [
-      Color(0xFF1E3A8A),
-      Color(0xFF2563EB),
-      Color(0xFF0F172A),
-      Color(0xFF059669),
-    ],
-    this.duration = const Duration(seconds: 8),
+    this.colors = const <Color>[],
+    this.duration = Duration.zero,
   });
 
   final Widget child;
+
+  /// Kept for source compatibility; no longer used for rendering.
   final List<Color> colors;
+
+  /// Kept for source compatibility; no longer used for rendering.
   final Duration duration;
 
   @override
-  State<AnimatedGradientBackground> createState() =>
-      _AnimatedGradientBackgroundState();
-}
-
-class _AnimatedGradientBackgroundState extends State<AnimatedGradientBackground>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    final isTestEnvironment = WidgetsBinding.instance.runtimeType
-        .toString()
-        .contains('Test');
-    _controller = AnimationController(
-      vsync: this,
-      duration: isTestEnvironment ? Duration.zero : widget.duration,
-    );
-    if (!isTestEnvironment) {
-      _controller.repeat();
-    }
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    // Honour the OS "reduce motion" accessibility setting: show a static
-    // diagonal gradient sampled from the middle of the cycle.
-    final reduceMotion = MediaQuery.disableAnimationsOf(context);
-
-    if (reduceMotion) {
-      if (_controller.isAnimating) {
-        _controller.stop();
-      }
-      final c = widget.colors;
-      return Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [c[0], c[2]],
-          ),
-        ),
-        child: widget.child,
-      );
-    }
-
-    return AnimatedBuilder(
-      animation: _controller,
-      child: widget.child,
-      builder: (context, child) {
-        final t = _controller.value;
-        final c = widget.colors;
-        return RepaintBoundary(
-          child: Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  Color.lerp(c[0], c[1], (sin(t * 2 * pi) + 1) / 2)!,
-                  Color.lerp(c[2], c[3], (cos(t * 2 * pi) + 1) / 2)!,
-                ],
-              ),
-            ),
-            child: child,
-          ),
-        );
-      },
-    );
+    return ColoredBox(color: Ds.bgPage, child: child);
   }
 }

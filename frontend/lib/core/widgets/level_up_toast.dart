@@ -1,15 +1,15 @@
 import 'dart:async';
-import 'dart:math';
 
 import 'package:flutter/material.dart';
 
-import '../theme/app_colors.dart';
+import '../design_system/ds_tokens.dart';
 import '../theme/app_spacing.dart';
 
-/// A celebratory toast shown when the user reaches a new level.
+/// A compact success toast shown when the user reaches a new level.
 ///
-/// Features a scale-up entrance, a rotating trophy icon, and a confetti burst
-/// of particles behind the text. Auto-dismisses after [duration].
+/// It uses the same flat treatment as the rest of the design system: a solid
+/// green surface, a single status icon and a short fade/slide transition.
+/// Auto-dismisses after [duration].
 class LevelUpToast extends StatefulWidget {
   const LevelUpToast({
     super.key,
@@ -55,9 +55,8 @@ class LevelUpToast extends StatefulWidget {
 class _LevelUpToastState extends State<LevelUpToast>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
-  late final Animation<double> _scale;
-  late final Animation<double> _rotate;
   late final Animation<double> _fade;
+  late final Animation<Offset> _slide;
   Timer? _dismissTimer;
   bool _dismissing = false;
 
@@ -66,20 +65,13 @@ class _LevelUpToastState extends State<LevelUpToast>
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 700),
+      duration: const Duration(milliseconds: 180),
     );
-    _scale = CurvedAnimation(
-      parent: _controller,
-      curve: Curves.elasticOut,
-    ).drive(Tween<double>(begin: 0.5, end: 1.0));
-    _rotate = CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeInOut,
-    ).drive(Tween<double>(begin: -0.4, end: 0.4));
-    _fade = CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeInOut,
-    ).drive(Tween<double>(begin: 0.0, end: 1.0));
+    _fade = CurvedAnimation(parent: _controller, curve: Curves.easeOut);
+    _slide = Tween<Offset>(
+      begin: const Offset(0, -0.08),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
     _controller.forward();
     // Own the dismissal timer so the overlay is removed predictably and no
     // pending timer survives disposal (important for widget tests).
@@ -108,138 +100,78 @@ class _LevelUpToastState extends State<LevelUpToast>
     final theme = Theme.of(context);
 
     return Positioned(
-      top: 40,
+      top: AppSpacing.lg,
       left: 0,
       right: 0,
       child: FadeTransition(
         opacity: _fade,
-        child: Center(
-          child: ScaleTransition(
-            scale: _scale,
+        child: SlideTransition(
+          position: _slide,
+          child: Center(
             child: Material(
               color: Colors.transparent,
-              child: Container(
-                constraints: const BoxConstraints(maxWidth: 520),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.lg,
-                  vertical: AppSpacing.xl,
-                ),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: <Color>[
-                      AppColors.successGreen.withValues(alpha: 0.95),
-                      AppColors.navyDeep.withValues(alpha: 0.9),
-                    ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
+              child: Semantics(
+                liveRegion: true,
+                label: 'Level up. You reached level ${widget.level}.',
+                child: Container(
+                  key: const Key('level-up-toast'),
+                  constraints: const BoxConstraints(maxWidth: 480),
+                  margin: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.lg,
+                    vertical: AppSpacing.md,
                   ),
-                  borderRadius: BorderRadius.circular(AppRadius.xl),
-                  boxShadow: <BoxShadow>[
-                    BoxShadow(
-                      color: AppColors.successGreen.withValues(alpha: 0.35),
-                      blurRadius: 24,
-                      offset: const Offset(0, 8),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: <Widget>[
-                    const SizedBox(height: AppSpacing.xs),
-                    AnimatedBuilder(
-                      animation: _rotate,
-                      builder: (context, child) {
-                        return Transform.rotate(
-                          angle: _rotate.value,
-                          child: Container(
-                            width: 56,
-                            height: 56,
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.2),
-                              borderRadius: BorderRadius.circular(
-                                AppRadius.pill,
+                  decoration: BoxDecoration(
+                    color: Ds.accentGreen,
+                    borderRadius: BorderRadius.circular(Ds.rLg),
+                    boxShadow: Ds.elevation2,
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          color: Ds.onPrimary.withValues(alpha: 0.16),
+                          borderRadius: BorderRadius.circular(Ds.rMd),
+                        ),
+                        child: const Icon(
+                          Icons.check_circle_rounded,
+                          color: Ds.onPrimary,
+                          size: AppSizes.iconLg,
+                        ),
+                      ),
+                      const SizedBox(width: AppSpacing.md),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: <Widget>[
+                            Text(
+                              'Level Up!',
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                color: Ds.onPrimary,
+                                fontWeight: FontWeight.w700,
                               ),
                             ),
-                            child: const Icon(
-                              Icons.emoji_events_rounded,
-                              color: Colors.white,
-                              size: 32,
+                            const SizedBox(height: AppSpacing.xxs),
+                            Text(
+                              'You reached level ${widget.level}',
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: Ds.onPrimary,
+                              ),
                             ),
-                          ),
-                        );
-                      },
-                    ),
-                    const SizedBox(height: AppSpacing.md),
-                    Text(
-                      'Level Up!',
-                      style: theme.textTheme.headlineSmall?.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 0.5,
+                          ],
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: AppSpacing.xs),
-                    Text(
-                      'You reached level ${widget.level}',
-                      style: theme.textTheme.bodyLarge?.copyWith(
-                        color: Colors.white.withValues(alpha: 0.95),
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.md),
-                    // Confetti-style particle burst behind the text.
-                    _ConfettiParticles(animation: _controller),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),
           ),
         ),
-      ),
-    );
-  }
-}
-
-/// Animated confetti particles that burst outward from the centre.
-class _ConfettiParticles extends StatelessWidget {
-  const _ConfettiParticles({required this.animation});
-
-  final Animation<double> animation;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = <Color>[
-      AppColors.warningAmber,
-      AppColors.errorRed,
-      AppColors.warningAmber,
-      AppColors.successGreen,
-    ];
-
-    return SizedBox(
-      height: 40,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: List.generate(8, (i) {
-          final angle = (i / 8) * 2 * pi;
-          final distance = animation.value;
-          return Transform.translate(
-            offset: Offset(
-              cos(angle) * distance * 40,
-              sin(angle) * distance * 20,
-            ),
-            child: Opacity(
-              opacity: animation.value,
-              child: Container(
-                width: 6,
-                height: 6,
-                decoration: BoxDecoration(
-                  color: colors[i % colors.length],
-                  shape: BoxShape.circle,
-                ),
-              ),
-            ),
-          );
-        }),
       ),
     );
   }
