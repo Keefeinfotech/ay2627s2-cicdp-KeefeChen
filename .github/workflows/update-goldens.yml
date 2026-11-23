@@ -4,6 +4,9 @@ name: Update golden baselines
 # with the same Linux/Flutter combination as the CI frontend job.
 
 on:
+  push:
+    branches:
+      - feature/ci-cd-delivery-hardening
   workflow_dispatch:
     inputs:
       ref:
