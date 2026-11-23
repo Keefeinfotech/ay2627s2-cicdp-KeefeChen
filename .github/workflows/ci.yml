@@ -105,6 +105,19 @@ jobs:
             ghcr.io/gitleaks/gitleaks@sha256:c00b6bd0aeb3071cbcb79009cb16a60dd9e0a7c60e2be9ab65d25e6bc8abbb7f \
             dir --redact --no-banner --exit-code 1 .
 
+  actions-security:
+    name: "1 · Security · Actions Hardening"
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Validate pinned third-party Actions
+        run: node .github/scripts/check-action-pins.mjs
+
   codeql:
     name: "1 · Security · CodeQL"
     runs-on: ubuntu-latest
@@ -419,6 +432,37 @@ jobs:
           output: trivy-frontend.sarif
           severity: CRITICAL,HIGH
           exit-code: "1"
+      - name: Generate SBOM (filesystem, SPDX)
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          format: spdx-json
+          output: sbom-filesystem.spdx.json
+          exit-code: "0"
+          ignore-unfixed: true
+
+      - name: Generate SBOM (backend image, SPDX)
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          scan-type: image
+          image-ref: auxilia-backend:ci
+          format: spdx-json
+          output: sbom-backend.spdx.json
+          exit-code: "0"
+          ignore-unfixed: true
+
+      - name: Upload SBOM artifacts
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v4.6.2
+        with:
+          name: sbom-ci
+          path: |
+            sbom-filesystem.spdx.json
+            sbom-backend.spdx.json
+          if-no-files-found: ignore
+          retention-days: 7
+
       - name: Publish scan results
         if: ${{ always() && hashFiles('trivy-*.sarif') != '' }}
         continue-on-error: true
@@ -436,6 +480,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 50
     needs: [sonarqube-quality-gate, trivy-container-scan]
+    env:
+      # Explicit test-only secret: compose no longer supplies a fallback.
+      JWT_SECRET: ci-test-only-jwt-secret
     # The Playwright suite is the slowest gate (~4m). Reserve it for PRs and
     # manual full runs; Stages 1-3 still run on every push, and the Final
     # Quality Gate treats this job's "skipped" result as pass on non-PR events.
@@ -490,7 +537,7 @@ jobs:
           E2E_BASE_URL: http://localhost:8080
           E2E_API_URL: http://localhost:3000
         run: npm test
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
           name: playwright-report
@@ -508,6 +555,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 50
     needs: [sonarqube-quality-gate, trivy-container-scan]
+    env:
+      # Explicit test-only secret: compose no longer supplies a fallback.
+      JWT_SECRET: ci-test-only-jwt-secret
     # Same policy as E2E: the live-stack load smoke (~4m) runs on PRs and
     # manual dispatch only. Every push still gets Stages 1-3.
     if: >-
@@ -583,6 +633,7 @@ jobs:
       - pr-conventions
       - dependency-review
       - gitleaks
+      - actions-security
       - codeql
       - backend-build
       - frontend-build
@@ -602,6 +653,7 @@ jobs:
           DEPENDENCY_REVIEW: ${{ needs.dependency-review.result }}
           GITLEAKS: ${{ needs.gitleaks.result }}
           CODEQL: ${{ needs.codeql.result }}
+          ACTIONS_SECURITY: ${{ needs.actions-security.result }}
           BACKEND: ${{ needs.backend-build.result }}
           FRONTEND: ${{ needs.frontend-build.result }}
           SONAR: ${{ needs.sonarqube-quality-gate.result }}
@@ -619,6 +671,7 @@ jobs:
             echo "| 1 Preflight | Dependency Review | ${DEPENDENCY_REVIEW} |"
             echo "| 1 Security | Gitleaks | ${GITLEAKS} |"
             echo "| 1 Security | CodeQL | ${CODEQL} |"
+            echo "| 1 Security | Actions Pinned | ${ACTIONS_SECURITY} |"
             echo "| 2 Build | Backend | ${BACKEND} |"
             echo "| 2 Build | Frontend | ${FRONTEND} |"
             echo "| 3 Quality | SonarQube Quality Gate | ${SONAR} |"
@@ -659,6 +712,7 @@ jobs:
           check "Dependency Review"   "$DEPENDENCY_REVIEW"  true
           check "Gitleaks"            "$GITLEAKS"           false
           check "CodeQL"              "$CODEQL"             false
+          check "Actions Hardening"   "$ACTIONS_SECURITY"   false
           check "Backend Build"       "$BACKEND"            false
           check "Frontend Build"      "$FRONTEND"           false
           check "SonarQube Gate"      "$SONAR"              false

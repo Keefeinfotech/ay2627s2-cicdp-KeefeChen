@@ -10,6 +10,7 @@ Entries focus on meaningful, user-facing or system-level changes; see
 ## [Unreleased]
 
 ### Added
+- Enterprise DevSecOps hardening: pinned third-party Actions enforced in CI (`actions-security` job + `check-action-pins.mjs`), SBOM artifacts generated and uploaded from CI, `SECURITY_GOVERNANCE.md` with a severity escalation matrix and remediation tracking, and `REPOSITORY_SECURITY_RULES.md` documenting GitHub-side settings.
 - API versioning: all application routes are now served under the canonical `/api/v1` prefix (legacy `/api` mount retained for backward compatibility).
 - Productivity analytics endpoints: `GET /api/v1/analytics/weekly` (weekly created/completed counts, completion rate, on-time completions, overdue count, completion streak).
 - AI-style task prioritisation: `GET /api/v1/analytics/priority-suggestions` and `POST /api/v1/analytics/priority-suggestions/apply`, scoring open tasks by deadline proximity and progress state.
@@ -38,7 +39,7 @@ Entries focus on meaningful, user-facing or system-level changes; see
 - Production deployment health gate: the Render health check polled a non-existent hostname (`x-render-routing: no-server`); the `production` environment variable `RENDER_API_BASE_URL` was corrected to the live service on 2026-11-16.
 
 ### Security
-- _No entries yet._
+- Removed the development `JWT_SECRET` fallback from `docker-compose.yml`. Local, CI and Jenkins stacks must now supply an explicit secret; production was already correct because Render injects the real value. (#125)
 
 ### Deprecated
 - _None._

@@ -64,6 +64,11 @@ services:
       # - key: SMTP_HOST / SMTP_USER / SMTP_PASS / EMAIL_FROM   # email delivery
       # - key: AI_PROVIDER / AI_BASE_URL / AI_MODEL / AI_API_KEY # non-mock AI
       # - key: API_BASE_URL              # frontend build only
+#
+# IMMUTABLE ARTIFACTS: `.github/workflows/publish-image.yml` pushes SHA-tagged
+# backend/web images to GHCR after CI passes. Prefer deploying those digests via
+# the Render Deploy API (promote.yml / rollback.yml) over rebuilding from source
+# at deploy time; the services below keep their git connection as a fallback.
 
   # ------------------------------------------------------------------
   # Flutter web frontend (separate free Docker web service).
@@ -97,4 +102,52 @@ services:
       # as the backend's TURNSTILE_SECRET_KEY, and the widget must allow
       # auxilia-web.onrender.com as a hostname.
       - key: TURNSTILE_SITE_KEY
+        sync: false
+
+  # ------------------------------------------------------------------
+  # Staging (isolated): not auto-deployed. `promote.yml` targets it with
+  # environment-scoped RENDER_SERVICE_ID / RENDER_DEPLOY_HOOK_URL /
+  # RENDER_API_BASE_URL values, so staging never shares production config.
+  # ------------------------------------------------------------------
+  - type: web
+    name: auxilia-backend-staging
+    runtime: docker
+    dockerfilePath: backend/Dockerfile
+    dockerContext: backend
+    plan: free
+    region: singapore
+    healthCheckPath: /api/health
+    autoDeploy: false
+    envVars:
+      - key: NODE_ENV
+        value: staging
+      - key: TRUST_PROXY
+        value: "true"
+      - key: CAPTCHA_ENABLED
+        value: "false"
+      - key: AI_PROVIDER
+        value: mock
+      - key: MONGODB_URI
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: CORS_ORIGIN
+        sync: false
+      - key: METRICS_TOKEN
+        sync: false
+
+  - type: web
+    name: auxilia-web-staging
+    runtime: docker
+    dockerfilePath: frontend/Dockerfile
+    dockerContext: frontend
+    plan: free
+    region: singapore
+    healthCheckPath: /
+    autoDeploy: false
+    envVars:
+      - key: PORT
+        value: "8080"
+      # Staging backend origin - supply when applying the Blueprint.
+      - key: API_BASE_URL
         sync: false

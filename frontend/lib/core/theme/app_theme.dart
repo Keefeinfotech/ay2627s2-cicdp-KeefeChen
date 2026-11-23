@@ -1,17 +1,16 @@
 import 'package:flutter/material.dart';
 
+import '../design_system/ds_tokens.dart';
 import 'app_colors.dart';
 import 'app_spacing.dart';
 import 'app_typography.dart';
 
-/// Builds the light and dark Material 3 themes from Auxilia's design tokens.
+/// Builds the light and dark Material 3 themes from the canonical [Ds] tokens.
 ///
-/// The palette is Trust Blue: trust blue primary actions,
-/// pacific blue, moss slate, malachite emerald, lichen and persimmon,
-/// cream. The app feels like sitting in a cosy cafe on a rainy day — warm,
-/// grounded and alive. Each tab and stat card carries its own accent colour so
-/// the dashboard reads like a spread of weather patterns rather than one flat
-/// navy surface.
+/// The palette is deliberately restrained: Trust Blue for primary actions,
+/// a subtle green for positive states, and neutral greys for surfaces and
+/// text. Radii and elevation stay compact so the app reads as a professional
+/// SaaS product rather than a decorative consumer interface.
 abstract final class AppTheme {
   const AppTheme._();
 
@@ -63,9 +62,14 @@ abstract final class AppTheme {
     primary: AppColors.darkPrimary,
     onPrimary: AppColors.darkestNavy,
     primaryContainer: AppColors.darkSurfaceAlt,
+    // ColorScheme falls back to `onPrimary` (near-black) when these are omitted.
+    // That is unreadable on a dark container and breaks the selected
+    // navigation item, so pin high-contrast light text explicitly.
+    onPrimaryContainer: AppColors.darkOnSurface,
     secondary: AppColors.darkPrimary,
     onSecondary: AppColors.darkestNavy,
     secondaryContainer: AppColors.darkSurfaceAlt,
+    onSecondaryContainer: AppColors.darkOnSurface,
     tertiary: AppColors.malachite,
     onTertiary: AppColors.white,
     tertiaryContainer: Color(0xFF0F3E34),
@@ -152,7 +156,7 @@ abstract final class AppTheme {
             ? const Color(0xFF2563EB).withValues(alpha: 0.10)
             : Colors.black.withValues(alpha: 0.4),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadius.lg),
+          borderRadius: BorderRadius.circular(Ds.rLg),
           side: BorderSide(color: scheme.outlineVariant),
         ),
       ),
@@ -432,7 +436,10 @@ abstract final class AppTheme {
         labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
         iconTheme: WidgetStateProperty.resolveWith<IconThemeData>((states) {
           if (states.contains(WidgetState.selected)) {
-            return IconThemeData(color: scheme.primary, size: AppSizes.iconMd);
+            return IconThemeData(
+              color: scheme.onPrimaryContainer,
+              size: AppSizes.iconMd,
+            );
           }
           return IconThemeData(
             color: scheme.onSurfaceVariant,
@@ -442,7 +449,7 @@ abstract final class AppTheme {
         labelTextStyle: WidgetStateProperty.resolveWith<TextStyle?>((states) {
           if (states.contains(WidgetState.selected)) {
             return textTheme.labelSmall?.copyWith(
-              color: scheme.primary,
+              color: scheme.onPrimaryContainer,
               fontWeight: FontWeight.w600,
             );
           }
@@ -452,10 +459,10 @@ abstract final class AppTheme {
       navigationRailTheme: NavigationRailThemeData(
         backgroundColor: scheme.surface,
         indicatorColor: scheme.primaryContainer,
-        selectedIconTheme: IconThemeData(color: scheme.primary),
+        selectedIconTheme: IconThemeData(color: scheme.onPrimaryContainer),
         unselectedIconTheme: IconThemeData(color: scheme.onSurfaceVariant),
         selectedLabelTextStyle: textTheme.labelMedium?.copyWith(
-          color: scheme.primary,
+          color: scheme.onPrimaryContainer,
           fontWeight: FontWeight.w700,
         ),
         unselectedLabelTextStyle: textTheme.labelMedium?.copyWith(

@@ -4,6 +4,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/utils/formatters.dart';
 import '../../../../core/widgets/app_status_badge.dart';
+import '../../../../core/widgets/progress_ring.dart';
 import '../../data/models/project.dart';
 
 /// Project summary card shared by the projects grid and dashboard previews.
@@ -146,11 +147,17 @@ class ProjectCard extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: AppSpacing.sm),
-                    Text(
-                      '${(project.progress * 100).round()}%',
-                      style: theme.textTheme.labelMedium?.copyWith(
-                        fontWeight: FontWeight.w700,
-                        color: _accent,
+                    ProgressRing(
+                      value: project.progress,
+                      diameter: 44,
+                      strokeWidth: 8,
+                      color: _accent,
+                      center: Text(
+                        '${(project.progress * 100).round()}%',
+                        style: theme.textTheme.labelMedium?.copyWith(
+                          fontWeight: FontWeight.w700,
+                          color: _accent,
+                        ),
                       ),
                     ),
                   ],

@@ -4,11 +4,11 @@ on:
   workflow_dispatch:
     inputs:
       image_tag:
-        description: "Image tag / commit SHA to promote"
+        description: "Commit SHA (the exact revision that passed CI) to promote"
         required: true
         type: string
       environment:
-        description: "Target environment"
+        description: "Target environment (each has its own service ID, hook and base URL)"
         required: true
         type: choice
         options: [staging, production]
@@ -17,33 +17,103 @@ permissions:
   contents: read
   deployments: write
 
+concurrency:
+  group: promote-${{ inputs.environment }}
+  cancel-in-progress: false
+
 jobs:
   promote:
     name: Promote to ${{ inputs.environment }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    permissions:
+      contents: read
+      deployments: write
+      actions: write
     environment:
       name: ${{ inputs.environment }}
       url: ${{ vars.RENDER_API_BASE_URL }}
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with:
-          ref: ${{ inputs.image_tag }}
-      - name: Trigger deploy hook
+      - name: Validate requested revision
+        shell: bash
         env:
-          RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+          COMMIT_SHA: ${{ inputs.image_tag }}
         run: |
           set -euo pipefail
-          if [[ -n "$RENDER_DEPLOY_HOOK_URL" ]]; then
-            curl --proto "=https" -fsSL -X POST "$RENDER_DEPLOY_HOOK_URL"
+          if [[ ! "$COMMIT_SHA" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "::error::Provide a full 40-character commit SHA, got: $COMMIT_SHA"
+            exit 1
           fi
-      - name: Health check
+
+      - name: Checkout (for smoke script)
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          ref: ${{ inputs.image_tag }}
+
+      - name: "Deploy exact SHA via Render API (fallback: environment deploy hook)"
+        env:
+          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+          RENDER_SERVICE_ID: ${{ vars.RENDER_SERVICE_ID }}
+          RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+          COMMIT_SHA: ${{ inputs.image_tag }}
+          TARGET: ${{ inputs.environment }}
+        run: |
+          set -euo pipefail
+          if [[ -n "$RENDER_API_KEY" && -n "$RENDER_SERVICE_ID" ]]; then
+            status="$(curl --proto "=https" -sS -o /dev/null -w '%{http_code}' \
+              -X POST \
+              -H "Authorization: Bearer $RENDER_API_KEY" \
+              -H "Content-Type: application/json" \
+              -d "{\"commit\":{\"id\":\"$COMMIT_SHA\"}}" \
+              "https://api.render.com/v1/services/$RENDER_SERVICE_ID/deploys")"
+            if [[ "$status" != "201" && "$status" != "200" ]]; then
+              echo "::error::Render deploy API returned HTTP $status for $TARGET"
+              exit 1
+            fi
+            echo "Requested deploy of $COMMIT_SHA to $TARGET."
+          elif [[ -n "$RENDER_DEPLOY_HOOK_URL" ]]; then
+            curl --proto "=https" -fsSL -X POST "$RENDER_DEPLOY_HOOK_URL"
+            echo "Deploy hook triggered for $TARGET."
+          else
+            echo "::error::Configure RENDER_API_KEY + RENDER_SERVICE_ID (or RENDER_DEPLOY_HOOK_URL) on the '$TARGET' environment."
+            exit 1
+          fi
+
+      - name: Wait for the promoted service to become healthy
         env:
           SMOKE_BASE_URL: ${{ vars.RENDER_API_BASE_URL }}
         run: |
           set -euo pipefail
-          for i in $(seq 1 30); do
-            if curl -fsS "${SMOKE_BASE_URL}/api/health"; then exit 0; fi
+          if [[ -z "$SMOKE_BASE_URL" ]]; then
+            echo "::error::RENDER_API_BASE_URL is not set on the '${{ inputs.environment }}' environment."
+            exit 1
+          fi
+          for attempt in $(seq 1 60); do
+            code="$(curl --proto "=https" -s -o /dev/null -w '%{http_code}' "$SMOKE_BASE_URL/api/health" || true)"
+            echo "health probe ${attempt}/60 -> HTTP ${code:-000}"
+            if [[ "$code" == "200" ]]; then exit 0; fi
             sleep 10
           done
+          echo "::error::Service never returned 200 from /api/health within 10 minutes."
           exit 1
+
+      - name: Run post-promotion smoke checks
+        env:
+          SMOKE_BASE_URL: ${{ vars.RENDER_API_BASE_URL }}
+        run: node scripts/smoke-test.mjs "$SMOKE_BASE_URL"
+
+      - name: Record promotion trace
+        if: always()
+        env:
+          RESULT: ${{ job.status }}
+          DEPLOYED_SHA: ${{ inputs.image_tag }}
+          TARGET: ${{ inputs.environment }}
+        run: |
+          {
+            echo "## Promotion to $TARGET"
+            echo ""
+            echo "- Result: $RESULT"
+            echo "- Revision: $DEPLOYED_SHA"
+            echo "- Triggered by: ${{ github.actor }}"
+          } >> "$GITHUB_STEP_SUMMARY"

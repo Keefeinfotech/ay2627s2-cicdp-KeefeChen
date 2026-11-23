@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../theme/app_colors.dart';
+import '../design_system/ds_tokens.dart';
 import '../theme/app_spacing.dart';
 
 enum AppButtonVariant { primary, secondary, outline, ghost, danger, success }
@@ -11,9 +11,9 @@ enum AppButtonSize { medium, large }
 ///
 /// It standardises height, radius, padding, disabled/loading states and keeps
 /// destructive actions visually distinct from primary actions.
-/// Primary action rendered with the brand gradient and a soft blue glow.
-class _GradientPrimaryButton extends StatelessWidget {
-  const _GradientPrimaryButton({
+/// Primary action uses a flat Trust Blue surface with subtle elevation.
+class _PrimaryButton extends StatelessWidget {
+  const _PrimaryButton({
     required this.onPressed,
     required this.borderRadius,
     required this.height,
@@ -40,17 +40,9 @@ class _GradientPrimaryButton extends StatelessWidget {
         opacity: enabled ? 1 : 0.45,
         child: DecoratedBox(
           decoration: BoxDecoration(
-            gradient: AppColors.primaryGradient,
+            color: Ds.trustBlue,
             borderRadius: BorderRadius.circular(borderRadius),
-            boxShadow: enabled
-                ? [
-                    BoxShadow(
-                      color: AppColors.pacific.withValues(alpha: 0.35),
-                      blurRadius: 16,
-                      offset: const Offset(0, 6),
-                    ),
-                  ]
-                : null,
+            boxShadow: enabled ? Ds.elevation1 : null,
           ),
           child: Material(
             color: Colors.transparent,
@@ -163,16 +155,14 @@ class AppButton extends StatelessWidget {
         ),
       ),
       shape: WidgetStatePropertyAll<OutlinedBorder>(
-        RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadius.md),
-        ),
+        RoundedRectangleBorder(borderRadius: BorderRadius.circular(Ds.rMd)),
       ),
     );
 
     final Widget button = switch (variant) {
-      AppButtonVariant.primary => _GradientPrimaryButton(
+      AppButtonVariant.primary => _PrimaryButton(
         onPressed: isLoading ? null : onPressed,
-        borderRadius: AppRadius.md,
+        borderRadius: Ds.rMd,
         height: height,
         expand: expand,
         horizontalPadding: isLarge ? AppSpacing.xl : AppSpacing.lg,
@@ -218,8 +208,8 @@ class AppButton extends StatelessWidget {
       AppButtonVariant.success => FilledButton(
         onPressed: isLoading ? null : onPressed,
         style: baseStyle.copyWith(
-          backgroundColor: const WidgetStatePropertyAll<Color>(AppColors.teal),
-          foregroundColor: const WidgetStatePropertyAll<Color>(AppColors.white),
+          backgroundColor: const WidgetStatePropertyAll<Color>(Ds.accentGreen),
+          foregroundColor: const WidgetStatePropertyAll<Color>(Ds.onPrimary),
         ),
         child: content,
       ),

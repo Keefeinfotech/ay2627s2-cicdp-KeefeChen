@@ -30,8 +30,8 @@
 - [x] Keep Skip/Back/Next/Get Started consistently positioned
 
 ## Phase 6 - Dummy Data Seed Scripts
-- [x] Create backend seed script (backend/scripts/seed.ts)
-- [x] Create data definitions (backend/scripts/seed-data.ts)
+- [x] Create backend seed script (backend/scripts/seed/seed.ts)
+- [x] Create data definitions (backend/scripts/seed/seed-data.json)
 - [x] Add npm scripts (seed, seed:reset, seed:dry-run)
 - [x] Support repeatable seeding without duplicates (upsert pattern)
 - [x] Provide reset mechanism (--reset flag)

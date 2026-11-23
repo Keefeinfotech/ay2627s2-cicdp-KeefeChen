@@ -8,6 +8,12 @@ tooling. It is written for a solo-developed project — the project owner is
 both the requester and the approver — while remaining traceable enough to
 satisfy a professional change-control audit.
 
+Decision authorities (CCB for project/design changes, CAB for production
+deployment approvals) and change categories (Standard / Normal / Emergency)
+are defined in [GOVERNANCE.md](GOVERNANCE.md). Every Normal or Emergency
+change must carry a `CCB-*` / `CAB-*` decision ID recorded on the issue and in
+the change log.
+
 ## Purpose and scope
 
 Change management controls **any deliberate modification** to:
@@ -263,16 +269,19 @@ Implemented in the repository (this PR):
 - `CHANGELOG.md` structure and entries
 - Branch naming enforced by `.github/scripts/check-branch-name.mjs` via CI
 
-Manual GitHub configuration (cannot be done from repository files) — see the
-list in the change-management rollout notes or `SECURITY.md`/repo settings:
+Repository settings (not files) are applied with the reproducible script
+`scripts/configure-branch-protection.sh`. It sets the same policy on `main` and
+`develop`: require `CI - Final Quality Gate`, require branches to be up to date,
+require 1 approving review (CODEOWNERS reviews enabled), dismiss stale reviews,
+and block force-push/deletion/admin bypass. After running it, verify in
+GitHub → Settings → Branches and record the outcome in the release evidence.
 
-1. **`main` ruleset** (`Protect main branch`): add the required status check
-   `CI - Final Quality Gate` (and optionally `Code Quality - SonarCloud
-   Automatic Analysis`) so merges block on green. Currently the ruleset only
-   requires a PR (0 approvals) and blocks deletion/force-push.
-2. **`develop` ruleset** (`Protect develop branch`): its `required_status_checks`
-   list is empty; add the same checks. Also for PRs to `develop` they should
-   match the PR targets already present.
+Manual GitHub configuration that the script cannot perform:
+
+1. **`production` environment**: add required reviewers and restrict
+   deployments to the `main` branch.
+2. **SonarCloud**: optionally add `Code Quality - SonarCloud Automatic Analysis`
+   as an additional required status check once the quality gate is stable.
 3. **Environments**: the `production` environment variable
    `RENDER_API_BASE_URL` must point at the live service
    (`https://ay2627s2-cicdp-keefechen-1.onrender.com`, fixed 2026-11-16);

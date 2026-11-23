@@ -79,3 +79,14 @@ Smoke test: 3/3 checks passed.
 
 Production rollback path (`.github/workflows/rollback.yml`): re-deploys a chosen prior SHA via Render hook; prior release `v1.0.0` tag exists for rollback-to-tag. Health-poll + post-deploy smoke (`scripts/smoke-test.mjs`) gate the process; runbook at `docs/deployment/ROLLBACK_RUNBOOK.md`.
 Recovery time objective: < 10 minutes (Render redeploy + health poll window).
+
+## Governance cross-references (added 22 Nov 2026)
+
+The following artifacts were created retrospectively from the evidence in this
+file and are now mandatory for subsequent releases: [Master Test Plan](../testing/TEST_PLAN.md),
+[RTM](../quality/RTM.md), [Test Case Catalogue](../testing/TEST_CASE_CATALOGUE.md),
+[Defect Log](../quality/DEFECT_LOG.md), [Quality Metrics](../quality/QUALITY_METRICS.md),
+[CCB/CAB Governance](../change-management/GOVERNANCE.md), and
+[Post-Deployment Review](../deployment/POST_DEPLOYMENT_REVIEW_v1.1.md).
+No measured figure in this document was altered; metrics that were not recorded
+at release time remain unrecorded rather than estimated.

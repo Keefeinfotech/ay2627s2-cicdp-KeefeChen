@@ -1,0 +1,15 @@
+# Production Grafana datasource template. Mount only in the production Grafana
+# instance (the local Compose profile mounts the `prometheus.yml` datasource
+# in this same directory, so do not enable both at once).
+apiVersion: 1
+
+datasources:
+  - name: Prometheus
+    uid: prometheus
+    type: prometheus
+    access: proxy
+    url: "${PROMETHEUS_URL}"
+    isDefault: true
+    editable: false
+    jsonData:
+      httpMethod: GET
