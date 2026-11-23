@@ -180,7 +180,7 @@ class _BarPair extends StatelessWidget {
                 maxLines: 1,
                 style: theme.textTheme.labelSmall?.copyWith(
                   color: scheme.onSurfaceVariant,
-                  fontSize: 10,
+                  fontSize: 12,
                 ),
               ),
             ),

@@ -200,6 +200,10 @@ pipeline {
                     return (params.DEPLOY ?: false) || ['main', 'master'].contains(env.BRANCH_NAME)
                 }
             }
+            environment {
+                // Explicit test-only secret; the compose file has no fallback.
+                JWT_SECRET = 'ci-test-only-jwt-secret'
+            }
             steps {
                 input message: 'Rebuild and restart the local stack?', ok: 'Deploy'
 

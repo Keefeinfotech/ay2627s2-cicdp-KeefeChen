@@ -20,6 +20,7 @@ and no force-push/deletion on `main` and `develop`.
 | Scope | Name | Purpose |
 |---|---|---|
 | Repository variable | `FRONTEND_API_BASE_URL` | API origin baked into published web images (defaults to the production backend URL) |
+| Repository variable | `TURNSTILE_SITE_KEY` | Public site key passed to the web image build (empty disables CAPTCHA locally) |
 | Repository variable | `LAST_GOOD_SHA` | Written automatically by `deploy-production.yml`; do not set manually except during incident recovery |
 | Repository secret | `RENDER_API_KEY` | Optional; required for exact-SHA deploys. Grant deploy permission only. |
 | Environment `production` variable | `RENDER_SERVICE_ID` | Backend service id for the Deploy API |

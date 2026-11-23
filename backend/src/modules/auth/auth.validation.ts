@@ -114,3 +114,15 @@ export const refreshSchema = z.object({
     })
     .strict(),
 });
+
+export const changePasswordSchema = z.object({
+  body: z
+    .object({
+      currentPassword: z
+        .string()
+        .min(1, "Current password is required")
+        .max(128),
+      newPassword: password,
+    })
+    .strict(),
+});

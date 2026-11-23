@@ -15,6 +15,14 @@ docs/change-management/change-management-process.md.
 
 ## Change title
 
+## Classification
+- Change type: **Standard** (pre-approved, low risk) · **Normal** (CCB approval) · **Emergency** (CAB retro-approval within 1 working day)
+- Requested by:
+- Target release:
+- CCB / CAB decision ID (if applicable):
+- Rollback plan:
+- Post-change verification plan:
+
 ## Description of the change
 
 ## Reason and justification

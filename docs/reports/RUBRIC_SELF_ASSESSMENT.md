@@ -331,3 +331,45 @@ be dishonest:
 The two artefacts a marker can open first: `docs/reports/RELEASE_EVIDENCE_v1.1.md`
 and `docs/reports/REGRESSION_RUN_2026-11-19.md`.
 
+---
+
+## v1.2 re-rating — 22 November 2026 (SQA & change-governance uplift)
+
+A formal SQA/V&V/change-governance audit was completed on 22 November 2026
+(`docs/reports/SQA_GOVERNANCE_AUDIT.md`) and every recommended artifact was
+added. The table below re-scores the same six published CA1 criteria against
+the repository as it now stands. Scores are honest: criteria whose evidence did
+not change are held, not inflated.
+
+| # | Criterion | Weight | v1.1 | v1.2 | Why it moved (or did not) |
+|---|-----------|--------|-----:|-----:|---|
+| 1 | Project Management | 10% | 8.5 | **9.0** | Added RTM, Master Test Plan with entry/exit/suspension criteria, CCB/CAB governance, change-type routing, CMDB; audit found and fixed two stale coverage references in release docs. Still solo, Jira board external, manual NFR gates open. |
+| 2 | Quality Assurance | 20% | 9.0 | **9.5** | Added detailed Test Case Catalogue (preconditions/data/expected), SQA metrics with DDE/defect-density/escaped-defect formulas, backfilled Defect Log, V&V map and explicit test-design-technique pointers. Manual case results and DDE remain unmeasured historically. |
+| 3 | Integration and Delivery Pipeline | 20% | 9.5 | **9.5** | Hold: pipeline refactored into a 4-stage flow on 21 Nov, two releases already executed end-to-end; no new evidence of failure or improvement. A fresh green run on current HEAD is still recommended. |
+| 4 | Software Development and Deployment | 20% | 8.5 | **8.5** | Hold: live deployment remains evidenced (health, headers, smoke 3/3); the outstanding manual NFR gates and known limitations are unchanged. |
+| 5 | Independent Research and Learning | 20% | 9.0 | **9.0** | Hold: governance standards (RTM, DDE, CCB/CAB, CMDB) were researched and applied, but no new deep technical spike was completed. |
+| 6 | Presentation and Demonstration | 10% | 8.0 | **8.0** | Hold: demo script and recording exist; live delivery still cannot be evidenced from a repository. |
+
+**Weighted v1.2 estimate: 9.0 / 10 ≈ 90% (A−, borderline A).**
+
+`0.1×9.0 + 0.2×9.5 + 0.2×9.5 + 0.2×8.5 + 0.2×9.0 + 0.1×8.0 = 9.0`
+
+**Residual risks that prevent higher scores (unchanged or newly disclosed):**
+
+- DDE, defect density and escaped-defect counts were not captured historically;
+  the framework and backfilled log now exist, but the numbers remain
+  "Not measured" rather than estimated.
+- Manual test cases M-01…M-38 have no recorded results; the manual NFR gates
+  (screen reader, physical-device 200% scale, DB backup, rollback rehearsal,
+  HTTPS/CORS check) remain unexecuted.
+- CCB/CAB decisions for v1.0.0/v1.1 are retrospective records; future releases
+  must carry a live `CAB-YYYYMMDD-nn` ID.
+- Feature PRs have no independent human approvals (0 required by design); the
+  risk-tiered review policy and self-inspection checklist are now documented.
+- Criterion 6 is unassessable from a repository.
+
+**Marker entry points:** `docs/reports/SQA_GOVERNANCE_AUDIT.md` (what was
+audited and what was fixed), `docs/quality/RTM.md` (requirements → evidence),
+`docs/testing/TEST_PLAN.md` + `TEST_CASE_CATALOGUE.md` (test governance), and
+`docs/reports/RELEASE_EVIDENCE_v1.1.md` (measured runtime evidence).
+

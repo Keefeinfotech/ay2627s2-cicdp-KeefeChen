@@ -10,6 +10,19 @@ import { expect, test } from "@playwright/test";
 
 const API_URL = process.env.E2E_API_URL ?? "http://localhost:3000";
 
+// Production enables Cloudflare Turnstile, so tokenless auth requests are
+// rejected with CAPTCHA_REQUIRED before validation/auth logic runs. Supply a
+// valid test token to exercise the downstream contract against production.
+const CAPTCHA_TOKEN = process.env.E2E_CAPTCHA_TOKEN?.trim();
+const captchaHeaders = CAPTCHA_TOKEN
+  ? { "X-Captcha-Token": CAPTCHA_TOKEN }
+  : {};
+
+interface ErrorBody {
+  code?: string;
+  error?: string;
+}
+
 test.describe("API black-box contract", () => {
   test("unknown routes return a structured 404", async ({ request }) => {
     const response = await request.get(
@@ -43,9 +56,16 @@ test.describe("API black-box contract", () => {
   }) => {
     const response = await request.post(`${API_URL}/api/auth/signup`, {
       data: { email: "not-an-email", password: "short" },
+      headers: captchaHeaders,
     });
     expect(response.status()).toBe(400);
-    const body = await response.json();
+    const body: ErrorBody = await response.json();
+    if (body.code === "CAPTCHA_REQUIRED" && !CAPTCHA_TOKEN) {
+      // CAPTCHA is on (production): the gate contract is verified here; the
+      // validation contract is covered by local runs or with a test token.
+      expect(body.error).toMatch(/captcha/i);
+      return;
+    }
     expect(body.code).toBe("VALIDATION_ERROR");
   });
 
@@ -57,9 +77,17 @@ test.describe("API black-box contract", () => {
         email: "definitely-not-registered@example.com",
         password: "WrongP@ss1234",
       },
+      headers: captchaHeaders,
     });
+    const body: ErrorBody = await response.json();
+    if (body.code === "CAPTCHA_REQUIRED" && !CAPTCHA_TOKEN) {
+      // Same reasoning as the signup test: verify the CAPTCHA gate instead
+      // of the (unreachable) auth branch when no token is configured.
+      expect(response.status()).toBe(400);
+      expect(JSON.stringify(body)).not.toMatch(/no account|user not found/i);
+      return;
+    }
     expect(response.status()).toBe(401);
-    const body = await response.json();
     expect(JSON.stringify(body)).not.toMatch(/no account|user not found/i);
   });
 

@@ -359,7 +359,9 @@ class _HomeScreenState extends State<HomeScreen> {
         bottom: false,
         child: Center(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 1120),
+            constraints: const BoxConstraints(
+              maxWidth: AppSizes.maxContentWidth,
+            ),
             child: _buildBody(context),
           ),
         ),
@@ -369,11 +371,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildBody(BuildContext context) {
     if (_store.isLoading && !_store.hasLoaded) {
-      return const Center(
-        child: SingleChildScrollView(
-          padding: EdgeInsets.all(AppSpacing.xl),
-          child: AppLoading(label: 'Loading your tasks...'),
-        ),
+      return const SingleChildScrollView(
+        padding: EdgeInsets.all(AppSpacing.xl),
+        child: DashboardSkeleton(),
       );
     }
 

@@ -47,8 +47,9 @@ Environment variables (Render passes these to the Docker build as args):
 |---|---|
 | `PORT` | `8080` — nginx listens there; Render routes to the port named by `PORT` |
 | `API_BASE_URL` | `https://ay2627s2-cicdp-keefechen-1.onrender.com` — the deployed backend URL from `RENDER_API_BASE_URL` |
+| `TURNSTILE_SITE_KEY` | The **public** Cloudflare Turnstile site key from the same widget as the backend's `TURNSTILE_SECRET_KEY`. Compiled into the app at build time (`--dart-define`); without it `AuthService.requiresCaptcha` is false and `/api/auth/login` rejects sign-in with `CAPTCHA_REQUIRED`. |
 
-Do **not** set `MONGODB_URI`, `JWT_SECRET` or other backend secrets on this service — the frontend never needs them.
+Do **not** set `MONGODB_URI`, `JWT_SECRET` or other backend secrets on this service — the frontend never needs them. The site key is public; the secret key stays on the backend only. Also add `auxilia-web.onrender.com` to the widget's allowed hostnames in the Cloudflare dashboard, or verification will fail with a hostname mismatch.
 
 ## 3. Obtain the public URL
 

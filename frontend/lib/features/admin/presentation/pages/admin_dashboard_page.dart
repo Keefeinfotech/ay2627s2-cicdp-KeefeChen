@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 
 import '../../../../core/widgets/app_card.dart';
+import '../../../../core/widgets/app_loading.dart';
 import '../../../../core/widgets/app_section_header.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
@@ -67,7 +68,10 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
         future: _stats,
         builder: (context, snapshot) {
           if (snapshot.connectionState != ConnectionState.done) {
-            return const Center(child: CircularProgressIndicator());
+            return const SingleChildScrollView(
+              padding: EdgeInsets.all(AppSpacing.lg),
+              child: DashboardSkeleton(),
+            );
           }
           if (snapshot.hasError) {
             return _ErrorState(
@@ -370,7 +374,7 @@ class _TrendChart extends StatelessWidget {
               reservedSize: 34,
               getTitlesWidget: (value, _) => Text(
                 value.toInt().toString(),
-                style: const TextStyle(fontSize: 11),
+                style: const TextStyle(fontSize: 12),
               ),
             ),
           ),
@@ -388,7 +392,7 @@ class _TrendChart extends StatelessWidget {
                     : days[index].date;
                 return Padding(
                   padding: const EdgeInsets.only(top: 4),
-                  child: Text(label, style: const TextStyle(fontSize: 9)),
+                  child: Text(label, style: const TextStyle(fontSize: 12)),
                 );
               },
             ),

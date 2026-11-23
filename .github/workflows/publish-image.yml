@@ -105,6 +105,7 @@ jobs:
           push: true
           build-args: |
             API_BASE_URL=${{ vars.FRONTEND_API_BASE_URL || 'https://ay2627s2-cicdp-keefechen-1.onrender.com' }}
+            TURNSTILE_SITE_KEY=${{ vars.TURNSTILE_SITE_KEY || '' }}
           tags: ${{ steps.meta.outputs.image }}:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max

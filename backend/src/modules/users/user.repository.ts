@@ -1,16 +1,14 @@
-
 /**
  * File Name: user.repository.ts
  * Description: Handles MongoDB persistence operations for users.
  * Author: Keefe Chen
  */
 
+import { requireString } from "../../shared/utils/queryGuard.js";
+
 import { User, type UserRecord } from "./user.model.js";
 
-import type {
-  CreateUserInput,
-  UpdateOwnProfileInput,
-} from "./user.types.js";
+import type { CreateUserInput, UpdateOwnProfileInput } from "./user.types.js";
 
 export const userRepository = {
   /**
@@ -29,6 +27,38 @@ export const userRepository = {
     });
 
     return createdUser.toObject() as UserRecord;
+  },
+
+  /**
+   * Changes the authenticated user's email address.
+   * The email is normalised and marked unverified.
+   */
+  async updateOwnEmail(
+    userId: string,
+    email: string,
+  ): Promise<UserRecord | null> {
+    return User.findOneAndUpdate(
+      {
+        _id: userId,
+        status: "active",
+        deletedAt: null,
+      },
+      {
+        $set: {
+          email: email.trim().toLowerCase(),
+          emailVerifiedAt: null,
+          emailVerificationTokenHash: null,
+          emailVerificationExpiresAt: null,
+        },
+      },
+      {
+        new: true,
+        runValidators: true,
+      },
+    )
+      .select("-passwordHash")
+      .lean<UserRecord>()
+      .exec();
   },
 
   /**
@@ -69,9 +99,7 @@ export const userRepository = {
    * Finds an active user using their UUID and retrieves
    * their password hash for password verification.
    */
-  async findByIdWithPassword(
-    userId: string
-  ): Promise<UserRecord | null> {
+  async findByIdWithPassword(userId: string): Promise<UserRecord | null> {
     return User.findOne({
       _id: userId,
       status: "active",
@@ -118,7 +146,7 @@ export const userRepository = {
    */
   async updateOwnProfile(
     userId: string,
-    input: UpdateOwnProfileInput
+    input: UpdateOwnProfileInput,
   ): Promise<UserRecord | null> {
     return User.findOneAndUpdate(
       {
@@ -127,12 +155,13 @@ export const userRepository = {
         deletedAt: null,
       },
       {
-        $set: input,
+        // Fixed allow-list: never spread client input into `$set`.
+        $set: { name: requireString(input.name, "name") },
       },
       {
         new: true,
         runValidators: true,
-      }
+      },
     )
       .select("-passwordHash")
       .lean<UserRecord>()
@@ -142,10 +171,7 @@ export const userRepository = {
   /**
    * Updates the timestamp of the user's last successful login.
    */
-  async updateLastLogin(
-    userId: string,
-    at: Date = new Date()
-  ): Promise<void> {
+  async updateLastLogin(userId: string, at: Date = new Date()): Promise<void> {
     await User.updateOne(
       {
         _id: userId,
@@ -156,7 +182,7 @@ export const userRepository = {
         $set: {
           lastLoginAt: at,
         },
-      }
+      },
     ).exec();
   },
 
@@ -181,7 +207,7 @@ export const userRepository = {
       },
       {
         runValidators: true,
-      }
+      },
     ).exec();
 
     return result.modifiedCount === 1;

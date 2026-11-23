@@ -107,6 +107,59 @@ export const userService = {
   },
 
   /**
+   * Changes the authenticated user's email address.
+   * Requires the current password; the new address must not be taken.
+   */
+  async updateOwnEmail(
+    userId: string,
+    input: { email: string; currentPassword: string },
+  ): Promise<PublicUser> {
+    const user = await userRepository.findByIdWithPassword(userId);
+
+    if (!user || user.status !== "active") {
+      throw new AppError(404, "USER_NOT_FOUND", "User account was not found.");
+    }
+
+    if (!user.passwordHash) {
+      throw new AppError(
+        400,
+        "PASSWORD_VERIFICATION_UNAVAILABLE",
+        "Account password verification is unavailable.",
+      );
+    }
+
+    const passwordMatches = await bcrypt.compare(
+      input.currentPassword,
+      user.passwordHash,
+    );
+
+    if (!passwordMatches) {
+      throw new AppError(
+        403,
+        "INVALID_PASSWORD",
+        "The current password is incorrect.",
+      );
+    }
+
+    const emailTaken = await userRepository.existsByEmail(input.email);
+    if (emailTaken && input.email.toLowerCase() !== user.email.toLowerCase()) {
+      throw new AppError(
+        409,
+        "EMAIL_IN_USE",
+        "That email address is already registered.",
+      );
+    }
+
+    const updated = await userRepository.updateOwnEmail(userId, input.email);
+
+    if (!updated) {
+      throw new AppError(404, "USER_NOT_FOUND", "User account was not found.");
+    }
+
+    return toPublicUser(updated);
+  },
+
+  /**
    * Deactivates the authenticated user's account.
    *
    * Requires the current password as an additional

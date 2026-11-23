@@ -8,6 +8,25 @@ Auxilia project: what it is, where the tests live, how to run them, and which
 CI gate enforces them. It covers the Flutter frontend, the Express/TypeScript
 backend and the Docker-composed deployment.
 
+### V&V map and governance artefacts
+
+| Half | Practice | Evidence |
+|---|---|---|
+| Verification (build it right) | typecheck/analyze/format, unit/integration/contract tests, coverage ratchets, security scanners, SonarCloud | CI jobs, `NFR_RELEASE_GATES.md`, `QA_VERIFICATION_*.md` |
+| Validation (build the right system) | story acceptance criteria, manual plan, E2E journeys, demo script, production smoke, manual NFR gates | `USER_STORIES.md`, `MANUAL_TEST_PLAN.md`, `RELEASE_EVIDENCE_*.md` |
+
+Test design techniques (Equivalence Partitioning, Boundary Value Analysis and
+Use Case Testing) are named explicitly in
+`backend/tests/unit/validators/task.query-design.test.ts` and
+`backend/tests/unit/modules/users/user.validation.test.ts`.
+
+Governance index: [TEST_PLAN.md](TEST_PLAN.md) (entry/exit/suspension criteria),
+[TEST_CASE_CATALOGUE.md](TEST_CASE_CATALOGUE.md) (detailed cases),
+[RTM.md](../quality/RTM.md) (requirements traceability),
+[DEFECT_LOG.md](../quality/DEFECT_LOG.md),
+[QUALITY_METRICS.md](../quality/QUALITY_METRICS.md),
+[GOVERNANCE.md](../change-management/GOVERNANCE.md) (CCB/CAB).
+
 ## Quick start
 
 ```bash
@@ -326,10 +345,10 @@ flutter drive --driver=test_driver/integration_test.dart --target=integration_te
 | `frontend` | format, analyze, `flutter test` (incl. goldens), 62% line gate, web build | yes |
 | `e2e` | docker-compose stack health, Playwright smoke/API/a11y/auth (4 browser projects) | yes |
 | `dependency-review` | dependency graph diff scan, fails on high severity | yes (PR only) since the repo is public — enabled 2026-11-19 via repo variable `DEPENDENCY_REVIEW_ENABLED=true`; was previously off because the repo was private without GitHub Advanced Security |
-| `integration.yml` | Flutter `integration_test` on an Android emulator (API 34) | no — advisory by design (weekly + `workflow_dispatch` + frontend PRs); not wired into `CI - Final Quality Gate` |
+| `integration.yml` | Flutter `integration_test` on an Android emulator (API 34) | no — advisory by design (weekly + `workflow_dispatch` + frontend PRs); not wired into `4 · Gate · CI Final Quality Gate` |
 | `mutation.yml` | Stryker mutation testing, scoped to `tokens.ts` + `AppError.ts` | no — advisory (nightly + `workflow_dispatch`); never a per-PR gate |
 | `performance` | node load smoke (p95 budget) | manual only (`workflow_dispatch`) |
-| `ci-summary` | aggregates all gates (E2E included) | branch protection (`CI - Final Quality Gate`) |
+| `ci-summary` | aggregates all gates (E2E included) | branch protection (`4 · Gate · CI Final Quality Gate`) |
 | `deploy-production.yml` | post-deploy `smoke-test.mjs` | deployment |
 
 Contract testing runs inside the `backend` job (`tests/contract/`): the Pact
@@ -351,7 +370,7 @@ in one without the other is an automatic CI failure.
   functional or E2E test; fixed defects get a regression test.
 - GitHub Advanced Security is not needed for Dependency Review now that the
   repository is public; `Dependency Review` is a required-by-convention PR
-  gate (enforced via `CI - Final Quality Gate`).
+  gate (enforced via `4 · Gate · CI Final Quality Gate`).
 - `docs/planning/TASKS.md` is the product backlog; this file is the testing backlog index.
 
 ## Known gaps and future work

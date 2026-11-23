@@ -4,16 +4,13 @@
  * Author: Keefe Chen
  */
 
-import type {
-  Request,
-  Response,
-  NextFunction,
-} from "express";
+import type { Request, Response, NextFunction } from "express";
 
 import { userService } from "./user.service.js";
 
 import type {
   UpdateOwnProfileBody,
+  UpdateOwnEmailBody,
   DeleteOwnAccountBody,
 } from "./user.validation.js";
 
@@ -26,7 +23,7 @@ export const userController = {
   async getOwnProfile(
     req: Request,
     res: Response,
-    next: NextFunction
+    next: NextFunction,
   ): Promise<void> {
     try {
       const userId = req.userId;
@@ -58,7 +55,7 @@ export const userController = {
   async updateOwnProfile(
     req: Request,
     res: Response,
-    next: NextFunction
+    next: NextFunction,
   ): Promise<void> {
     try {
       const userId = req.userId;
@@ -73,11 +70,46 @@ export const userController = {
 
       const user = await userService.updateOwnProfile(
         userId,
-        req.body as UpdateOwnProfileBody
+        req.body as UpdateOwnProfileBody,
       );
 
       res.status(200).json({
         message: "User profile updated successfully.",
+        data: user,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  /**
+   * PATCH /api/users/me/email
+   *
+   * Changes the authenticated user's email address.
+   */
+  async updateOwnEmail(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
+    try {
+      const userId = req.userId;
+
+      if (!userId) {
+        res.status(401).json({
+          code: "UNAUTHENTICATED",
+          message: "Authentication is required.",
+        });
+        return;
+      }
+
+      const user = await userService.updateOwnEmail(
+        userId,
+        req.body as UpdateOwnEmailBody,
+      );
+
+      res.status(200).json({
+        message: "Email address updated successfully.",
         data: user,
       });
     } catch (error) {
@@ -94,7 +126,7 @@ export const userController = {
   async deleteOwnAccount(
     req: Request,
     res: Response,
-    next: NextFunction
+    next: NextFunction,
   ): Promise<void> {
     try {
       const userId = req.userId;
@@ -107,13 +139,9 @@ export const userController = {
         return;
       }
 
-      const { currentPassword } =
-        req.body as DeleteOwnAccountBody;
+      const { currentPassword } = req.body as DeleteOwnAccountBody;
 
-      await userService.deleteOwnAccount(
-        userId,
-        currentPassword
-      );
+      await userService.deleteOwnAccount(userId, currentPassword);
 
       res.status(200).json({
         message: "Your account has been deactivated successfully.",

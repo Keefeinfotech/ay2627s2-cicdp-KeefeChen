@@ -39,7 +39,7 @@ void main() {
     SharedPreferences.setMockInitialValues(<String, Object>{});
   });
 
-  testWidgets('previews and saves a chosen colour and glyph', (tester) async {
+  testWidgets('previews and saves a chosen colour', (tester) async {
     final store = AvatarStore(ownerId: 'owner');
     await store.load();
     bool? result;
@@ -54,14 +54,12 @@ void main() {
 
     await tester.tap(find.byTooltip('Violet'));
     await tester.pump();
-    await tester.tap(find.text('🦉'));
-    await tester.pump();
     await tester.tap(find.text('Save avatar'));
     await tester.pumpAndSettle();
 
     expect(result, isTrue);
     expect(store.style.accent, AvatarAccent.violet);
-    expect(store.style.glyph, '🦉');
+    expect(store.style.usesImage, isFalse);
     expect(find.text('Customize avatar'), findsNothing);
   });
 

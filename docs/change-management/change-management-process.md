@@ -8,6 +8,12 @@ tooling. It is written for a solo-developed project — the project owner is
 both the requester and the approver — while remaining traceable enough to
 satisfy a professional change-control audit.
 
+Decision authorities (CCB for project/design changes, CAB for production
+deployment approvals) and change categories (Standard / Normal / Emergency)
+are defined in [GOVERNANCE.md](GOVERNANCE.md). Every Normal or Emergency
+change must carry a `CCB-*` / `CAB-*` decision ID recorded on the issue and in
+the change log.
+
 ## Purpose and scope
 
 Change management controls **any deliberate modification** to:

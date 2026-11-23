@@ -20,6 +20,8 @@ export interface TaskChange {
   dueDate: Date | null;
   completedAt: Date | null;
   deletedAt: Date | null;
+  /** Explicit deletion flag so offline clients need not interpret deletedAt. */
+  isDeleted: boolean;
   updatedAt: Date;
   createdAt: Date;
 }
@@ -28,4 +30,38 @@ export interface SyncChangesResult {
   serverTime: Date;
   since: Date;
   tasks: TaskChange[];
+}
+
+import type { CreateTaskInput, UpdateTaskInput } from "../tasks/task.types.js";
+
+export type SyncOperationInput =
+  | {
+      opId: string;
+      type: "task.create";
+      payload: CreateTaskInput;
+    }
+  | {
+      opId: string;
+      type: "task.update";
+      payload: UpdateTaskInput & { taskId: string };
+    }
+  | {
+      opId: string;
+      type: "task.delete";
+      payload: { taskId: string };
+    };
+
+export interface SyncOperationResult {
+  opId: string;
+  type: SyncOperationInput["type"];
+  status: "applied" | "failed" | "conflict";
+  detail?: unknown;
+  replayed: boolean;
+  /** True when a previously failed operation was re-applied on this push. */
+  retried?: boolean;
+}
+
+export interface SyncPushResult {
+  serverTime: Date;
+  results: SyncOperationResult[];
 }

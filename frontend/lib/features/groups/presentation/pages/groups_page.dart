@@ -20,6 +20,21 @@ import '../../data/groups_repository.dart';
 import '../../models/group.dart';
 import '../widgets/group_dialogs.dart';
 
+/// Maps failures to a short, actionable message. Never surfaces raw exception
+/// strings or internals to the user.
+String _friendlyError(Object error) {
+  if (error is ApiException) {
+    if (error.isUnauthorized) {
+      return 'Your session has expired. Please sign in again.';
+    }
+    if (error.isServerError) {
+      return 'The server ran into a problem. Please try again in a moment.';
+    }
+    return '${error.message} — please check your input and try again.';
+  }
+  return 'Something went wrong. Please check your connection and try again.';
+}
+
 /// Group workspace: create and manage study groups, invite members and assign
 /// shared tasks.
 ///
@@ -95,7 +110,7 @@ class _GroupsPageState extends State<GroupsPage> {
         _unauthorized = unauthorized;
         _error = unauthorized
             ? 'Your session has expired. Please sign in again to access groups.'
-            : error.toString();
+            : _friendlyError(error);
         _loading = false;
       });
     }
@@ -120,7 +135,7 @@ class _GroupsPageState extends State<GroupsPage> {
       await _load();
     } catch (error) {
       if (!mounted) return;
-      AppSnackBar.error(context, error.toString());
+      AppSnackBar.error(context, _friendlyError(error));
     } finally {
       if (mounted) setState(() => _busyGroupId = null);
     }
@@ -146,7 +161,7 @@ class _GroupsPageState extends State<GroupsPage> {
       await _load();
     } catch (error) {
       if (!mounted) return;
-      AppSnackBar.error(context, error.toString());
+      AppSnackBar.error(context, _friendlyError(error));
     } finally {
       if (mounted) setState(() => _busyGroupId = null);
     }
@@ -176,7 +191,7 @@ class _GroupsPageState extends State<GroupsPage> {
       await _load();
     } catch (error) {
       if (!mounted) return;
-      AppSnackBar.error(context, error.toString());
+      AppSnackBar.error(context, _friendlyError(error));
     } finally {
       if (mounted) setState(() => _busyGroupId = null);
     }
@@ -203,7 +218,7 @@ class _GroupsPageState extends State<GroupsPage> {
       await showInvitationTokenDialog(context, invitation);
     } catch (error) {
       if (!mounted) return;
-      AppSnackBar.error(context, error.toString());
+      AppSnackBar.error(context, _friendlyError(error));
     } finally {
       if (mounted) setState(() => _busyGroupId = null);
     }
@@ -224,7 +239,7 @@ class _GroupsPageState extends State<GroupsPage> {
       await _load();
     } catch (error) {
       if (!mounted) return;
-      AppSnackBar.error(context, error.toString());
+      AppSnackBar.error(context, _friendlyError(error));
     } finally {
       if (mounted) setState(() => _busyGroupId = null);
     }
@@ -282,7 +297,7 @@ class _GroupsPageState extends State<GroupsPage> {
       );
     } catch (error) {
       if (!mounted) return;
-      AppSnackBar.error(context, error.toString());
+      AppSnackBar.error(context, _friendlyError(error));
     } finally {
       if (mounted) setState(() => _busyGroupId = null);
     }

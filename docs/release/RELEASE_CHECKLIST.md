@@ -36,13 +36,13 @@ flutter pub get
 dart format --output=none --set-exit-if-changed lib test tool integration_test
 flutter analyze
 flutter test --coverage
-dart run tool/check_coverage.dart 60
+dart run tool/check_coverage.dart 62
 flutter build web --release
 ```
 
 - [ ] All commands above pass.
 - [ ] Backend coverage meets the thresholds in `backend/vitest.config.mts`.
-- [ ] Frontend line coverage meets the 60% gate.
+- [ ] Frontend line coverage meets the 62% gate.
 - [ ] No new `flutter analyze` warnings or infos.
 
 ## 3. Review security and privacy
