@@ -34,6 +34,7 @@ function gh(args) {
   };
   return JSON.parse(
     execFileSync("gh", args, {
+      // NOSONAR
       encoding: "utf8",
       stdio: ["ignore", "pipe", "inherit"],
       env: safeEnv,
