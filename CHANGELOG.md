@@ -10,6 +10,7 @@ Entries focus on meaningful, user-facing or system-level changes; see
 ## [Unreleased]
 
 ### Added
+- Customisable calendar appearance: five skins (System, Midnight, Aurora, Sandstone, Orchid), separable day squares with three corner styles, and private per-day marks (focus, done, important, personal) persisted per workspace.
 - Enterprise DevSecOps hardening: pinned third-party Actions enforced in CI (`actions-security` job + `check-action-pins.mjs`), SBOM artifacts generated and uploaded from CI, `SECURITY_GOVERNANCE.md` with a severity escalation matrix and remediation tracking, and `REPOSITORY_SECURITY_RULES.md` documenting GitHub-side settings.
 - API versioning: all application routes are now served under the canonical `/api/v1` prefix (legacy `/api` mount retained for backward compatibility).
 - Productivity analytics endpoints: `GET /api/v1/analytics/weekly` (weekly created/completed counts, completion rate, on-time completions, overdue count, completion streak).
