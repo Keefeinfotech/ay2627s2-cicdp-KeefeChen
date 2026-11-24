@@ -36,7 +36,10 @@ describe("reminder controller extra", () => {
     mocks.create.mockResolvedValue({ _id: "r1" });
     const r = res();
     await reminderController.create(
-      { userId: "u1", body: { message: "M", dueAt: "2026-01-01" } } as unknown as Request,
+      {
+        userId: "u1",
+        body: { message: "M", dueAt: "2026-01-01" },
+      } as unknown as Request,
       r,
       next,
     );
@@ -71,7 +74,11 @@ describe("reminder controller extra", () => {
 
   it("rejects complete unauthenticated", async () => {
     const r = res();
-    await reminderController.complete({ params: { id: "r1" } } as unknown as Request, r, next);
+    await reminderController.complete(
+      { params: { id: "r1" } } as unknown as Request,
+      r,
+      next,
+    );
     expect(r.status).toHaveBeenCalledWith(401);
   });
 
@@ -79,18 +86,27 @@ describe("reminder controller extra", () => {
     mocks.delete.mockResolvedValue(null);
     const r = res();
     await reminderController.remove(
-      { userId: "u1", params: { id: "x", reminderId: "x" } } as unknown as Request,
+      {
+        userId: "u1",
+        params: { id: "x", reminderId: "x" },
+      } as unknown as Request,
       r,
       next,
     );
     const status404 = r.status.mock.calls.some((c: unknown[]) => c[0] === 404);
-    const next404 = next.mock.calls.some((c: unknown[]) => (c[0] as any)?.status === 404);
+    const next404 = next.mock.calls.some(
+      (c: unknown[]) => (c[0] as any)?.status === 404,
+    );
     expect(status404 || next404).toBe(true);
   });
 
   it("rejects delete unauthenticated", async () => {
     const r = res();
-    await reminderController.remove({ params: { id: "r1" } } as unknown as Request, r, next);
+    await reminderController.remove(
+      { params: { id: "r1" } } as unknown as Request,
+      r,
+      next,
+    );
     expect(r.status).toHaveBeenCalledWith(401);
   });
 
@@ -102,7 +118,11 @@ describe("reminder controller extra", () => {
 
   it("forwards index errors", async () => {
     mocks.findAll.mockRejectedValue(new Error("boom"));
-    await reminderController.index({ userId: "u1" } as unknown as Request, res(), next);
+    await reminderController.index(
+      { userId: "u1" } as unknown as Request,
+      res(),
+      next,
+    );
     expect(next).toHaveBeenCalled();
   });
 });
