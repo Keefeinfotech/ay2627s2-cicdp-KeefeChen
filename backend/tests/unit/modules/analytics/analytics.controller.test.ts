@@ -114,24 +114,22 @@ describe("analytics controller", () => {
     expect(analyticsService.getWeeklySummary).not.toHaveBeenCalled();
   });
 
-  it("rejects unauthenticated priority suggestion requests", async () => {
-    const res = ok();
+  it("rejects unauthenticated priority and apply requests", async () => {
+    const res1 = ok();
     await analyticsController.prioritySuggestions(
       { query: {} } as never,
-      res as never,
+      res1 as never,
       vi.fn() as never,
     );
-    expect(res.status).toHaveBeenCalledWith(401);
-  });
+    expect(res1.status).toHaveBeenCalledWith(401);
 
-  it("rejects unauthenticated apply requests", async () => {
-    const res = ok();
+    const res2 = ok();
     await analyticsController.applyPrioritySuggestions(
       {} as never,
-      res as never,
+      res2 as never,
       vi.fn() as never,
     );
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res2.status).toHaveBeenCalledWith(401);
   });
 
   it("propagates service errors", async () => {
@@ -148,29 +146,26 @@ describe("analytics controller", () => {
     expect(next).toHaveBeenCalledWith(error);
   });
 
-  it("propagates priority suggestion errors", async () => {
+  it("propagates priority suggestion and apply errors", async () => {
     const error = new Error("boom");
     vi.mocked(analyticsService.getPrioritySuggestions).mockRejectedValue(error);
-    const next = vi.fn();
-    await analyticsController.prioritySuggestions(
-      { userId: "user-1", query: {} } as never,
-      ok() as never,
-      next as never,
-    );
-    expect(next).toHaveBeenCalledWith(error);
-  });
-
-  it("propagates apply errors", async () => {
-    const error = new Error("boom");
     vi.mocked(analyticsService.applyPrioritySuggestions).mockRejectedValue(
       error,
     );
-    const next = vi.fn();
+    const next1 = vi.fn();
+    await analyticsController.prioritySuggestions(
+      { userId: "user-1", query: {} } as never,
+      ok() as never,
+      next1 as never,
+    );
+    expect(next1).toHaveBeenCalledWith(error);
+
+    const next2 = vi.fn();
     await analyticsController.applyPrioritySuggestions(
       { userId: "user-1" } as never,
       ok() as never,
-      next as never,
+      next2 as never,
     );
-    expect(next).toHaveBeenCalledWith(error);
+    expect(next2).toHaveBeenCalledWith(error);
   });
 });

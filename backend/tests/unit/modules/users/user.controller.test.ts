@@ -137,39 +137,29 @@ describe("user controller", () => {
     expect(next).toHaveBeenCalledWith(error);
   });
 
-  it("propagates update errors", async () => {
+  it("propagates update and delete errors", async () => {
     const error = new Error("boom");
     vi.mocked(userService.updateOwnProfile).mockRejectedValue(error);
-    const next = vi.fn();
+    vi.mocked(userService.deleteOwnAccount).mockRejectedValue(error);
     const res: any = {
       status: vi.fn().mockReturnThis(),
       json: vi.fn().mockReturnThis(),
     };
 
+    const next1 = vi.fn();
     await userController.updateOwnProfile(
       { userId: "user-1", body: { name: "Ada" } } as any,
       res,
-      next,
+      next1,
     );
+    expect(next1).toHaveBeenCalledWith(error);
 
-    expect(next).toHaveBeenCalledWith(error);
-  });
-
-  it("propagates delete errors", async () => {
-    const error = new Error("boom");
-    vi.mocked(userService.deleteOwnAccount).mockRejectedValue(error);
-    const next = vi.fn();
-    const res: any = {
-      status: vi.fn().mockReturnThis(),
-      json: vi.fn().mockReturnThis(),
-    };
-
+    const next2 = vi.fn();
     await userController.deleteOwnAccount(
       { userId: "user-1", body: { currentPassword: "password123" } } as any,
       res,
-      next,
+      next2,
     );
-
-    expect(next).toHaveBeenCalledWith(error);
+    expect(next2).toHaveBeenCalledWith(error);
   });
 });
