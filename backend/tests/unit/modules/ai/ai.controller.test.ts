@@ -21,7 +21,7 @@ import {
   createTaskDraft,
 } from "../../../../src/modules/ai/ai.service.js";
 import { taskService } from "../../../../src/modules/tasks/task.service.js";
-import { taskDraftResponseSchema } from "../../../../src/modules/ai/ai.validation.js";
+
 
 const ok = () => ({
   status: vi.fn().mockReturnThis(),

@@ -138,7 +138,7 @@ describe("feedback controller", () => {
 
   it("maps unexpected update errors to the error handler", async () => {
     mocks.updateStatus.mockRejectedValue(new Error("boom"));
-    const { res, next } = await call(feedbackController.updateFeedbackStatus)({
+    const { res: _res, next } = await call(feedbackController.updateFeedbackStatus)({
       params: { id: "42" },
       body: { status: "PENDING" },
     });

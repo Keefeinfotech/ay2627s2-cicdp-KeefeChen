@@ -26,11 +26,6 @@ const chainFind = (value: unknown) => {
   q.lean = vi.fn().mockReturnValue(q);
   return q;
 };
-const chainLean = (value: unknown) => ({
-  lean: vi.fn().mockReturnValue({ exec: vi.fn().mockResolvedValue(value) }),
-  exec: vi.fn().mockResolvedValue(value),
-  ...{ lean: vi.fn().mockResolvedValue(value) },
-});
 
 describe("sessionRepository", () => {
   beforeEach(() => vi.clearAllMocks());

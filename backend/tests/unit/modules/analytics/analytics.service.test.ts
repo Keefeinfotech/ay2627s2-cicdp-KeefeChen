@@ -29,10 +29,6 @@ vi.mock("../../../../src/shared/utils/cache.js", () => ({
 }));
 
 import { analyticsService } from "../../../../src/modules/analytics/analytics.service.js";
-import {
-  cacheGetJson,
-  cacheSetJson,
-} from "../../../../src/shared/utils/cache.js";
 
 function leanQuery(result: unknown) {
   return {
