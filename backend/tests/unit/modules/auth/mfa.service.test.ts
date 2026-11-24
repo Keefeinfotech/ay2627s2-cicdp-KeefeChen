@@ -50,14 +50,19 @@ describe("mfaService", () => {
   beforeEach(() => vi.clearAllMocks());
 
   it("returns status for existing user", async () => {
-    mocks.findUserById.mockResolvedValue({ mfaEnabled: true, mfaEnabledAt: new Date("2026-01-01") });
+    mocks.findUserById.mockResolvedValue({
+      mfaEnabled: true,
+      mfaEnabledAt: new Date("2026-01-01"),
+    });
     const res = await mfaService.getStatus("u1");
     expect(res.enabled).toBe(true);
   });
 
   it("throws when status user missing", async () => {
     mocks.findUserById.mockResolvedValue(null);
-    await expect(mfaService.getStatus("u1")).rejects.toMatchObject({ code: "USER_NOT_FOUND" });
+    await expect(mfaService.getStatus("u1")).rejects.toMatchObject({
+      code: "USER_NOT_FOUND",
+    });
   });
 
   it("begins setup and stores pending secret", async () => {
@@ -72,16 +77,27 @@ describe("mfaService", () => {
 
   it("rejects beginSetup when user missing", async () => {
     mocks.findUserByIdWithMfaSecrets.mockResolvedValue(null);
-    await expect(mfaService.beginSetup("u1")).rejects.toMatchObject({ code: "USER_NOT_FOUND" });
+    await expect(mfaService.beginSetup("u1")).rejects.toMatchObject({
+      code: "USER_NOT_FOUND",
+    });
   });
 
   it("rejects beginSetup when already enabled", async () => {
-    mocks.findUserByIdWithMfaSecrets.mockResolvedValue({ ...baseUser(), mfaEnabled: true });
-    await expect(mfaService.beginSetup("u1")).rejects.toMatchObject({ code: "MFA_ALREADY_ENABLED" });
+    mocks.findUserByIdWithMfaSecrets.mockResolvedValue({
+      ...baseUser(),
+      mfaEnabled: true,
+    });
+    await expect(mfaService.beginSetup("u1")).rejects.toMatchObject({
+      code: "MFA_ALREADY_ENABLED",
+    });
   });
 
   it("verifies setup and enables MFA", async () => {
-    const user = { ...baseUser(), mfaPendingSecretEncrypted: "enc:SECRET", mfaPendingExpiresAt: new Date(Date.now() + 60000) };
+    const user = {
+      ...baseUser(),
+      mfaPendingSecretEncrypted: "enc:SECRET",
+      mfaPendingExpiresAt: new Date(Date.now() + 60000),
+    };
     mocks.findUserByIdWithMfaSecrets.mockResolvedValue(user);
     const res = await mfaService.verifySetup("u1", { code: "123456" } as never);
     expect(res.recoveryCodes).toEqual(["r1", "r2"]);
@@ -91,24 +107,43 @@ describe("mfaService", () => {
 
   it("rejects verify when no setup in progress", async () => {
     mocks.findUserByIdWithMfaSecrets.mockResolvedValue(baseUser());
-    await expect(mfaService.verifySetup("u1", { code: "123456" } as never)).rejects.toMatchObject({ code: "MFA_SETUP_NOT_STARTED" });
+    await expect(
+      mfaService.verifySetup("u1", { code: "123456" } as never),
+    ).rejects.toMatchObject({ code: "MFA_SETUP_NOT_STARTED" });
   });
 
   it("rejects expired setup", async () => {
-    const user = { ...baseUser(), mfaPendingSecretEncrypted: "enc:SECRET", mfaPendingExpiresAt: new Date(Date.now() - 1000) };
+    const user = {
+      ...baseUser(),
+      mfaPendingSecretEncrypted: "enc:SECRET",
+      mfaPendingExpiresAt: new Date(Date.now() - 1000),
+    };
     mocks.findUserByIdWithMfaSecrets.mockResolvedValue(user);
-    await expect(mfaService.verifySetup("u1", { code: "123456" } as never)).rejects.toMatchObject({ code: "MFA_SETUP_EXPIRED" });
+    await expect(
+      mfaService.verifySetup("u1", { code: "123456" } as never),
+    ).rejects.toMatchObject({ code: "MFA_SETUP_EXPIRED" });
   });
 
   it("rejects invalid verification code", async () => {
-    const user = { ...baseUser(), mfaPendingSecretEncrypted: "enc:SECRET", mfaPendingExpiresAt: new Date(Date.now() + 60000) };
+    const user = {
+      ...baseUser(),
+      mfaPendingSecretEncrypted: "enc:SECRET",
+      mfaPendingExpiresAt: new Date(Date.now() + 60000),
+    };
     mocks.findUserByIdWithMfaSecrets.mockResolvedValue(user);
     mocks.verifyTotpCode.mockReturnValueOnce(false);
-    await expect(mfaService.verifySetup("u1", { code: "000000" } as never)).rejects.toMatchObject({ code: "INVALID_MFA_CODE" });
+    await expect(
+      mfaService.verifySetup("u1", { code: "000000" } as never),
+    ).rejects.toMatchObject({ code: "INVALID_MFA_CODE" });
   });
 
   it("disables MFA with valid totp code", async () => {
-    const user = { ...baseUser(), mfaEnabled: true, mfaSecretEncrypted: "enc:SECRET", mfaRecoveryCodeHashes: ["h:r1"] };
+    const user = {
+      ...baseUser(),
+      mfaEnabled: true,
+      mfaSecretEncrypted: "enc:SECRET",
+      mfaRecoveryCodeHashes: ["h:r1"],
+    };
     mocks.findUserByIdWithMfaSecrets.mockResolvedValue(user);
     mocks.verifyTotpCode.mockReturnValueOnce(true);
     await mfaService.disable("u1", { code: "123456" } as never);
@@ -117,7 +152,12 @@ describe("mfaService", () => {
   });
 
   it("disables MFA with recovery code", async () => {
-    const user = { ...baseUser(), mfaEnabled: true, mfaSecretEncrypted: "enc:SECRET", mfaRecoveryCodeHashes: ["h:recovery"] };
+    const user = {
+      ...baseUser(),
+      mfaEnabled: true,
+      mfaSecretEncrypted: "enc:SECRET",
+      mfaRecoveryCodeHashes: ["h:recovery"],
+    };
     mocks.findUserByIdWithMfaSecrets.mockResolvedValue(user);
     mocks.verifyTotpCode.mockReturnValueOnce(false);
     await mfaService.disable("u1", { code: "recovery" } as never);
@@ -126,13 +166,22 @@ describe("mfaService", () => {
 
   it("rejects disable when not enabled", async () => {
     mocks.findUserByIdWithMfaSecrets.mockResolvedValue(baseUser());
-    await expect(mfaService.disable("u1", { code: "123456" } as never)).rejects.toMatchObject({ code: "MFA_NOT_ENABLED" });
+    await expect(
+      mfaService.disable("u1", { code: "123456" } as never),
+    ).rejects.toMatchObject({ code: "MFA_NOT_ENABLED" });
   });
 
   it("rejects disable with invalid code", async () => {
-    const user = { ...baseUser(), mfaEnabled: true, mfaSecretEncrypted: "enc:SECRET", mfaRecoveryCodeHashes: [] };
+    const user = {
+      ...baseUser(),
+      mfaEnabled: true,
+      mfaSecretEncrypted: "enc:SECRET",
+      mfaRecoveryCodeHashes: [],
+    };
     mocks.findUserByIdWithMfaSecrets.mockResolvedValue(user);
     mocks.verifyTotpCode.mockReturnValueOnce(false);
-    await expect(mfaService.disable("u1", { code: "bad" } as never)).rejects.toMatchObject({ code: "INVALID_MFA_CODE" });
+    await expect(
+      mfaService.disable("u1", { code: "bad" } as never),
+    ).rejects.toMatchObject({ code: "INVALID_MFA_CODE" });
   });
 });

@@ -1,28 +1,36 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { registerMock, counterMock, histogramMock, gaugeMock } = vi.hoisted(() => {
-  const counter = { inc: vi.fn() };
-  const timer = vi.fn();
-  const histogram = { startTimer: vi.fn(() => timer) };
-  const gauge = { set: vi.fn() };
-  const register = {
-    contentType: "text/plain",
-    metrics: vi.fn().mockResolvedValue("metrics"),
-  };
-  return {
-    registerMock: register,
-    counterMock: counter,
-    histogramMock: histogram,
-    gaugeMock: gauge,
-  };
-});
+const { registerMock, counterMock, histogramMock, gaugeMock } = vi.hoisted(
+  () => {
+    const counter = { inc: vi.fn() };
+    const timer = vi.fn();
+    const histogram = { startTimer: vi.fn(() => timer) };
+    const gauge = { set: vi.fn() };
+    const register = {
+      contentType: "text/plain",
+      metrics: vi.fn().mockResolvedValue("metrics"),
+    };
+    return {
+      registerMock: register,
+      counterMock: counter,
+      histogramMock: histogram,
+      gaugeMock: gauge,
+    };
+  },
+);
 
 vi.mock("prom-client", () => ({
   default: {
     collectDefaultMetrics: vi.fn(),
-    Counter: vi.fn().mockImplementation(function () { return counterMock; }),
-    Histogram: vi.fn().mockImplementation(function () { return histogramMock; }),
-    Gauge: vi.fn().mockImplementation(function () { return gaugeMock; }),
+    Counter: vi.fn().mockImplementation(function () {
+      return counterMock;
+    }),
+    Histogram: vi.fn().mockImplementation(function () {
+      return histogramMock;
+    }),
+    Gauge: vi.fn().mockImplementation(function () {
+      return gaugeMock;
+    }),
     register: registerMock,
   },
 }));
@@ -49,7 +57,9 @@ const mkRes = () => {
   const handlers: Record<string, Function> = {};
   return {
     statusCode: 200,
-    on: vi.fn((event: string, cb: Function) => { handlers[event] = cb; }),
+    on: vi.fn((event: string, cb: Function) => {
+      handlers[event] = cb;
+    }),
     set: vi.fn(),
     send: vi.fn(),
     emit: (event: string) => handlers[event]?.(),
@@ -63,7 +73,10 @@ describe("metrics", () => {
   });
 
   it("records http metrics on finish", () => {
-    const req: any = { method: "GET", originalUrl: "/api/tasks/123e4567-e89b-12d3-a456-426614174000?x=1" };
+    const req: any = {
+      method: "GET",
+      originalUrl: "/api/tasks/123e4567-e89b-12d3-a456-426614174000?x=1",
+    };
     const res = mkRes();
     const next = vi.fn();
 
@@ -71,7 +84,9 @@ describe("metrics", () => {
     expect(next).toHaveBeenCalled();
     res.emit("finish");
 
-    expect(counterMock.inc).toHaveBeenCalledWith(expect.objectContaining({ method: "GET", status_code: "200" }));
+    expect(counterMock.inc).toHaveBeenCalledWith(
+      expect.objectContaining({ method: "GET", status_code: "200" }),
+    );
     const timer = histogramMock.startTimer.mock.results[0].value;
     expect(timer).toHaveBeenCalled();
   });

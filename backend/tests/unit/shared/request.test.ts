@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { getWelcomeMessage, requireSessionId, requireUserId } from "../../../src/shared/utils/request.js";
+import {
+  getWelcomeMessage,
+  requireSessionId,
+  requireUserId,
+} from "../../../src/shared/utils/request.js";
 
 describe("request utils", () => {
   it("returns userId when present", () => {

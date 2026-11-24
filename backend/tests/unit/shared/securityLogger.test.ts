@@ -26,7 +26,7 @@ describe("securityLogger", () => {
     logSecurityEvent("evt", { ip: "1.2.3.4" });
     expect(warnSpy).toHaveBeenCalled();
     const line = String(warnSpy.mock.calls[0][0]);
-    expect(line).toContain("\"event\":\"evt\"");
+    expect(line).toContain('"event":"evt"');
   });
 
   it("logs server errors as error json", () => {

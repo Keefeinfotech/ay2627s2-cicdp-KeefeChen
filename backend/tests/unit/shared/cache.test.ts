@@ -18,7 +18,12 @@ vi.mock("../../../src/config/logger.js", () => ({
   default: { warn: mocks.warn, info: vi.fn(), error: vi.fn() },
 }));
 
-import { cacheGetJson, cacheSetJson, cacheDel, cacheDelByPattern } from "../../../src/shared/utils/cache.js";
+import {
+  cacheGetJson,
+  cacheSetJson,
+  cacheDel,
+  cacheDelByPattern,
+} from "../../../src/shared/utils/cache.js";
 
 describe("cache utils", () => {
   beforeEach(() => {
@@ -58,7 +63,12 @@ describe("cache utils", () => {
     mocks.getRedisClient.mockReturnValue({ set: mocks.set });
     mocks.set.mockResolvedValue("OK");
     await cacheSetJson("k", { a: 1 }, 60);
-    expect(mocks.set).toHaveBeenCalledWith("k", JSON.stringify({ a: 1 }), "EX", 60);
+    expect(mocks.set).toHaveBeenCalledWith(
+      "k",
+      JSON.stringify({ a: 1 }),
+      "EX",
+      60,
+    );
   });
 
   it("cacheSetJson fails open on error", async () => {
@@ -92,7 +102,9 @@ describe("cache utils", () => {
   });
 
   it("cacheDelByPattern scans and deletes matches", async () => {
-    mocks.scan.mockResolvedValueOnce(["2", ["a", "b"]]).mockResolvedValueOnce(["0", ["c"]]);
+    mocks.scan
+      .mockResolvedValueOnce(["2", ["a", "b"]])
+      .mockResolvedValueOnce(["0", ["c"]]);
     mocks.del.mockResolvedValue(1);
     mocks.getRedisClient.mockReturnValue({ scan: mocks.scan, del: mocks.del });
     await cacheDelByPattern("p:*");

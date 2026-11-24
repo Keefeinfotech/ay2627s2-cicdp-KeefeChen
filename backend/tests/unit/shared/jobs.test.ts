@@ -28,7 +28,10 @@ describe("jobs queue", () => {
 
   it("registers built-in jobs and enqueues notification", async () => {
     const jobs = await import("../../../src/shared/jobs/index.js");
-    const ok = jobs.enqueue("notification.send", { to: "a@b.com", message: "hi" });
+    const ok = jobs.enqueue("notification.send", {
+      to: "a@b.com",
+      message: "hi",
+    });
     expect(ok).toBe(true);
     await new Promise((r) => setImmediate(r));
     await new Promise((r) => setImmediate(r));
@@ -42,6 +45,8 @@ describe("jobs queue", () => {
     expect(jobs.enqueue("analytics.invalidate", { userId: "u1" })).toBe(true);
     await new Promise((r) => setImmediate(r));
     await new Promise((r) => setImmediate(r));
-    expect(mocks.cacheDelByPattern).toHaveBeenCalledWith("analytics:v1:weekly:u1:*");
+    expect(mocks.cacheDelByPattern).toHaveBeenCalledWith(
+      "analytics:v1:weekly:u1:*",
+    );
   });
 });

@@ -16,11 +16,17 @@ vi.mock("../../../../src/modules/ai/ai.service.js", () => ({
 }));
 
 import * as aiController from "../../../../src/modules/ai/ai.controller.js";
-import { createChatReply, createTaskDraft } from "../../../../src/modules/ai/ai.service.js";
+import {
+  createChatReply,
+  createTaskDraft,
+} from "../../../../src/modules/ai/ai.service.js";
 import { taskService } from "../../../../src/modules/tasks/task.service.js";
 import { taskDraftResponseSchema } from "../../../../src/modules/ai/ai.validation.js";
 
-const ok = () => ({ status: vi.fn().mockReturnThis(), json: vi.fn().mockReturnThis() });
+const ok = () => ({
+  status: vi.fn().mockReturnThis(),
+  json: vi.fn().mockReturnThis(),
+});
 
 describe("ai controller", () => {
   beforeEach(() => {
@@ -48,7 +54,12 @@ describe("ai controller", () => {
       const res = ok();
 
       await aiController.chat(
-        { body: { message: "hello", context: [{ role: "user", content: "hi" }] } } as never,
+        {
+          body: {
+            message: "hello",
+            context: [{ role: "user", content: "hi" }],
+          },
+        } as never,
         res as never,
         vi.fn() as never,
       );
@@ -78,7 +89,12 @@ describe("ai controller", () => {
       const res = ok();
 
       await aiController.taskDraft(
-        { body: { message: "remind me to write report", currentDate: "2026-11-24" } } as never,
+        {
+          body: {
+            message: "remind me to write report",
+            currentDate: "2026-11-24",
+          },
+        } as never,
         res as never,
         vi.fn() as never,
       );
@@ -107,13 +123,20 @@ describe("ai controller", () => {
 
   describe("createTaskAi", () => {
     it("creates a task from an ai prompt", async () => {
-      vi.mocked(taskService.createTask).mockResolvedValue({ _id: "task-1" } as never);
+      vi.mocked(taskService.createTask).mockResolvedValue({
+        _id: "task-1",
+      } as never);
       const res = ok();
 
       await aiController.createTaskAi(
         {
           user: { id: "user-1" },
-          body: { title: "Write report", description: "d", dueDate: "2026-12-01", priority: "high" },
+          body: {
+            title: "Write report",
+            description: "d",
+            dueDate: "2026-12-01",
+            priority: "high",
+          },
         } as never,
         res as never,
         vi.fn() as never,
@@ -126,7 +149,10 @@ describe("ai controller", () => {
         priority: "high",
       });
       expect(res.status).toHaveBeenCalledWith(201);
-      expect(res.json).toHaveBeenCalledWith({ message: "Task created", task: { _id: "task-1" } });
+      expect(res.json).toHaveBeenCalledWith({
+        message: "Task created",
+        task: { _id: "task-1" },
+      });
     });
 
     it("requires a title", async () => {
@@ -145,7 +171,11 @@ describe("ai controller", () => {
     it("rejects unauthenticated requests", async () => {
       const res = ok();
 
-      await aiController.createTaskAi({ body: { title: "T" } } as never, res as never, vi.fn() as never);
+      await aiController.createTaskAi(
+        { body: { title: "T" } } as never,
+        res as never,
+        vi.fn() as never,
+      );
 
       expect(res.status).toHaveBeenCalledWith(401);
       expect(res.json).toHaveBeenCalledWith({ message: "Unauthenticated" });
@@ -154,7 +184,9 @@ describe("ai controller", () => {
 
   describe("completeTaskAi", () => {
     it("marks a task complete", async () => {
-      vi.mocked(taskService.updateTask).mockResolvedValue({ _id: "task-1" } as never);
+      vi.mocked(taskService.updateTask).mockResolvedValue({
+        _id: "task-1",
+      } as never);
       const res = ok();
 
       await aiController.completeTaskAi(
@@ -163,9 +195,14 @@ describe("ai controller", () => {
         vi.fn() as never,
       );
 
-      expect(taskService.updateTask).toHaveBeenCalledWith("user-1", "task-1", { status: "completed" });
+      expect(taskService.updateTask).toHaveBeenCalledWith("user-1", "task-1", {
+        status: "completed",
+      });
       expect(res.status).toHaveBeenCalledWith(200);
-      expect(res.json).toHaveBeenCalledWith({ message: "Task completed", task: { _id: "task-1" } });
+      expect(res.json).toHaveBeenCalledWith({
+        message: "Task completed",
+        task: { _id: "task-1" },
+      });
     });
 
     it("requires a taskId", async () => {
@@ -184,7 +221,11 @@ describe("ai controller", () => {
     it("rejects unauthenticated requests", async () => {
       const res = ok();
 
-      await aiController.completeTaskAi({ body: { taskId: "task-1" } } as never, res as never, vi.fn() as never);
+      await aiController.completeTaskAi(
+        { body: { taskId: "task-1" } } as never,
+        res as never,
+        vi.fn() as never,
+      );
 
       expect(res.status).toHaveBeenCalledWith(401);
     });
@@ -192,7 +233,9 @@ describe("ai controller", () => {
 
   describe("deleteTaskAi", () => {
     it("deletes a task", async () => {
-      vi.mocked(taskService.deleteTask).mockResolvedValue({ _id: "task-1" } as never);
+      vi.mocked(taskService.deleteTask).mockResolvedValue({
+        _id: "task-1",
+      } as never);
       const res = ok();
 
       await aiController.deleteTaskAi(
@@ -223,7 +266,13 @@ describe("ai controller", () => {
     it("returns a summarised task list", async () => {
       vi.mocked(taskService.listTasks).mockResolvedValue({
         items: [
-          { _id: "task-1", title: "Write report", status: "todo", priority: "high", dueDate: "2026-12-01" },
+          {
+            _id: "task-1",
+            title: "Write report",
+            status: "todo",
+            priority: "high",
+            dueDate: "2026-12-01",
+          },
         ],
       } as never);
       const res = ok();
@@ -234,7 +283,10 @@ describe("ai controller", () => {
         vi.fn() as never,
       );
 
-      expect(taskService.listTasks).toHaveBeenCalledWith("user-1", expect.objectContaining({ limit: 100 }));
+      expect(taskService.listTasks).toHaveBeenCalledWith(
+        "user-1",
+        expect.objectContaining({ limit: 100 }),
+      );
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.json).toHaveBeenCalledWith({
         count: 1,
@@ -253,7 +305,11 @@ describe("ai controller", () => {
     it("returns 401 when unauthenticated", async () => {
       const res = ok();
 
-      await aiController.tasks({ query: {} } as never, res as never, vi.fn() as never);
+      await aiController.tasks(
+        { query: {} } as never,
+        res as never,
+        vi.fn() as never,
+      );
 
       expect(res.status).toHaveBeenCalledWith(401);
     });
@@ -263,8 +319,20 @@ describe("ai controller", () => {
     it("builds a summary from today's open tasks", async () => {
       vi.mocked(taskService.listTasks).mockResolvedValue({
         items: [
-          { _id: "task-1", title: "Write report", status: "todo", priority: "high", dueDate: "2026-12-01" },
-          { _id: "task-2", title: "Overdue", status: "todo", priority: "low", dueDate: "2020-01-01" },
+          {
+            _id: "task-1",
+            title: "Write report",
+            status: "todo",
+            priority: "high",
+            dueDate: "2026-12-01",
+          },
+          {
+            _id: "task-2",
+            title: "Overdue",
+            status: "todo",
+            priority: "low",
+            dueDate: "2020-01-01",
+          },
         ],
       } as never);
       const res = ok();
@@ -278,13 +346,17 @@ describe("ai controller", () => {
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.json).toHaveBeenCalledWith(
         expect.objectContaining({
-          summary: expect.stringContaining("You have 2 open task(s). 1 are overdue."),
+          summary: expect.stringContaining(
+            "You have 2 open task(s). 1 are overdue.",
+          ),
         }),
       );
     });
 
     it("reports an empty day optimistically", async () => {
-      vi.mocked(taskService.listTasks).mockResolvedValue({ items: [] } as never);
+      vi.mocked(taskService.listTasks).mockResolvedValue({
+        items: [],
+      } as never);
       const res = ok();
 
       await aiController.today(
@@ -302,7 +374,11 @@ describe("ai controller", () => {
     it("requires authentication", async () => {
       const res = ok();
 
-      await aiController.today({ query: {} } as never, res as never, vi.fn() as never);
+      await aiController.today(
+        { query: {} } as never,
+        res as never,
+        vi.fn() as never,
+      );
 
       expect(res.status).toHaveBeenCalledWith(401);
     });

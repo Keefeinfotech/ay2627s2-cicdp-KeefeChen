@@ -39,7 +39,11 @@ describe("FeedbackService", () => {
 
   describe("submitFeedback", () => {
     it("creates feedback for the user", async () => {
-      const created = { id: "fb-1", userId: "user-1", status: FeedbackStatus.PENDING };
+      const created = {
+        id: "fb-1",
+        userId: "user-1",
+        status: FeedbackStatus.PENDING,
+      };
       mocks.create.mockResolvedValue(created);
 
       const result = await service.submitFeedback("user-1", {
@@ -80,7 +84,9 @@ describe("FeedbackService", () => {
       const fb = { id: "fb-1", userId: "user-1" };
       mocks.findById.mockResolvedValue(fb);
 
-      await expect(service.getById("fb-1", "user-1", false)).resolves.toEqual(fb);
+      await expect(service.getById("fb-1", "user-1", false)).resolves.toEqual(
+        fb,
+      );
       expect(mocks.findById).toHaveBeenCalledWith("fb-1");
     });
 
@@ -88,7 +94,9 @@ describe("FeedbackService", () => {
       const fb = { id: "fb-1", userId: "user-2" };
       mocks.findById.mockResolvedValue(fb);
 
-      await expect(service.getById("fb-1", "user-1", true)).resolves.toEqual(fb);
+      await expect(service.getById("fb-1", "user-1", true)).resolves.toEqual(
+        fb,
+      );
     });
 
     it("rejects feedback owned by another user", async () => {
@@ -102,9 +110,9 @@ describe("FeedbackService", () => {
     it("throws when feedback is missing", async () => {
       mocks.findById.mockResolvedValue(null);
 
-      await expect(service.getById("fb-missing", "user-1", true)).rejects.toThrow(
-        "Feedback item not found",
-      );
+      await expect(
+        service.getById("fb-missing", "user-1", true),
+      ).rejects.toThrow("Feedback item not found");
     });
   });
 
@@ -113,18 +121,20 @@ describe("FeedbackService", () => {
       const updated = { id: "fb-1", status: FeedbackStatus.RESOLVED };
       mocks.update.mockResolvedValue(updated);
 
-      await expect(service.updateStatus("fb-1", FeedbackStatus.RESOLVED)).resolves.toEqual(
-        updated,
-      );
-      expect(mocks.update).toHaveBeenCalledWith("fb-1", { status: FeedbackStatus.RESOLVED });
+      await expect(
+        service.updateStatus("fb-1", FeedbackStatus.RESOLVED),
+      ).resolves.toEqual(updated);
+      expect(mocks.update).toHaveBeenCalledWith("fb-1", {
+        status: FeedbackStatus.RESOLVED,
+      });
     });
 
     it("throws when the item does not exist", async () => {
       mocks.update.mockResolvedValue(null);
 
-      await expect(service.updateStatus("fb-missing", FeedbackStatus.RESOLVED)).rejects.toThrow(
-        "Feedback item not found",
-      );
+      await expect(
+        service.updateStatus("fb-missing", FeedbackStatus.RESOLVED),
+      ).rejects.toThrow("Feedback item not found");
     });
   });
 
@@ -137,15 +147,19 @@ describe("FeedbackService", () => {
         service.addResponse("fb-1", "admin-1", "We are on it"),
       ).resolves.toEqual(updated);
 
-      expect(mocks.addAdminResponse).toHaveBeenCalledWith("fb-1", "admin-1", "We are on it");
+      expect(mocks.addAdminResponse).toHaveBeenCalledWith(
+        "fb-1",
+        "admin-1",
+        "We are on it",
+      );
     });
 
     it("throws when the item does not exist", async () => {
       mocks.addAdminResponse.mockResolvedValue(null);
 
-      await expect(service.addResponse("fb-missing", "admin-1", "hello")).rejects.toThrow(
-        "Feedback item not found",
-      );
+      await expect(
+        service.addResponse("fb-missing", "admin-1", "hello"),
+      ).rejects.toThrow("Feedback item not found");
     });
   });
 
@@ -192,21 +206,27 @@ describe("FeedbackService", () => {
     it("deletes feedback for the owner", async () => {
       mocks.delete.mockResolvedValue(true);
 
-      await expect(service.deleteFeedback("fb-1", "user-1", false)).resolves.toBe(true);
+      await expect(
+        service.deleteFeedback("fb-1", "user-1", false),
+      ).resolves.toBe(true);
       expect(mocks.delete).toHaveBeenCalledWith("fb-1", "user-1");
     });
 
     it("deletes any feedback for admins", async () => {
       mocks.delete.mockResolvedValue(true);
 
-      await expect(service.deleteFeedback("fb-1", "admin-1", true)).resolves.toBe(true);
+      await expect(
+        service.deleteFeedback("fb-1", "admin-1", true),
+      ).resolves.toBe(true);
       expect(mocks.delete).toHaveBeenCalledWith("fb-1", undefined);
     });
 
     it("returns false when nothing was deleted", async () => {
       mocks.delete.mockResolvedValue(false);
 
-      await expect(service.deleteFeedback("fb-missing", "user-1", false)).resolves.toBe(false);
+      await expect(
+        service.deleteFeedback("fb-missing", "user-1", false),
+      ).resolves.toBe(false);
     });
   });
 

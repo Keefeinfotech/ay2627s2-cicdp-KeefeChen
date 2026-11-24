@@ -29,7 +29,10 @@ vi.mock("../../../../src/shared/utils/cache.js", () => ({
 }));
 
 import { analyticsService } from "../../../../src/modules/analytics/analytics.service.js";
-import { cacheGetJson, cacheSetJson } from "../../../../src/shared/utils/cache.js";
+import {
+  cacheGetJson,
+  cacheSetJson,
+} from "../../../../src/shared/utils/cache.js";
 
 function leanQuery(result: unknown) {
   return {
@@ -51,7 +54,9 @@ describe("analyticsService.getWeeklySummary", () => {
     const cached = { weeks: [], totals: { created: 0 } };
     mocks.cacheGetJson.mockResolvedValue(cached);
 
-    await expect(analyticsService.getWeeklySummary("user-1", 4)).resolves.toEqual(cached);
+    await expect(
+      analyticsService.getWeeklySummary("user-1", 4),
+    ).resolves.toEqual(cached);
 
     expect(mocks.find).not.toHaveBeenCalled();
     expect(mocks.cacheSetJson).not.toHaveBeenCalled();
@@ -94,7 +99,6 @@ describe("analyticsService.getWeeklySummary", () => {
     expect(summary.weeks).toHaveLength(52);
   });
 });
-
 
 describe("analyticsService.getPrioritySuggestions", () => {
   beforeEach(() => {

@@ -55,52 +55,80 @@ describe("sessionService", () => {
 
   it("creates a session", async () => {
     mocks.create.mockResolvedValue({ ...baseSession });
-    const res = await sessionService.create("g1", "u1", { title: "Study", startsAt: new Date("2026-01-01T10:00:00Z"), endsAt: new Date("2026-01-01T11:00:00Z") } as never);
+    const res = await sessionService.create("g1", "u1", {
+      title: "Study",
+      startsAt: new Date("2026-01-01T10:00:00Z"),
+      endsAt: new Date("2026-01-01T11:00:00Z"),
+    } as never);
     expect(mocks.create).toHaveBeenCalled();
     expect(res._id).toBe("s1");
   });
 
   it("rejects invalid session range on create", async () => {
-    await expect(sessionService.create("g1", "u1", { title: "T", startsAt: new Date("2026-01-01T11:00:00Z"), endsAt: new Date("2026-01-01T10:00:00Z") } as never)).rejects.toMatchObject({ code: "INVALID_SESSION_RANGE" });
+    await expect(
+      sessionService.create("g1", "u1", {
+        title: "T",
+        startsAt: new Date("2026-01-01T11:00:00Z"),
+        endsAt: new Date("2026-01-01T10:00:00Z"),
+      } as never),
+    ).rejects.toMatchObject({ code: "INVALID_SESSION_RANGE" });
   });
 
   it("lists sessions", async () => {
     mocks.listByGroup.mockResolvedValue({ items: [], pagination: {} });
     await sessionService.list("g1", "u1", { page: 1, limit: 10 } as never);
-    expect(mocks.listByGroup).toHaveBeenCalledWith("g1", expect.objectContaining({ page: 1, limit: 10 }));
+    expect(mocks.listByGroup).toHaveBeenCalledWith(
+      "g1",
+      expect.objectContaining({ page: 1, limit: 10 }),
+    );
   });
 
   it("gets a session", async () => {
     mocks.findById.mockResolvedValue(baseSession);
-    await expect(sessionService.get("g1", "u1", "s1")).resolves.toEqual(baseSession);
+    await expect(sessionService.get("g1", "u1", "s1")).resolves.toEqual(
+      baseSession,
+    );
   });
 
   it("throws when session not found", async () => {
     mocks.findById.mockResolvedValue(null);
-    await expect(sessionService.get("g1", "u1", "s1")).rejects.toMatchObject({ code: "SESSION_NOT_FOUND" });
+    await expect(sessionService.get("g1", "u1", "s1")).rejects.toMatchObject({
+      code: "SESSION_NOT_FOUND",
+    });
   });
 
   it("throws when session belongs to another group", async () => {
     mocks.findById.mockResolvedValue({ ...baseSession, groupId: "g2" });
-    await expect(sessionService.get("g1", "u1", "s1")).rejects.toMatchObject({ code: "SESSION_NOT_FOUND" });
+    await expect(sessionService.get("g1", "u1", "s1")).rejects.toMatchObject({
+      code: "SESSION_NOT_FOUND",
+    });
   });
 
   it("updates a session as creator", async () => {
     mocks.findById.mockResolvedValue(baseSession);
     mocks.update.mockResolvedValue({ ...baseSession, title: "N" });
-    const res = await sessionService.update("g1", "u1", "s1", { title: " New " } as never);
+    const res = await sessionService.update("g1", "u1", "s1", {
+      title: " New ",
+    } as never);
     expect(res.title).toBe("N");
   });
 
   it("rejects update by non-creator non-manager", async () => {
     mocks.findById.mockResolvedValue({ ...baseSession, createdBy: "other" });
     mocks.requireGroupMembership.mockResolvedValue({ role: "member" });
-    await expect(sessionService.update("g1", "u1", "s1", { title: "X" } as never)).rejects.toMatchObject({ code: "SESSION_UPDATE_FORBIDDEN" });
+    await expect(
+      sessionService.update("g1", "u1", "s1", { title: "X" } as never),
+    ).rejects.toMatchObject({ code: "SESSION_UPDATE_FORBIDDEN" });
   });
 
   it("rejects update with invalid range", async () => {
     mocks.findById.mockResolvedValue(baseSession);
-    await expect(sessionService.update("g1", "u1", "s1", { startsAt: new Date("2026-01-01T12:00:00Z"), endsAt: new Date("2026-01-01T11:00:00Z") } as never)).rejects.toMatchObject({ code: "INVALID_SESSION_RANGE" });
+    await expect(
+      sessionService.update("g1", "u1", "s1", {
+        startsAt: new Date("2026-01-01T12:00:00Z"),
+        endsAt: new Date("2026-01-01T11:00:00Z"),
+      } as never),
+    ).rejects.toMatchObject({ code: "INVALID_SESSION_RANGE" });
   });
 
   it("cancels a scheduled session", async () => {
@@ -112,7 +140,9 @@ describe("sessionService", () => {
 
   it("rejects cancelling non-scheduled session", async () => {
     mocks.findById.mockResolvedValue({ ...baseSession, status: "completed" });
-    await expect(sessionService.cancel("g1", "u1", "s1")).rejects.toMatchObject({ code: "SESSION_NOT_SCHEDULABLE" });
+    await expect(sessionService.cancel("g1", "u1", "s1")).rejects.toMatchObject(
+      { code: "SESSION_NOT_SCHEDULABLE" },
+    );
   });
 
   it("completes a scheduled session", async () => {
@@ -137,9 +167,15 @@ describe("sessionService", () => {
   });
 
   it("rejects joining full session", async () => {
-    mocks.findById.mockResolvedValue({ ...baseSession, attendeeIds: ["u2"], maxAttendees: 1 });
+    mocks.findById.mockResolvedValue({
+      ...baseSession,
+      attendeeIds: ["u2"],
+      maxAttendees: 1,
+    });
     mocks.join.mockResolvedValue(null);
-    await expect(sessionService.join("g1", "u1", "s1")).rejects.toMatchObject({ code: "SESSION_FULL" });
+    await expect(sessionService.join("g1", "u1", "s1")).rejects.toMatchObject({
+      code: "SESSION_FULL",
+    });
   });
 
   it("leaves a session", async () => {
@@ -150,17 +186,23 @@ describe("sessionService", () => {
 
   it("throws when leaving missing/non-attending session", async () => {
     mocks.leave.mockResolvedValue(null);
-    await expect(sessionService.leave("g1", "u1", "s1")).rejects.toMatchObject({ code: "SESSION_NOT_FOUND" });
+    await expect(sessionService.leave("g1", "u1", "s1")).rejects.toMatchObject({
+      code: "SESSION_NOT_FOUND",
+    });
   });
 
   it("deletes a session as creator", async () => {
     mocks.findById.mockResolvedValue(baseSession);
     mocks.remove.mockResolvedValue(true);
-    await expect(sessionService.delete("g1", "u1", "s1")).resolves.toBeUndefined();
+    await expect(
+      sessionService.delete("g1", "u1", "s1"),
+    ).resolves.toBeUndefined();
   });
 
   it("rejects delete by non-creator non-manager", async () => {
     mocks.findById.mockResolvedValue({ ...baseSession, createdBy: "other" });
-    await expect(sessionService.delete("g1", "u1", "s1")).rejects.toMatchObject({ code: "SESSION_UPDATE_FORBIDDEN" });
+    await expect(sessionService.delete("g1", "u1", "s1")).rejects.toMatchObject(
+      { code: "SESSION_UPDATE_FORBIDDEN" },
+    );
   });
 });

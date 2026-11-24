@@ -65,7 +65,10 @@ describe("feedback controller", () => {
       description: "D",
     });
     expect(res.status).toHaveBeenCalledWith(201);
-    expect(res.json).toHaveBeenCalledWith({ success: true, data: { id: "fb-1" } });
+    expect(res.json).toHaveBeenCalledWith({
+      success: true,
+      data: { id: "fb-1" },
+    });
   });
 
   it("rejects feedback submission without a user", async () => {
@@ -179,7 +182,9 @@ describe("feedback controller", () => {
   });
 
   it("maps unauthorized feedback reads to 403", async () => {
-    mocks.getById.mockRejectedValue(new Error("Unauthorized access to feedback"));
+    mocks.getById.mockRejectedValue(
+      new Error("Unauthorized access to feedback"),
+    );
     const { res } = await call(feedbackController.getFeedbackById)({
       params: { id: "fb-1" },
       userId: "user-1",
@@ -208,7 +213,9 @@ describe("feedback controller", () => {
       body: { rating: 5 },
     });
 
-    expect(mocks.updateFeedback).toHaveBeenCalledWith("fb-1", "admin-1", true, { rating: 5 });
+    expect(mocks.updateFeedback).toHaveBeenCalledWith("fb-1", "admin-1", true, {
+      rating: 5,
+    });
     expect(res.status).toHaveBeenCalledWith(200);
   });
 

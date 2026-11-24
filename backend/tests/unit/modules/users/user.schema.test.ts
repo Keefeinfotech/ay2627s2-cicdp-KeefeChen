@@ -12,18 +12,21 @@ describe("userSchema", () => {
 
   it("toJSON transform removes sensitive fields", () => {
     const transform = (userSchema as any).options.toJSON.transform;
-    const result = transform({}, {
-      passwordHash: "x",
-      emailVerificationTokenHash: "x",
-      mfaSecretEncrypted: "x",
-      mfaPendingSecretEncrypted: "x",
-      mfaRecoveryCodeHashes: ["x"],
-      mfaLastUsedStep: 1,
-      passwordResetTokenHash: "x",
-      failedLoginAttempts: 2,
-      lockoutUntil: new Date(),
-      email: "a@b.com",
-    });
+    const result = transform(
+      {},
+      {
+        passwordHash: "x",
+        emailVerificationTokenHash: "x",
+        mfaSecretEncrypted: "x",
+        mfaPendingSecretEncrypted: "x",
+        mfaRecoveryCodeHashes: ["x"],
+        mfaLastUsedStep: 1,
+        passwordResetTokenHash: "x",
+        failedLoginAttempts: 2,
+        lockoutUntil: new Date(),
+        email: "a@b.com",
+      },
+    );
     expect(result.passwordHash).toBeUndefined();
     expect(result.emailVerificationTokenHash).toBeUndefined();
     expect(result.mfaSecretEncrypted).toBeUndefined();
