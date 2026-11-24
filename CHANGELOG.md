@@ -37,6 +37,7 @@ Entries focus on meaningful, user-facing or system-level changes; see
 - Pull request template now requires linked issue, impact assessment, security considerations, regression risks and testing evidence.
 
 ### Fixed
+- Release workflow SBOM generation: scan the packaged web tarball as a file (`file:`) instead of a directory path (`path:`), fixing the `v1.0.0` release publish failure. (#155)
 - Production deployment health gate: the Render health check polled a non-existent hostname (`x-render-routing: no-server`); the `production` environment variable `RENDER_API_BASE_URL` was corrected to the live service on 2026-11-16.
 
 ### Security
