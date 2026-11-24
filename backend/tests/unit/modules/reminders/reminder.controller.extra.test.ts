@@ -125,4 +125,47 @@ describe("reminder controller extra", () => {
     );
     expect(next).toHaveBeenCalled();
   });
+
+  it("forwards create errors", async () => {
+    mocks.create.mockRejectedValue(new Error("boom"));
+    await reminderController.create(
+      {
+        userId: "u1",
+        body: { message: "M", dueAt: "2026-01-01" },
+      } as unknown as Request,
+      res(),
+      next,
+    );
+    expect(next).toHaveBeenCalledWith(expect.any(Error));
+  });
+
+  it("forwards complete errors", async () => {
+    mocks.complete.mockRejectedValue(new Error("boom"));
+    await reminderController.complete(
+      { userId: "u1", params: { id: "r1" } } as unknown as Request,
+      res(),
+      next,
+    );
+    expect(next).toHaveBeenCalledWith(expect.any(Error));
+  });
+
+  it("forwards remove errors", async () => {
+    mocks.delete.mockRejectedValue(new Error("boom"));
+    await reminderController.remove(
+      { userId: "u1", params: { id: "r1" } } as unknown as Request,
+      res(),
+      next,
+    );
+    expect(next).toHaveBeenCalledWith(expect.any(Error));
+  });
+
+  it("forwards pending errors", async () => {
+    mocks.findPending.mockRejectedValue(new Error("boom"));
+    await reminderController.pending(
+      { userId: "u1" } as unknown as Request,
+      res(),
+      next,
+    );
+    expect(next).toHaveBeenCalledWith(expect.any(Error));
+  });
 });

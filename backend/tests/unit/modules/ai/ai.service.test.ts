@@ -1,6 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { createChatReply } from "../../../../src/modules/ai/ai.service.js";
+import {
+  createChatReply,
+  createTaskDraft,
+} from "../../../../src/modules/ai/ai.service.js";
 
 const originalEnv = { ...process.env };
 
@@ -132,6 +135,86 @@ describe("ai service", () => {
     await expect(createChatReply("hello")).rejects.toMatchObject({
       status: 502,
       code: "AI_PROVIDER_EMPTY_REPLY",
+    });
+  });
+
+  it("creates a mock task draft with date, priority and course", async () => {
+    setAiEnv({ AI_PROVIDER: "mock" });
+    const result = await createTaskDraft(
+      "Create a high priority task tomorrow to study for course CS101",
+      [],
+      { currentDate: "2026-11-24" },
+    );
+    expect(result.draft).toMatchObject({
+      priority: "high",
+      course: "CS101",
+      dueDate: "2026-11-25",
+    });
+    expect(result.clarification).toBeNull();
+  });
+
+  it("asks for clarification on ambiguous date in mock draft", async () => {
+    setAiEnv({ AI_PROVIDER: "mock" });
+    const result = await createTaskDraft("submit report 3/4", [], {
+      currentDate: "2026-11-24",
+    });
+    expect(result.draft).toBeNull();
+    expect(result.clarification).toMatch(/clarify/i);
+  });
+
+  it("asks for a title when mock draft has no usable title", async () => {
+    setAiEnv({ AI_PROVIDER: "mock" });
+    const result = await createTaskDraft("task tomorrow", [], {
+      currentDate: "2026-11-24",
+    });
+    expect(result.draft).toBeNull();
+    expect(result.clarification).toMatch(/title/i);
+  });
+
+  it("parses weekday and month-name dates in mock drafts", async () => {
+    setAiEnv({ AI_PROVIDER: "mock" });
+    const weekday = await createTaskDraft("Submit essay Friday", [], {
+      currentDate: "2026-11-24", // Tuesday
+    });
+    expect(weekday.draft?.dueDate).toBe("2026-11-27");
+
+    const named = await createTaskDraft("Pay fees 5 Dec 2026", [], {
+      currentDate: "2026-11-24",
+    });
+    expect(named.draft?.dueDate).toBe("2026-12-05");
+  });
+
+  it("handles mock draft clarification follow-up context", async () => {
+    setAiEnv({ AI_PROVIDER: "mock" });
+    const result = await createTaskDraft(
+      "tomorrow",
+      [
+        { role: "user", content: "submit report 3/4" },
+        {
+          role: "assistant",
+          content:
+            "Which date format did you mean? Please clarify the deadline.",
+        },
+      ],
+      { currentDate: "2026-11-24" },
+    );
+    expect(result.draft?.dueDate).toBe("2026-11-25");
+    expect(result.draft?.title).toMatch(/Submit report/i);
+  });
+
+  it("rejects unsupported provider for task drafts", async () => {
+    setAiEnv({ AI_PROVIDER: "made-up", AI_API_KEY: "x" });
+    await expect(createTaskDraft("hello")).rejects.toMatchObject({
+      status: 501,
+      code: "AI_PROVIDER_UNSUPPORTED",
+    });
+  });
+
+  it("requires API key for real-provider task drafts", async () => {
+    setAiEnv({ AI_PROVIDER: "openai-compatible", AI_API_KEY: undefined });
+    await expect(createTaskDraft("hello")).rejects.toMatchObject({
+      status: 503,
+      code: "AI_PROVIDER_NOT_CONFIGURED",
     });
   });
 });
