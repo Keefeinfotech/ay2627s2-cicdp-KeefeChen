@@ -230,7 +230,7 @@ describe("task repository", () => {
     } as any);
 
     expect(Task.findOneAndUpdate).toHaveBeenCalledWith(
-      expect.objectContaining({ updatedAt: expected }),
+      expect.objectContaining({ updatedAt: { $eq: expected } }),
       { $set: { title: "Changed" } },
       { new: true, runValidators: true },
     );
