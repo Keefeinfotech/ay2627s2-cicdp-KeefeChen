@@ -44,17 +44,31 @@ describe("reminder controller coverage", () => {
   it("show returns reminder or 404", async () => {
     mocks.findById.mockResolvedValueOnce({ _id: "r1" });
     const r = res();
-    await reminderController.show({ userId: "u1", params: { reminderId: "r1" } } as any, r, next);
+    await reminderController.show(
+      { userId: "u1", params: { reminderId: "r1" } } as any,
+      r,
+      next,
+    );
     expect(r.status).toHaveBeenCalledWith(200);
 
     mocks.findById.mockResolvedValueOnce(null);
-    await reminderController.show({ userId: "u1", params: { reminderId: "missing" } } as any, res(), next);
-    expect(next).toHaveBeenCalledWith(expect.objectContaining({ code: "REMINDER_NOT_FOUND" }));
+    await reminderController.show(
+      { userId: "u1", params: { reminderId: "missing" } } as any,
+      res(),
+      next,
+    );
+    expect(next).toHaveBeenCalledWith(
+      expect.objectContaining({ code: "REMINDER_NOT_FOUND" }),
+    );
   });
 
   it("show rejects unauthenticated", async () => {
     const r = res();
-    await reminderController.show({ params: { reminderId: "r1" } } as any, r, next);
+    await reminderController.show(
+      { params: { reminderId: "r1" } } as any,
+      r,
+      next,
+    );
     expect(r.status).toHaveBeenCalledWith(401);
   });
 
@@ -62,7 +76,11 @@ describe("reminder controller coverage", () => {
     mocks.update.mockResolvedValueOnce({ _id: "r1" });
     const r = res();
     await reminderController.update(
-      { userId: "u1", params: { reminderId: "r1" }, body: { taskId: "t1", message: "m" } } as any,
+      {
+        userId: "u1",
+        params: { reminderId: "r1" },
+        body: { taskId: "t1", message: "m" },
+      } as any,
       r,
       next,
     );
@@ -75,12 +93,18 @@ describe("reminder controller coverage", () => {
       res(),
       next,
     );
-    expect(next).toHaveBeenCalledWith(expect.objectContaining({ code: "REMINDER_NOT_FOUND" }));
+    expect(next).toHaveBeenCalledWith(
+      expect.objectContaining({ code: "REMINDER_NOT_FOUND" }),
+    );
   });
 
   it("update rejects unauthenticated", async () => {
     const r = res();
-    await reminderController.update({ params: { reminderId: "r1" }, body: {} } as any, r, next);
+    await reminderController.update(
+      { params: { reminderId: "r1" }, body: {} } as any,
+      r,
+      next,
+    );
     expect(r.status).toHaveBeenCalledWith(401);
   });
 
@@ -88,7 +112,11 @@ describe("reminder controller coverage", () => {
     mocks.complete.mockResolvedValue({ _id: "r1", completed: true });
     let r = res();
     await reminderController.status(
-      { userId: "u1", params: { reminderId: "r1" }, body: { completed: true } } as any,
+      {
+        userId: "u1",
+        params: { reminderId: "r1" },
+        body: { completed: true },
+      } as any,
       r,
       next,
     );
@@ -97,7 +125,11 @@ describe("reminder controller coverage", () => {
     mocks.update.mockResolvedValue({ _id: "r1", completed: false });
     r = res();
     await reminderController.status(
-      { userId: "u1", params: { reminderId: "r1" }, body: { completed: false } } as any,
+      {
+        userId: "u1",
+        params: { reminderId: "r1" },
+        body: { completed: false },
+      } as any,
       r,
       next,
     );
@@ -106,7 +138,11 @@ describe("reminder controller coverage", () => {
     mocks.setEnabled.mockResolvedValue({ _id: "r1", enabled: false });
     r = res();
     await reminderController.status(
-      { userId: "u1", params: { reminderId: "r1" }, body: { enabled: false } } as any,
+      {
+        userId: "u1",
+        params: { reminderId: "r1" },
+        body: { enabled: false },
+      } as any,
       r,
       next,
     );
@@ -122,51 +158,85 @@ describe("reminder controller coverage", () => {
 
     mocks.complete.mockResolvedValueOnce(null);
     await reminderController.status(
-      { userId: "u1", params: { reminderId: "r1" }, body: { completed: true } } as any,
+      {
+        userId: "u1",
+        params: { reminderId: "r1" },
+        body: { completed: true },
+      } as any,
       res(),
       next,
     );
-    expect(next).toHaveBeenCalledWith(expect.objectContaining({ code: "REMINDER_NOT_FOUND" }));
+    expect(next).toHaveBeenCalledWith(
+      expect.objectContaining({ code: "REMINDER_NOT_FOUND" }),
+    );
   });
 
   it("status rejects unauthenticated", async () => {
     const r = res();
-    await reminderController.status({ params: { reminderId: "r1" }, body: {} } as any, r, next);
+    await reminderController.status(
+      { params: { reminderId: "r1" }, body: {} } as any,
+      r,
+      next,
+    );
     expect(r.status).toHaveBeenCalledWith(401);
   });
 
   it("complete uses id fallback and handles unauthenticated", async () => {
     mocks.complete.mockResolvedValue({ _id: "r1" });
     const r = res();
-    await reminderController.complete({ userId: "u1", params: { id: "r1" } } as any, r, next);
+    await reminderController.complete(
+      { userId: "u1", params: { id: "r1" } } as any,
+      r,
+      next,
+    );
     expect(mocks.complete).toHaveBeenCalledWith("r1", "u1");
 
     const r401 = res();
-    await reminderController.complete({ params: { id: "r1" } } as any, r401, next);
+    await reminderController.complete(
+      { params: { id: "r1" } } as any,
+      r401,
+      next,
+    );
     expect(r401.status).toHaveBeenCalledWith(401);
   });
 
   it("remove uses id fallback and handles unauthenticated", async () => {
     mocks.delete.mockResolvedValue({ _id: "r1" });
     const r = res();
-    await reminderController.remove({ userId: "u1", params: { id: "r1" } } as any, r, next);
+    await reminderController.remove(
+      { userId: "u1", params: { id: "r1" } } as any,
+      r,
+      next,
+    );
     expect(r.status).toHaveBeenCalledWith(204);
 
     const r401 = res();
-    await reminderController.remove({ params: { id: "r1" } } as any, r401, next);
+    await reminderController.remove(
+      { params: { id: "r1" } } as any,
+      r401,
+      next,
+    );
     expect(r401.status).toHaveBeenCalledWith(401);
   });
 
   it("listForTask and createForTask check ownership and validate", async () => {
     mocks.findByTask.mockResolvedValue([{ _id: "r1" }]);
     let r = res();
-    await reminderController.listForTask({ userId: "u1", params: { taskId: "t1" } } as any, r, next);
+    await reminderController.listForTask(
+      { userId: "u1", params: { taskId: "t1" } } as any,
+      r,
+      next,
+    );
     expect(mocks.getTask).toHaveBeenCalledWith("u1", "t1");
     expect(r.status).toHaveBeenCalledWith(200);
 
     r = res();
     await reminderController.createForTask(
-      { userId: "u1", params: { taskId: "t1" }, body: { message: "M", dueAt: "2026-01-01" } } as any,
+      {
+        userId: "u1",
+        params: { taskId: "t1" },
+        body: { message: "M", dueAt: "2026-01-01" },
+      } as any,
       r,
       next,
     );
@@ -183,10 +253,18 @@ describe("reminder controller coverage", () => {
 
   it("listForTask/createForTask reject unauthenticated", async () => {
     let r = res();
-    await reminderController.listForTask({ params: { taskId: "t1" } } as any, r, next);
+    await reminderController.listForTask(
+      { params: { taskId: "t1" } } as any,
+      r,
+      next,
+    );
     expect(r.status).toHaveBeenCalledWith(401);
     r = res();
-    await reminderController.createForTask({ params: { taskId: "t1" }, body: {} } as any, r, next);
+    await reminderController.createForTask(
+      { params: { taskId: "t1" }, body: {} } as any,
+      r,
+      next,
+    );
     expect(r.status).toHaveBeenCalledWith(401);
   });
 
@@ -194,7 +272,10 @@ describe("reminder controller coverage", () => {
     mocks.create.mockResolvedValue({ _id: "r1" });
     const r = res();
     await reminderController.create(
-      { userId: "u1", body: { message: "M", dueAt: "2026-01-01", taskId: "t1" } } as any,
+      {
+        userId: "u1",
+        body: { message: "M", dueAt: "2026-01-01", taskId: "t1" },
+      } as any,
       r,
       next,
     );

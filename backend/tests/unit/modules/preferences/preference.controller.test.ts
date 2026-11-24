@@ -50,28 +50,48 @@ describe("preferenceController", () => {
     expect(r401.status).toHaveBeenCalledWith(401);
     mocks.update.mockResolvedValueOnce({ ok: true });
     const r = res();
-    await preferenceController.update({ userId: "u1", body: { a: 1 } } as any, r, next);
+    await preferenceController.update(
+      { userId: "u1", body: { a: 1 } } as any,
+      r,
+      next,
+    );
     expect(mocks.update).toHaveBeenCalledWith("u1", { a: 1 });
     expect(r.status).toHaveBeenCalledWith(200);
   });
 
   it("updateNotifications handles 401 and success", async () => {
     const r401 = res();
-    await preferenceController.updateNotifications({ body: {} } as any, r401, next);
+    await preferenceController.updateNotifications(
+      { body: {} } as any,
+      r401,
+      next,
+    );
     expect(r401.status).toHaveBeenCalledWith(401);
     mocks.updateNotifications.mockResolvedValueOnce({ ok: true });
     const r = res();
-    await preferenceController.updateNotifications({ userId: "u1", body: { email: true } } as any, r, next);
+    await preferenceController.updateNotifications(
+      { userId: "u1", body: { email: true } } as any,
+      r,
+      next,
+    );
     expect(r.status).toHaveBeenCalledWith(200);
   });
 
   it("updateAppearance handles 401 and success", async () => {
     const r401 = res();
-    await preferenceController.updateAppearance({ body: {} } as any, r401, next);
+    await preferenceController.updateAppearance(
+      { body: {} } as any,
+      r401,
+      next,
+    );
     expect(r401.status).toHaveBeenCalledWith(401);
     mocks.updateAppearance.mockResolvedValueOnce({ ok: true });
     const r = res();
-    await preferenceController.updateAppearance({ userId: "u1", body: { theme: "dark" } } as any, r, next);
+    await preferenceController.updateAppearance(
+      { userId: "u1", body: { theme: "dark" } } as any,
+      r,
+      next,
+    );
     expect(r.status).toHaveBeenCalledWith(200);
   });
 
@@ -81,7 +101,11 @@ describe("preferenceController", () => {
     expect(r401.status).toHaveBeenCalledWith(401);
     mocks.updateTimezone.mockResolvedValueOnce({ ok: true });
     const r = res();
-    await preferenceController.updateTimezone({ userId: "u1", body: { timezone: "UTC" } } as any, r, next);
+    await preferenceController.updateTimezone(
+      { userId: "u1", body: { timezone: "UTC" } } as any,
+      r,
+      next,
+    );
     expect(mocks.updateTimezone).toHaveBeenCalledWith("u1", "UTC");
     expect(r.status).toHaveBeenCalledWith(200);
   });

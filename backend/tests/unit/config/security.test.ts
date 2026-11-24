@@ -55,7 +55,10 @@ describe("security config", () => {
     const rejected = await new Promise((resolve) =>
       devOrigin("https://evil.com", (...args: any[]) => resolve(args)),
     );
-    expect((rejected as any[])[0]).toMatchObject({ status: 403, code: "CORS_FORBIDDEN" });
+    expect((rejected as any[])[0]).toMatchObject({
+      status: 403,
+      code: "CORS_FORBIDDEN",
+    });
 
     process.env.NODE_ENV = "production";
     process.env.CORS_ORIGIN = "https://app.example.com";

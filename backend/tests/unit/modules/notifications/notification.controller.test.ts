@@ -14,9 +14,12 @@ const mocks = vi.hoisted(() => ({
   unregisterDevice: vi.fn(),
 }));
 
-vi.mock("../../../../src/modules/notifications/notification.service.js", () => ({
-  notificationService: mocks,
-}));
+vi.mock(
+  "../../../../src/modules/notifications/notification.service.js",
+  () => ({
+    notificationService: mocks,
+  }),
+);
 
 import { notificationController } from "../../../../src/modules/notifications/notification.controller.js";
 
@@ -44,20 +47,31 @@ describe("notificationController", () => {
   });
 
   it("list returns notifications for user", async () => {
-    mocks.list.mockResolvedValue({ items: [{ id: "1" }], pagination: { page: 1 } });
+    mocks.list.mockResolvedValue({
+      items: [{ id: "1" }],
+      pagination: { page: 1 },
+    });
     const res = createRes();
     await notificationController.list(
       { userId: "u1", query: { page: 1, limit: 10, read: true } } as any,
       res,
       next,
     );
-    expect(mocks.list).toHaveBeenCalledWith("u1", { page: 1, limit: 10, read: true });
+    expect(mocks.list).toHaveBeenCalledWith("u1", {
+      page: 1,
+      limit: 10,
+      read: true,
+    });
     expect(res.status).toHaveBeenCalledWith(200);
   });
 
   it("list forwards errors", async () => {
     mocks.list.mockRejectedValue(new Error("boom"));
-    await notificationController.list({ userId: "u1", query: {} } as any, createRes(), next);
+    await notificationController.list(
+      { userId: "u1", query: {} } as any,
+      createRes(),
+      next,
+    );
     expect(next).toHaveBeenCalledWith(expect.any(Error));
   });
 
@@ -68,7 +82,11 @@ describe("notificationController", () => {
 
     mocks.unreadCount.mockResolvedValue(3);
     const res = createRes();
-    await notificationController.unreadCount({ userId: "u1" } as any, res, next);
+    await notificationController.unreadCount(
+      { userId: "u1" } as any,
+      res,
+      next,
+    );
     expect(res.json).toHaveBeenCalledWith({
       message: "Unread count retrieved successfully.",
       data: { unread: 3 },
@@ -97,13 +115,21 @@ describe("notificationController", () => {
 
   it("show returns 401 when unauthenticated", async () => {
     const res = createRes();
-    await notificationController.show({ params: { notificationId: "n1" } } as any, res, next);
+    await notificationController.show(
+      { params: { notificationId: "n1" } } as any,
+      res,
+      next,
+    );
     expect(res.status).toHaveBeenCalledWith(401);
   });
 
   it("markRead handles 401, 404, and success", async () => {
     const res401 = createRes();
-    await notificationController.markRead({ params: { notificationId: "n1" } } as any, res401, next);
+    await notificationController.markRead(
+      { params: { notificationId: "n1" } } as any,
+      res401,
+      next,
+    );
     expect(res401.status).toHaveBeenCalledWith(401);
 
     mocks.markRead.mockResolvedValueOnce(null);
@@ -132,7 +158,11 @@ describe("notificationController", () => {
 
     mocks.markAllRead.mockResolvedValue(5);
     const res = createRes();
-    await notificationController.markAllRead({ userId: "u1" } as any, res, next);
+    await notificationController.markAllRead(
+      { userId: "u1" } as any,
+      res,
+      next,
+    );
     expect(res.json).toHaveBeenCalledWith({
       message: "All notifications marked as read.",
       data: { updated: 5 },
@@ -141,7 +171,11 @@ describe("notificationController", () => {
 
   it("remove handles 401, 404, and success", async () => {
     const res401 = createRes();
-    await notificationController.remove({ params: { notificationId: "n1" } } as any, res401, next);
+    await notificationController.remove(
+      { params: { notificationId: "n1" } } as any,
+      res401,
+      next,
+    );
     expect(res401.status).toHaveBeenCalledWith(401);
 
     mocks.remove.mockResolvedValueOnce(null);
@@ -179,7 +213,11 @@ describe("notificationController", () => {
 
   it("registerDevice handles 401 and success", async () => {
     const res401 = createRes();
-    await notificationController.registerDevice({ body: {} } as any, res401, next);
+    await notificationController.registerDevice(
+      { body: {} } as any,
+      res401,
+      next,
+    );
     expect(res401.status).toHaveBeenCalledWith(401);
 
     mocks.registerDevice.mockResolvedValue({ _id: "d1" });
@@ -189,7 +227,10 @@ describe("notificationController", () => {
       res,
       next,
     );
-    expect(mocks.registerDevice).toHaveBeenCalledWith("u1", { token: "t", platform: "web" });
+    expect(mocks.registerDevice).toHaveBeenCalledWith("u1", {
+      token: "t",
+      platform: "web",
+    });
     expect(res.status).toHaveBeenCalledWith(201);
   });
 
@@ -200,13 +241,21 @@ describe("notificationController", () => {
 
     mocks.listDevices.mockResolvedValue([{ _id: "d1" }]);
     const res = createRes();
-    await notificationController.listDevices({ userId: "u1" } as any, res, next);
+    await notificationController.listDevices(
+      { userId: "u1" } as any,
+      res,
+      next,
+    );
     expect(res.status).toHaveBeenCalledWith(200);
   });
 
   it("unregisterDevice handles 401, 404, and success", async () => {
     const res401 = createRes();
-    await notificationController.unregisterDevice({ params: { deviceId: "d1" } } as any, res401, next);
+    await notificationController.unregisterDevice(
+      { params: { deviceId: "d1" } } as any,
+      res401,
+      next,
+    );
     expect(res401.status).toHaveBeenCalledWith(401);
 
     mocks.unregisterDevice.mockResolvedValueOnce(null);
@@ -230,7 +279,11 @@ describe("notificationController", () => {
 
   it("forwards errors from handlers", async () => {
     mocks.unreadCount.mockRejectedValue(new Error("x"));
-    await notificationController.unreadCount({ userId: "u1" } as any, createRes(), next);
+    await notificationController.unreadCount(
+      { userId: "u1" } as any,
+      createRes(),
+      next,
+    );
     expect(next).toHaveBeenCalledWith(expect.any(Error));
   });
 });

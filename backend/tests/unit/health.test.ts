@@ -25,7 +25,11 @@ vi.mock("../../src/config/environment.js", () => ({
   getRedisUrl: mocks.getRedisUrl,
 }));
 
-import { healthCheck, livenessCheck, readinessCheck } from "../../src/modules/health/health.controller.js";
+import {
+  healthCheck,
+  livenessCheck,
+  readinessCheck,
+} from "../../src/modules/health/health.controller.js";
 
 const createRes = () => {
   const res: any = {};
@@ -95,7 +99,9 @@ describe("health controller", () => {
 
   it("readinessCheck reports redis unavailable when ping throws", async () => {
     mocks.getRedisUrl.mockReturnValue("redis://localhost:6379");
-    mocks.getRedisClient.mockReturnValue({ ping: mocks.ping.mockRejectedValue(new Error("down")) });
+    mocks.getRedisClient.mockReturnValue({
+      ping: mocks.ping.mockRejectedValue(new Error("down")),
+    });
     const res = createRes();
     await readinessCheck({} as any, res);
     expect(res.status).toHaveBeenCalledWith(200);

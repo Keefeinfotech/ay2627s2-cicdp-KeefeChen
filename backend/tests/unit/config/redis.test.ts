@@ -118,7 +118,9 @@ describe("redis config", () => {
     nowSpy.mockReturnValue(1_000_000);
     const redis = await loadRedis();
     redis.getRedisClient();
-    const handler = mocks.client.on.mock.calls.find((c: any[]) => c[0] === "error")?.[1];
+    const handler = mocks.client.on.mock.calls.find(
+      (c: any[]) => c[0] === "error",
+    )?.[1];
     expect(handler).toBeTypeOf("function");
     handler(new Error("e1"));
     handler(new Error("e2"));

@@ -52,7 +52,11 @@ describe("feedback controller", () => {
 
     mocks.submitFeedback.mockResolvedValueOnce({ _id: "f1" });
     const r = res();
-    await createFeedback({ userId: "u1", body: { message: "hi" } } as any, r, next);
+    await createFeedback(
+      { userId: "u1", body: { message: "hi" } } as any,
+      r,
+      next,
+    );
     expect(r.status).toHaveBeenCalledWith(201);
 
     mocks.submitFeedback.mockRejectedValueOnce(new Error("boom"));
@@ -85,74 +89,126 @@ describe("feedback controller", () => {
   it("updateFeedbackStatus handles success and not found", async () => {
     mocks.updateStatus.mockResolvedValueOnce({ _id: "f1" });
     let r = res();
-    await updateFeedbackStatus({ params: { id: "f1" }, body: { status: "open" } } as any, r, next);
+    await updateFeedbackStatus(
+      { params: { id: "f1" }, body: { status: "open" } } as any,
+      r,
+      next,
+    );
     expect(r.status).toHaveBeenCalledWith(200);
 
     mocks.updateStatus.mockRejectedValueOnce(new Error("not found"));
     r = res();
-    await updateFeedbackStatus({ params: { id: "missing" }, body: { status: "open" } } as any, r, next);
+    await updateFeedbackStatus(
+      { params: { id: "missing" }, body: { status: "open" } } as any,
+      r,
+      next,
+    );
     expect(r.status).toHaveBeenCalledWith(404);
 
     mocks.updateStatus.mockRejectedValueOnce(new Error("other"));
-    await updateFeedbackStatus({ params: { id: "f1" }, body: { status: "open" } } as any, res(), next);
+    await updateFeedbackStatus(
+      { params: { id: "f1" }, body: { status: "open" } } as any,
+      res(),
+      next,
+    );
     expect(next).toHaveBeenCalled();
   });
 
   it("respondToFeedback handles success and not found", async () => {
     mocks.addResponse.mockResolvedValueOnce({ _id: "f1" });
     let r = res();
-    await respondToFeedback({ params: { id: "f1" }, userId: "a1", body: { response: "ok" } } as any, r, next);
+    await respondToFeedback(
+      { params: { id: "f1" }, userId: "a1", body: { response: "ok" } } as any,
+      r,
+      next,
+    );
     expect(r.status).toHaveBeenCalledWith(200);
 
     mocks.addResponse.mockRejectedValueOnce(new Error("not found"));
     r = res();
-    await respondToFeedback({ params: { id: "x" }, userId: "a1", body: { response: "ok" } } as any, r, next);
+    await respondToFeedback(
+      { params: { id: "x" }, userId: "a1", body: { response: "ok" } } as any,
+      r,
+      next,
+    );
     expect(r.status).toHaveBeenCalledWith(404);
   });
 
   it("getFeedbackById handles success, unauthorized, not found", async () => {
     mocks.getById.mockResolvedValueOnce({ _id: "f1" });
     let r = res();
-    await getFeedbackById({ params: { id: "f1" }, userId: "u1", userRole: "USER" } as any, r, next);
+    await getFeedbackById(
+      { params: { id: "f1" }, userId: "u1", userRole: "USER" } as any,
+      r,
+      next,
+    );
     expect(r.status).toHaveBeenCalledWith(200);
 
     mocks.getById.mockRejectedValueOnce(new Error("Unauthorized access"));
     r = res();
-    await getFeedbackById({ params: { id: "f1" }, userId: "u1" } as any, r, next);
+    await getFeedbackById(
+      { params: { id: "f1" }, userId: "u1" } as any,
+      r,
+      next,
+    );
     expect(r.status).toHaveBeenCalledWith(403);
 
     mocks.getById.mockRejectedValueOnce(new Error("not found"));
     r = res();
-    await getFeedbackById({ params: { id: "f1" }, userId: "u1" } as any, r, next);
+    await getFeedbackById(
+      { params: { id: "f1" }, userId: "u1" } as any,
+      r,
+      next,
+    );
     expect(r.status).toHaveBeenCalledWith(404);
   });
 
   it("updateFeedback handles success, unauthorized, not found", async () => {
     mocks.updateFeedback.mockResolvedValueOnce({ _id: "f1" });
     let r = res();
-    await updateFeedback({ params: { id: "f1" }, userId: "u1", userRole: "ADMIN" } as any, r, next);
+    await updateFeedback(
+      { params: { id: "f1" }, userId: "u1", userRole: "ADMIN" } as any,
+      r,
+      next,
+    );
     expect(r.status).toHaveBeenCalledWith(200);
 
     mocks.updateFeedback.mockRejectedValueOnce(new Error("Unauthorized"));
     r = res();
-    await updateFeedback({ params: { id: "f1" }, userId: "u1" } as any, r, next);
+    await updateFeedback(
+      { params: { id: "f1" }, userId: "u1" } as any,
+      r,
+      next,
+    );
     expect(r.status).toHaveBeenCalledWith(403);
 
     mocks.updateFeedback.mockRejectedValueOnce(new Error("not found"));
     r = res();
-    await updateFeedback({ params: { id: "f1" }, userId: "u1" } as any, r, next);
+    await updateFeedback(
+      { params: { id: "f1" }, userId: "u1" } as any,
+      r,
+      next,
+    );
     expect(r.status).toHaveBeenCalledWith(404);
   });
 
   it("deleteFeedback handles success and not found/unauthorized", async () => {
     mocks.deleteFeedback.mockResolvedValueOnce(true);
     let r = res();
-    await deleteFeedback({ params: { id: "f1" }, userId: "u1", userRole: "ADMIN" } as any, r, next);
+    await deleteFeedback(
+      { params: { id: "f1" }, userId: "u1", userRole: "ADMIN" } as any,
+      r,
+      next,
+    );
     expect(r.status).toHaveBeenCalledWith(200);
 
     mocks.deleteFeedback.mockResolvedValueOnce(false);
     r = res();
-    await deleteFeedback({ params: { id: "f1" }, userId: "u1" } as any, r, next);
+    await deleteFeedback(
+      { params: { id: "f1" }, userId: "u1" } as any,
+      r,
+      next,
+    );
     expect(r.status).toHaveBeenCalledWith(404);
   });
 });

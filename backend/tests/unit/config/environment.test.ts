@@ -45,7 +45,7 @@ describe("environment config", () => {
     const env = await loadEnv();
     expect(() => env.getJwtSecret()).toThrow(/JWT_SECRET/);
     process.env.JWT_SECRET = "short";
-    expect(() => (env.getJwtSecret())).toThrow(/at least 16/);
+    expect(() => env.getJwtSecret()).toThrow(/at least 16/);
     process.env.JWT_SECRET = "a".repeat(16);
     expect(env.getJwtSecret()).toBe("a".repeat(16));
   });

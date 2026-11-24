@@ -41,17 +41,31 @@ describe("assistantController", () => {
   for (const [method, serviceMethod, status] of cases) {
     it(`${String(method)} handles 401, success, and error`, async () => {
       const r401 = res();
-      await (assistantController[method] as any)({ body: {} } as any, r401, next);
+      await (assistantController[method] as any)(
+        { body: {} } as any,
+        r401,
+        next,
+      );
       expect(r401.status).toHaveBeenCalledWith(401);
 
       (mocks as any)[serviceMethod].mockResolvedValueOnce({ ok: true });
       const r = res();
-      await (assistantController[method] as any)({ userId: "u1", body: { a: 1 } } as any, r, next);
-      expect((mocks as any)[serviceMethod]).toHaveBeenCalledWith("u1", { a: 1 });
+      await (assistantController[method] as any)(
+        { userId: "u1", body: { a: 1 } } as any,
+        r,
+        next,
+      );
+      expect((mocks as any)[serviceMethod]).toHaveBeenCalledWith("u1", {
+        a: 1,
+      });
       expect(r.status).toHaveBeenCalledWith(status);
 
       (mocks as any)[serviceMethod].mockRejectedValueOnce(new Error("boom"));
-      await (assistantController[method] as any)({ userId: "u1", body: {} } as any, res(), next);
+      await (assistantController[method] as any)(
+        { userId: "u1", body: {} } as any,
+        res(),
+        next,
+      );
       expect(next).toHaveBeenCalledWith(expect.any(Error));
     });
   }
