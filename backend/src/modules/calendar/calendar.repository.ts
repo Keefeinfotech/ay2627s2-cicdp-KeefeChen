@@ -1,4 +1,9 @@
-import { CalendarEventModel, ICalendarEvent } from "./calendar.model";
+import {
+  CalendarEventModel,
+  EventPriority,
+  EventStatus,
+  ICalendarEvent,
+} from "./calendar.model";
 import { CreateEventDTO, UpdateEventDTO } from "./calendar.types";
 import { Types } from "mongoose";
 
@@ -64,9 +69,31 @@ export class CalendarRepository {
     userId: string,
     data: UpdateEventDTO,
   ): Promise<ICalendarEvent | null> {
+    // Whitelist writable fields before applying updates — never pass the raw
+    // user-supplied payload to $set (mass-assignment defence in depth).
+    const updates: {
+      title?: string;
+      description?: string;
+      startTime?: Date;
+      endTime?: Date;
+      isAllDay?: boolean;
+      priority?: EventPriority;
+      status?: EventStatus;
+      location?: string;
+    } = {};
+
+    if (data.title !== undefined) updates.title = data.title;
+    if (data.description !== undefined) updates.description = data.description;
+    if (data.startTime !== undefined) updates.startTime = data.startTime;
+    if (data.endTime !== undefined) updates.endTime = data.endTime;
+    if (data.isAllDay !== undefined) updates.isAllDay = data.isAllDay;
+    if (data.priority !== undefined) updates.priority = data.priority;
+    if (data.status !== undefined) updates.status = data.status;
+    if (data.location !== undefined) updates.location = data.location;
+
     return await CalendarEventModel.findOneAndUpdate(
       { _id: eventId, userId },
-      { $set: data },
+      { $set: updates },
       { new: true },
     ).exec();
   }

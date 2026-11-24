@@ -113,4 +113,119 @@ describe("task repository", () => {
       taskRepository.softDeleteForUser("task-1", "user-1"),
     ).resolves.toBe(true);
   });
+
+  it("creates a task with all optional fields", async () => {
+    const { Task } =
+      await import("../../../../src/modules/tasks/task.model.js");
+    vi.mocked(Task.create).mockResolvedValue({
+      toObject: () => ({ _id: "task-1" }),
+    } as any);
+
+    await taskRepository.create("user-1", {
+      id: "task-1",
+      title: "Ship it",
+      description: "desc",
+      course: "CS101",
+      tags: ["a"],
+      groupId: "g1",
+      assigneeId: "u2",
+      assigneeName: "Asha",
+      reminderAt: new Date("2026-01-01T00:00:00Z"),
+      priority: "high",
+      dueDate: new Date("2026-01-02T00:00:00Z"),
+    } as any);
+
+    expect(Task.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        _id: "task-1",
+        description: "desc",
+        course: "CS101",
+        tags: ["a"],
+        groupId: "g1",
+        assigneeId: "u2",
+        assigneeName: "Asha",
+        priority: "high",
+      }),
+    );
+  });
+
+  const mockTaskList = async () => {
+    const { Task } =
+      await import("../../../../src/modules/tasks/task.model.js");
+    const findMock = vi.fn().mockReturnValue({
+      sort: vi.fn().mockReturnThis(),
+      skip: vi.fn().mockReturnThis(),
+      limit: vi.fn().mockReturnThis(),
+      lean: vi.fn().mockReturnThis(),
+      exec: vi.fn().mockResolvedValue([]),
+    });
+    vi.mocked(Task.find).mockImplementation(findMock as any);
+    vi.mocked(Task.countDocuments).mockReturnValue({
+      exec: vi.fn().mockResolvedValue(0),
+    } as any);
+    return { Task, findMock };
+  };
+
+  it("lists tasks with filters, search, date ranges, and sort", async () => {
+    const { findMock } = await mockTaskList();
+
+    await taskRepository.listForUser("user-1", {
+      includeDeleted: true,
+      search: "  calc  ",
+      status: ["todo", "in_progress"] as any,
+      priority: ["high"] as any,
+      dueAfter: new Date("2026-01-01T00:00:00Z"),
+      dueBefore: new Date("2026-02-01T00:00:00Z"),
+      completedAfter: new Date("2026-01-03T00:00:00Z"),
+      completedBefore: new Date("2026-01-04T00:00:00Z"),
+      sortBy: "dueDate" as any,
+      sortOrder: "asc",
+      page: 1,
+      limit: 10,
+    } as any);
+
+    expect(findMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: "user-1",
+        $text: { $search: "calc" },
+        status: { $in: ["todo", "in_progress"] },
+        priority: { $in: ["high"] },
+        dueDate: { $gte: expect.any(Date), $lte: expect.any(Date) },
+        completedAt: { $gte: expect.any(Date), $lte: expect.any(Date) },
+      }),
+    );
+  });
+
+  it("applies single-value status/priority filters", async () => {
+    const { findMock } = await mockTaskList();
+
+    await taskRepository.listForUser("user-1", {
+      status: "todo" as any,
+      priority: "high" as any,
+    } as any);
+
+    expect(findMock).toHaveBeenCalledWith(
+      expect.objectContaining({ status: "todo", priority: "high" }),
+    );
+  });
+
+  it("includes expectedUpdatedAt in update filter for compare-and-swap", async () => {
+    const { Task } =
+      await import("../../../../src/modules/tasks/task.model.js");
+    vi.mocked(Task.findOneAndUpdate).mockReturnValue({
+      lean: () => ({ exec: async () => ({ _id: "task-1" }) }),
+    } as any);
+
+    const expected = new Date("2026-03-01T00:00:00.000Z");
+    await taskRepository.updateForUser("task-1", "user-1", {
+      title: "Changed",
+      expectedUpdatedAt: expected,
+    } as any);
+
+    expect(Task.findOneAndUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ updatedAt: { $eq: expected } }),
+      { $set: { title: "Changed" } },
+      { new: true, runValidators: true },
+    );
+  });
 });

@@ -41,27 +41,21 @@ describe("sync controller", () => {
     );
   });
 
-  it("rejects an invalid cursor", async () => {
-    const req = {
-      userId: "user-1",
-      query: { since: "not-a-date" },
-    } as unknown as Request;
-    const res = response();
-
-    await controller.getChanges(req, res, next);
-
-    expect(next).toHaveBeenCalledWith(
-      expect.objectContaining({ status: 400, code: "INVALID_SINCE" }),
-    );
+  it("rejects invalid cursors", async () => {
+    for (const since of ["not-a-date", ["2026-11-01T00:00:00.000Z"]]) {
+      next.mockClear();
+      const req = { userId: "user-1", query: { since } } as unknown as Request;
+      await controller.getChanges(req, response(), next);
+      expect(next).toHaveBeenCalledWith(
+        expect.objectContaining({ status: 400, code: "INVALID_SINCE" }),
+      );
+    }
   });
 
   it("returns the changes for the authenticated user", async () => {
     vi.mocked(syncService.getChangesSince).mockResolvedValue(result);
     const since = "2026-11-01T00:00:00.000Z";
-    const req = {
-      userId: "user-1",
-      query: { since },
-    } as unknown as Request;
+    const req = { userId: "user-1", query: { since } } as unknown as Request;
     const res = response();
 
     await controller.getChanges(req, res, next);
@@ -75,5 +69,19 @@ describe("sync controller", () => {
       message: "Sync changes retrieved successfully.",
       data: result,
     });
+  });
+
+  it("defaults since to epoch when cursor is omitted", async () => {
+    vi.mocked(syncService.getChangesSince).mockResolvedValue(result);
+    const req = { userId: "user-1", query: {} } as unknown as Request;
+    const res = response();
+
+    await controller.getChanges(req, res, next);
+
+    expect(syncService.getChangesSince).toHaveBeenCalledWith(
+      "user-1",
+      new Date(0),
+    );
+    expect(res.status).toHaveBeenCalledWith(200);
   });
 });

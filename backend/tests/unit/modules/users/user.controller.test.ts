@@ -25,7 +25,11 @@ describe("user controller", () => {
       json: vi.fn().mockReturnThis(),
     };
 
-    await userController.getOwnProfile({ userId: "user-1" } as any, res, vi.fn());
+    await userController.getOwnProfile(
+      { userId: "user-1" } as any,
+      res,
+      vi.fn(),
+    );
 
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.json).toHaveBeenCalledWith({
@@ -57,7 +61,7 @@ describe("user controller", () => {
     await userController.updateOwnProfile(
       { userId: "user-1", body: { name: "Ada" } } as any,
       res,
-      vi.fn()
+      vi.fn(),
     );
 
     expect(res.status).toHaveBeenCalledWith(200);
@@ -78,12 +82,12 @@ describe("user controller", () => {
     await userController.deleteOwnAccount(
       { userId: "user-1", body: { currentPassword: "password123" } } as any,
       res,
-      vi.fn()
+      vi.fn(),
     );
 
     expect(userService.deleteOwnAccount).toHaveBeenCalledWith(
       "user-1",
-      "password123"
+      "password123",
     );
     expect(res.status).toHaveBeenCalledWith(200);
   });
@@ -97,7 +101,22 @@ describe("user controller", () => {
     await userController.deleteOwnAccount(
       { body: { currentPassword: "password123" } } as any,
       res,
-      vi.fn()
+      vi.fn(),
+    );
+
+    expect(res.status).toHaveBeenCalledWith(401);
+  });
+
+  it("returns 401 when updating without an authenticated user", async () => {
+    const res: any = {
+      status: vi.fn().mockReturnThis(),
+      json: vi.fn().mockReturnThis(),
+    };
+
+    await userController.updateOwnProfile(
+      { body: { name: "Ada" } } as any,
+      res,
+      vi.fn(),
     );
 
     expect(res.status).toHaveBeenCalledWith(401);
@@ -116,5 +135,31 @@ describe("user controller", () => {
     await userController.getOwnProfile({ userId: "user-1" } as any, res, next);
 
     expect(next).toHaveBeenCalledWith(error);
+  });
+
+  it("propagates update and delete errors", async () => {
+    const error = new Error("boom");
+    vi.mocked(userService.updateOwnProfile).mockRejectedValue(error);
+    vi.mocked(userService.deleteOwnAccount).mockRejectedValue(error);
+    const res: any = {
+      status: vi.fn().mockReturnThis(),
+      json: vi.fn().mockReturnThis(),
+    };
+
+    const next1 = vi.fn();
+    await userController.updateOwnProfile(
+      { userId: "user-1", body: { name: "Ada" } } as any,
+      res,
+      next1,
+    );
+    expect(next1).toHaveBeenCalledWith(error);
+
+    const next2 = vi.fn();
+    await userController.deleteOwnAccount(
+      { userId: "user-1", body: { currentPassword: "password123" } } as any,
+      res,
+      next2,
+    );
+    expect(next2).toHaveBeenCalledWith(error);
   });
 });

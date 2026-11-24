@@ -17,7 +17,7 @@
  *   controller, service, repository, session handling) is the real code.
  */
 
-import { afterAll, beforeAll, describe, it, vi } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import type { Server } from "node:http";
 import path from "node:path";
 
@@ -177,6 +177,7 @@ describe("Auxilia-API provider verification (Pact)", () => {
     });
 
     // Rejects with the mismatch report when the contract is not met.
-    await verifier.verifyProvider();
+    const verificationResult = await verifier.verifyProvider();
+    expect(verificationResult).toBeTruthy();
   }, 120_000);
 });

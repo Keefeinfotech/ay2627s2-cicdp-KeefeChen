@@ -255,4 +255,43 @@ describe("task service", () => {
       "user-1",
     );
   });
+
+  it("throws TASK_NOT_FOUND when updating a missing task", async () => {
+    vi.mocked(taskRepository.findByIdForUser).mockResolvedValue(null);
+
+    await expect(
+      taskService.updateTask("user-1", "missing", { title: "Nope" }),
+    ).rejects.toMatchObject({ status: 404, code: "TASK_NOT_FOUND" });
+  });
+
+  it("throws TASK_NOT_FOUND when update returns null without expectedUpdatedAt", async () => {
+    vi.mocked(taskRepository.findByIdForUser).mockResolvedValue({
+      _id: "task-1",
+      updatedAt: new Date("2026-03-01T00:00:00.000Z"),
+    } as any);
+    vi.mocked(taskRepository.updateForUser).mockResolvedValue(null);
+
+    await expect(
+      taskService.updateTask("user-1", "task-1", { title: "Changed" }),
+    ).rejects.toMatchObject({ status: 404, code: "TASK_NOT_FOUND" });
+  });
+
+  it("throws TASK_NOT_FOUND when deleting a missing task", async () => {
+    vi.mocked(taskRepository.softDeleteForUser).mockResolvedValue(false);
+
+    await expect(
+      taskService.deleteTask("user-1", "missing"),
+    ).rejects.toMatchObject({ status: 404, code: "TASK_NOT_FOUND" });
+  });
+
+  it("rethrows duplicate-key create race when the existing row cannot be found", async () => {
+    vi.mocked(taskRepository.findByIdForUser)
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce(null);
+    vi.mocked(taskRepository.create).mockRejectedValue({ code: 11000 });
+
+    await expect(
+      taskService.createTask("user-1", { id: "task-1", title: "Race" }),
+    ).rejects.toMatchObject({ code: 11000 });
+  });
 });
