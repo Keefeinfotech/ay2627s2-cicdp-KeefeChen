@@ -162,7 +162,9 @@ describe("analytics controller", () => {
 
   it("propagates apply errors", async () => {
     const error = new Error("boom");
-    vi.mocked(analyticsService.applyPrioritySuggestions).mockRejectedValue(error);
+    vi.mocked(analyticsService.applyPrioritySuggestions).mockRejectedValue(
+      error,
+    );
     const next = vi.fn();
     await analyticsController.applyPrioritySuggestions(
       { userId: "user-1" } as never,

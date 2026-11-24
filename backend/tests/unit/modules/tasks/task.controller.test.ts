@@ -19,7 +19,10 @@ describe("task controller", () => {
   });
 
   it("creates a task and returns 201", async () => {
-    const task = { _id: "550e8400-e29b-41d4-a716-446655440000", title: "Ship it" };
+    const task = {
+      _id: "550e8400-e29b-41d4-a716-446655440000",
+      title: "Ship it",
+    };
     vi.mocked(taskService.createTask).mockResolvedValue(task as any);
 
     const res: any = {
@@ -30,7 +33,7 @@ describe("task controller", () => {
     await taskController.create(
       { userId: "user-1", body: { title: "Ship it" } } as any,
       res,
-      vi.fn()
+      vi.fn(),
     );
 
     expect(taskService.createTask).toHaveBeenCalledWith("user-1", {
@@ -49,7 +52,11 @@ describe("task controller", () => {
       json: vi.fn().mockReturnThis(),
     };
 
-    await taskController.create({ body: { title: "Ship it" } } as any, res, vi.fn());
+    await taskController.create(
+      { body: { title: "Ship it" } } as any,
+      res,
+      vi.fn(),
+    );
 
     expect(res.status).toHaveBeenCalledWith(401);
     expect(res.json).toHaveBeenCalledWith({
@@ -81,7 +88,7 @@ describe("task controller", () => {
     await taskController.list(
       { userId: "user-1", query: { page: 1, limit: 20 } } as any,
       res,
-      vi.fn()
+      vi.fn(),
     );
 
     expect(taskService.listTasks).toHaveBeenCalled();
@@ -105,7 +112,10 @@ describe("task controller", () => {
   });
 
   it("gets a task by id", async () => {
-    const task = { _id: "550e8400-e29b-41d4-a716-446655440000", title: "Ship it" };
+    const task = {
+      _id: "550e8400-e29b-41d4-a716-446655440000",
+      title: "Ship it",
+    };
     vi.mocked(taskService.getTask).mockResolvedValue(task as any);
 
     const res: any = {
@@ -114,12 +124,18 @@ describe("task controller", () => {
     };
 
     await taskController.getById(
-      { userId: "user-1", params: { taskId: "550e8400-e29b-41d4-a716-446655440000" } } as any,
+      {
+        userId: "user-1",
+        params: { taskId: "550e8400-e29b-41d4-a716-446655440000" },
+      } as any,
       res,
-      vi.fn()
+      vi.fn(),
     );
 
-    expect(taskService.getTask).toHaveBeenCalledWith("user-1", "550e8400-e29b-41d4-a716-446655440000");
+    expect(taskService.getTask).toHaveBeenCalledWith(
+      "user-1",
+      "550e8400-e29b-41d4-a716-446655440000",
+    );
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.json).toHaveBeenCalledWith({
       message: "Task retrieved successfully.",
@@ -138,16 +154,22 @@ describe("task controller", () => {
     };
 
     await taskController.getById(
-      { userId: "user-1", params: { taskId: "550e8400-e29b-41d4-a716-446655440000" } } as any,
+      {
+        userId: "user-1",
+        params: { taskId: "550e8400-e29b-41d4-a716-446655440000" },
+      } as any,
       res,
-      next
+      next,
     );
 
     expect(next).toHaveBeenCalledWith(error);
   });
 
   it("updates a task", async () => {
-    const task = { _id: "550e8400-e29b-41d4-a716-446655440000", status: "COMPLETED" };
+    const task = {
+      _id: "550e8400-e29b-41d4-a716-446655440000",
+      status: "COMPLETED",
+    };
     vi.mocked(taskService.updateTask).mockResolvedValue(task as any);
 
     const res: any = {
@@ -156,9 +178,13 @@ describe("task controller", () => {
     };
 
     await taskController.update(
-      { userId: "user-1", params: { taskId: "550e8400-e29b-41d4-a716-446655440000" }, body: { status: "completed" } } as any,
+      {
+        userId: "user-1",
+        params: { taskId: "550e8400-e29b-41d4-a716-446655440000" },
+        body: { status: "completed" },
+      } as any,
       res,
-      vi.fn()
+      vi.fn(),
     );
 
     expect(taskService.updateTask).toHaveBeenCalled();
@@ -178,12 +204,18 @@ describe("task controller", () => {
     };
 
     await taskController.remove(
-      { userId: "user-1", params: { taskId: "550e8400-e29b-41d4-a716-446655440000" } } as any,
+      {
+        userId: "user-1",
+        params: { taskId: "550e8400-e29b-41d4-a716-446655440000" },
+      } as any,
       res,
-      vi.fn()
+      vi.fn(),
     );
 
-    expect(taskService.deleteTask).toHaveBeenCalledWith("user-1", "550e8400-e29b-41d4-a716-446655440000");
+    expect(taskService.deleteTask).toHaveBeenCalledWith(
+      "user-1",
+      "550e8400-e29b-41d4-a716-446655440000",
+    );
     expect(res.status).toHaveBeenCalledWith(204);
     expect(res.send).toHaveBeenCalled();
   });
@@ -194,15 +226,25 @@ describe("task controller", () => {
       json: vi.fn().mockReturnThis(),
     };
 
-    await taskController.remove({ params: { taskId: "550e8400-e29b-41d4-a716-446655440000" } } as any, res, vi.fn());
+    await taskController.remove(
+      { params: { taskId: "550e8400-e29b-41d4-a716-446655440000" } } as any,
+      res,
+      vi.fn(),
+    );
 
     expect(res.status).toHaveBeenCalledWith(401);
   });
 
   it("gets a task by id", async () => {
-    const task = { _id: "550e8400-e29b-41d4-a716-446655440000", title: "Ship it" };
+    const task = {
+      _id: "550e8400-e29b-41d4-a716-446655440000",
+      title: "Ship it",
+    };
     vi.mocked(taskService.getTask).mockResolvedValue(task as any);
-    const res: any = { status: vi.fn().mockReturnThis(), json: vi.fn().mockReturnThis() };
+    const res: any = {
+      status: vi.fn().mockReturnThis(),
+      json: vi.fn().mockReturnThis(),
+    };
 
     await taskController.getById(
       { userId: "user-1", params: { taskId: task._id } } as any,
@@ -215,13 +257,20 @@ describe("task controller", () => {
   });
 
   it("returns 401 from protected handlers when unauthenticated", async () => {
-    const res: any = { status: vi.fn().mockReturnThis(), json: vi.fn().mockReturnThis() };
+    const res: any = {
+      status: vi.fn().mockReturnThis(),
+      json: vi.fn().mockReturnThis(),
+    };
     const next = vi.fn();
     const taskId = "550e8400-e29b-41d4-a716-446655440000";
 
     await taskController.list({ query: {} } as any, res, next);
     await taskController.getById({ params: { taskId } } as any, res, next);
-    await taskController.update({ params: { taskId }, body: { title: "x" } } as any, res, next);
+    await taskController.update(
+      { params: { taskId }, body: { title: "x" } } as any,
+      res,
+      next,
+    );
 
     expect(res.status).toHaveBeenCalledWith(401);
   });
@@ -233,13 +282,29 @@ describe("task controller", () => {
     vi.mocked(taskService.updateTask).mockRejectedValue(error);
     vi.mocked(taskService.deleteTask).mockRejectedValue(error);
     const next = vi.fn();
-    const res: any = { status: vi.fn().mockReturnThis(), json: vi.fn().mockReturnThis(), send: vi.fn().mockReturnThis() };
+    const res: any = {
+      status: vi.fn().mockReturnThis(),
+      json: vi.fn().mockReturnThis(),
+      send: vi.fn().mockReturnThis(),
+    };
     const taskId = "550e8400-e29b-41d4-a716-446655440000";
 
     await taskController.list({ userId: "u1", query: {} } as any, res, next);
-    await taskController.getById({ userId: "u1", params: { taskId } } as any, res, next);
-    await taskController.update({ userId: "u1", params: { taskId }, body: { title: "x" } } as any, res, next);
-    await taskController.remove({ userId: "u1", params: { taskId } } as any, res, next);
+    await taskController.getById(
+      { userId: "u1", params: { taskId } } as any,
+      res,
+      next,
+    );
+    await taskController.update(
+      { userId: "u1", params: { taskId }, body: { title: "x" } } as any,
+      res,
+      next,
+    );
+    await taskController.remove(
+      { userId: "u1", params: { taskId } } as any,
+      res,
+      next,
+    );
 
     expect(next).toHaveBeenCalledWith(error);
     expect(next).toHaveBeenCalledTimes(4);

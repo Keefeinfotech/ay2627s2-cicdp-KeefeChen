@@ -279,9 +279,9 @@ describe("task service", () => {
   it("throws TASK_NOT_FOUND when deleting a missing task", async () => {
     vi.mocked(taskRepository.softDeleteForUser).mockResolvedValue(false);
 
-    await expect(taskService.deleteTask("user-1", "missing")).rejects.toMatchObject(
-      { status: 404, code: "TASK_NOT_FOUND" },
-    );
+    await expect(
+      taskService.deleteTask("user-1", "missing"),
+    ).rejects.toMatchObject({ status: 404, code: "TASK_NOT_FOUND" });
   });
 
   it("rethrows duplicate-key create race when the existing row cannot be found", async () => {

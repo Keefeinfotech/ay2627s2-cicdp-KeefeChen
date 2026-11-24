@@ -46,7 +46,10 @@ describe("sync repository", () => {
     mockFind([document]);
     const since = new Date("2026-11-01T00:00:00Z");
 
-    const result = await new SyncRepository().fetchChangesSince("user-2", since);
+    const result = await new SyncRepository().fetchChangesSince(
+      "user-2",
+      since,
+    );
 
     expect(Task.find).toHaveBeenCalledWith({
       $or: [{ userId: "user-2" }, { assigneeId: "user-2" }],
@@ -64,15 +67,20 @@ describe("sync repository", () => {
   });
 
   it("defaults optional fields when missing", async () => {
-    mockFind([{
-      ...document,
-      tags: undefined,
-      groupId: undefined,
-      assigneeId: undefined,
-      assigneeName: undefined,
-      deletedAt: undefined,
-    }]);
-    const result = await new SyncRepository().fetchChangesSince("u1", new Date(0));
+    mockFind([
+      {
+        ...document,
+        tags: undefined,
+        groupId: undefined,
+        assigneeId: undefined,
+        assigneeName: undefined,
+        deletedAt: undefined,
+      },
+    ]);
+    const result = await new SyncRepository().fetchChangesSince(
+      "u1",
+      new Date(0),
+    );
     expect(result[0]).toMatchObject({
       tags: [],
       groupId: null,

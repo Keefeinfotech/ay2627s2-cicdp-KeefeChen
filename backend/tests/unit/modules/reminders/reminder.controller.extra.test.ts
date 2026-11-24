@@ -129,7 +129,10 @@ describe("reminder controller extra", () => {
   it("forwards create errors", async () => {
     mocks.create.mockRejectedValue(new Error("boom"));
     await reminderController.create(
-      { userId: "u1", body: { message: "M", dueAt: "2026-01-01" } } as unknown as Request,
+      {
+        userId: "u1",
+        body: { message: "M", dueAt: "2026-01-01" },
+      } as unknown as Request,
       res(),
       next,
     );

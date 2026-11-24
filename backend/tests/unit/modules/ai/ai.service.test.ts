@@ -1,6 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { createChatReply, createTaskDraft } from "../../../../src/modules/ai/ai.service.js";
+import {
+  createChatReply,
+  createTaskDraft,
+} from "../../../../src/modules/ai/ai.service.js";
 
 const originalEnv = { ...process.env };
 
@@ -187,7 +190,11 @@ describe("ai service", () => {
       "tomorrow",
       [
         { role: "user", content: "submit report 3/4" },
-        { role: "assistant", content: "Which date format did you mean? Please clarify the deadline." },
+        {
+          role: "assistant",
+          content:
+            "Which date format did you mean? Please clarify the deadline.",
+        },
       ],
       { currentDate: "2026-11-24" },
     );

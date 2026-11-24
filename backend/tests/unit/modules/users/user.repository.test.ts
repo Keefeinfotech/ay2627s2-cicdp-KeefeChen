@@ -20,7 +20,8 @@ describe("user repository", () => {
 
   it("creates a user", async () => {
     const created = { _id: "user-1", toObject: () => ({ _id: "user-1" }) };
-    const { User } = await import("../../../../src/modules/users/user.model.js");
+    const { User } =
+      await import("../../../../src/modules/users/user.model.js");
     vi.mocked(User.create).mockResolvedValue(created as any);
 
     const result = await userRepository.create({
@@ -41,7 +42,8 @@ describe("user repository", () => {
 
   it("finds a user by id", async () => {
     const user = { _id: "user-1" };
-    const { User } = await import("../../../../src/modules/users/user.model.js");
+    const { User } =
+      await import("../../../../src/modules/users/user.model.js");
     vi.mocked(User.findOne).mockReturnValue({
       lean: () => ({ exec: async () => user }),
     } as any);
@@ -51,68 +53,89 @@ describe("user repository", () => {
 
   it("finds a user with password", async () => {
     const user = { _id: "user-1", passwordHash: "hash" };
-    const { User } = await import("../../../../src/modules/users/user.model.js");
+    const { User } =
+      await import("../../../../src/modules/users/user.model.js");
     vi.mocked(User.findOne).mockReturnValue({
       select: () => ({ lean: () => ({ exec: async () => user }) }),
     } as any);
 
-    await expect(userRepository.findByIdWithPassword("user-1")).resolves.toBe(user);
+    await expect(userRepository.findByIdWithPassword("user-1")).resolves.toBe(
+      user,
+    );
   });
 
   it("finds a user by email", async () => {
     const user = { _id: "user-1" };
-    const { User } = await import("../../../../src/modules/users/user.model.js");
+    const { User } =
+      await import("../../../../src/modules/users/user.model.js");
     vi.mocked(User.findOne).mockReturnValue({
       select: () => ({ lean: () => ({ exec: async () => user }) }),
     } as any);
 
-    await expect(userRepository.findByEmail("ADA@EXAMPLE.COM")).resolves.toBe(user);
+    await expect(userRepository.findByEmail("ADA@EXAMPLE.COM")).resolves.toBe(
+      user,
+    );
   });
 
   it("checks whether an email exists", async () => {
-    const { User } = await import("../../../../src/modules/users/user.model.js");
+    const { User } =
+      await import("../../../../src/modules/users/user.model.js");
     vi.mocked(User.exists).mockResolvedValue({ _id: "user-1" } as any);
 
-    await expect(userRepository.existsByEmail("ada@example.com")).resolves.toBe(true);
+    await expect(userRepository.existsByEmail("ada@example.com")).resolves.toBe(
+      true,
+    );
     vi.mocked(User.exists).mockResolvedValue(null as any);
-    await expect(userRepository.existsByEmail("none@example.com")).resolves.toBe(false);
+    await expect(
+      userRepository.existsByEmail("none@example.com"),
+    ).resolves.toBe(false);
   });
 
   it("finds users by ids and returns empty for empty input", async () => {
-    const { User } = await import("../../../../src/modules/users/user.model.js");
+    const { User } =
+      await import("../../../../src/modules/users/user.model.js");
     vi.mocked(User.find).mockReturnValue({
       lean: () => ({ exec: async () => [{ _id: "u1" }] }),
     } as any);
 
     await expect(userRepository.findByIds([])).resolves.toEqual([]);
-    await expect(userRepository.findByIds(["u1"])).resolves.toEqual([{ _id: "u1" }]);
+    await expect(userRepository.findByIds(["u1"])).resolves.toEqual([
+      { _id: "u1" },
+    ]);
   });
 
   it("updates a user's profile", async () => {
     const user = { _id: "user-1", name: "Ada" };
-    const { User } = await import("../../../../src/modules/users/user.model.js");
+    const { User } =
+      await import("../../../../src/modules/users/user.model.js");
     vi.mocked(User.findOneAndUpdate).mockReturnValue({
       select: () => ({ lean: () => ({ exec: async () => user }) }),
     } as any);
 
     await expect(
-      userRepository.updateOwnProfile("user-1", { name: "Ada" })
+      userRepository.updateOwnProfile("user-1", { name: "Ada" }),
     ).resolves.toBe(user);
   });
 
   it("updates the last login timestamp", async () => {
-    const { User } = await import("../../../../src/modules/users/user.model.js");
+    const { User } =
+      await import("../../../../src/modules/users/user.model.js");
     vi.mocked(User.updateOne).mockReturnValue({ exec: async () => ({}) });
 
-    await expect(userRepository.updateLastLogin("user-1")).resolves.toBeUndefined();
+    await expect(
+      userRepository.updateLastLogin("user-1"),
+    ).resolves.toBeUndefined();
   });
 
   it("deactivates an account", async () => {
-    const { User } = await import("../../../../src/modules/users/user.model.js");
+    const { User } =
+      await import("../../../../src/modules/users/user.model.js");
     vi.mocked(User.updateOne).mockReturnValue({
       exec: async () => ({ modifiedCount: 1 }),
     });
 
-    await expect(userRepository.deactivateAccount("user-1")).resolves.toBe(true);
+    await expect(userRepository.deactivateAccount("user-1")).resolves.toBe(
+      true,
+    );
   });
 });

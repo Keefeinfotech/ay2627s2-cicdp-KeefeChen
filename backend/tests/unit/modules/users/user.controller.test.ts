@@ -25,7 +25,11 @@ describe("user controller", () => {
       json: vi.fn().mockReturnThis(),
     };
 
-    await userController.getOwnProfile({ userId: "user-1" } as any, res, vi.fn());
+    await userController.getOwnProfile(
+      { userId: "user-1" } as any,
+      res,
+      vi.fn(),
+    );
 
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.json).toHaveBeenCalledWith({
@@ -57,7 +61,7 @@ describe("user controller", () => {
     await userController.updateOwnProfile(
       { userId: "user-1", body: { name: "Ada" } } as any,
       res,
-      vi.fn()
+      vi.fn(),
     );
 
     expect(res.status).toHaveBeenCalledWith(200);
@@ -78,12 +82,12 @@ describe("user controller", () => {
     await userController.deleteOwnAccount(
       { userId: "user-1", body: { currentPassword: "password123" } } as any,
       res,
-      vi.fn()
+      vi.fn(),
     );
 
     expect(userService.deleteOwnAccount).toHaveBeenCalledWith(
       "user-1",
-      "password123"
+      "password123",
     );
     expect(res.status).toHaveBeenCalledWith(200);
   });
@@ -97,7 +101,7 @@ describe("user controller", () => {
     await userController.deleteOwnAccount(
       { body: { currentPassword: "password123" } } as any,
       res,
-      vi.fn()
+      vi.fn(),
     );
 
     expect(res.status).toHaveBeenCalledWith(401);
@@ -137,7 +141,10 @@ describe("user controller", () => {
     const error = new Error("boom");
     vi.mocked(userService.updateOwnProfile).mockRejectedValue(error);
     const next = vi.fn();
-    const res: any = { status: vi.fn().mockReturnThis(), json: vi.fn().mockReturnThis() };
+    const res: any = {
+      status: vi.fn().mockReturnThis(),
+      json: vi.fn().mockReturnThis(),
+    };
 
     await userController.updateOwnProfile(
       { userId: "user-1", body: { name: "Ada" } } as any,
@@ -152,7 +159,10 @@ describe("user controller", () => {
     const error = new Error("boom");
     vi.mocked(userService.deleteOwnAccount).mockRejectedValue(error);
     const next = vi.fn();
-    const res: any = { status: vi.fn().mockReturnThis(), json: vi.fn().mockReturnThis() };
+    const res: any = {
+      status: vi.fn().mockReturnThis(),
+      json: vi.fn().mockReturnThis(),
+    };
 
     await userController.deleteOwnAccount(
       { userId: "user-1", body: { currentPassword: "password123" } } as any,

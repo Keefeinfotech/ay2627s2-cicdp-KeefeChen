@@ -115,7 +115,8 @@ describe("task repository", () => {
   });
 
   it("creates a task with all optional fields", async () => {
-    const { Task } = await import("../../../../src/modules/tasks/task.model.js");
+    const { Task } =
+      await import("../../../../src/modules/tasks/task.model.js");
     vi.mocked(Task.create).mockResolvedValue({
       toObject: () => ({ _id: "task-1" }),
     } as any);
@@ -149,7 +150,8 @@ describe("task repository", () => {
   });
 
   it("lists tasks with filters, search, date ranges, and sort", async () => {
-    const { Task } = await import("../../../../src/modules/tasks/task.model.js");
+    const { Task } =
+      await import("../../../../src/modules/tasks/task.model.js");
     const findMock = vi.fn().mockReturnValue({
       sort: vi.fn().mockReturnThis(),
       skip: vi.fn().mockReturnThis(),
@@ -158,7 +160,9 @@ describe("task repository", () => {
       exec: vi.fn().mockResolvedValue([]),
     });
     vi.mocked(Task.find).mockImplementation(findMock as any);
-    vi.mocked(Task.countDocuments).mockReturnValue({ exec: vi.fn().mockResolvedValue(0) } as any);
+    vi.mocked(Task.countDocuments).mockReturnValue({
+      exec: vi.fn().mockResolvedValue(0),
+    } as any);
 
     await taskRepository.listForUser("user-1", {
       includeDeleted: true,
@@ -188,7 +192,8 @@ describe("task repository", () => {
   });
 
   it("applies single-value status/priority filters", async () => {
-    const { Task } = await import("../../../../src/modules/tasks/task.model.js");
+    const { Task } =
+      await import("../../../../src/modules/tasks/task.model.js");
     const findMock = vi.fn().mockReturnValue({
       sort: vi.fn().mockReturnThis(),
       skip: vi.fn().mockReturnThis(),
@@ -197,7 +202,9 @@ describe("task repository", () => {
       exec: vi.fn().mockResolvedValue([]),
     });
     vi.mocked(Task.find).mockImplementation(findMock as any);
-    vi.mocked(Task.countDocuments).mockReturnValue({ exec: vi.fn().mockResolvedValue(0) } as any);
+    vi.mocked(Task.countDocuments).mockReturnValue({
+      exec: vi.fn().mockResolvedValue(0),
+    } as any);
 
     await taskRepository.listForUser("user-1", {
       status: "todo" as any,
@@ -210,7 +217,8 @@ describe("task repository", () => {
   });
 
   it("includes expectedUpdatedAt in update filter for compare-and-swap", async () => {
-    const { Task } = await import("../../../../src/modules/tasks/task.model.js");
+    const { Task } =
+      await import("../../../../src/modules/tasks/task.model.js");
     vi.mocked(Task.findOneAndUpdate).mockReturnValue({
       lean: () => ({ exec: async () => ({ _id: "task-1" }) }),
     } as any);

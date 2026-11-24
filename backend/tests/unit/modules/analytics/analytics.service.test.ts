@@ -109,8 +109,14 @@ describe("analyticsService.getWeeklySummary", () => {
       if (f.createdAt) return leanQuery([]); // created==0, completed>0 => rate 1
       if (f.completedAt && f.dueDate) {
         return leanQuery([
-          { completedAt: yesterday, dueDate: new Date(yesterday.getTime() + DAY) }, // on time
-          { completedAt: yesterday, dueDate: new Date(yesterday.getTime() - DAY) }, // late
+          {
+            completedAt: yesterday,
+            dueDate: new Date(yesterday.getTime() + DAY),
+          }, // on time
+          {
+            completedAt: yesterday,
+            dueDate: new Date(yesterday.getTime() - DAY),
+          }, // late
         ]);
       }
       if (f.completedAt) {
@@ -202,16 +208,48 @@ describe("analyticsService.getPrioritySuggestions", () => {
     const now = Date.now();
     mocks.find.mockReturnValue(
       leanQuery([
-        { _id: "t0", title: "Today", priority: "low", status: "todo", dueDate: new Date(now + 2 * 60 * 60 * 1000) },
-        { _id: "t2", title: "Soon", priority: "low", status: "todo", dueDate: new Date(now + 2 * DAY) },
-        { _id: "t7", title: "Week", priority: "low", status: "todo", dueDate: new Date(now + 6 * DAY) },
-        { _id: "t14", title: "Two weeks", priority: "low", status: "todo", dueDate: new Date(now + 10 * DAY) },
-        { _id: "t30", title: "Later", priority: "low", status: "todo", dueDate: new Date(now + 30 * DAY) },
+        {
+          _id: "t0",
+          title: "Today",
+          priority: "low",
+          status: "todo",
+          dueDate: new Date(now + 2 * 60 * 60 * 1000),
+        },
+        {
+          _id: "t2",
+          title: "Soon",
+          priority: "low",
+          status: "todo",
+          dueDate: new Date(now + 2 * DAY),
+        },
+        {
+          _id: "t7",
+          title: "Week",
+          priority: "low",
+          status: "todo",
+          dueDate: new Date(now + 6 * DAY),
+        },
+        {
+          _id: "t14",
+          title: "Two weeks",
+          priority: "low",
+          status: "todo",
+          dueDate: new Date(now + 10 * DAY),
+        },
+        {
+          _id: "t30",
+          title: "Later",
+          priority: "low",
+          status: "todo",
+          dueDate: new Date(now + 30 * DAY),
+        },
       ]),
     );
 
     const result = await analyticsService.getPrioritySuggestions("user-1", 20);
-    const byId = Object.fromEntries(result.suggestions.map((s) => [s.taskId, s]));
+    const byId = Object.fromEntries(
+      result.suggestions.map((s) => [s.taskId, s]),
+    );
 
     expect(byId.t0.suggestedPriority).toBe("urgent");
     expect(byId.t2.suggestedPriority).toBe("high");
