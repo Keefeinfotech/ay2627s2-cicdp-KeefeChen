@@ -1,13 +1,6 @@
-name: Production Deployment
+name: Production Deployment (manual / emergency)
 
 on:
-  # Deploy only after the CI workflow completes successfully on main.
-  # A green CI on main is now the deploy gate; previously deploy ran on every
-  # push regardless of CI outcome.
-  workflow_run:
-    workflows: ["CI"]
-    types: [completed]
-    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -19,32 +12,28 @@ concurrency:
 
 jobs:
   deploy-backend:
-    name: Deploy - Render Production
+    name: Deploy - Render Production (manual)
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    # Scoped here (not workflow-wide) so only the deploy job can write
-    # LAST_GOOD_SHA / trigger rollback.
     permissions:
       contents: read
       actions: write
     environment:
       name: production
       url: ${{ vars.RENDER_API_BASE_URL }}
-    # Manual dispatch always runs; CI-triggered runs only proceed on success.
-    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
-
     steps:
       - name: Checkout merged source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          ref: ${{ github.ref }}
 
       - name: Set up Node.js
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: "22"
 
-      - name: Trigger Render deploy for the exact CI commit
+      - name: Trigger Render deploy for the current commit
         shell: bash
         env:
           RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
@@ -53,9 +42,7 @@ jobs:
           DEPLOYED_COMMIT: ${{ github.sha }}
         run: |
           set -euo pipefail
-          # Preferred path: Deploy API pins the exact SHA that passed CI, so a
-          # newer push racing this workflow cannot change what gets deployed.
-          if [[ -n "$RENDER_API_KEY" && -n "$RENDER_SERVICE_ID" ]]; then
+          if [[ -n "${RENDER_API_KEY:-}" && -n "${RENDER_SERVICE_ID:-}" ]]; then
             status="$(curl --proto "=https" -sS -o /dev/null -w '%{http_code}' \
               -X POST \
               -H "Authorization: Bearer $RENDER_API_KEY" \
@@ -67,11 +54,11 @@ jobs:
               exit 1
             fi
             echo "Requested Render deploy of $DEPLOYED_COMMIT."
-          elif [[ -n "$RENDER_DEPLOY_HOOK_URL" ]]; then
+          elif [[ -n "${RENDER_DEPLOY_HOOK_URL:-}" ]]; then
             curl --proto "=https" -fsSL -X POST "$RENDER_DEPLOY_HOOK_URL"
-            echo "Render deploy hook triggered (fallback: deploys the connected branch HEAD)."
+            echo "Render deploy hook triggered (fallback)."
           else
-            echo "::notice::No RENDER_API_KEY/RENDER_SERVICE_ID or RENDER_DEPLOY_HOOK_URL configured; relying on Render auto-deploy from this push to main."
+            echo "::notice::No deploy credentials configured; relying on platform auto-deploy if enabled."
           fi
 
       - name: Wait for the backend to become healthy
@@ -80,13 +67,10 @@ jobs:
           SMOKE_BASE_URL: ${{ vars.RENDER_API_BASE_URL }}
         run: |
           set -euo pipefail
-          if [[ -z "$SMOKE_BASE_URL" ]]; then
+          if [[ -z "${SMOKE_BASE_URL:-}" ]]; then
             echo "::error::RENDER_API_BASE_URL is not set."
-            echo "::error::Set it to your Render service URL, e.g. https://auxilia-backend.onrender.com"
-            echo "::error::GitHub: Settings > Secrets and variables > Actions > Variables > New repository variable"
             exit 1
           fi
-          # Poll up to 10 minutes (60 x 10s) for a healthy deploy.
           for attempt in $(seq 1 60); do
             code="$(curl --proto "=https" -s -o /dev/null -w '%{http_code}' "$SMOKE_BASE_URL/api/health" || true)"
             echo "health probe ${attempt}/60 -> HTTP ${code:-000}"
@@ -97,11 +81,6 @@ jobs:
             sleep 10
           done
           echo "::error::Backend never returned 200 from $SMOKE_BASE_URL/api/health within 10 minutes."
-          echo "::error::The most likely cause is that the Render service is failing at startup because"
-          echo "::error::required environment variables are not set in the Render dashboard."
-          echo "::error::In Render: Dashboard > your service > Environment > confirm each of the following is set:"
-          echo "::error::  MONGODB_URI, JWT_SECRET (>=16 chars), CORS_ORIGIN, CAPTCHA_ENABLED=true, TURNSTILE_SECRET_KEY,"
-          echo "::error::  and AI_API_KEY if AI_PROVIDER != mock. Also confirm health check path is /api/health."
           exit 1
 
       - name: Run post-deployment smoke checks
@@ -119,7 +98,7 @@ jobs:
           DEPLOYED_COMMIT: ${{ github.sha }}
         run: |
           {
-            echo "## Render Production Deployment"
+            echo "## Render Production Deployment (manual)"
             echo ""
             echo "- Result: $DEPLOYMENT_RESULT"
             echo "- Source commit: $DEPLOYED_COMMIT"
@@ -148,8 +127,8 @@ jobs:
             echo ""
             echo "Deployment or smoke validation failed for $DEPLOYED_COMMIT."
           } >> "$GITHUB_STEP_SUMMARY"
-          if [[ -z "$LAST_GOOD_SHA" || "$LAST_GOOD_SHA" == "$DEPLOYED_COMMIT" ]]; then
-            echo "::error::No earlier LAST_GOOD_SHA is recorded. Roll back manually via Render's Deploys page and set the LAST_GOOD_SHA variable."
+          if [[ -z "${LAST_GOOD_SHA:-}" || "$LAST_GOOD_SHA" == "$DEPLOYED_COMMIT" ]]; then
+            echo "::error::No earlier LAST_GOOD_SHA is recorded. Roll back manually."
             exit 1
           fi
           echo "Triggering rollback to $LAST_GOOD_SHA."
@@ -157,8 +136,8 @@ jobs:
             --repo "$GITHUB_REPOSITORY" \
             --field commit_sha="$LAST_GOOD_SHA" \
             --field environment=production \
-            --field reason="Automatic rollback after failed deploy of $DEPLOYED_COMMIT"
+            --field reason="Automatic rollback after failed manual deploy of $DEPLOYED_COMMIT"
           {
             echo ""
-            echo "Automatic rollback to $LAST_GOOD_SHA requested. Verify with the Rollback Production run and the smoke suite."
+            echo "Automatic rollback requested to $LAST_GOOD_SHA."
           } >> "$GITHUB_STEP_SUMMARY"

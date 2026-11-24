@@ -207,18 +207,18 @@ flowchart TD
 
 ---
 
-## 8) Recommended implementation mapping (to existing repo workflows)
+## 8) Implementation mapping (current repo workflows)
 
-| Target stage | Current repo touchpoints (today) | Recommended direction |
+| Area | Workflow(s) | Notes |
 |---|---|---|
-| CI validation | `.github/workflows/ci.yml` | **Keep as-is** (preserve stages/gates). |
-| Release trigger + artifacts | `.github/workflows/release.yml` | Extend into **Release Workflow** (or orchestrate) so tag/release also drives staging→prod promotion of the same SHA, while keeping artifact/SBOM/provenance publishing. |
-| Staging deploy/verify | `.github/workflows/promote.yml` (staging path) | Reuse as callable jobs/steps inside Release Workflow with strict “same SHA” input. |
-| Production CD | `.github/workflows/deploy-production.yml` (triggered after CI on main) | **Integrate** into Release Workflow after approval; reduce reliance on “deploy-after-CI-on-main” as the only prod path for releases (keep as emergency/hotfix policy if documented). |
-| Rollback | `.github/workflows/rollback.yml` | Keep as manual + called by automated recovery steps in Release Workflow. |
-| Immutable images | `.github/workflows/publish-image.yml` | Continue publishing SHA-tagged images/digests for promotion. |
+| CI validation | `.github/workflows/ci.yml` | Preserved quality/security gates (unchanged in purpose). |
+| **Combined Release + CD (tag-driven)** | `.github/workflows/release.yml` | On `v*.*.*`: verify/build/package → publish GitHub Release (SBOM/provenance) → **deploy staging** (same SHA) → smoke → **deploy production** after **`production` environment approval** → smoke → record `LAST_GOOD_SHA` / auto-rollback on failure. |
+| Manual staging/prod promotion (ad hoc) | `.github/workflows/promote.yml` | Still available for explicit SHA promotions outside the tag release flow. |
+| Emergency / manual production deploy | `.github/workflows/deploy-production.yml` | **`workflow_dispatch` only** (no automatic deploy on CI success on `main` in the integrated release model). |
+| Rollback | `.github/workflows/rollback.yml` | Manual and callable from automated recovery steps. |
+| Immutable images | `.github/workflows/publish-image.yml` | Publishes SHA/tagged images; can support digest-based promotion. |
 
-> **Note:** This document defines the **target architecture and process**. Workflow YAML refactoring should be done in a follow-up change with environment protection rules, secrets audit, and a staging rehearsal (per `docs/deployment/CICD_CONFIGURATION.md`).
+> Operational requirement: configure GitHub Environments `staging` and `production` with required secrets/vars and (for `production`) required reviewers so the integrated release pipeline enforces approval before production CD.
 
 ---
 

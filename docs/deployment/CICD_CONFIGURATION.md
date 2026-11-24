@@ -34,12 +34,13 @@ Environment-scoped values override repository-scoped ones, so staging and produc
 
 ## 3. Deploy paths (current)
 
-1. `CI` passes on `main` → `deploy-production.yml` deploys `github.sha` via Render Deploy API (falls back to hook), polls `/api/health`, runs `scripts/smoke-test.mjs`, records `LAST_GOOD_SHA`. On failure it may trigger `rollback.yml` using `LAST_GOOD_SHA`.
-2. `promote.yml` deploys an explicit SHA to a selected environment (`staging` or `production`) with environment-scoped settings, then health-checks and smokes.
+1. **Combined Release + CD (recommended for releases):** push tag `vX.Y.Z` → `.github/workflows/release.yml` runs verify/build/package → publishes GitHub Release (SBOM/provenance) → deploys the same SHA to **staging** → smoke → **production deploy after `production` Environment approval** → smoke → records `LAST_GOOD_SHA` / auto-rollback on failure.
+2. `promote.yml` deploys an explicit SHA to a selected environment (`staging` or `production`) with environment-scoped settings (ad hoc/manual promotion).
 3. `rollback.yml` restores a specified good SHA to an environment with verification.
-4. `publish-image.yml` builds immutable SHA-tagged GHCR images to support artifact promotion.
+4. `publish-image.yml` builds immutable SHA-tagged GHCR images to support artifact/digest promotion.
+5. `.github/workflows/deploy-production.yml` is **manual only** (`workflow_dispatch`) for emergency use (does not auto-run on CI success on `main`).
 
-**Target (integrated Release Workflow):** a tagged (or approved RC) release orchestrates artifact promotion → staging deploy + verification → **approval gate** → **production CD** → post-deploy verification → rollback/recovery, using the same promoted SHA/digest throughout. See [RELEASE_WORKFLOW_INTEGRATED.md](./RELEASE_WORKFLOW_INTEGRATED.md).
+See [RELEASE_WORKFLOW_INTEGRATED.md](./RELEASE_WORKFLOW_INTEGRATED.md) for the full target/stage model.
 
 ## 4. First-time verification (staging + rollback rehearsal)
 
