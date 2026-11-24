@@ -94,6 +94,46 @@ describe("analyticsService.getWeeklySummary", () => {
     expect(analyticsService.getWeeklySummary).toBeDefined();
     expect(summary.weeks).toHaveLength(52);
   });
+
+  it("computes completion rates, on-time/late, and streak branches", async () => {
+    const now = new Date();
+    const today = new Date(now);
+    today.setHours(12, 0, 0, 0);
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const twoDaysAgo = new Date(today);
+    twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
+
+    mocks.find.mockImplementation((filter: unknown) => {
+      const f = filter as Record<string, unknown>;
+      if (f.createdAt) return leanQuery([]); // created==0, completed>0 => rate 1
+      if (f.completedAt && f.dueDate) {
+        return leanQuery([
+          { completedAt: yesterday, dueDate: new Date(yesterday.getTime() + DAY) }, // on time
+          { completedAt: yesterday, dueDate: new Date(yesterday.getTime() - DAY) }, // late
+        ]);
+      }
+      if (f.completedAt) {
+        return leanQuery([
+          { completedAt: today },
+          { completedAt: yesterday },
+          { completedAt: twoDaysAgo },
+        ]);
+      }
+      return leanQuery([]);
+    });
+    mocks.countDocuments.mockResolvedValue(3);
+
+    const summary = await analyticsService.getWeeklySummary("user-1", 4);
+
+    expect(summary.totals.created).toBe(0);
+    expect(summary.totals.completed).toBe(3);
+    expect(summary.totals.completionRate).toBe(1);
+    expect(summary.totals.completedOnTime).toBe(1);
+    expect(summary.totals.completedLate).toBe(1);
+    expect(summary.totals.overdueOpen).toBe(3);
+    expect(summary.currentStreakDays).toBeGreaterThanOrEqual(2);
+  });
 });
 
 describe("analyticsService.getPrioritySuggestions", () => {

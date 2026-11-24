@@ -225,4 +225,23 @@ describe("task controller", () => {
 
     expect(res.status).toHaveBeenCalledWith(401);
   });
+
+  it("propagates service errors to next", async () => {
+    const error = new Error("boom");
+    vi.mocked(taskService.listTasks).mockRejectedValue(error);
+    vi.mocked(taskService.getTask).mockRejectedValue(error);
+    vi.mocked(taskService.updateTask).mockRejectedValue(error);
+    vi.mocked(taskService.deleteTask).mockRejectedValue(error);
+    const next = vi.fn();
+    const res: any = { status: vi.fn().mockReturnThis(), json: vi.fn().mockReturnThis(), send: vi.fn().mockReturnThis() };
+    const taskId = "550e8400-e29b-41d4-a716-446655440000";
+
+    await taskController.list({ userId: "u1", query: {} } as any, res, next);
+    await taskController.getById({ userId: "u1", params: { taskId } } as any, res, next);
+    await taskController.update({ userId: "u1", params: { taskId }, body: { title: "x" } } as any, res, next);
+    await taskController.remove({ userId: "u1", params: { taskId } } as any, res, next);
+
+    expect(next).toHaveBeenCalledWith(error);
+    expect(next).toHaveBeenCalledTimes(4);
+  });
 });
