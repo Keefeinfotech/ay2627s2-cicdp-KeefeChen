@@ -177,6 +177,7 @@ describe("Auxilia-API provider verification (Pact)", () => {
     });
 
     // Rejects with the mismatch report when the contract is not met.
-    await verifier.verifyProvider();
+    const verificationResult = await verifier.verifyProvider();
+    expect(verificationResult).toBeTruthy();
   }, 120_000);
 });
