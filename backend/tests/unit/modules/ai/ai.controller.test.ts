@@ -22,7 +22,6 @@ import {
 } from "../../../../src/modules/ai/ai.service.js";
 import { taskService } from "../../../../src/modules/tasks/task.service.js";
 
-
 const ok = () => ({
   status: vi.fn().mockReturnThis(),
   json: vi.fn().mockReturnThis(),
