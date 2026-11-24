@@ -6,13 +6,17 @@ import 'package:frontend/core/widgets/app_loading.dart';
 import 'package:frontend/core/widgets/app_snackbar.dart';
 import 'package:frontend/core/widgets/app_status_badge.dart';
 import 'package:frontend/features/authentication/models/session.dart';
+import 'package:frontend/features/calendar/data/calendar_preferences_store.dart';
 import 'package:frontend/features/calendar/data/datasources/calendar_api_data_source.dart';
 import 'package:frontend/features/calendar/data/models/calendar_event.dart';
 import 'package:frontend/features/calendar/data/repositories/calendar_repository.dart';
 import 'package:frontend/features/calendar/domain/usecases/analyze_schedule.dart';
 import 'package:frontend/features/calendar/presentation/controllers/calendar_controller.dart';
+import 'package:frontend/features/calendar/presentation/models/calendar_skin.dart';
+import 'package:frontend/features/calendar/presentation/widgets/calendar_appearance_dialog.dart';
 import 'package:frontend/features/calendar/presentation/widgets/calendar_event_editor.dart';
 import 'package:frontend/features/calendar/presentation/widgets/calendar_views.dart';
+import 'package:frontend/features/calendar/presentation/widgets/day_mark_picker.dart';
 import 'package:frontend/features/calendar/presentation/widgets/schedule_optimization_banner.dart';
 import 'package:frontend/features/home/data/api_task_repository.dart';
 import 'package:frontend/features/home/data/task_store.dart';
@@ -29,12 +33,14 @@ class CalendarPage extends StatefulWidget {
     this.store,
     this.session,
     this.api,
+    this.preferencesStore,
   });
 
   final String ownerId;
   final TaskStore? store;
   final Session? session;
   final ApiClient? api;
+  final CalendarPreferencesStore? preferencesStore;
 
   @override
   State<CalendarPage> createState() => _CalendarPageState();
@@ -43,12 +49,20 @@ class CalendarPage extends StatefulWidget {
 class _CalendarPageState extends State<CalendarPage> {
   late final TaskStore _store;
   late final bool _ownsStore;
+  late final CalendarPreferencesStore _preferences;
+  late final bool _ownsPreferences;
   late final CalendarController _controller;
 
   @override
   void initState() {
     super.initState();
     _ownsStore = widget.store == null;
+    _ownsPreferences = widget.preferencesStore == null;
+    _preferences =
+        widget.preferencesStore ??
+        CalendarPreferencesStore(ownerId: widget.ownerId);
+    _preferences.addListener(_changed);
+    if (!_preferences.isLoaded) _preferences.load();
     _store =
         widget.store ??
         TaskStore(repository: ApiTaskRepository(), ownerId: widget.ownerId);
@@ -70,8 +84,10 @@ class _CalendarPageState extends State<CalendarPage> {
   void dispose() {
     _controller.removeListener(_changed);
     _store.removeListener(_storeChanged);
+    _preferences.removeListener(_changed);
     _controller.dispose();
     if (_ownsStore) _store.dispose();
+    if (_ownsPreferences) _preferences.dispose();
     super.dispose();
   }
 
@@ -86,6 +102,29 @@ class _CalendarPageState extends State<CalendarPage> {
 
   void _snack(String message, {AppSnackType type = AppSnackType.info}) {
     AppSnackBar.show(context, message, type: type);
+  }
+
+  Future<void> _openAppearance() async {
+    final saved = await showCalendarAppearanceDialog(context, _preferences);
+    if (saved && mounted) _snack('Calendar appearance updated.');
+  }
+
+  Future<void> _openMarkPicker(DateTime date) async {
+    final current = _preferences.preferences.markFor(date);
+    final mark = await showDayMarkPicker(
+      context: context,
+      date: date,
+      current: current,
+      skin: _preferences.preferences.skin,
+    );
+    if (mark == null || !mounted) return;
+    await _preferences.setMark(date, mark);
+    if (!mounted) return;
+    _snack(
+      mark == CalendarMark.none
+          ? 'Day mark removed.'
+          : 'Day marked ${mark.label.toLowerCase()}.',
+    );
   }
 
   Future<void> _addEvent(DateTime date) async {
@@ -154,67 +193,78 @@ class _CalendarPageState extends State<CalendarPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AuxiliaAppBar(
-        title: 'Calendar',
-        subtitle: 'Plan deadlines, events and focus time',
-        actions: <Widget>[
-          IconButton(
-            tooltip: 'Add event',
-            onPressed: () => _addEvent(_controller.focusDate),
-            icon: const Icon(Icons.add_rounded),
-          ),
-          IconButton(
-            tooltip: 'Refresh calendar',
-            onPressed: _controller.isLoading ? null : _controller.load,
-            icon: const Icon(Icons.refresh_rounded),
-          ),
-        ],
-      ),
-      body: SafeArea(
-        bottom: false,
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 1120),
-            child: RefreshIndicator(
-              onRefresh: _controller.retry,
-              child: ListView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.fromLTRB(
-                  AppSpacing.lg,
-                  AppSpacing.lg,
-                  AppSpacing.lg,
-                  AppSpacing.xxl,
-                ),
-                children: <Widget>[
-                  _buildToolbar(context),
-                  const SizedBox(height: AppSpacing.lg),
-                  if (_controller.warning != null) ...<Widget>[
-                    _WarningBanner(
-                      message: _controller.warning!,
-                      onDismiss: _controller.dismissWarning,
-                    ),
-                    const SizedBox(height: AppSpacing.md),
-                  ],
-                  if (_controller.error != null) ...<Widget>[
-                    AppErrorBanner(
-                      message: _controller.error!,
-                      onRetry: _controller.retry,
-                      onDismiss: null,
-                    ),
-                    const SizedBox(height: AppSpacing.md),
-                  ],
-                  if (_controller.isLoading && !_controller.hasLoaded)
-                    const _CalendarSkeleton()
-                  else ...<Widget>[
-                    ScheduleOptimizationBanner(
-                      analysis: _controller.analysis,
-                      onReview: _reviewSchedule,
-                    ),
+    // Skins are applied to this subtree only; the rest of Auxilia keeps the
+    // application theme. The picker and mark sheet inherit it automatically.
+    final skin = _preferences.preferences.skin;
+    return Theme(
+      data: skin.themeFor(Theme.of(context)),
+      child: Scaffold(
+        appBar: AuxiliaAppBar(
+          title: 'Calendar',
+          subtitle: 'Plan deadlines, events and focus time',
+          actions: <Widget>[
+            IconButton(
+              tooltip: 'Customize calendar appearance',
+              onPressed: _openAppearance,
+              icon: const Icon(Icons.palette_outlined),
+            ),
+            IconButton(
+              tooltip: 'Add event',
+              onPressed: () => _addEvent(_controller.focusDate),
+              icon: const Icon(Icons.add_rounded),
+            ),
+            IconButton(
+              tooltip: 'Refresh calendar',
+              onPressed: _controller.isLoading ? null : _controller.load,
+              icon: const Icon(Icons.refresh_rounded),
+            ),
+          ],
+        ),
+        body: SafeArea(
+          bottom: false,
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 1120),
+              child: RefreshIndicator(
+                onRefresh: _controller.retry,
+                child: ListView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.lg,
+                    AppSpacing.lg,
+                    AppSpacing.lg,
+                    AppSpacing.xxl,
+                  ),
+                  children: <Widget>[
+                    _buildToolbar(context),
                     const SizedBox(height: AppSpacing.lg),
-                    _buildCalendarBody(context),
+                    if (_controller.warning != null) ...<Widget>[
+                      _WarningBanner(
+                        message: _controller.warning!,
+                        onDismiss: _controller.dismissWarning,
+                      ),
+                      const SizedBox(height: AppSpacing.md),
+                    ],
+                    if (_controller.error != null) ...<Widget>[
+                      AppErrorBanner(
+                        message: _controller.error!,
+                        onRetry: _controller.retry,
+                        onDismiss: null,
+                      ),
+                      const SizedBox(height: AppSpacing.md),
+                    ],
+                    if (_controller.isLoading && !_controller.hasLoaded)
+                      const _CalendarSkeleton()
+                    else ...<Widget>[
+                      ScheduleOptimizationBanner(
+                        analysis: _controller.analysis,
+                        onReview: _reviewSchedule,
+                      ),
+                      const SizedBox(height: AppSpacing.lg),
+                      _buildCalendarBody(context),
+                    ],
                   ],
-                ],
+                ),
               ),
             ),
           ),
@@ -354,6 +404,8 @@ class _CalendarPageState extends State<CalendarPage> {
           onSelectDate: _controller.selectDate,
           onEventTap: _openEvent,
           onCreate: _addEvent,
+          preferences: _preferences.preferences,
+          onMarkDate: _openMarkPicker,
         );
       case CalendarViewMode.monthly:
         return MonthlyCalendarView(
@@ -363,6 +415,8 @@ class _CalendarPageState extends State<CalendarPage> {
           onSelectDate: _controller.selectDate,
           onEventTap: _openEvent,
           onCreate: _addEvent,
+          preferences: _preferences.preferences,
+          onMarkDate: _openMarkPicker,
         );
     }
   }
@@ -444,7 +498,7 @@ class _WarningBanner extends StatelessWidget {
         children: <Widget>[
           const Icon(
             Icons.cloud_off_outlined,
-            color: Color(0xFFD97706),
+            color: AppColors.warningAmber,
             size: 20,
           ),
           const SizedBox(width: AppSpacing.sm),

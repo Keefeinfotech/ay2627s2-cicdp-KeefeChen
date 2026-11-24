@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_empty_state.dart';
 import '../../../../core/widgets/app_status_badge.dart';
 import '../../data/models/calendar_event.dart';
 import '../../domain/usecases/analyze_schedule.dart';
+import '../models/calendar_skin.dart';
 import 'calendar_event_card.dart';
+
+/// Warning accent derived from the active palette so skins stay consistent.
+Color _warningColor(ColorScheme scheme) =>
+    Color.lerp(scheme.error, scheme.tertiary, 0.35) ?? scheme.error;
 
 const List<String> _weekdayShort = <String>[
   'Mon',
@@ -120,9 +124,9 @@ class DailyCalendarView extends StatelessWidget {
                   icon: Icons.warning_amber_rounded,
                 ),
               if (day.isOverloaded)
-                const StatusBadge(
+                StatusBadge(
                   label: 'Heavy day',
-                  color: AppColors.warningAmber,
+                  color: _warningColor(scheme),
                   icon: Icons.local_fire_department_outlined,
                 ),
               TextButton.icon(
@@ -266,6 +270,8 @@ class WeeklyCalendarView extends StatelessWidget {
     required this.onSelectDate,
     required this.onEventTap,
     required this.onCreate,
+    this.preferences = const CalendarPreferences(),
+    this.onMarkDate,
   });
 
   final List<CalendarDaySummary> days;
@@ -273,6 +279,8 @@ class WeeklyCalendarView extends StatelessWidget {
   final ValueChanged<DateTime> onSelectDate;
   final ValueChanged<CalendarEvent> onEventTap;
   final ValueChanged<DateTime> onCreate;
+  final CalendarPreferences preferences;
+  final ValueChanged<DateTime>? onMarkDate;
 
   @override
   Widget build(BuildContext context) {
@@ -312,6 +320,11 @@ class WeeklyCalendarView extends StatelessWidget {
                   child: _WeekColumn(
                     day: days[index],
                     selected: _sameDate(days[index].date, selectedDate),
+                    mark: preferences.markFor(days[index].date),
+                    skin: preferences.skin,
+                    onMark: onMarkDate == null
+                        ? null
+                        : () => onMarkDate!(days[index].date),
                     onSelect: () => onSelectDate(days[index].date),
                     onEventTap: onEventTap,
                     onCreate: () => onCreate(days[index].date),
@@ -328,6 +341,9 @@ class WeeklyCalendarView extends StatelessWidget {
               _WeekDayCard(
                 day: day,
                 selected: _sameDate(day.date, selectedDate),
+                mark: preferences.markFor(day.date),
+                skin: preferences.skin,
+                onMark: onMarkDate == null ? null : () => onMarkDate!(day.date),
                 onSelect: () => onSelectDate(day.date),
                 onEventTap: onEventTap,
                 onCreate: () => onCreate(day.date),
@@ -348,16 +364,22 @@ class _WeekColumn extends StatelessWidget {
   const _WeekColumn({
     required this.day,
     required this.selected,
+    required this.mark,
+    required this.skin,
     required this.onSelect,
     required this.onEventTap,
     required this.onCreate,
+    this.onMark,
   });
 
   final CalendarDaySummary day;
   final bool selected;
+  final CalendarMark mark;
+  final CalendarSkin skin;
   final VoidCallback onSelect;
   final ValueChanged<CalendarEvent> onEventTap;
   final VoidCallback onCreate;
+  final VoidCallback? onMark;
 
   @override
   Widget build(BuildContext context) {
@@ -400,6 +422,14 @@ class _WeekColumn extends StatelessWidget {
                     color: selected ? scheme.primary : null,
                   ),
                 ),
+                if (onMark != null) ...<Widget>[
+                  const SizedBox(width: AppSpacing.xs),
+                  _DayMarkButton(
+                    mark: mark,
+                    color: skin.markColor(mark, scheme),
+                    onTap: onMark!,
+                  ),
+                ],
               ],
             ),
             const SizedBox(height: AppSpacing.xs),
@@ -413,12 +443,12 @@ class _WeekColumn extends StatelessWidget {
                 ),
               )
             else if (day.isOverloaded)
-              const Padding(
-                padding: EdgeInsets.only(bottom: AppSpacing.xs),
+              Padding(
+                padding: const EdgeInsets.only(bottom: AppSpacing.xs),
                 child: Icon(
                   Icons.local_fire_department_outlined,
                   size: 14,
-                  color: AppColors.warningAmber,
+                  color: _warningColor(scheme),
                 ),
               ),
             if (day.events.isEmpty)
@@ -470,16 +500,22 @@ class _WeekDayCard extends StatelessWidget {
   const _WeekDayCard({
     required this.day,
     required this.selected,
+    required this.mark,
+    required this.skin,
     required this.onSelect,
     required this.onEventTap,
     required this.onCreate,
+    this.onMark,
   });
 
   final CalendarDaySummary day;
   final bool selected;
+  final CalendarMark mark;
+  final CalendarSkin skin;
   final VoidCallback onSelect;
   final ValueChanged<CalendarEvent> onEventTap;
   final VoidCallback onCreate;
+  final VoidCallback? onMark;
 
   @override
   Widget build(BuildContext context) {
@@ -556,10 +592,16 @@ class _WeekDayCard extends StatelessWidget {
                       icon: Icons.warning_amber_rounded,
                     )
                   else if (day.isOverloaded)
-                    const StatusBadge(
+                    StatusBadge(
                       label: 'Heavy',
-                      color: AppColors.warningAmber,
+                      color: _warningColor(scheme),
                       icon: Icons.local_fire_department_outlined,
+                    ),
+                  if (onMark != null)
+                    _DayMarkButton(
+                      mark: mark,
+                      color: skin.markColor(mark, scheme),
+                      onTap: onMark!,
                     ),
                   IconButton(
                     tooltip:
@@ -606,6 +648,8 @@ class MonthlyCalendarView extends StatelessWidget {
     required this.onSelectDate,
     required this.onEventTap,
     required this.onCreate,
+    this.preferences = const CalendarPreferences(),
+    this.onMarkDate,
   });
 
   final DateTime focusDate;
@@ -614,6 +658,8 @@ class MonthlyCalendarView extends StatelessWidget {
   final ValueChanged<DateTime> onSelectDate;
   final ValueChanged<CalendarEvent> onEventTap;
   final ValueChanged<DateTime> onCreate;
+  final CalendarPreferences preferences;
+  final ValueChanged<DateTime>? onMarkDate;
 
   @override
   Widget build(BuildContext context) {
@@ -684,7 +730,13 @@ class MonthlyCalendarView extends StatelessWidget {
                         summary: summary,
                         selected: _sameDate(date, selectedDate),
                         today: _sameDate(date, DateTime.now()),
+                        mark: preferences.markFor(date),
+                        skin: preferences.skin,
+                        squareStyle: preferences.squareStyle,
                         onTap: () => onSelectDate(date),
+                        onMark: onMarkDate == null
+                            ? null
+                            : () => onMarkDate!(date),
                       );
                     },
                   ),
@@ -714,33 +766,70 @@ class _MonthCell extends StatelessWidget {
     required this.summary,
     required this.selected,
     required this.today,
+    required this.mark,
+    required this.skin,
+    required this.squareStyle,
     required this.onTap,
+    this.onMark,
   });
 
   final DateTime date;
   final CalendarDaySummary summary;
   final bool selected;
   final bool today;
+  final CalendarMark mark;
+  final CalendarSkin skin;
+  final CalendarSquareStyle squareStyle;
   final VoidCallback onTap;
+  final VoidCallback? onMark;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
+    final radius = BorderRadius.circular(squareStyle.radius);
+    final markColor = skin.markColor(mark, scheme);
+
+    // Every day gets its own tile so days are visually separable, even when
+    // they have no events and no mark.
+    final Color fill;
+    final Color foreground;
+    if (selected) {
+      fill = scheme.primary;
+      foreground = scheme.onPrimary;
+    } else if (mark.isMarked) {
+      fill = markColor.withValues(alpha: skin.isDark ? 0.24 : 0.16);
+      foreground = scheme.onSurface;
+    } else if (summary.isOverloaded) {
+      fill = _warningColor(scheme).withValues(alpha: 0.14);
+      foreground = scheme.onSurface;
+    } else {
+      fill = scheme.surfaceContainerHighest.withValues(
+        alpha: skin.isDark ? 0.35 : 0.55,
+      );
+      foreground = scheme.onSurface;
+    }
+
+    final border = Border.all(
+      color: selected || today
+          ? scheme.primary
+          : mark.isMarked
+          ? markColor.withValues(alpha: 0.7)
+          : scheme.outlineVariant.withValues(alpha: 0.8),
+      width: selected || today ? 1.6 : 1,
+    );
 
     return Padding(
-      padding: const EdgeInsets.all(2),
+      padding: const EdgeInsets.all(2.5),
       child: Material(
-        color: selected
-            ? scheme.primary
-            : summary.isOverloaded
-            ? AppColors.warningTint.withValues(alpha: 0.55)
-            : Colors.transparent,
-        borderRadius: BorderRadius.circular(AppRadius.sm),
+        color: fill,
+        borderRadius: radius,
         clipBehavior: Clip.antiAlias,
         child: InkWell(
           onTap: onTap,
-          child: Padding(
+          onLongPress: onMark,
+          child: Container(
+            decoration: BoxDecoration(borderRadius: radius, border: border),
             padding: const EdgeInsets.all(4),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -753,6 +842,9 @@ class _MonthCell extends StatelessWidget {
                       alignment: Alignment.center,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
+                        color: today && !selected
+                            ? scheme.primary.withValues(alpha: 0.14)
+                            : null,
                         border: today && !selected
                             ? Border.all(color: scheme.primary, width: 1.4)
                             : null,
@@ -764,7 +856,7 @@ class _MonthCell extends StatelessWidget {
                           fontWeight: today || selected
                               ? FontWeight.w700
                               : FontWeight.w500,
-                          color: selected ? scheme.onPrimary : null,
+                          color: foreground,
                         ),
                       ),
                     ),
@@ -773,42 +865,102 @@ class _MonthCell extends StatelessWidget {
                       Icon(
                         Icons.warning_amber_rounded,
                         size: 12,
-                        color: selected ? scheme.onPrimary : scheme.error,
+                        color: selected ? foreground : scheme.error,
                       )
                     else if (summary.isOverloaded)
                       Icon(
                         Icons.local_fire_department_outlined,
                         size: 12,
-                        color: selected
-                            ? scheme.onPrimary
-                            : AppColors.warningAmber,
+                        color: selected ? foreground : _warningColor(scheme),
                       ),
                   ],
                 ),
                 const Spacer(),
-                if (summary.events.isNotEmpty)
-                  Wrap(
-                    spacing: 2,
-                    runSpacing: 2,
-                    children: <Widget>[
-                      for (final event in summary.events.take(3))
-                        Container(
-                          width: 5,
-                          height: 5,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: selected
-                                ? scheme.onPrimary
-                                : event.isCompleted
-                                ? AppColors.successGreen
-                                : event.priority == CalendarEventPriority.urgent
-                                ? scheme.error
-                                : scheme.primary,
-                          ),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: <Widget>[
+                    if (summary.events.isNotEmpty)
+                      Expanded(
+                        child: Wrap(
+                          spacing: 2,
+                          runSpacing: 2,
+                          children: <Widget>[
+                            for (final event in summary.events.take(3))
+                              Container(
+                                width: 5,
+                                height: 5,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: selected
+                                      ? foreground
+                                      : event.isCompleted
+                                      ? scheme.tertiary
+                                      : event.priority ==
+                                            CalendarEventPriority.urgent
+                                      ? scheme.error
+                                      : scheme.primary,
+                                ),
+                              ),
+                          ],
                         ),
-                    ],
-                  ),
+                      )
+                    else
+                      const Spacer(),
+                    if (onMark != null)
+                      _DayMarkButton(
+                        mark: mark,
+                        color: markColor,
+                        onTap: onMark!,
+                      ),
+                  ],
+                ),
               ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Small, tappable flag in the corner of a day square.
+class _DayMarkButton extends StatelessWidget {
+  const _DayMarkButton({
+    required this.mark,
+    required this.color,
+    required this.onTap,
+  });
+
+  final CalendarMark mark;
+  final Color color;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      label: mark.isMarked ? 'Change ${mark.label} mark' : 'Mark this day',
+      child: Tooltip(
+        message: mark.isMarked ? mark.label : 'Mark day',
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(6),
+          child: Container(
+            width: 18,
+            height: 18,
+            decoration: BoxDecoration(
+              color: mark.isMarked
+                  ? color.withValues(alpha: 0.20)
+                  : Colors.transparent,
+              borderRadius: BorderRadius.circular(5),
+              border: Border.all(
+                color: color.withValues(alpha: mark.isMarked ? 1 : 0.5),
+              ),
+            ),
+            child: Icon(
+              mark.icon,
+              size: 11,
+              color: color.withValues(alpha: mark.isMarked ? 1 : 0.7),
             ),
           ),
         ),

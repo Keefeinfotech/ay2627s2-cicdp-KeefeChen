@@ -4,7 +4,7 @@ The workflows are fully versioned, but a few settings live in GitHub/Render and
 must be configured once before the pipeline is operational. This is the single
 checklist for a new environment.
 
-> **Target architecture (enterprise):** Auxilia is moving to an **integrated Release Workflow** where **Production CD is a stage inside the release pipeline** (trigger → artifact promotion → staging deploy/verify → approval gate → production CD → post-deploy verify → rollback). See [RELEASE_WORKFLOW_INTEGRATED.md](./RELEASE_WORKFLOW_INTEGRATED.md) for the full design, stages, responsibilities, and Mermaid diagram. The “Deploy paths (current)” section below describes today’s automation split; the integrated model is the planned end state.
+> **Target architecture (enterprise):** Auxilia is moving to an **integrated Release Workflow** where **Production CD is a stage inside the release pipeline** (trigger → artifact promotion → staging deploy/verify → approval gate → production CD → post-deploy verify → rollback). See [RELEASE_WORKFLOW_INTEGRATED.md](./RELEASE_WORKFLOW_INTEGRATED.md) for the full design, stages, responsibilities, and Mermaid diagram.
 
 ## 1. Repository settings
 
@@ -22,7 +22,8 @@ and no force-push/deletion on `main` and `develop`.
 | Scope | Name | Purpose |
 |---|---|---|
 | Repository variable | `FRONTEND_API_BASE_URL` | API origin baked into published web images (defaults to the production backend URL) |
-| Repository variable | `LAST_GOOD_SHA` | Written automatically by current deploy workflows; do not set manually except during incident recovery |
+| Repository variable | `TURNSTILE_SITE_KEY` | Public site key passed to the web image build (empty disables CAPTCHA locally) |
+| Repository variable | `LAST_GOOD_SHA` | Written automatically by deploy workflows; do not set manually except during incident recovery |
 | Repository secret | `RENDER_API_KEY` | Optional; required for exact-SHA deploys. Grant deploy permission only. |
 | Environment `production` variable | `RENDER_SERVICE_ID` | Backend service id for the Deploy API |
 | Environment `production` variable | `RENDER_API_BASE_URL` | Public health/smoke target |

@@ -18,6 +18,8 @@ jobs:
     permissions:
       contents: read
       actions: write
+    env:
+      DEPLOYED_COMMIT: ${{ github.sha }}
     environment:
       name: production
       url: ${{ vars.RENDER_API_BASE_URL }}
@@ -33,13 +35,13 @@ jobs:
         with:
           node-version: "22"
 
-      - name: Trigger Render deploy for the current commit
+      - name: Trigger Render deploy for the exact commit
+        id: trigger_render
         shell: bash
         env:
           RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
           RENDER_SERVICE_ID: ${{ vars.RENDER_SERVICE_ID }}
           RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
-          DEPLOYED_COMMIT: ${{ github.sha }}
         run: |
           set -euo pipefail
           if [[ -n "${RENDER_API_KEY:-}" && -n "${RENDER_SERVICE_ID:-}" ]]; then
@@ -62,6 +64,7 @@ jobs:
           fi
 
       - name: Wait for the backend to become healthy
+        id: wait_health
         shell: bash
         env:
           SMOKE_BASE_URL: ${{ vars.RENDER_API_BASE_URL }}
@@ -84,6 +87,7 @@ jobs:
           exit 1
 
       - name: Run post-deployment smoke checks
+        id: smoke
         shell: bash
         env:
           SMOKE_BASE_URL: ${{ vars.RENDER_API_BASE_URL }}
@@ -95,7 +99,6 @@ jobs:
         if: always()
         env:
           DEPLOYMENT_RESULT: ${{ job.status }}
-          DEPLOYED_COMMIT: ${{ github.sha }}
         run: |
           {
             echo "## Render Production Deployment (manual)"
@@ -106,21 +109,36 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Persist last good SHA
+        id: persist_last_good
         if: success()
         env:
-          GH_TOKEN: ${{ github.token }}
-          DEPLOYED_COMMIT: ${{ github.sha }}
+          GH_VARIABLES_TOKEN: ${{ secrets.GH_VARIABLES_TOKEN }}
         run: |
           set -euo pipefail
-          gh variable set LAST_GOOD_SHA --body "$DEPLOYED_COMMIT" --repo "$GITHUB_REPOSITORY"
-          echo "Recorded $DEPLOYED_COMMIT as LAST_GOOD_SHA."
+          if [[ -z "${GH_VARIABLES_TOKEN:-}" ]]; then
+            echo "::notice::GH_VARIABLES_TOKEN is not configured. Skipping LAST_GOOD_SHA persistence; automatic rollback will be unavailable until configured."
+            echo "persisted=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if GH_TOKEN="$GH_VARIABLES_TOKEN" gh variable set LAST_GOOD_SHA \
+            --body "$DEPLOYED_COMMIT" \
+            --repo "$GITHUB_REPOSITORY"; then
+            echo "Recorded $DEPLOYED_COMMIT as LAST_GOOD_SHA."
+            echo "persisted=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning::Could not persist LAST_GOOD_SHA. Automatic rollback unavailable for this deployment."
+            echo "persisted=false" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Auto-rollback on failed deploy or smoke check
-        if: failure()
+        if: >-
+          failure() &&
+          (steps.trigger_render.outcome == 'failure' ||
+           steps.wait_health.outcome == 'failure' ||
+           steps.smoke.outcome == 'failure')
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ secrets.GH_VARIABLES_TOKEN || github.token }}
           LAST_GOOD_SHA: ${{ vars.LAST_GOOD_SHA }}
-          DEPLOYED_COMMIT: ${{ github.sha }}
         run: |
           set -euo pipefail
           {
@@ -128,8 +146,12 @@ jobs:
             echo "Deployment or smoke validation failed for $DEPLOYED_COMMIT."
           } >> "$GITHUB_STEP_SUMMARY"
           if [[ -z "${LAST_GOOD_SHA:-}" || "$LAST_GOOD_SHA" == "$DEPLOYED_COMMIT" ]]; then
-            echo "::error::No earlier LAST_GOOD_SHA is recorded. Roll back manually."
-            exit 1
+            echo "::warning::No earlier LAST_GOOD_SHA is recorded. Roll back manually via Render Deploys page."
+            {
+              echo ""
+              echo "No last-good SHA available; automatic rollback skipped."
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 0
           fi
           echo "Triggering rollback to $LAST_GOOD_SHA."
           gh workflow run rollback.yml \
@@ -139,5 +161,27 @@ jobs:
             --field reason="Automatic rollback after failed manual deploy of $DEPLOYED_COMMIT"
           {
             echo ""
-            echo "Automatic rollback requested to $LAST_GOOD_SHA."
+            echo "Automatic rollback to $LAST_GOOD_SHA requested."
           } >> "$GITHUB_STEP_SUMMARY"
+
+  zap-baseline:
+    name: DAST - OWASP ZAP (production, advisory)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: [deploy-backend]
+    if: ${{ needs.deploy-backend.result == 'success' }}
+    continue-on-error: true
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Run ZAP baseline against the deployed API
+        uses: zaproxy/action-baseline@de8ad967d3548d44ef623df22cf95c3b0baf8b25 # v0.15.0
+        with:
+          target: ${{ vars.RENDER_API_BASE_URL }}/api/health
+          rules_file_name: .zap/rules.tsv
+          cmd_options: '-a -i'
+          allow_issue_writing: false
+        continue-on-error: true

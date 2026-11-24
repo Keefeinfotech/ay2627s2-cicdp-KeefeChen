@@ -96,6 +96,14 @@ abstract final class AppTheme {
 
   static ThemeData dark() => _build(_darkScheme, AppColors.darkCanvas);
 
+  /// Builds the full component theme for a custom palette.
+  ///
+  /// Used by the calendar skins: reusing [_build] keeps buttons, chips,
+  /// segmented controls and dialogs consistent with the selected palette
+  /// instead of only recolouring `colorScheme`.
+  static ThemeData fromScheme(ColorScheme scheme, Color canvas) =>
+      _build(scheme, canvas);
+
   static ThemeData _build(ColorScheme scheme, Color canvas) {
     final bool isLight = scheme.brightness == Brightness.light;
     final TextTheme textTheme = AppTypography.textTheme(scheme);
@@ -233,7 +241,7 @@ abstract final class AppTheme {
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
           elevation: 2,
-          shadowColor: AppColors.saffron.withValues(alpha: 0.35),
+          shadowColor: scheme.primary.withValues(alpha: 0.35),
           backgroundColor: scheme.primary,
           foregroundColor: scheme.onPrimary,
           disabledBackgroundColor: scheme.primary.withValues(alpha: 0.35),
@@ -279,7 +287,7 @@ abstract final class AppTheme {
           foregroundColor: isLight
               ? AppColors.clearBlueText
               : AppColors.darkBlue,
-          minimumSize: const Size(0, 44),
+          minimumSize: const Size(0, AppSizes.touchTarget),
           padding: const EdgeInsets.symmetric(
             horizontal: AppSpacing.md,
             vertical: AppSpacing.sm,
@@ -293,7 +301,7 @@ abstract final class AppTheme {
       iconButtonTheme: IconButtonThemeData(
         style: IconButton.styleFrom(
           foregroundColor: scheme.onSurfaceVariant,
-          minimumSize: const Size(44, 44),
+          minimumSize: const Size(AppSizes.touchTarget, AppSizes.touchTarget),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppRadius.sm),
           ),

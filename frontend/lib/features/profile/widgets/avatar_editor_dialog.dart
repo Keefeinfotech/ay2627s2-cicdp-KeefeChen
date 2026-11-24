@@ -1,4 +1,7 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../../core/models/avatar_style.dart';
 import '../../../core/theme/app_spacing.dart';
@@ -46,6 +49,30 @@ class _AvatarEditorDialogState extends State<AvatarEditorDialog> {
     await widget.store.save(_draft);
     if (!mounted) return;
     Navigator.of(context).pop(true);
+  }
+
+  Future<void> _pickPhoto() async {
+    try {
+      final picked = await ImagePicker().pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 512,
+        maxHeight: 512,
+        imageQuality: 85,
+      );
+      if (picked == null || !mounted) return;
+      final bytes = await picked.readAsBytes();
+      if (!mounted) return;
+      setState(() {
+        _draft = _draft.copyWith(imageData: base64Encode(bytes), glyph: null);
+      });
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Could not read that photo. Try another image.'),
+        ),
+      );
+    }
   }
 
   @override
@@ -109,23 +136,37 @@ class _AvatarEditorDialogState extends State<AvatarEditorDialog> {
               Wrap(
                 spacing: AppSpacing.xs,
                 runSpacing: AppSpacing.xs,
+                crossAxisAlignment: WrapCrossAlignment.center,
                 children: <Widget>[
                   ChoiceChip(
                     label: const Text('Initials'),
-                    selected: !_draft.usesGlyph,
+                    selected: !_draft.usesImage && !_draft.usesGlyph,
                     showCheckmark: false,
-                    onSelected: (_) =>
-                        setState(() => _draft = _draft.copyWith(glyph: null)),
-                  ),
-                  for (final glyph in AvatarStyle.glyphChoices)
-                    ChoiceChip(
-                      label: Text(glyph, style: const TextStyle(fontSize: 18)),
-                      selected: _draft.glyph == glyph,
-                      showCheckmark: false,
-                      tooltip: 'Use $glyph',
-                      onSelected: (_) => setState(
-                        () => _draft = _draft.copyWith(glyph: glyph),
+                    onSelected: (_) => setState(
+                      () => _draft = _draft.copyWith(
+                        imageData: null,
+                        glyph: null,
                       ),
+                    ),
+                  ),
+                  ChoiceChip(
+                    avatar: const Icon(
+                      Icons.add_photo_alternate_outlined,
+                      size: 18,
+                    ),
+                    label: const Text('Photo'),
+                    selected: _draft.usesImage,
+                    showCheckmark: false,
+                    tooltip: 'Upload a photo from your device',
+                    onSelected: (_) => _pickPhoto(),
+                  ),
+                  if (_draft.usesImage)
+                    TextButton.icon(
+                      onPressed: () => setState(
+                        () => _draft = _draft.copyWith(imageData: null),
+                      ),
+                      icon: const Icon(Icons.delete_outline, size: 18),
+                      label: const Text('Remove photo'),
                     ),
                 ],
               ),

@@ -12,6 +12,11 @@ export const findUserByEmail = async (
 export const findUserById = async (userId: string): Promise<IUser | null> =>
   User.findById(userId).exec();
 
+export const findUserByIdWithPassword = async (
+  userId: string,
+): Promise<IUser | null> =>
+  User.findById(userId).select("+passwordHash").exec();
+
 export const findUserByResetTokenHash = async (
   tokenHash: string,
 ): Promise<IUser | null> =>

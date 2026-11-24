@@ -1,8 +1,10 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../features/admin/presentation/pages/admin_dashboard_page.dart';
 import '../../features/assistant/presentation/pages/assistant_page.dart';
 import '../../features/authentication/models/session.dart';
+import '../../features/calendar/data/calendar_preferences_store.dart';
 import '../../features/calendar/presentation/pages/calendar_page.dart';
 import '../../features/groups/presentation/pages/groups_page.dart';
 import '../../features/home/data/api_task_repository.dart';
@@ -135,6 +137,7 @@ class _AppShellState extends State<AppShell> {
   late final TaskStore _store;
   late final bool _ownsStore;
   late final AvatarStore _avatarStore;
+  late final CalendarPreferencesStore _calendarPreferences;
   late final BackgroundSyncHandler _backgroundSync;
   final Map<ShellDestination, Widget> _pages = <ShellDestination, Widget>{};
   ShellDestination _selected = ShellDestination.home;
@@ -165,6 +168,8 @@ class _AppShellState extends State<AppShell> {
     _backgroundSync = BackgroundSyncHandler(store: _store)..start();
     _avatarStore = AvatarStore(ownerId: widget.ownerId);
     _avatarStore.load();
+    _calendarPreferences = CalendarPreferencesStore(ownerId: widget.ownerId);
+    _calendarPreferences.load();
     _pages[ShellDestination.home] = _buildPage(ShellDestination.home);
   }
 
@@ -172,6 +177,7 @@ class _AppShellState extends State<AppShell> {
   void dispose() {
     _backgroundSync.dispose();
     _avatarStore.dispose();
+    _calendarPreferences.dispose();
     if (_ownsStore) _store.dispose();
     super.dispose();
   }
@@ -204,6 +210,7 @@ class _AppShellState extends State<AppShell> {
         ownerId: widget.ownerId,
         store: _store,
         session: widget.session,
+        preferencesStore: _calendarPreferences,
       ),
       ShellDestination.assistant => AssistantPage(
         ownerId: widget.ownerId,
@@ -311,8 +318,16 @@ class _AppShellState extends State<AppShell> {
   @override
   Widget build(BuildContext context) {
     final width = MediaQuery.sizeOf(context).width;
+    // Desktop browsers never get the phone frame: a narrow window (or docked
+    // DevTools) must not collapse the whole shell to a bottom navigation bar.
+    // Mobile web/native keep the responsive phone behaviour.
+    final bool isDesktopTarget =
+        defaultTargetPlatform != TargetPlatform.android &&
+        defaultTargetPlatform != TargetPlatform.iOS &&
+        defaultTargetPlatform != TargetPlatform.fuchsia;
     final bool showSidebar = width >= _sidebarBreakpoint;
-    final bool showRail = !showSidebar && width >= _railBreakpoint;
+    final bool showRail =
+        !showSidebar && (width >= _railBreakpoint || isDesktopTarget);
     final bool compactPhones = width < _compactPhoneBreakpoint;
 
     // The sync strip sits above every page so a queued or conflicted change is

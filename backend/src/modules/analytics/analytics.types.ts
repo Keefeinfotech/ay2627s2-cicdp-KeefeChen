@@ -28,6 +28,42 @@ export interface ProductivitySummary {
   generatedAt: string;
 }
 
+export interface DayBucket {
+  date: string;
+  created: number;
+  completed: number;
+}
+
+export interface MonthBucket {
+  month: string;
+  created: number;
+  completed: number;
+}
+
+export interface OverdueTask {
+  taskId: string;
+  title: string;
+  priority: string;
+  dueDate: string;
+  daysOverdue: number;
+}
+
+export interface AnalyticsOverview {
+  totalTasks: number;
+  active: number;
+  completed: number;
+  overdueOpen: number;
+  completionRate: number;
+  createdThisWeek: number;
+  completedThisWeek: number;
+}
+
+export interface ProductivityOverviewSummary {
+  overview: AnalyticsOverview;
+  streakDays: number;
+  generatedAt: string;
+}
+
 export type SuggestedPriority = "low" | "medium" | "high" | "urgent";
 
 export interface PrioritySuggestion {

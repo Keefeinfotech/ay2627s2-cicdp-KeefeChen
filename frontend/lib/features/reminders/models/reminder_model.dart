@@ -29,7 +29,7 @@ class ReminderModel {
 
 ReminderModel _$ReminderModelFromJson(Map<String, dynamic> json) =>
     ReminderModel(
-      id: json['id'] as String,
+      id: (json['id'] ?? json['_id']) as String,
       message: json['message'] as String,
       dueAt: DateTime.parse(json['dueAt'] as String),
       completed: json['completed'] as bool,
