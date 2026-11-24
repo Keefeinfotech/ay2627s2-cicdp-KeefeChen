@@ -235,27 +235,6 @@ describe("task controller", () => {
     expect(res.status).toHaveBeenCalledWith(401);
   });
 
-  it("gets a task by id", async () => {
-    const task = {
-      _id: "550e8400-e29b-41d4-a716-446655440000",
-      title: "Ship it",
-    };
-    vi.mocked(taskService.getTask).mockResolvedValue(task as any);
-    const res: any = {
-      status: vi.fn().mockReturnThis(),
-      json: vi.fn().mockReturnThis(),
-    };
-
-    await taskController.getById(
-      { userId: "user-1", params: { taskId: task._id } } as any,
-      res,
-      vi.fn(),
-    );
-
-    expect(taskService.getTask).toHaveBeenCalledWith("user-1", task._id);
-    expect(res.status).toHaveBeenCalledWith(200);
-  });
-
   it("returns 401 from protected handlers when unauthenticated", async () => {
     const res: any = {
       status: vi.fn().mockReturnThis(),

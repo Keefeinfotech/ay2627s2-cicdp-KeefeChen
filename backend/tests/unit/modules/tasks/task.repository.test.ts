@@ -149,7 +149,7 @@ describe("task repository", () => {
     );
   });
 
-  it("lists tasks with filters, search, date ranges, and sort", async () => {
+  const mockTaskList = async () => {
     const { Task } =
       await import("../../../../src/modules/tasks/task.model.js");
     const findMock = vi.fn().mockReturnValue({
@@ -163,6 +163,11 @@ describe("task repository", () => {
     vi.mocked(Task.countDocuments).mockReturnValue({
       exec: vi.fn().mockResolvedValue(0),
     } as any);
+    return { Task, findMock };
+  };
+
+  it("lists tasks with filters, search, date ranges, and sort", async () => {
+    const { findMock } = await mockTaskList();
 
     await taskRepository.listForUser("user-1", {
       includeDeleted: true,
@@ -192,19 +197,7 @@ describe("task repository", () => {
   });
 
   it("applies single-value status/priority filters", async () => {
-    const { Task } =
-      await import("../../../../src/modules/tasks/task.model.js");
-    const findMock = vi.fn().mockReturnValue({
-      sort: vi.fn().mockReturnThis(),
-      skip: vi.fn().mockReturnThis(),
-      limit: vi.fn().mockReturnThis(),
-      lean: vi.fn().mockReturnThis(),
-      exec: vi.fn().mockResolvedValue([]),
-    });
-    vi.mocked(Task.find).mockImplementation(findMock as any);
-    vi.mocked(Task.countDocuments).mockReturnValue({
-      exec: vi.fn().mockResolvedValue(0),
-    } as any);
+    const { findMock } = await mockTaskList();
 
     await taskRepository.listForUser("user-1", {
       status: "todo" as any,

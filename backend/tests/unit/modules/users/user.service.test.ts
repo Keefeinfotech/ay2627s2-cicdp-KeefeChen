@@ -17,22 +17,30 @@ import { userService } from "../../../../src/modules/users/user.service.js";
 import { userRepository } from "../../../../src/modules/users/user.repository.js";
 
 describe("user service", () => {
+  const baseUser = {
+    _id: "user-1",
+    name: "Ada",
+    email: "ada@example.com",
+    role: "user",
+    status: "active",
+    emailVerifiedAt: null,
+    lastLoginAt: null,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  };
+  const pwUser = {
+    _id: "user-1",
+    status: "active",
+    deletedAt: null,
+    passwordHash:
+      "$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy",
+  };
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
   it("returns the authenticated user's profile", async () => {
-    const user = {
-      _id: "user-1",
-      name: "Ada",
-      email: "ada@example.com",
-      role: "user",
-      status: "active",
-      emailVerifiedAt: null,
-      lastLoginAt: null,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
+    const user = { ...baseUser };
     vi.mocked(userRepository.findById).mockResolvedValue(user as any);
 
     const result = await userService.getOwnProfile("user-1");
@@ -62,17 +70,7 @@ describe("user service", () => {
   });
 
   it("updates the user's profile", async () => {
-    const user = {
-      _id: "user-1",
-      name: "Ada",
-      email: "ada@example.com",
-      role: "user",
-      status: "active",
-      emailVerifiedAt: null,
-      lastLoginAt: null,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
+    const user = { ...baseUser };
     vi.mocked(userRepository.updateOwnProfile).mockResolvedValue(user as any);
 
     const result = await userService.updateOwnProfile("user-1", {
@@ -97,17 +95,7 @@ describe("user service", () => {
   });
 
   it("returns a public summary", async () => {
-    const user = {
-      _id: "user-1",
-      name: "Ada",
-      email: "ada@example.com",
-      role: "user",
-      status: "active",
-      emailVerifiedAt: null,
-      lastLoginAt: null,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
+    const user = { ...baseUser };
     vi.mocked(userRepository.findById).mockResolvedValue(user as any);
 
     const result = await userService.getPublicSummary("user-1");
@@ -143,13 +131,7 @@ describe("user service", () => {
   });
 
   it("deactivates an account with the correct password", async () => {
-    const user = {
-      _id: "user-1",
-      status: "active",
-      deletedAt: null,
-      passwordHash:
-        "$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy",
-    };
+    const user = { ...pwUser };
     vi.mocked(userRepository.findByIdWithPassword).mockResolvedValue(
       user as any,
     );
@@ -181,13 +163,7 @@ describe("user service", () => {
   });
 
   it("throws INVALID_PASSWORD when the password is wrong", async () => {
-    const user = {
-      _id: "user-1",
-      status: "active",
-      deletedAt: null,
-      passwordHash:
-        "$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy",
-    };
+    const user = { ...pwUser };
     vi.mocked(userRepository.findByIdWithPassword).mockResolvedValue(
       user as any,
     );
@@ -204,13 +180,7 @@ describe("user service", () => {
   });
 
   it("throws ACCOUNT_DEACTIVATION_CONFLICT when deactivation fails", async () => {
-    const user = {
-      _id: "user-1",
-      status: "active",
-      deletedAt: null,
-      passwordHash:
-        "$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy",
-    };
+    const user = { ...pwUser };
     vi.mocked(userRepository.findByIdWithPassword).mockResolvedValue(
       user as any,
     );
