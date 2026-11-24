@@ -27,8 +27,7 @@ class RemindersScreen extends StatelessWidget {
           ? AppEmptyState(
               icon: Icons.notifications_outlined,
               title: 'Reminders live with your tasks',
-              message:
-                  'Open a task to add, edit, or snooze its reminder. Due reminders also appear in-app while you use Auxilia.',
+              message: 'Open a task to add, edit, or snooze its reminder. Due reminders also appear in-app while you use Auxilia.',
               action: FilledButton.icon(
                 onPressed: () => Navigator.pushNamedAndRemoveUntil(
                   context,
@@ -42,12 +41,9 @@ class RemindersScreen extends StatelessWidget {
           : AnimatedBuilder(
               animation: taskStore,
               builder: (context, _) {
-                final reminders = taskStore.tasks
-                    .where((t) => t.reminderAt != null)
-                    .toList()
-                  ..sort(
-                    (a, b) => a.reminderAt!.compareTo(b.reminderAt!),
-                  );
+                final reminders =
+                    taskStore.tasks.where((t) => t.reminderAt != null).toList()
+                      ..sort((a, b) => a.reminderAt!.compareTo(b.reminderAt!));
                 if (reminders.isEmpty) {
                   return AppEmptyState(
                     icon: Icons.notifications_outlined,
@@ -122,9 +118,8 @@ class _SectionHeader extends StatelessWidget {
       children: [
         Text(
           title,
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
+          style: Theme.of(context).textTheme.titleMedium
+              ?.copyWith(fontWeight: FontWeight.w700),
         ),
         const SizedBox(width: 8),
         Container(
@@ -135,10 +130,8 @@ class _SectionHeader extends StatelessWidget {
           ),
           child: Text(
             '$count',
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: color,
-                  fontWeight: FontWeight.w700,
-                ),
+            style: Theme.of(context).textTheme.labelSmall
+                ?.copyWith(color: color, fontWeight: FontWeight.w700),
           ),
         ),
       ],
@@ -165,15 +158,9 @@ class _ReminderTile extends StatelessWidget {
               : Icons.notifications_active_outlined,
           color: isDone ? theme.colorScheme.outline : theme.colorScheme.primary,
         ),
-        title: Text(
-          task.title,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
+        title: Text(task.title, maxLines: 1, overflow: TextOverflow.ellipsis),
         subtitle: Text(_formatDate(due)),
-        trailing: isDone
-            ? const Chip(label: Text('Done'))
-            : null,
+        trailing: isDone ? const Chip(label: Text('Done')) : null,
       ),
     );
   }
