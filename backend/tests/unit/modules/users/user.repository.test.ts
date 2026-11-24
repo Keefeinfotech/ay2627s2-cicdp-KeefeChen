@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 vi.mock("../../../../src/modules/users/user.model.js", () => ({
   User: {
     create: vi.fn(),
+    find: vi.fn(),
     findOne: vi.fn(),
     exists: vi.fn(),
     findOneAndUpdate: vi.fn(),
@@ -73,6 +74,18 @@ describe("user repository", () => {
     vi.mocked(User.exists).mockResolvedValue({ _id: "user-1" } as any);
 
     await expect(userRepository.existsByEmail("ada@example.com")).resolves.toBe(true);
+    vi.mocked(User.exists).mockResolvedValue(null as any);
+    await expect(userRepository.existsByEmail("none@example.com")).resolves.toBe(false);
+  });
+
+  it("finds users by ids and returns empty for empty input", async () => {
+    const { User } = await import("../../../../src/modules/users/user.model.js");
+    vi.mocked(User.find).mockReturnValue({
+      lean: () => ({ exec: async () => [{ _id: "u1" }] }),
+    } as any);
+
+    await expect(userRepository.findByIds([])).resolves.toEqual([]);
+    await expect(userRepository.findByIds(["u1"])).resolves.toEqual([{ _id: "u1" }]);
   });
 
   it("updates a user's profile", async () => {

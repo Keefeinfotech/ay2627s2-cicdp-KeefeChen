@@ -76,4 +76,32 @@ describe("sync controller", () => {
       data: result,
     });
   });
+
+  it("defaults since to epoch when cursor is omitted", async () => {
+    vi.mocked(syncService.getChangesSince).mockResolvedValue(result);
+    const req = { userId: "user-1", query: {} } as unknown as Request;
+    const res = response();
+
+    await controller.getChanges(req, res, next);
+
+    expect(syncService.getChangesSince).toHaveBeenCalledWith(
+      "user-1",
+      new Date(0),
+    );
+    expect(res.status).toHaveBeenCalledWith(200);
+  });
+
+  it("rejects a non-string cursor", async () => {
+    const req = {
+      userId: "user-1",
+      query: { since: ["2026-11-01T00:00:00.000Z"] },
+    } as unknown as Request;
+    const res = response();
+
+    await controller.getChanges(req, res, next);
+
+    expect(next).toHaveBeenCalledWith(
+      expect.objectContaining({ status: 400, code: "INVALID_SINCE" }),
+    );
+  });
 });

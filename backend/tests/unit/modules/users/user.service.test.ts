@@ -122,6 +122,24 @@ describe("user service", () => {
       status: 404,
       code: "USER_NOT_FOUND",
     });
+
+    vi.mocked(userRepository.findById).mockResolvedValue({
+      _id: "user-1",
+      status: "disabled",
+    } as any);
+
+    await expect(userService.getPublicSummary("user-1")).rejects.toMatchObject({
+      status: 404,
+      code: "USER_NOT_FOUND",
+    });
+  });
+
+  it("throws USER_NOT_FOUND when deleting a missing or inactive account", async () => {
+    vi.mocked(userRepository.findByIdWithPassword).mockResolvedValue(null);
+
+    await expect(
+      userService.deleteOwnAccount("user-1", "password123"),
+    ).rejects.toMatchObject({ status: 404, code: "USER_NOT_FOUND" });
   });
 
   it("deactivates an account with the correct password", async () => {

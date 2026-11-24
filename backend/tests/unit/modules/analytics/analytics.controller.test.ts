@@ -114,6 +114,26 @@ describe("analytics controller", () => {
     expect(analyticsService.getWeeklySummary).not.toHaveBeenCalled();
   });
 
+  it("rejects unauthenticated priority suggestion requests", async () => {
+    const res = ok();
+    await analyticsController.prioritySuggestions(
+      { query: {} } as never,
+      res as never,
+      vi.fn() as never,
+    );
+    expect(res.status).toHaveBeenCalledWith(401);
+  });
+
+  it("rejects unauthenticated apply requests", async () => {
+    const res = ok();
+    await analyticsController.applyPrioritySuggestions(
+      {} as never,
+      res as never,
+      vi.fn() as never,
+    );
+    expect(res.status).toHaveBeenCalledWith(401);
+  });
+
   it("propagates service errors", async () => {
     const error = new Error("boom");
     vi.mocked(analyticsService.getWeeklySummary).mockRejectedValue(error);
@@ -125,6 +145,30 @@ describe("analytics controller", () => {
       next as never,
     );
 
+    expect(next).toHaveBeenCalledWith(error);
+  });
+
+  it("propagates priority suggestion errors", async () => {
+    const error = new Error("boom");
+    vi.mocked(analyticsService.getPrioritySuggestions).mockRejectedValue(error);
+    const next = vi.fn();
+    await analyticsController.prioritySuggestions(
+      { userId: "user-1", query: {} } as never,
+      ok() as never,
+      next as never,
+    );
+    expect(next).toHaveBeenCalledWith(error);
+  });
+
+  it("propagates apply errors", async () => {
+    const error = new Error("boom");
+    vi.mocked(analyticsService.applyPrioritySuggestions).mockRejectedValue(error);
+    const next = vi.fn();
+    await analyticsController.applyPrioritySuggestions(
+      { userId: "user-1" } as never,
+      ok() as never,
+      next as never,
+    );
     expect(next).toHaveBeenCalledWith(error);
   });
 });
