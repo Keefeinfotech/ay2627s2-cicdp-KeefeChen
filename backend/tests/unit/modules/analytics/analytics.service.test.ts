@@ -4,17 +4,28 @@ const mocks = vi.hoisted(() => {
   const find = vi.fn();
   const countDocuments = vi.fn();
   const updateOne = vi.fn();
+  const cacheGetJson = vi.fn();
+  const cacheSetJson = vi.fn();
 
   return {
     find,
     countDocuments,
     updateOne,
+    cacheGetJson,
+    cacheSetJson,
     Task: { find, countDocuments, updateOne },
   };
 });
 
 vi.mock("../../../../src/modules/tasks/task.model.js", () => ({
   Task: mocks.Task,
+}));
+
+vi.mock("../../../../src/shared/utils/cache.js", () => ({
+  cacheGetJson: mocks.cacheGetJson,
+  cacheSetJson: mocks.cacheSetJson,
+  cacheDel: vi.fn(),
+  cacheDelByPattern: vi.fn(),
 }));
 
 import { analyticsService } from "../../../../src/modules/analytics/analytics.service.js";
@@ -27,6 +38,63 @@ function leanQuery(result: unknown) {
 }
 
 const DAY = 24 * 60 * 60 * 1000;
+
+describe("analyticsService.getWeeklySummary", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.cacheGetJson.mockResolvedValue(null);
+    mocks.cacheSetJson.mockResolvedValue(undefined);
+  });
+
+  it("serves the summary from cache when available", async () => {
+    const cached = { weeks: [], totals: { created: 0 } };
+    mocks.cacheGetJson.mockResolvedValue(cached);
+
+    await expect(
+      analyticsService.getWeeklySummary("user-1", 4),
+    ).resolves.toEqual(cached);
+
+    expect(mocks.find).not.toHaveBeenCalled();
+    expect(mocks.cacheSetJson).not.toHaveBeenCalled();
+  });
+
+  it("computes weekly buckets and totals", async () => {
+    const now = new Date();
+    mocks.find.mockImplementation((filter: unknown) => {
+      const f = filter as Record<string, unknown>;
+      if (f.createdAt) {
+        return leanQuery([{ createdAt: new Date(now.getTime() - 2 * DAY) }]);
+      }
+      if (f.completedAt) {
+        return leanQuery([]);
+      }
+      if (f.status) {
+        // Overdue open tasks count query.
+        return { select: vi.fn(), lean: vi.fn() };
+      }
+      return leanQuery([]);
+    });
+    mocks.countDocuments.mockResolvedValue(1);
+
+    const summary = await analyticsService.getWeeklySummary("user-1", 2);
+
+    expect(summary.weeks).toHaveLength(2);
+    expect(summary.totals.created).toBe(1);
+    expect(summary.totals.completed).toBe(0);
+    expect(summary.currentStreakDays).toBe(0);
+    expect(mocks.cacheSetJson).toHaveBeenCalled();
+  });
+
+  it("clamps weeks into the supported range", async () => {
+    mocks.find.mockReturnValue(leanQuery([]));
+    mocks.countDocuments.mockResolvedValue(0);
+
+    const summary = await analyticsService.getWeeklySummary("user-1", 999);
+
+    expect(analyticsService.getWeeklySummary).toBeDefined();
+    expect(summary.weeks).toHaveLength(52);
+  });
+});
 
 describe("analyticsService.getPrioritySuggestions", () => {
   beforeEach(() => {
