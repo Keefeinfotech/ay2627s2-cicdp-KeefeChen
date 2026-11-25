@@ -79,7 +79,7 @@ void main() {
 
     await tester.tap(find.descendant(of: nav, matching: find.text('Tasks')));
     await tester.pumpAndSettle();
-    expect(find.text('Quick add'), findsOneWidget);
+    expect(find.text('New Task'), findsOneWidget);
 
     // Pages are created lazily and remain offstage when not selected.
     expect(find.text('How can I help?'), findsNothing);
@@ -91,10 +91,49 @@ void main() {
 
     await tester.tap(find.descendant(of: nav, matching: find.text('Profile')));
     await tester.pumpAndSettle();
-    expect(find.text('Account, progress and local data'), findsOneWidget);
+    expect(find.text('Guest workspace'), findsOneWidget);
 
     // Offstage pages do not leak their content into the active finder set.
-    expect(find.text('Quick add'), findsNothing);
+    expect(find.text('New Task'), findsNothing);
+  });
+
+  testWidgets('shell surfaces due reminders in the compact header', (
+    tester,
+  ) async {
+    _setSize(tester, const Size(1280, 900));
+    final store = _store(
+      seed: <Task>[
+        makeTask(
+          id: 'reminder',
+          title: 'Hand in assignment',
+          reminderAt: DateTime.now().subtract(const Duration(minutes: 1)),
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(_app(store));
+    await tester.pumpAndSettle();
+
+    // The redesign replaces stacked banners with one header indicator.
+    expect(find.byTooltip('1 reminder'), findsOneWidget);
+    expect(find.text('Reminder: Hand in assignment'), findsNothing);
+
+    await tester.tap(find.byTooltip('1 reminder'));
+    await tester.pumpAndSettle();
+    final dialog = find.byType(AlertDialog);
+    expect(dialog, findsOneWidget);
+    expect(
+      find.descendant(of: dialog, matching: find.text('Reminders')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: dialog, matching: find.text('Hand in assignment')),
+      findsOneWidget,
+    );
+
+    await tester.tap(find.descendant(of: dialog, matching: find.text('Close')));
+    await tester.pumpAndSettle();
+    expect(find.byType(AlertDialog), findsNothing);
   });
 
   testWidgets('tablet shell uses a rail with every destination', (
@@ -139,11 +178,11 @@ void main() {
 
     await tester.tap(find.text('Tasks'));
     await tester.pumpAndSettle();
-    expect(find.text('Quick add'), findsOneWidget);
+    expect(find.text('New Task'), findsOneWidget);
 
     await tester.tap(find.text('Profile'));
     await tester.pumpAndSettle();
-    expect(find.text('Account, progress and local data'), findsOneWidget);
+    expect(find.text('Guest workspace'), findsOneWidget);
   });
 
   testWidgets('Introduction can be revisited from About Auxilia', (
@@ -160,9 +199,11 @@ void main() {
     await tester.tap(find.text('Profile'));
     await tester.pumpAndSettle();
 
-    expect(find.text('ABOUT AUXILIA'), findsOneWidget);
+    // Profile uses a lazy ListView, so scroll the section into view before
+    // expecting its widgets to be built.
     await tester.drag(find.byType(ListView).first, const Offset(0, -1400));
     await tester.pumpAndSettle();
+    expect(find.text('ABOUT AUXILIA'), findsOneWidget);
     await tester.tap(find.text('Introduction'));
     await tester.pumpAndSettle();
 
@@ -174,6 +215,8 @@ void main() {
     await tester.tap(find.text('Skip'));
     await tester.pumpAndSettle();
 
+    await tester.drag(find.byType(ListView).first, const Offset(0, -1400));
+    await tester.pumpAndSettle();
     expect(find.text('ABOUT AUXILIA'), findsOneWidget);
     final prefs = await SharedPreferences.getInstance();
     expect(prefs.getBool(OnboardingStore.storageKey), isTrue);

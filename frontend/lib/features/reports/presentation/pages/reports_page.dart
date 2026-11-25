@@ -8,12 +8,10 @@ import 'package:frontend/features/reports/presentation/controllers/reports_contr
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
-import '../../../../core/widgets/app_app_bar.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_empty_state.dart';
 import '../../../../core/widgets/app_status_badge.dart';
 import '../../../../core/widgets/progress_ring.dart';
-import '../../../../core/widgets/responsive_page_layout.dart';
 import '../widgets/report_charts.dart';
 
 /// Progress reporting surface built from live task data.
@@ -56,17 +54,6 @@ class _ReportsPageState extends State<ReportsPage> {
       animation: _controller,
       builder: (context, _) {
         return Scaffold(
-          appBar: AuxiliaAppBar(
-            title: 'Reports',
-            subtitle: 'Progress at a glance',
-            actions: <Widget>[
-              IconButton(
-                tooltip: 'Refresh reports',
-                onPressed: _controller.isLoading ? null : _controller.refresh,
-                icon: const Icon(Icons.refresh_rounded),
-              ),
-            ],
-          ),
           body: SafeArea(
             bottom: false,
             child: Center(
@@ -202,9 +189,9 @@ class _ReportsPageState extends State<ReportsPage> {
           return Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              Expanded(flex: 3, child: activity),
+              Expanded(flex: 7, child: activity),
               const SizedBox(width: AppSpacing.lg),
-              Expanded(flex: 2, child: priority),
+              Expanded(flex: 5, child: priority),
             ],
           );
         },
@@ -222,66 +209,84 @@ class _ReportsPageState extends State<ReportsPage> {
         ? AppColors.successGreen
         : AppColors.trustBlue;
 
-    return ResponsiveGrid(
-      minItemWidth: 168,
-      spacing: AppSpacing.md,
-      runSpacing: AppSpacing.md,
-      children: <Widget>[
-        _ReportKpiCard(
-          icon: Icons.donut_large_outlined,
-          label: 'Completion rate',
-          value: '${(rate * 100).round()}%',
-          caption: 'of ${snapshot.totalTasks} in view',
-          color: rateColor,
-          ringValue: rate,
-        ),
-        _ReportKpiCard(
-          icon: Icons.task_alt_outlined,
-          label: 'Completed',
-          value: '${snapshot.completedTasks}',
-          caption: '${snapshot.completedInPeriod} finished in period',
-          color: AppColors.successGreen,
-        ),
-        _ReportKpiCard(
-          icon: Icons.pending_actions_outlined,
-          label: 'Still open',
-          value: '${snapshot.pendingTasks}',
-          caption: '${snapshot.createdInPeriod} created in period',
-        ),
-        _ReportKpiCard(
-          icon: Icons.warning_amber_outlined,
-          label: 'Overdue',
-          value: '${snapshot.overdueTasks}',
-          caption: snapshot.overdueTasks == 0
-              ? 'nothing past due'
-              : 'need attention',
-          color: snapshot.overdueTasks > 0 ? AppColors.errorRed : null,
-        ),
-        _ReportKpiCard(
-          icon: Icons.calendar_today_outlined,
-          label: 'Focus days',
-          value: '${snapshot.focusDays}',
-          caption: 'active days in period',
-        ),
-        _ReportKpiCard(
-          icon: Icons.local_fire_department_outlined,
-          label: 'Current streak',
-          value: '${snapshot.currentStreak}',
-          caption: snapshot.currentStreak == 1
-              ? 'day in a row'
-              : 'days in a row',
-          color: snapshot.currentStreak > 0 ? AppColors.warningAmber : null,
-        ),
-      ],
+    final cards = <Widget>[
+      _ReportKpiCard(
+        icon: Icons.donut_large_outlined,
+        label: 'Completion rate',
+        value: '${(rate * 100).round()}%',
+        caption: 'of ${snapshot.totalTasks} in view',
+        color: rateColor,
+        ringValue: rate,
+      ),
+      _ReportKpiCard(
+        icon: Icons.task_alt_outlined,
+        label: 'Completed',
+        value: '${snapshot.completedTasks}',
+        caption: '${snapshot.completedInPeriod} finished in period',
+        color: AppColors.successGreen,
+      ),
+      _ReportKpiCard(
+        icon: Icons.pending_actions_outlined,
+        label: 'Still open',
+        value: '${snapshot.pendingTasks}',
+        caption: '${snapshot.createdInPeriod} created in period',
+      ),
+      _ReportKpiCard(
+        icon: Icons.warning_amber_outlined,
+        label: 'Overdue',
+        value: '${snapshot.overdueTasks}',
+        caption: snapshot.overdueTasks == 0
+            ? 'nothing past due'
+            : 'need attention',
+        color: snapshot.overdueTasks > 0 ? AppColors.errorRed : null,
+      ),
+      _ReportKpiCard(
+        icon: Icons.calendar_today_outlined,
+        label: 'Focus days',
+        value: '${snapshot.focusDays}',
+        caption: 'active days in period',
+      ),
+      _ReportKpiCard(
+        icon: Icons.local_fire_department_outlined,
+        label: 'Current streak',
+        value: '${snapshot.currentStreak}',
+        caption: snapshot.currentStreak == 1 ? 'day in a row' : 'days in a row',
+        color: snapshot.currentStreak > 0 ? AppColors.warningAmber : null,
+      ),
+    ];
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final narrow = constraints.maxWidth < 640;
+        final cols = narrow ? 2 : 3;
+        return GridView.count(
+          crossAxisCount: cols,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          mainAxisSpacing: 12,
+          crossAxisSpacing: 12,
+          childAspectRatio: narrow ? 1.35 : 1.55,
+          children: cards,
+        );
+      },
     );
   }
 
   Widget _activityCard(BuildContext context, ReportSnapshot snapshot) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
+    final isDark = scheme.brightness == Brightness.dark;
+    final border = isDark
+        ? Colors.white.withValues(alpha: 0.08)
+        : scheme.outlineVariant;
 
-    return Padding(
+    return Container(
       padding: const EdgeInsets.all(AppSpacing.lg),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E293B) : scheme.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: border),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
@@ -352,9 +357,18 @@ class _ReportsPageState extends State<ReportsPage> {
   Widget _priorityCard(BuildContext context, ReportSnapshot snapshot) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
+    final isDark = scheme.brightness == Brightness.dark;
+    final border = isDark
+        ? Colors.white.withValues(alpha: 0.08)
+        : scheme.outlineVariant;
 
-    return Padding(
+    return Container(
       padding: const EdgeInsets.all(AppSpacing.lg),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E293B) : scheme.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: border),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
