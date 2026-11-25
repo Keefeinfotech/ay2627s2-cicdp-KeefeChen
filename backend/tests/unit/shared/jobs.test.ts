@@ -107,7 +107,11 @@ describe("jobs queue", () => {
   it("logs stringified non-Error persistence failures", async () => {
     mocks.createInApp.mockRejectedValueOnce("boom");
     const jobs = await import("../../../src/shared/jobs/index.js");
-    jobs.enqueue("notification.send", { userId: "u1", to: "a@b.com", message: "x" });
+    jobs.enqueue("notification.send", {
+      userId: "u1",
+      to: "a@b.com",
+      message: "x",
+    });
     await flush();
     expect(mocks.warn).toHaveBeenCalledWith(
       "notification.in_app_persist_failed",
@@ -118,7 +122,9 @@ describe("jobs queue", () => {
   it("enqueues analytics invalidation and handles unknown jobs", async () => {
     const jobs = await import("../../../src/shared/jobs/index.js");
     expect(jobs.enqueue("missing.job", {})).toBe(false);
-    expect(mocks.warn).toHaveBeenCalledWith("job.unknown", { name: "missing.job" });
+    expect(mocks.warn).toHaveBeenCalledWith("job.unknown", {
+      name: "missing.job",
+    });
     expect(jobs.enqueue("analytics.invalidate", { userId: "u1" })).toBe(true);
     await flush();
     expect(mocks.cacheDelByPattern).toHaveBeenCalledWith(
@@ -134,7 +140,10 @@ describe("jobs queue", () => {
     expect(jobs.getJobStats().failed).toBeGreaterThanOrEqual(1);
     expect(mocks.error).toHaveBeenCalledWith(
       "job.failed",
-      expect.objectContaining({ name: "notification.send", error: "smtp down" }),
+      expect.objectContaining({
+        name: "notification.send",
+        error: "smtp down",
+      }),
     );
   });
 
