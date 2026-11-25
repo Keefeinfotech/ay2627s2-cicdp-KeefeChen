@@ -464,7 +464,8 @@ class _CompactShellHeader extends StatelessWidget {
         final snapshot = store.syncSnapshot;
         final pending = snapshot?.pendingCount ?? 0;
         final hasConflict = snapshot?.phase.name == 'conflict';
-        final hasSyncIssue = snapshot != null &&
+        final hasSyncIssue =
+            snapshot != null &&
             snapshot.phase.name != 'synced' &&
             snapshot.phase.name != 'localOnly';
         final reminders = store.dueReminders();
@@ -493,7 +494,8 @@ class _CompactShellHeader extends StatelessWidget {
               if (reminderCount > 0)
                 _HeaderIconBadge(
                   icon: Icons.notifications_rounded,
-                  tooltip: '$reminderCount reminder${reminderCount == 1 ? '' : 's'}',
+                  tooltip:
+                      '$reminderCount reminder${reminderCount == 1 ? '' : 's'}',
                   badge: '$reminderCount',
                   color: const Color(0xFFF59E0B),
                   onPressed: () => _showReminders(context),
@@ -555,14 +557,24 @@ class _CompactShellHeader extends StatelessWidget {
                           dense: true,
                           contentPadding: EdgeInsets.zero,
                           leading: Icon(
-                            due ? Icons.notifications_active_rounded : Icons.schedule_rounded,
+                            due
+                                ? Icons.notifications_active_rounded
+                                : Icons.schedule_rounded,
                             color: due ? scheme.error : scheme.primary,
                             size: 20,
                           ),
-                          title: Text(task.title, maxLines: 1, overflow: TextOverflow.ellipsis),
+                          title: Text(
+                            task.title,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                           subtitle: Text(
                             due ? 'Due now' : 'Scheduled',
-                            style: TextStyle(color: due ? scheme.error : scheme.onSurfaceVariant),
+                            style: TextStyle(
+                              color: due
+                                  ? scheme.error
+                                  : scheme.onSurfaceVariant,
+                            ),
                           ),
                         );
                       },
@@ -570,7 +582,10 @@ class _CompactShellHeader extends StatelessWidget {
                   ),
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('Close')),
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: const Text('Close'),
+            ),
           ],
         );
       },
@@ -579,7 +594,11 @@ class _CompactShellHeader extends StatelessWidget {
 }
 
 class _HeaderIconButton extends StatelessWidget {
-  const _HeaderIconButton({required this.icon, required this.tooltip, required this.onPressed});
+  const _HeaderIconButton({
+    required this.icon,
+    required this.tooltip,
+    required this.onPressed,
+  });
   final IconData icon;
   final String tooltip;
   final VoidCallback onPressed;
@@ -622,10 +641,17 @@ class _HeaderIconBadge extends StatelessWidget {
           top: 2,
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-            decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(8)),
+            decoration: BoxDecoration(
+              color: color,
+              borderRadius: BorderRadius.circular(8),
+            ),
             child: Text(
               badge,
-              style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w700),
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 9,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
         ),
@@ -652,9 +678,11 @@ class _SyncIndicator extends StatelessWidget {
     final Color color = hasConflict
         ? const Color(0xFFF59E0B)
         : hasIssue
-            ? scheme.primary
-            : scheme.onSurfaceVariant;
-    final label = pending > 0 ? '$pending changes waiting' : (hasIssue ? 'Sync status' : 'Synced');
+        ? scheme.primary
+        : scheme.onSurfaceVariant;
+    final label = pending > 0
+        ? '$pending changes waiting'
+        : (hasIssue ? 'Sync status' : 'Synced');
 
     return Tooltip(
       message: label,
@@ -676,7 +704,10 @@ class _SyncIndicator extends StatelessWidget {
                 Container(
                   width: 6,
                   height: 6,
-                  decoration: BoxDecoration(color: const Color(0xFFF59E0B), shape: BoxShape.circle),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF59E0B),
+                    shape: BoxShape.circle,
+                  ),
                 ),
               ],
             ],

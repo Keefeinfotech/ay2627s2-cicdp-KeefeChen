@@ -359,7 +359,9 @@ class ProfilePage extends StatelessWidget {
                           icon: Icons.workspace_premium_outlined,
                         ),
                         StatusBadge(
-                          label: session == null ? 'Local workspace' : 'Signed in',
+                          label: session == null
+                              ? 'Local workspace'
+                              : 'Signed in',
                           color: session == null
                               ? scheme.onSurfaceVariant
                               : AppColors.successGreen,
@@ -579,7 +581,9 @@ class _ProfileStatCard extends StatelessWidget {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final isDark = scheme.brightness == Brightness.dark;
-    final border = isDark ? Colors.white.withValues(alpha: 0.08) : scheme.outlineVariant;
+    final border = isDark
+        ? Colors.white.withValues(alpha: 0.08)
+        : scheme.outlineVariant;
 
     return Container(
       padding: const EdgeInsets.all(16),

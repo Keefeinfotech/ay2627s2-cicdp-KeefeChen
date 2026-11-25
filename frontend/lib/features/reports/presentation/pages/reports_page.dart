@@ -206,7 +206,9 @@ class _ReportsPageState extends State<ReportsPage> {
 
   Widget _kpiGrid(BuildContext context, ReportSnapshot snapshot) {
     final rate = snapshot.completionRate;
-    final Color rateColor = rate >= 0.7 ? AppColors.successGreen : AppColors.trustBlue;
+    final Color rateColor = rate >= 0.7
+        ? AppColors.successGreen
+        : AppColors.trustBlue;
 
     final cards = <Widget>[
       _ReportKpiCard(
@@ -234,7 +236,9 @@ class _ReportsPageState extends State<ReportsPage> {
         icon: Icons.warning_amber_outlined,
         label: 'Overdue',
         value: '${snapshot.overdueTasks}',
-        caption: snapshot.overdueTasks == 0 ? 'nothing past due' : 'need attention',
+        caption: snapshot.overdueTasks == 0
+            ? 'nothing past due'
+            : 'need attention',
         color: snapshot.overdueTasks > 0 ? AppColors.errorRed : null,
       ),
       _ReportKpiCard(
@@ -273,7 +277,9 @@ class _ReportsPageState extends State<ReportsPage> {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final isDark = scheme.brightness == Brightness.dark;
-    final border = isDark ? Colors.white.withValues(alpha: 0.08) : scheme.outlineVariant;
+    final border = isDark
+        ? Colors.white.withValues(alpha: 0.08)
+        : scheme.outlineVariant;
 
     return Container(
       padding: const EdgeInsets.all(AppSpacing.lg),
@@ -353,7 +359,9 @@ class _ReportsPageState extends State<ReportsPage> {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final isDark = scheme.brightness == Brightness.dark;
-    final border = isDark ? Colors.white.withValues(alpha: 0.08) : scheme.outlineVariant;
+    final border = isDark
+        ? Colors.white.withValues(alpha: 0.08)
+        : scheme.outlineVariant;
 
     return Container(
       padding: const EdgeInsets.all(AppSpacing.lg),

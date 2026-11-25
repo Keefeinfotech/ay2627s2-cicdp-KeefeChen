@@ -259,58 +259,104 @@ class _ProjectsPageState extends State<ProjectsPage> {
       final sel = _view == id;
       return ChoiceChip(
         showCheckmark: false,
-        avatar: Icon(icon, size: 16, color: sel ? scheme.primary : scheme.onSurfaceVariant),
+        avatar: Icon(
+          icon,
+          size: 16,
+          color: sel ? scheme.primary : scheme.onSurfaceVariant,
+        ),
         label: Text(label),
         selected: sel,
         onSelected: (_) => setState(() => _view = id),
         selectedColor: scheme.primary.withValues(alpha: 0.12),
-        side: BorderSide(color: sel ? scheme.primary.withValues(alpha: 0.4) : (isDark ? Colors.white.withValues(alpha: 0.08) : scheme.outlineVariant)),
-        labelStyle: TextStyle(fontWeight: sel ? FontWeight.w600 : FontWeight.w500, color: sel ? scheme.primary : scheme.onSurfaceVariant),
+        side: BorderSide(
+          color: sel
+              ? scheme.primary.withValues(alpha: 0.4)
+              : (isDark
+                    ? Colors.white.withValues(alpha: 0.08)
+                    : scheme.outlineVariant),
+        ),
+        labelStyle: TextStyle(
+          fontWeight: sel ? FontWeight.w600 : FontWeight.w500,
+          color: sel ? scheme.primary : scheme.onSurfaceVariant,
+        ),
         backgroundColor: isDark ? const Color(0xFF1E293B) : scheme.surface,
       );
     }
-    return Wrap(spacing: 8, runSpacing: 8, children: [
-      chip('table', 'Main Table', Icons.table_rows_rounded),
-      chip('board', 'Board', Icons.view_kanban_outlined),
-      chip('calendar', 'Calendar', Icons.calendar_month_outlined),
-    ]);
+
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        chip('table', 'Main Table', Icons.table_rows_rounded),
+        chip('board', 'Board', Icons.view_kanban_outlined),
+        chip('calendar', 'Calendar', Icons.calendar_month_outlined),
+      ],
+    );
   }
 
   Widget _buildProjectToolbar(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final isDark = scheme.brightness == Brightness.dark;
-    final border = isDark ? Colors.white.withValues(alpha: 0.08) : scheme.outlineVariant;
-    OutlinedButton ghost(IconData icon, String label, VoidCallback onTap) => OutlinedButton.icon(
-      onPressed: onTap,
-      icon: Icon(icon, size: 16),
-      label: Text(label),
-      style: OutlinedButton.styleFrom(
-        foregroundColor: scheme.onSurfaceVariant,
-        side: BorderSide(color: border),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      ),
-    );
+    final border = isDark
+        ? Colors.white.withValues(alpha: 0.08)
+        : scheme.outlineVariant;
+    OutlinedButton ghost(IconData icon, String label, VoidCallback onTap) =>
+        OutlinedButton.icon(
+          onPressed: onTap,
+          icon: Icon(icon, size: 16),
+          label: Text(label),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: scheme.onSurfaceVariant,
+            side: BorderSide(color: border),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+        );
     return Wrap(
-      spacing: 8, runSpacing: 8, crossAxisAlignment: WrapCrossAlignment.center,
+      spacing: 8,
+      runSpacing: 8,
+      crossAxisAlignment: WrapCrossAlignment.center,
       children: [
         FilledButton.icon(
           onPressed: _createProject,
           icon: const Icon(Icons.add_rounded, size: 18),
           label: const Text('New project'),
-          style: FilledButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
+          style: FilledButton.styleFrom(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
         ),
         SizedBox(
-          width: 220, height: 40,
+          width: 220,
+          height: 40,
           child: TextField(
             controller: _search,
-            onChanged: (v) { _controller.setQuery(v); setState(() {}); },
+            onChanged: (v) {
+              _controller.setQuery(v);
+              setState(() {});
+            },
             decoration: InputDecoration(
-              hintText: 'Search', prefixIcon: const Icon(Icons.search_rounded, size: 18), isDense: true, filled: true,
+              hintText: 'Search',
+              prefixIcon: const Icon(Icons.search_rounded, size: 18),
+              isDense: true,
+              filled: true,
               fillColor: isDark ? const Color(0xFF1E293B) : scheme.surface,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: border)),
-              enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: border)),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 10,
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide(color: border),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide(color: border),
+              ),
             ),
           ),
         ),

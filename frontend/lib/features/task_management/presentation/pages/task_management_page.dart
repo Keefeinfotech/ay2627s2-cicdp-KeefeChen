@@ -263,16 +263,30 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
       final sel = _view == id;
       return ChoiceChip(
         showCheckmark: false,
-        avatar: Icon(icon, size: 16, color: sel ? scheme.primary : scheme.onSurfaceVariant),
+        avatar: Icon(
+          icon,
+          size: 16,
+          color: sel ? scheme.primary : scheme.onSurfaceVariant,
+        ),
         label: Text(label),
         selected: sel,
         onSelected: (_) => setState(() => _view = id),
         selectedColor: scheme.primary.withValues(alpha: 0.12),
-        side: BorderSide(color: sel ? scheme.primary.withValues(alpha: 0.4) : (isDark ? Colors.white.withValues(alpha: 0.08) : scheme.outlineVariant)),
-        labelStyle: TextStyle(fontWeight: sel ? FontWeight.w600 : FontWeight.w500, color: sel ? scheme.primary : scheme.onSurfaceVariant),
+        side: BorderSide(
+          color: sel
+              ? scheme.primary.withValues(alpha: 0.4)
+              : (isDark
+                    ? Colors.white.withValues(alpha: 0.08)
+                    : scheme.outlineVariant),
+        ),
+        labelStyle: TextStyle(
+          fontWeight: sel ? FontWeight.w600 : FontWeight.w500,
+          color: sel ? scheme.primary : scheme.onSurfaceVariant,
+        ),
         backgroundColor: isDark ? const Color(0xFF1E293B) : scheme.surface,
       );
     }
+
     return Wrap(
       spacing: 8,
       runSpacing: 8,
@@ -287,7 +301,9 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
   Widget _buildActionToolbar(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final isDark = scheme.brightness == Brightness.dark;
-    final border = isDark ? Colors.white.withValues(alpha: 0.08) : scheme.outlineVariant;
+    final border = isDark
+        ? Colors.white.withValues(alpha: 0.08)
+        : scheme.outlineVariant;
     return Wrap(
       spacing: 8,
       runSpacing: 8,
@@ -299,7 +315,9 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
           label: const Text('New Task'),
           style: FilledButton.styleFrom(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
           ),
         ),
         SizedBox(
@@ -307,32 +325,65 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
           height: 40,
           child: TextField(
             controller: _search,
-            onChanged: (v) { _store.setQuery(v); setState(() {}); },
+            onChanged: (v) {
+              _store.setQuery(v);
+              setState(() {});
+            },
             decoration: InputDecoration(
               hintText: 'Search',
               prefixIcon: const Icon(Icons.search_rounded, size: 18),
               isDense: true,
               filled: true,
               fillColor: isDark ? const Color(0xFF1E293B) : scheme.surface,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: border)),
-              enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: border)),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 10,
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide(color: border),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide(color: border),
+              ),
             ),
           ),
         ),
-        _ghostBtn(context, Icons.filter_list_rounded, 'Filter', () => _showFilterSheet(context)),
+        _ghostBtn(
+          context,
+          Icons.filter_list_rounded,
+          'Filter',
+          () => _showFilterSheet(context),
+        ),
         _ghostBtn(context, Icons.swap_vert_rounded, 'Sort', () {}),
         _ghostBtn(context, Icons.layers_outlined, 'Group by', () {}),
-        if (_store.query.isNotEmpty || _store.filter != TaskFilter.all || _store.tagFilter != null)
-          TextButton(onPressed: () { _search.clear(); _store.clearFilters(); setState(() {}); }, child: const Text('Clear')),
+        if (_store.query.isNotEmpty ||
+            _store.filter != TaskFilter.all ||
+            _store.tagFilter != null)
+          TextButton(
+            onPressed: () {
+              _search.clear();
+              _store.clearFilters();
+              setState(() {});
+            },
+            child: const Text('Clear'),
+          ),
       ],
     );
   }
 
-  Widget _ghostBtn(BuildContext context, IconData icon, String label, VoidCallback onTap) {
+  Widget _ghostBtn(
+    BuildContext context,
+    IconData icon,
+    String label,
+    VoidCallback onTap,
+  ) {
     final scheme = Theme.of(context).colorScheme;
     final isDark = scheme.brightness == Brightness.dark;
-    final border = isDark ? Colors.white.withValues(alpha: 0.08) : scheme.outlineVariant;
+    final border = isDark
+        ? Colors.white.withValues(alpha: 0.08)
+        : scheme.outlineVariant;
     return OutlinedButton.icon(
       onPressed: onTap,
       icon: Icon(icon, size: 16),
@@ -354,12 +405,45 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Wrap(
-            spacing: 8, runSpacing: 8,
+            spacing: 8,
+            runSpacing: 8,
             children: [
-              ChoiceChip(label: Text('All (${_store.tasks.length})'), selected: _store.filter == TaskFilter.all, onSelected: (_) { _store.setFilter(TaskFilter.all); Navigator.pop(ctx); setState(() {}); }),
-              ChoiceChip(label: Text('To do (${_store.pendingCount})'), selected: _store.filter == TaskFilter.pending, onSelected: (_) { _store.setFilter(TaskFilter.pending); Navigator.pop(ctx); setState(() {}); }),
-              ChoiceChip(label: Text('Overdue (${_store.overdueCount})'), selected: _store.filter == TaskFilter.overdue, onSelected: (_) { _store.setFilter(TaskFilter.overdue); Navigator.pop(ctx); setState(() {}); }),
-              ChoiceChip(label: Text('Done (${_store.completedCount})'), selected: _store.filter == TaskFilter.completed, onSelected: (_) { _store.setFilter(TaskFilter.completed); Navigator.pop(ctx); setState(() {}); }),
+              ChoiceChip(
+                label: Text('All (${_store.tasks.length})'),
+                selected: _store.filter == TaskFilter.all,
+                onSelected: (_) {
+                  _store.setFilter(TaskFilter.all);
+                  Navigator.pop(ctx);
+                  setState(() {});
+                },
+              ),
+              ChoiceChip(
+                label: Text('To do (${_store.pendingCount})'),
+                selected: _store.filter == TaskFilter.pending,
+                onSelected: (_) {
+                  _store.setFilter(TaskFilter.pending);
+                  Navigator.pop(ctx);
+                  setState(() {});
+                },
+              ),
+              ChoiceChip(
+                label: Text('Overdue (${_store.overdueCount})'),
+                selected: _store.filter == TaskFilter.overdue,
+                onSelected: (_) {
+                  _store.setFilter(TaskFilter.overdue);
+                  Navigator.pop(ctx);
+                  setState(() {});
+                },
+              ),
+              ChoiceChip(
+                label: Text('Done (${_store.completedCount})'),
+                selected: _store.filter == TaskFilter.completed,
+                onSelected: (_) {
+                  _store.setFilter(TaskFilter.completed);
+                  Navigator.pop(ctx);
+                  setState(() {});
+                },
+              ),
             ],
           ),
         ),
@@ -378,8 +462,11 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
       ),
       child: Center(
         child: Text(
-          _view == 'board' ? 'Board view coming soon' : 'Calendar view coming soon',
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: scheme.onSurfaceVariant),
+          _view == 'board'
+              ? 'Board view coming soon'
+              : 'Calendar view coming soon',
+          style: Theme.of(context).textTheme.bodyMedium
+              ?.copyWith(color: scheme.onSurfaceVariant),
         ),
       ),
     );
@@ -394,13 +481,19 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
           decoration: BoxDecoration(
             color: Theme.of(context).colorScheme.surface,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+            border: Border.all(
+              color: Theme.of(context).colorScheme.outlineVariant,
+            ),
           ),
           child: AppEmptyState(
             icon: Icons.task_alt_rounded,
             title: 'A clear task list',
             message: 'Use New Task to capture something in plain language.',
-            action: FilledButton.icon(onPressed: _quickAdd, icon: const Icon(Icons.add_rounded), label: const Text('New task')),
+            action: FilledButton.icon(
+              onPressed: _quickAdd,
+              icon: const Icon(Icons.add_rounded),
+              label: const Text('New task'),
+            ),
           ),
         ),
       ];
@@ -412,14 +505,23 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
           decoration: BoxDecoration(
             color: Theme.of(context).colorScheme.surface,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+            border: Border.all(
+              color: Theme.of(context).colorScheme.outlineVariant,
+            ),
           ),
           child: AppEmptyState(
             compact: true,
             icon: Icons.filter_alt_off_outlined,
             title: 'No matching tasks',
             message: 'Try a different search or clear the active filter.',
-            action: OutlinedButton(onPressed: () { _search.clear(); _store.clearFilters(); setState(() {}); }, child: const Text('Clear filters')),
+            action: OutlinedButton(
+              onPressed: () {
+                _search.clear();
+                _store.clearFilters();
+                setState(() {});
+              },
+              child: const Text('Clear filters'),
+            ),
           ),
         ),
       ];
@@ -463,10 +565,17 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
     return out;
   }
 
-  Widget _buildTaskGroup(BuildContext context, String name, Color accent, List<Task> items) {
+  Widget _buildTaskGroup(
+    BuildContext context,
+    String name,
+    Color accent,
+    List<Task> items,
+  ) {
     final scheme = Theme.of(context).colorScheme;
     final isDark = scheme.brightness == Brightness.dark;
-    final border = isDark ? Colors.white.withValues(alpha: 0.08) : scheme.outlineVariant;
+    final border = isDark
+        ? Colors.white.withValues(alpha: 0.08)
+        : scheme.outlineVariant;
     final bg = isDark ? const Color(0xFF1E293B) : scheme.surface;
     final collapsed = _collapsed.contains(name);
 
@@ -486,19 +595,49 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
               child: Column(
                 children: [
                   InkWell(
-                    onPressed: () => setState(() { collapsed ? _collapsed.remove(name) : _collapsed.add(name); }),
+                    onPressed: () => setState(() {
+                      collapsed
+                          ? _collapsed.remove(name)
+                          : _collapsed.add(name);
+                    }),
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 12,
+                      ),
                       child: Row(
                         children: [
-                          Icon(collapsed ? Icons.chevron_right_rounded : Icons.expand_more_rounded, size: 20, color: scheme.onSurfaceVariant),
+                          Icon(
+                            collapsed
+                                ? Icons.chevron_right_rounded
+                                : Icons.expand_more_rounded,
+                            size: 20,
+                            color: scheme.onSurfaceVariant,
+                          ),
                           const SizedBox(width: 6),
-                          Text(name, style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
+                          Text(
+                            name,
+                            style: Theme.of(context).textTheme.titleSmall
+                                ?.copyWith(fontWeight: FontWeight.w700),
+                          ),
                           const SizedBox(width: 8),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                            decoration: BoxDecoration(color: accent.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(10)),
-                            child: Text('${items.length}', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: accent)),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: accent.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Text(
+                              '${items.length}',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: accent,
+                              ),
+                            ),
                           ),
                         ],
                       ),
@@ -510,18 +649,37 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
                     Divider(height: 1, color: border),
                     for (var i = 0; i < items.length; i++) ...[
                       _taskRow(context, items[i]),
-                      if (i < items.length - 1) Divider(height: 1, indent: 14, endIndent: 14, color: border.withValues(alpha: 0.6)),
+                      if (i < items.length - 1)
+                        Divider(
+                          height: 1,
+                          indent: 14,
+                          endIndent: 14,
+                          color: border.withValues(alpha: 0.6),
+                        ),
                     ],
                     Divider(height: 1, color: border),
                     InkWell(
                       onPressed: _quickAdd,
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 10,
+                        ),
                         child: Row(
                           children: [
-                            Icon(Icons.add_rounded, size: 18, color: scheme.onSurfaceVariant),
+                            Icon(
+                              Icons.add_rounded,
+                              size: 18,
+                              color: scheme.onSurfaceVariant,
+                            ),
                             const SizedBox(width: 8),
-                            Text('Add task', style: TextStyle(color: scheme.onSurfaceVariant, fontWeight: FontWeight.w500)),
+                            Text(
+                              'Add task',
+                              style: TextStyle(
+                                color: scheme.onSurfaceVariant,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
                           ],
                         ),
                       ),
@@ -547,11 +705,41 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
       child: Row(
         children: [
           const SizedBox(width: 28),
-          const Expanded(flex: 4, child: Text('Task Name', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600))),
-          const Expanded(flex: 2, child: Text('Project', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600))),
-          const SizedBox(width: 110, child: Text('Status', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600))),
-          const SizedBox(width: 80, child: Text('Priority', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600))),
-          const SizedBox(width: 92, child: Text('Due Date', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600))),
+          const Expanded(
+            flex: 4,
+            child: Text(
+              'Task Name',
+              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+            ),
+          ),
+          const Expanded(
+            flex: 2,
+            child: Text(
+              'Project',
+              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+            ),
+          ),
+          const SizedBox(
+            width: 110,
+            child: Text(
+              'Status',
+              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+            ),
+          ),
+          const SizedBox(
+            width: 80,
+            child: Text(
+              'Priority',
+              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+            ),
+          ),
+          const SizedBox(
+            width: 92,
+            child: Text(
+              'Due Date',
+              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+            ),
+          ),
           const SizedBox(width: 32),
         ],
       ),
@@ -561,13 +749,20 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
   Widget _taskRow(BuildContext context, Task task) {
     final scheme = Theme.of(context).colorScheme;
     final isDark = scheme.brightness == Brightness.dark;
-    final overdue = !task.isCompleted && task.dueDate != null && task.dueDate!.isBefore(DateTime.now());
-    final statusLabel = task.isCompleted ? 'Done' : overdue ? 'Overdue' : 'Working on it';
+    final overdue =
+        !task.isCompleted &&
+        task.dueDate != null &&
+        task.dueDate!.isBefore(DateTime.now());
+    final statusLabel = task.isCompleted
+        ? 'Done'
+        : overdue
+        ? 'Overdue'
+        : 'Working on it';
     final statusColor = task.isCompleted
         ? const Color(0xFF10B981)
         : overdue
-            ? const Color(0xFFEF4444)
-            : const Color(0xFF3B82F6);
+        ? const Color(0xFFEF4444)
+        : const Color(0xFF3B82F6);
 
     return InkWell(
       onTap: () => _edit(task),
@@ -593,8 +788,12 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   fontWeight: FontWeight.w500,
-                  decoration: task.isCompleted ? TextDecoration.lineThrough : null,
-                  color: task.isCompleted ? scheme.onSurfaceVariant : scheme.onSurface,
+                  decoration: task.isCompleted
+                      ? TextDecoration.lineThrough
+                      : null,
+                  color: task.isCompleted
+                      ? scheme.onSurfaceVariant
+                      : scheme.onSurface,
                 ),
               ),
             ),
@@ -620,15 +819,24 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
                   statusLabel,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: statusColor),
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: statusColor,
+                  ),
                 ),
               ),
             ),
             SizedBox(
               width: 80,
               child: Text(
-                task.priority.name[0].toUpperCase() + task.priority.name.substring(1),
-                style: TextStyle(fontSize: 12, color: scheme.onSurfaceVariant, fontWeight: FontWeight.w500),
+                task.priority.name[0].toUpperCase() +
+                    task.priority.name.substring(1),
+                style: TextStyle(
+                  fontSize: 12,
+                  color: scheme.onSurfaceVariant,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
             ),
             SizedBox(
@@ -638,7 +846,9 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
                 style: TextStyle(
                   fontSize: 12,
                   fontFeatures: const [FontFeature.tabularFigures()],
-                  color: overdue ? const Color(0xFFEF4444) : scheme.onSurfaceVariant,
+                  color: overdue
+                      ? const Color(0xFFEF4444)
+                      : scheme.onSurfaceVariant,
                   fontWeight: overdue ? FontWeight.w600 : FontWeight.w400,
                 ),
               ),
@@ -647,7 +857,11 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
               width: 32,
               child: PopupMenuButton<String>(
                 padding: EdgeInsets.zero,
-                icon: Icon(Icons.more_horiz_rounded, size: 18, color: scheme.onSurfaceVariant),
+                icon: Icon(
+                  Icons.more_horiz_rounded,
+                  size: 18,
+                  color: scheme.onSurfaceVariant,
+                ),
                 onSelected: (v) {
                   if (v == 'edit') _edit(task);
                   if (v == 'delete') _confirmDelete(task);
@@ -667,7 +881,20 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
   }
 
   String _fmtDate(DateTime d) {
-    const m = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const m = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
     return '${m[d.month - 1]} ${d.day}';
   }
 
