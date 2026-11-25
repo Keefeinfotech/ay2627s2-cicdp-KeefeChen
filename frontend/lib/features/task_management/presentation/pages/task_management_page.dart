@@ -1,19 +1,15 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/app_dialog.dart';
 import '../../../../core/widgets/app_empty_state.dart';
 import '../../../../core/widgets/app_error_state.dart';
 import '../../../../core/widgets/app_loading.dart';
 import '../../../../core/widgets/app_snackbar.dart';
-import '../../../../core/widgets/app_status_badge.dart';
 
 import 'package:frontend/features/home/data/api_task_repository.dart';
 import 'package:frontend/features/home/data/task_store.dart';
 import 'package:frontend/features/home/data/task_validation.dart';
 import 'package:frontend/features/home/models/task.dart';
-import 'package:frontend/features/home/widgets/task_card.dart';
 import 'package:frontend/features/home/widgets/task_editor.dart';
 import 'package:frontend/features/task_management/data/models/task_breakdown.dart';
 import 'package:frontend/features/task_management/data/repositories/task_management_repository.dart';
