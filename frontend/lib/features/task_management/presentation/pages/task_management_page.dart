@@ -1,5 +1,3 @@
-import 'dart:ui' show FontFeature;
-
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
@@ -10,7 +8,6 @@ import '../../../../core/widgets/app_error_state.dart';
 import '../../../../core/widgets/app_loading.dart';
 import '../../../../core/widgets/app_snackbar.dart';
 import '../../../../core/widgets/app_status_badge.dart';
-import '../../../../core/widgets/app_text_field.dart';
 
 import 'package:frontend/features/home/data/api_task_repository.dart';
 import 'package:frontend/features/home/data/task_store.dart';
@@ -595,7 +592,7 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
               child: Column(
                 children: [
                   InkWell(
-                    onPressed: () => setState(() {
+                    onTap: () => setState(() {
                       collapsed
                           ? _collapsed.remove(name)
                           : _collapsed.add(name);
@@ -659,7 +656,7 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
                     ],
                     Divider(height: 1, color: border),
                     InkWell(
-                      onPressed: _quickAdd,
+                      onTap: _quickAdd,
                       child: Padding(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 14,
@@ -695,11 +692,6 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
   }
 
   Widget _tableHeader(BuildContext context) {
-    final style = Theme.of(context).textTheme.labelSmall?.copyWith(
-      color: Theme.of(context).colorScheme.onSurfaceVariant,
-      fontWeight: FontWeight.w600,
-      letterSpacing: 0.3,
-    );
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       child: Row(
@@ -896,331 +888,5 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
       'Dec',
     ];
     return '${m[d.month - 1]} ${d.day}';
-  }
-
-  Widget _buildSummary(BuildContext context) {
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
-    final int total = _store.tasks.length;
-    final int done = _store.completedCount;
-    final double ratio = total == 0 ? 0 : done / total;
-
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.lg),
-      decoration: BoxDecoration(
-        color: scheme.surface,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: scheme.outlineVariant),
-      ),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final Widget progress = Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Row(
-                children: <Widget>[
-                  Expanded(
-                    child: Text(
-                      '${(ratio * 100).round()}% complete',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: AppSpacing.sm),
-                  Flexible(
-                    child: Text(
-                      '$done of $total tasks',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      textAlign: TextAlign.end,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: scheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              CompletionBar(
-                value: ratio,
-                color: AppColors.successGreen,
-                label: '${(ratio * 100).round()} percent of tasks complete',
-              ),
-            ],
-          );
-
-          final Widget stats = Wrap(
-            spacing: AppSpacing.xl,
-            runSpacing: AppSpacing.sm,
-            children: <Widget>[
-              _Stat(label: 'To do', value: '${_store.pendingCount}'),
-              _Stat(label: 'Due today', value: '${_store.dueTodayCount}'),
-              _Stat(
-                label: 'Overdue',
-                value: '${_store.overdueCount}',
-                color: _store.overdueCount > 0 ? AppColors.errorRed : null,
-              ),
-            ],
-          );
-
-          if (constraints.maxWidth < 560) {
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: <Widget>[
-                progress,
-                const SizedBox(height: AppSpacing.lg),
-                stats,
-              ],
-            );
-          }
-
-          return Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: <Widget>[
-              Expanded(flex: 5, child: progress),
-              const SizedBox(width: AppSpacing.xl),
-              Expanded(flex: 4, child: stats),
-            ],
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildFilters(BuildContext context) {
-    final tags = _store.allTags;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        Wrap(
-          spacing: AppSpacing.sm,
-          runSpacing: AppSpacing.sm,
-          children: <Widget>[
-            _FilterChip(
-              label: 'All (${_store.tasks.length})',
-              selected: _store.filter == TaskFilter.all,
-              onTap: () => _store.setFilter(TaskFilter.all),
-            ),
-            _FilterChip(
-              label: 'To do (${_store.pendingCount})',
-              selected: _store.filter == TaskFilter.pending,
-              onTap: () => _store.setFilter(TaskFilter.pending),
-            ),
-            if (_store.overdueCount > 0)
-              _FilterChip(
-                label: 'Overdue (${_store.overdueCount})',
-                selected: _store.filter == TaskFilter.overdue,
-                onTap: () => _store.setFilter(TaskFilter.overdue),
-                warning: true,
-              ),
-            _FilterChip(
-              label: 'Done (${_store.completedCount})',
-              selected: _store.filter == TaskFilter.completed,
-              onTap: () => _store.setFilter(TaskFilter.completed),
-            ),
-          ],
-        ),
-        if (tags.isNotEmpty) ...<Widget>[
-          const SizedBox(height: AppSpacing.sm),
-          Text(
-            'Filter by tag',
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: AppSpacing.xs),
-          Wrap(
-            spacing: AppSpacing.xs,
-            runSpacing: AppSpacing.xs,
-            children: <Widget>[
-              for (final tag in tags)
-                FilterChip(
-                  label: Text('#$tag'),
-                  selected:
-                      _store.tagFilter?.toLowerCase() == tag.toLowerCase(),
-                  showCheckmark: false,
-                  onSelected: (selected) =>
-                      _store.setTagFilter(selected ? tag : null),
-                ),
-            ],
-          ),
-        ],
-      ],
-    );
-  }
-
-  List<Widget> _buildTaskSection(BuildContext context) {
-    if (_store.tasks.isEmpty) {
-      return <Widget>[
-        Padding(
-          padding: const EdgeInsets.all(AppSpacing.lg),
-          child: AppEmptyState(
-            icon: Icons.task_alt_rounded,
-            title: 'A clear task list',
-            message:
-                'Use quick add to capture something in plain language, or '
-                'break a bigger deliverable into smaller steps.',
-            action: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
-                Flexible(
-                  child: FilledButton.icon(
-                    onPressed: _quickAdd,
-                    icon: const Icon(Icons.add_rounded),
-                    label: const Text('Quick add a task'),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ];
-    }
-
-    if (_store.filteredCount == 0) {
-      return <Widget>[
-        Padding(
-          padding: const EdgeInsets.all(AppSpacing.lg),
-          child: AppEmptyState(
-            compact: true,
-            icon: Icons.filter_alt_off_outlined,
-            title: 'No matching tasks',
-            message: 'Try a different search or clear the active filter.',
-            action: OutlinedButton.icon(
-              onPressed: () {
-                _search.clear();
-                _store.clearFilters();
-                setState(() {});
-              },
-              icon: const Icon(Icons.filter_alt_off_rounded),
-              label: const Text('Clear filters'),
-            ),
-          ),
-        ),
-      ];
-    }
-
-    return <Widget>[
-      if (_store.error != null) ...[
-        AppErrorBanner(
-          message: _store.error!,
-          onRetry: _store.retry,
-          onDismiss: _store.clearError,
-        ),
-        const SizedBox(height: AppSpacing.sm),
-      ],
-      Padding(
-        padding: const EdgeInsets.all(AppSpacing.lg),
-        child: Column(
-          children: <Widget>[
-            for (final task in _store.visibleTasks)
-              TaskCard(
-                key: ValueKey<String>('task-${task.id}'),
-                task: task,
-                onToggle: () => _toggle(task),
-                onEdit: () => _edit(task),
-                onDelete: () => _confirmDelete(task),
-                onBreakdown: () => _breakDown(task),
-              ),
-          ],
-        ),
-      ),
-      if (_store.pageCount > 1) ...[
-        const SizedBox(height: AppSpacing.md),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            IconButton(
-              tooltip: 'Previous page',
-              onPressed: _store.canGoToPreviousPage
-                  ? _store.previousPage
-                  : null,
-              icon: const Icon(Icons.chevron_left_rounded),
-            ),
-            Text(
-              'Page ${_store.page + 1} of ${_store.pageCount}',
-              style: Theme.of(context).textTheme.labelMedium,
-            ),
-            IconButton(
-              tooltip: 'Next page',
-              onPressed: _store.canGoToNextPage ? _store.nextPage : null,
-              icon: const Icon(Icons.chevron_right_rounded),
-            ),
-          ],
-        ),
-      ],
-    ];
-  }
-}
-
-class _FilterChip extends StatelessWidget {
-  const _FilterChip({
-    required this.label,
-    required this.selected,
-    required this.onTap,
-    this.warning = false,
-  });
-
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-  final bool warning;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
-    final Color accent = warning ? AppColors.warningAmber : scheme.primary;
-
-    return ChoiceChip(
-      label: Text(label),
-      selected: selected,
-      showCheckmark: false,
-      onSelected: (_) => onTap(),
-      selectedColor: accent,
-      backgroundColor: scheme.surface,
-      side: BorderSide(color: selected ? accent : scheme.outline),
-      labelStyle: theme.textTheme.labelMedium?.copyWith(
-        color: selected ? Colors.white : scheme.onSurfaceVariant,
-        fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
-      ),
-    );
-  }
-}
-
-class _Stat extends StatelessWidget {
-  const _Stat({required this.label, required this.value, this.color});
-
-  final String label;
-  final String value;
-  final Color? color;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: <Widget>[
-        Text(
-          value,
-          style: theme.textTheme.titleLarge?.copyWith(
-            fontWeight: FontWeight.w700,
-            color: color,
-          ),
-        ),
-        Text(
-          label,
-          style: theme.textTheme.labelSmall?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
-        ),
-      ],
-    );
   }
 }

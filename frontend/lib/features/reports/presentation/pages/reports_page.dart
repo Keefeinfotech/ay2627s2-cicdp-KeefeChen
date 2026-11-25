@@ -12,7 +12,6 @@ import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_empty_state.dart';
 import '../../../../core/widgets/app_status_badge.dart';
 import '../../../../core/widgets/progress_ring.dart';
-import '../../../../core/widgets/responsive_page_layout.dart';
 import '../widgets/report_charts.dart';
 
 /// Progress reporting surface built from live task data.

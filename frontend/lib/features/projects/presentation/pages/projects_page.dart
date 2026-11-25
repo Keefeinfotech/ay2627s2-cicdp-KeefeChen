@@ -9,7 +9,6 @@ import '../../../../core/widgets/app_error_state.dart';
 import '../../../../core/widgets/app_loading.dart';
 import '../../../../core/widgets/app_snackbar.dart';
 import '../../../../core/widgets/app_status_badge.dart';
-import '../../../../core/widgets/app_text_field.dart';
 import '../../../../core/widgets/responsive_page_layout.dart';
 
 import 'package:frontend/features/home/data/api_task_repository.dart';
@@ -460,54 +459,6 @@ class _ProjectsPageState extends State<ProjectsPage> {
     );
   }
 
-  Widget _toolbar(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: <Widget>[
-        AppTextField(
-          controller: _search,
-          useFormField: false,
-          hintText: 'Search projects',
-          prefixIcon: Icons.search_rounded,
-          textInputAction: TextInputAction.search,
-          onChanged: _controller.setQuery,
-          suffixIcon: _controller.query.isEmpty
-              ? null
-              : IconButton(
-                  tooltip: 'Clear project search',
-                  onPressed: () {
-                    _search.clear();
-                    _controller.setQuery('');
-                  },
-                  icon: const Icon(Icons.clear_rounded),
-                ),
-        ),
-        const SizedBox(height: AppSpacing.md),
-        Wrap(
-          spacing: AppSpacing.sm,
-          runSpacing: AppSpacing.sm,
-          children: <Widget>[
-            _ProjectFilterChip(
-              label: 'Active (${_controller.activeCount})',
-              selected: _controller.filter == ProjectFilter.active,
-              onTap: () => _controller.setFilter(ProjectFilter.active),
-            ),
-            _ProjectFilterChip(
-              label: 'Completed (${_controller.completedCount})',
-              selected: _controller.filter == ProjectFilter.completed,
-              onTap: () => _controller.setFilter(ProjectFilter.completed),
-            ),
-            _ProjectFilterChip(
-              label: 'Archived (${_controller.archivedCount})',
-              selected: _controller.filter == ProjectFilter.archived,
-              onTap: () => _controller.setFilter(ProjectFilter.archived),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
   Widget _emptyState(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.all(AppSpacing.lg),
@@ -547,37 +498,6 @@ class _ProjectsPageState extends State<ProjectsPage> {
           },
         ),
       ),
-    );
-  }
-}
-
-class _ProjectFilterChip extends StatelessWidget {
-  const _ProjectFilterChip({
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
-
-    return ChoiceChip(
-      label: Text(label),
-      selected: selected,
-      showCheckmark: false,
-      onSelected: (_) => onTap(),
-      selectedColor: scheme.primary,
-      labelStyle: theme.textTheme.labelMedium?.copyWith(
-        color: selected ? scheme.onPrimary : scheme.onSurfaceVariant,
-        fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
-      ),
-      side: BorderSide(color: selected ? scheme.primary : scheme.outline),
     );
   }
 }
