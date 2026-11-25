@@ -330,12 +330,16 @@ class _AppShellState extends State<AppShell> {
         !showSidebar && (width >= _railBreakpoint || isDesktopTarget);
     final bool compactPhones = width < _compactPhoneBreakpoint;
 
-    // The sync strip sits above every page so a queued or conflicted change is
-    // visible no matter which workspace the user is in.
     final pages = Column(
       children: <Widget>[
-        SyncStatusBanner(store: _store),
-        const LatencyBanner(),
+        _CompactShellHeader(
+          title: _selected.label,
+          store: _store,
+          onRefresh: () {
+            _store.load();
+            _store.retrySync();
+          },
+        ),
         Expanded(
           child: IndexedStack(
             index: _selected.index,
@@ -429,6 +433,255 @@ class _AppShellState extends State<AppShell> {
             ? NavigationDestinationLabelBehavior.onlyShowSelected
             : NavigationDestinationLabelBehavior.alwaysShow,
         onSelected: _onMobileSelected,
+      ),
+    );
+  }
+}
+
+class _CompactShellHeader extends StatelessWidget {
+  const _CompactShellHeader({
+    required this.title,
+    required this.store,
+    required this.onRefresh,
+  });
+
+  final String title;
+  final TaskStore store;
+  final VoidCallback onRefresh;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final isDark = scheme.brightness == Brightness.dark;
+    final borderColor = isDark
+        ? Colors.white.withValues(alpha: 0.08)
+        : scheme.outlineVariant;
+
+    return AnimatedBuilder(
+      animation: store,
+      builder: (context, _) {
+        final snapshot = store.syncSnapshot;
+        final pending = snapshot?.pendingCount ?? 0;
+        final hasConflict = snapshot?.phase.name == 'conflict';
+        final hasSyncIssue = snapshot != null &&
+            snapshot.phase.name != 'synced' &&
+            snapshot.phase.name != 'localOnly';
+        final reminders = store.dueReminders();
+        final reminderCount = reminders.length;
+
+        return Container(
+          height: 52,
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF111827) : scheme.surface,
+            border: Border(bottom: BorderSide(color: borderColor)),
+          ),
+          child: Row(
+            children: <Widget>[
+              Expanded(
+                child: Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: -0.2,
+                  ),
+                ),
+              ),
+              if (reminderCount > 0)
+                _HeaderIconBadge(
+                  icon: Icons.notifications_rounded,
+                  tooltip: '$reminderCount reminder${reminderCount == 1 ? '' : 's'}',
+                  badge: '$reminderCount',
+                  color: const Color(0xFFF59E0B),
+                  onPressed: () => _showReminders(context),
+                )
+              else
+                _HeaderIconButton(
+                  icon: Icons.notifications_none_rounded,
+                  tooltip: 'Notifications',
+                  onPressed: () => _showReminders(context),
+                ),
+              const SizedBox(width: 4),
+              _SyncIndicator(
+                pending: pending,
+                hasIssue: hasSyncIssue,
+                hasConflict: hasConflict,
+                onTap: () => showSyncCenterDialog(context, store),
+              ),
+              const SizedBox(width: 4),
+              _HeaderIconButton(
+                icon: Icons.refresh_rounded,
+                tooltip: 'Refresh',
+                onPressed: onRefresh,
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _showReminders(BuildContext context) {
+    final reminders = store.upcomingReminders;
+    showDialog<void>(
+      context: context,
+      builder: (ctx) {
+        final theme = Theme.of(ctx);
+        final scheme = theme.colorScheme;
+        return AlertDialog(
+          title: const Text('Reminders'),
+          content: SizedBox(
+            width: 360,
+            child: reminders.isEmpty
+                ? Text(
+                    'No reminders scheduled.',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: scheme.onSurfaceVariant,
+                    ),
+                  )
+                : ConstrainedBox(
+                    constraints: const BoxConstraints(maxHeight: 320),
+                    child: ListView.separated(
+                      shrinkWrap: true,
+                      itemCount: reminders.length > 8 ? 8 : reminders.length,
+                      separatorBuilder: (_, __) => const Divider(height: 1),
+                      itemBuilder: (_, i) {
+                        final task = reminders[i];
+                        final due = task.isReminderDue();
+                        return ListTile(
+                          dense: true,
+                          contentPadding: EdgeInsets.zero,
+                          leading: Icon(
+                            due ? Icons.notifications_active_rounded : Icons.schedule_rounded,
+                            color: due ? scheme.error : scheme.primary,
+                            size: 20,
+                          ),
+                          title: Text(task.title, maxLines: 1, overflow: TextOverflow.ellipsis),
+                          subtitle: Text(
+                            due ? 'Due now' : 'Scheduled',
+                            style: TextStyle(color: due ? scheme.error : scheme.onSurfaceVariant),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('Close')),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _HeaderIconButton extends StatelessWidget {
+  const _HeaderIconButton({required this.icon, required this.tooltip, required this.onPressed});
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      tooltip: tooltip,
+      onPressed: onPressed,
+      icon: Icon(icon, size: 20),
+      visualDensity: VisualDensity.compact,
+      constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+      padding: EdgeInsets.zero,
+    );
+  }
+}
+
+class _HeaderIconBadge extends StatelessWidget {
+  const _HeaderIconBadge({
+    required this.icon,
+    required this.tooltip,
+    required this.badge,
+    required this.color,
+    required this.onPressed,
+  });
+  final IconData icon;
+  final String tooltip;
+  final String badge;
+  final Color color;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        _HeaderIconButton(icon: icon, tooltip: tooltip, onPressed: onPressed),
+        Positioned(
+          right: 2,
+          top: 2,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+            decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(8)),
+            child: Text(
+              badge,
+              style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w700),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _SyncIndicator extends StatelessWidget {
+  const _SyncIndicator({
+    required this.pending,
+    required this.hasIssue,
+    required this.hasConflict,
+    required this.onTap,
+  });
+  final int pending;
+  final bool hasIssue;
+  final bool hasConflict;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final Color color = hasConflict
+        ? const Color(0xFFF59E0B)
+        : hasIssue
+            ? scheme.primary
+            : scheme.onSurfaceVariant;
+    final label = pending > 0 ? '$pending changes waiting' : (hasIssue ? 'Sync status' : 'Synced');
+
+    return Tooltip(
+      message: label,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                hasConflict ? Icons.cloud_sync_rounded : Icons.cloud_outlined,
+                size: 18,
+                color: color,
+              ),
+              if (pending > 0) ...[
+                const SizedBox(width: 6),
+                Container(
+                  width: 6,
+                  height: 6,
+                  decoration: BoxDecoration(color: const Color(0xFFF59E0B), shape: BoxShape.circle),
+                ),
+              ],
+            ],
+          ),
+        ),
       ),
     );
   }

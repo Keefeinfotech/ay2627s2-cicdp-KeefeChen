@@ -103,12 +103,8 @@ class DashboardHeader extends StatelessWidget {
         LayoutBuilder(
           builder: (context, constraints) {
             final isNarrow = constraints.maxWidth < AppSizes.compactBreakpoint;
-            final columns = constraints.maxWidth < AppSizes.tightBreakpoint
-                ? 2
-                : isNarrow
-                ? 3
-                : 5;
-            final gap = isNarrow ? AppSpacing.xs : AppSpacing.md;
+            final columns = isNarrow ? 2 : 5;
+            final gap = isNarrow ? AppSpacing.sm : AppSpacing.md;
 
             final cards = <Widget>[
               _DashboardStatCard(
@@ -155,7 +151,13 @@ class DashboardHeader extends StatelessWidget {
                 spacing: gap,
                 runSpacing: gap,
                 children: <Widget>[
-                  for (final card in cards) SizedBox(width: width, child: card),
+                  for (var i = 0; i < cards.length; i++)
+                    SizedBox(
+                      width: i == cards.length - 1 && cards.length.isOdd
+                          ? constraints.maxWidth
+                          : width,
+                      child: cards[i],
+                    ),
                 ],
               );
             }
