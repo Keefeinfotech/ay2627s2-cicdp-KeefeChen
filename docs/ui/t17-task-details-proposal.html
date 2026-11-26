@@ -1,0 +1,669 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Auxilia — T17 Task details (grounded in TaskEditor)</title>
+  <style>
+    /* Tokens copied from frontend/lib/core/design_system/ds_tokens.dart,
+       frontend/lib/core/theme/app_colors.dart and app_theme.dart. */
+    :root {
+      --font: Roboto, "Segoe UI", "SF Pro Text", Arial, sans-serif;
+
+      --canvas: #f1f5f9;              /* AppColors.background */
+      --surface: #ffffff;             /* AppColors.surface */
+      --surface-alt: #e2e8f0;         /* light surfaceContainerHighest */
+      --border: #cbd5e1;              /* AppColors.divider */
+      --border-soft: #e2e8f0;         /* scheme.outlineVariant */
+      --text: #0f172a;                /* AppColors.textPrimary */
+      --text-2: #475569;              /* AppColors.textSecondary */
+      --muted: #64748b;               /* AppColors.blush */
+
+      --primary: #1d4ed8;             /* scheme.primary / AppColors.saffron */
+      --primary-2: #2563eb;           /* scheme.secondary / AppColors.pacific */
+      --on-primary: #ffffff;
+      --primary-container: #dbeafe;   /* scheme.primaryContainer */
+      --on-primary-container: #475569;
+
+      --success: #059669;
+      --warning: #d97706;
+      --danger: #dc2626;
+      --priority-low: #1055c2;        /* Ds.trustBlue */
+      --priority-medium: #c78600;     /* Ds.warningAmber */
+      --priority-high: #c62828;       /* Ds.dangerRed */
+
+      --hover: rgba(29, 78, 216, .06);   /* ThemeData.hoverColor */
+      --focus: rgba(29, 78, 216, .10);   /* ThemeData.focusColor */
+      --scrim: rgba(15, 23, 42, .55);
+
+      /* Ds elevation 1 / 4 */
+      --elev-1: 0 1px 2px rgba(0, 0, 0, .05);
+      --elev-4: 0 8px 24px rgba(0, 0, 0, .10);
+    }
+
+    .t17[data-theme="dark"] {
+      --canvas: #0f172a;              /* AppColors.darkCanvas */
+      --surface: #1e293b;             /* AppColors.darkSurface */
+      --surface-alt: #263449;         /* AppColors.darkSurfaceAlt */
+      --border: #334155;              /* AppColors.darkBorder */
+      --border-soft: #334155;
+      --text: #f1f5f9;                /* scheme.onSurface */
+      --text-2: #94a3b8;              /* AppColors.darkMuted */
+      --muted: #94a3b8;
+
+      --primary: #60a5fa;             /* AppColors.darkPrimary */
+      --primary-2: #60a5fa;
+      --on-primary: #0f172a;
+      --primary-container: #263449;
+      --on-primary-container: #e2e8f0;
+
+      --success: #6ee7b7;             /* AppColors.darkCompleted */
+      --warning: #fbbf24;
+      --danger: #f87171;              /* scheme.error */
+      --priority-low: #60a5fa;
+      --priority-medium: #fbbf24;
+      --priority-high: #fca5a5;       /* AppColors.darkOverdue */
+
+      --hover: rgba(96, 165, 250, .08);
+      --focus: rgba(96, 165, 250, .14);
+      --scrim: rgba(0, 0, 0, .66);
+      --elev-4: 0 8px 24px rgba(0, 0, 0, .45);
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; }
+    body { font-family: var(--font); -webkit-font-smoothing: antialiased; }
+    button, input, textarea { font: inherit; }
+    button { cursor: pointer; }
+
+    .t17 {
+      width: 100%;
+      height: 960px;
+      overflow: hidden;
+      background: var(--canvas);
+      color: var(--text);
+      font-size: 14px;              /* AppTypography.bodyMedium */
+      line-height: 1.55;
+    }
+
+    .app {
+      display: grid;
+      grid-template-columns: 248px minmax(0, 1fr); /* AppSidebar.width */
+      height: 100%;
+    }
+
+    /* ---------- Sidebar: mirrors AppSidebar ---------- */
+    .sidebar {
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      background: var(--surface);
+      border-right: 1px solid var(--border-soft);
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 24px 16px;           /* AppSpacing.xl / lg */
+    }
+    .brand-mark {
+      width: 36px; height: 36px;
+      display: grid; place-items: center;
+      border-radius: 8px;           /* Ds.rLg — no gradient */
+      background: var(--primary);
+      color: var(--on-primary);
+      font-size: 17px; font-weight: 700;
+    }
+    .brand-name { font-size: 17px; font-weight: 600; line-height: 1.32; }
+    .brand-sub { font-size: 11.5px; font-weight: 600; color: var(--text-2); }
+
+    .nav { padding: 0 8px; overflow: auto; }
+    .nav-item {
+      display: flex; align-items: center; gap: 12px;
+      width: 100%; min-height: 52px;
+      padding: 12px 16px;
+      border: 0; border-radius: 10px;  /* AppRadius.md */
+      background: transparent;
+      color: var(--text-2);
+      font-size: 15px; font-weight: 500; /* AppTypography.labelLarge */
+      text-align: left;
+      transition: background .15s ease, color .15s ease;
+    }
+    .nav-item:hover { background: var(--hover); color: var(--text); }
+    .nav-item:focus-visible { outline: 3px solid var(--focus); outline-offset: 1px; }
+    .nav-item.selected {
+      background: var(--primary-container);
+      color: var(--on-primary-container);
+      font-weight: 700;
+    }
+    .nav-item .ico { width: 20px; height: 20px; flex: 0 0 auto; }
+
+    .profile {
+      margin: 12px;
+      padding: 8px;
+      display: flex; align-items: center; gap: 8px;
+      border: 1px solid var(--border-soft);
+      border-radius: 8px;
+      background: var(--surface);
+    }
+    .avatar {
+      width: 32px; height: 32px; flex: 0 0 auto;
+      display: grid; place-items: center;
+      border-radius: 999px;
+      background: var(--primary-container);
+      color: var(--on-primary-container);
+      font-size: 11.5px; font-weight: 700;
+    }
+    .profile-name {
+      font-size: 13px; font-weight: 600;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .profile-mail {
+      font-size: 11.5px; font-weight: 600; color: var(--text-2);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+
+    /* ---------- Compact shell header: 52px from AppShell ---------- */
+    .workspace { display: flex; flex-direction: column; min-width: 0; }
+    .topbar {
+      height: 52px; flex: 0 0 52px;
+      display: flex; align-items: center; gap: 8px;
+      padding: 0 20px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border-soft);
+    }
+    .topbar h1 {
+      margin: 0;
+      font-size: 17px; font-weight: 700; letter-spacing: -.2px;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .topbar-actions { margin-left: auto; display: flex; align-items: center; gap: 4px; }
+    .icon-btn {
+      width: 40px; height: 40px;
+      display: grid; place-items: center;
+      border: 0; border-radius: 6px;
+      background: transparent; color: var(--text-2);
+      transition: background .15s ease, color .15s ease;
+    }
+    .icon-btn:hover { background: var(--hover); color: var(--text); }
+    .icon-btn:focus-visible { outline: 3px solid var(--focus); outline-offset: 1px; }
+    .icon-btn .ico { width: 20px; height: 20px; }
+    .badge-count {
+      position: absolute; top: 4px; right: 4px;
+      min-width: 16px; height: 16px; padding: 0 3px;
+      display: grid; place-items: center;
+      border-radius: 999px;
+      background: var(--warning); color: #fff;
+      font-size: 10px; font-weight: 700;
+    }
+    .icon-wrap { position: relative; }
+
+    /* ---------- Task list behind the modal ---------- */
+    .content { flex: 1; min-height: 0; overflow: hidden; padding: 24px; }
+    .content-inner { max-width: 1120px; margin: 0 auto; } /* AppSizes.maxContentWidth */
+    .section-title {
+      margin: 0 0 12px;
+      font-size: 14px; font-weight: 600; letter-spacing: .06px;
+      color: var(--text-2);
+    }
+    .task-card {
+      display: flex; gap: 12px;
+      padding: 12px;
+      margin-bottom: 8px;
+      border: 1px solid var(--border-soft);
+      border-radius: 8px;
+      background: var(--surface);
+      box-shadow: var(--elev-1);
+    }
+    .check {
+      width: 18px; height: 18px; margin-top: 2px; flex: 0 0 auto;
+      border: 1.5px solid var(--border); border-radius: 4px;
+    }
+    .task-title { font-size: 17px; font-weight: 600; line-height: 1.35; }
+    .task-meta {
+      display: flex; flex-wrap: wrap; gap: 12px; margin-top: 8px;
+      font-size: 13px; font-weight: 600; color: var(--text-2);
+    }
+    .meta { display: inline-flex; align-items: center; gap: 4px; }
+    .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+    .pill {
+      display: inline-flex; align-items: center;
+      height: 22px; padding: 0 8px;
+      border: 1px solid currentColor; border-radius: 999px;
+      font-size: 11.5px; font-weight: 600;
+    }
+
+    /* ---------- Modal: mirrors TaskEditor ---------- */
+    .scrim { position: absolute; inset: 0; background: var(--scrim); z-index: 2; }
+    .modal-layer {
+      position: absolute; inset: 0; z-index: 3;
+      display: grid; place-items: center;
+      padding: 24px;
+    }
+    .sheet {
+      width: 640px;                 /* TaskEditor ConstrainedBox.maxWidth */
+      max-width: 100%;
+      max-height: 883px;            /* 92% of the 960px canvas */
+      display: flex; flex-direction: column;
+      overflow: hidden;
+      border: 1px solid var(--border-soft);
+      border-radius: 20px 20px 12px 12px; /* BottomSheetTheme top radius */
+      background: var(--surface);
+      box-shadow: var(--elev-4);
+    }
+
+    .sheet-head { padding: 12px 12px 8px 24px; }
+    .handle {
+      width: 40px; height: 4px; margin: 0 auto 12px;
+      border-radius: 999px; background: var(--border);
+    }
+    .sheet-head-row { display: flex; align-items: center; gap: 8px; }
+    .sheet-title {
+      margin: 0;
+      font-size: 20px; font-weight: 600; line-height: 1.32;
+    }
+
+    .sheet-body {
+      flex: 1; min-height: 0; overflow-y: auto;
+      padding: 0 24px 16px;
+      scrollbar-width: thin;
+    }
+
+    .field {
+      position: relative;
+      margin-bottom: 8px;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 10px;          /* AppRadius.md via inputDecorationTheme */
+      background: var(--surface);
+      transition: border-color .15s ease, box-shadow .15s ease;
+    }
+    .field:focus-within {
+      border-color: var(--primary);
+      border-width: 1.5px;
+      box-shadow: 0 0 0 3px var(--focus);
+    }
+    .field > label {
+      position: absolute; top: -8px; left: 10px;
+      padding: 0 4px;
+      background: var(--surface);
+      color: var(--text-2);
+      font-size: 12px; font-weight: 500;
+    }
+    .field:focus-within > label { color: var(--primary); font-weight: 600; }
+    .field input, .field textarea {
+      width: 100%;
+      border: 0; outline: 0; resize: vertical;
+      background: transparent;
+      color: var(--text);
+      font-size: 14px; line-height: 1.55;
+    }
+    .field textarea { min-height: 72px; }
+    .field input::placeholder, .field textarea::placeholder { color: var(--muted); opacity: 1; }
+    .field.with-icon { display: flex; align-items: flex-start; gap: 8px; }
+    .field.with-icon > label { left: 38px; }
+    .field.with-icon .ico { width: 20px; height: 20px; margin-top: 1px; color: var(--text-2); }
+    .field.with-icon input { padding-top: 0; }
+
+    .group-label {
+      margin: 16px 0 4px;
+      font-size: 15px; font-weight: 600;
+    }
+    .chips { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 8px; }
+    .chip {
+      display: inline-flex; align-items: center; gap: 4px;
+      max-height: 32px; padding: 0 8px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--surface);
+      color: var(--text-2);
+      font-size: 13px; font-weight: 600;
+      white-space: nowrap;
+      transition: background .15s ease, border-color .15s ease;
+    }
+    .chip:hover { background: var(--hover); border-color: var(--primary); }
+    .chip.suggested { background: var(--surface-alt); }
+    .chip .x {
+      width: 16px; height: 16px;
+      display: grid; place-items: center;
+      border-radius: 999px;
+      color: var(--muted);
+      font-size: 13px; line-height: 1;
+    }
+    .tag-row { display: flex; gap: 4px; }
+    .tag-row .field { flex: 1; margin-bottom: 0; }
+    .add-btn {
+      width: 48px; height: 48px; flex: 0 0 48px;
+      display: grid; place-items: center;
+      border: 0; border-radius: 10px;
+      background: var(--primary-container);
+      color: var(--primary);
+      transition: background .15s ease;
+    }
+    .add-btn:hover { background: var(--hover); }
+    .add-btn .ico { width: 20px; height: 20px; }
+
+    .segmented {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 2px; padding: 2px;
+      border: 1px solid var(--border); border-radius: 10px;
+      background: var(--surface-alt);
+    }
+    .segment {
+      height: 40px;
+      border: 0; border-radius: 8px;
+      background: transparent; color: var(--text-2);
+      font-size: 13px; font-weight: 600;
+      transition: background .15s ease, color .15s ease;
+    }
+    .segment:hover { background: var(--hover); }
+    .segment.selected { background: var(--primary); color: var(--on-primary); }
+
+    .schedule {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+    }
+    .schedule-btn {
+      display: flex; align-items: center; gap: 8px;
+      height: 44px; padding: 0 12px;
+      border: 1px solid var(--primary); border-radius: 10px;
+      background: var(--surface); color: var(--primary);
+      font-size: 13px; font-weight: 600;
+      text-align: left;
+      min-width: 0;
+      transition: background .15s ease;
+    }
+    .schedule-btn:hover { background: var(--hover); }
+    .schedule-btn span {
+      min-width: 0;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .schedule-btn .ico { width: 18px; height: 18px; flex: 0 0 auto; }
+
+    .clear-row { display: flex; justify-content: flex-end; gap: 12px; margin-top: 4px; }
+    .text-btn {
+      height: 36px; padding: 0 12px;
+      border: 0; border-radius: 6px;
+      background: transparent; color: var(--primary);
+      font-size: 13px; font-weight: 600;
+    }
+    .text-btn:hover { background: var(--hover); }
+
+    .error {
+      display: flex; align-items: flex-start; gap: 4px;
+      margin-top: 8px; color: var(--danger); font-size: 13px;
+    }
+    .error[hidden] { display: none; }
+    .error .ico { width: 18px; height: 18px; flex: 0 0 auto; }
+
+    .sheet-foot {
+      display: flex; align-items: center; justify-content: flex-end; gap: 8px;
+      padding: 12px 24px 16px;
+      border-top: 1px solid var(--border-soft);
+      background: var(--surface);
+    }
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+    .btn.cancel { height: 40px; padding: 0 12px; border: 0; border-radius: 6px; background: transparent; color: var(--primary); font-size: 15px; font-weight: 600; }
+    .btn.cancel:hover { background: var(--hover); }
+    .btn.save {
+      height: 44px; padding: 0 24px;
+      border: 0; border-radius: 10px;
+      background: var(--primary); color: var(--on-primary);
+      font-size: 15px; font-weight: 600;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, .18), 0 2px 4px rgba(15, 23, 42, .12);
+      transition: box-shadow .15s ease;
+    }
+    .btn.save:hover { box-shadow: 0 2px 4px rgba(15, 23, 42, .20), 0 4px 8px rgba(15, 23, 42, .14); }
+    .btn.save:active { box-shadow: 0 1px 2px rgba(15, 23, 42, .18); }
+    .btn.save:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+    .btn.save .ico { width: 18px; height: 18px; }
+
+    .ico {
+      width: 18px; height: 18px;
+      fill: none; stroke: currentColor; stroke-width: 1.8;
+      stroke-linecap: round; stroke-linejoin: round;
+    }
+
+    /* Responsive equivalents of AppShell breakpoints (1024 / 600). */
+    @media (max-width: 1024px) {
+      .t17 { height: 900px; }
+      .app { grid-template-columns: 92px minmax(0, 1fr); } /* AppNavigationRail.width */
+      .brand { justify-content: center; padding: 24px 8px; }
+      .brand-copy, .nav-item .label, .profile-meta { display: none; }
+      .nav-item { justify-content: center; padding: 12px 0; }
+      .profile { justify-content: center; padding: 8px 0; }
+    }
+    @media (max-width: 600px) {
+      .t17 { height: 844px; }
+      .app { display: block; }
+      .sidebar { display: none; }
+      .topbar { padding: 0 12px; }
+      .content { padding: 16px; }
+      .modal-layer { padding: 8px; }
+      .sheet { max-height: calc(844px - 16px); }
+      .sheet-head { padding: 12px 8px 8px 16px; }
+      .sheet-body { padding: 0 16px 16px; }
+      .sheet-foot { padding: 12px 16px 16px; }
+      .schedule { grid-template-columns: 1fr; }
+      .segment { font-size: 12px; }
+    }
+  </style>
+</head>
+<body>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.8V20h14V9.8"/><path d="M9.5 20v-6h5v6"/></symbol>
+    <symbol id="i-checklist" viewBox="0 0 24 24"><path d="m4 7 2 2 3-3M4 15l2 2 3-3M12 7h8M12 15h8"/></symbol>
+    <symbol id="i-workspaces" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></symbol>
+    <symbol id="i-groups" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3 20a6 6 0 0 1 12 0"/><path d="M16 5a3 3 0 0 1 0 6M17 14a6 6 0 0 1 4 6"/></symbol>
+    <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M8 3v4M16 3v4M3 10h18"/></symbol>
+    <symbol id="i-ai" viewBox="0 0 24 24"><path d="m12 3 1.7 4.6L18 9l-4.3 1.4L12 15l-1.7-4.6L6 9l4.3-1.4Z"/><path d="m18.5 15 .8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8Z"/></symbol>
+    <symbol id="i-reports" viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></symbol>
+    <symbol id="i-person" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></symbol>
+    <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 11a8 8 0 1 0-2.3 6.3"/><path d="M20 4v7h-7"/></symbol>
+    <symbol id="i-bell" viewBox="0 0 24 24"><path d="M18 9a6 6 0 1 0-12 0c0 6-2 7-2 7h16s-2-1-2-7"/><path d="M10 20h4"/></symbol>
+    <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4 8.5 8.5 0 1 0 20 14.5Z"/></symbol>
+    <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6 18 18M18 6 6 18"/></symbol>
+    <symbol id="i-school" viewBox="0 0 24 24"><path d="m3 9 9-5 9 5-9 5-9-5Z"/><path d="M7 11v5c0 1.5 2.2 3 5 3s5-1.5 5-3v-5"/></symbol>
+    <symbol id="i-tag" viewBox="0 0 24 24"><path d="M20 13 13 20a2 2 0 0 1-3 0l-6-6a2 2 0 0 1 0-3l7-7h7a2 2 0 0 1 2 2v7Z"/><circle cx="16.5" cy="7.5" r="1"/></symbol>
+    <symbol id="i-add" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-event" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M8 3v4M16 3v4M3 10h18"/></symbol>
+    <symbol id="i-error" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v6M12 17h.01"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></symbol>
+  </svg>
+
+  <div class="t17" id="app">
+    <div class="app">
+      <!-- Real destinations from ShellDestination -->
+      <aside class="sidebar" aria-label="Primary navigation">
+        <div class="brand">
+          <div class="brand-mark">A</div>
+          <div class="brand-copy">
+            <div class="brand-name">Auxilia</div>
+            <div class="brand-sub">Personal assistant</div>
+          </div>
+        </div>
+
+        <nav class="nav">
+          <button class="nav-item"><svg class="ico"><use href="#i-home"/></svg><span class="label">Home</span></button>
+          <button class="nav-item selected" aria-current="page"><svg class="ico"><use href="#i-checklist"/></svg><span class="label">Tasks</span></button>
+          <button class="nav-item"><svg class="ico"><use href="#i-workspaces"/></svg><span class="label">Projects</span></button>
+          <button class="nav-item"><svg class="ico"><use href="#i-groups"/></svg><span class="label">Groups</span></button>
+          <button class="nav-item"><svg class="ico"><use href="#i-calendar"/></svg><span class="label">Calendar</span></button>
+          <button class="nav-item"><svg class="ico"><use href="#i-ai"/></svg><span class="label">AI Assistant</span></button>
+          <button class="nav-item"><svg class="ico"><use href="#i-reports"/></svg><span class="label">Reports</span></button>
+          <button class="nav-item"><svg class="ico"><use href="#i-person"/></svg><span class="label">Profile</span></button>
+        </nav>
+
+        <div class="profile">
+          <div class="avatar">GC</div>
+          <div class="profile-meta" style="min-width:0">
+            <div class="profile-name">grace@auxilia.demo</div>
+            <div class="profile-mail">My workspace</div>
+          </div>
+        </div>
+      </aside>
+
+      <div class="workspace">
+        <header class="topbar">
+          <h1>Tasks</h1>
+          <div class="topbar-actions">
+            <button class="icon-btn" aria-label="Refresh and sync"><svg class="ico"><use href="#i-refresh"/></svg></button>
+            <button class="icon-btn icon-wrap" aria-label="2 reminders">
+              <svg class="ico"><use href="#i-bell"/></svg><span class="badge-count">2</span>
+            </button>
+            <button class="icon-btn" id="themeToggle" aria-label="Toggle dark mode"><svg class="ico"><use href="#i-moon"/></svg></button>
+            <div class="avatar">GC</div>
+          </div>
+        </header>
+
+        <main class="content">
+          <div class="content-inner">
+            <h2 class="section-title">Pending</h2>
+
+            <article class="task-card">
+              <span class="check"></span>
+              <div style="min-width:0">
+                <div class="task-title">Finish week 4 revision</div>
+                <div class="task-meta">
+                  <span class="meta" style="color:var(--priority-high)"><span class="dot"></span>High priority</span>
+                  <span class="meta"><svg class="ico" style="width:14px;height:14px"><use href="#i-school"/></svg>COMP 2101</span>
+                  <span class="meta"><svg class="ico" style="width:14px;height:14px"><use href="#i-event"/></svg>Due Fri, 27 Nov</span>
+                  <span class="pill" style="color:var(--text-2)">Pending</span>
+                </div>
+              </div>
+            </article>
+
+            <article class="task-card">
+              <span class="check"></span>
+              <div style="min-width:0">
+                <div class="task-title">Send group plan to Marcus</div>
+                <div class="task-meta">
+                  <span class="meta" style="color:var(--priority-medium)"><span class="dot"></span>Medium priority</span>
+                  <span class="meta"><svg class="ico" style="width:14px;height:14px"><use href="#i-person"/></svg>Marcus Lee</span>
+                  <span class="meta"><svg class="ico" style="width:14px;height:14px"><use href="#i-bell"/></svg>Remind today</span>
+                  <span class="pill" style="color:var(--text-2)">Pending</span>
+                </div>
+              </div>
+            </article>
+
+            <article class="task-card">
+              <span class="check"></span>
+              <div style="min-width:0">
+                <div class="task-title">Upload lab notes</div>
+                <div class="task-meta">
+                  <span class="meta" style="color:var(--priority-low)"><span class="dot"></span>Low priority</span>
+                  <span class="meta"><svg class="ico" style="width:14px;height:14px"><use href="#i-event"/></svg>No due date</span>
+                  <span class="pill" style="color:var(--text-2)">Pending</span>
+                </div>
+              </div>
+            </article>
+          </div>
+        </main>
+      </div>
+    </div>
+
+    <div class="scrim"></div>
+
+    <!-- TaskEditor: 640px, sticky footer, fields scroll independently -->
+    <div class="modal-layer">
+      <section class="sheet" aria-label="Edit task" aria-modal="true">
+        <div class="sheet-head">
+          <div class="handle"></div>
+          <div class="sheet-head-row">
+            <h2 class="sheet-title">Edit task</h2>
+            <button class="icon-btn" style="margin-left:auto" aria-label="Close"><svg class="ico"><use href="#i-close"/></svg></button>
+          </div>
+        </div>
+
+        <div class="sheet-body">
+          <div class="field">
+            <label for="t-title">Title</label>
+            <input id="t-title" value="Finish week 4 revision" placeholder="What needs to be done?" />
+          </div>
+
+          <div class="field with-icon">
+            <label for="t-course">Course or subject (optional)</label>
+            <svg class="ico"><use href="#i-school"/></svg>
+            <input id="t-course" value="COMP 2101" placeholder="e.g. COMP 2101" />
+          </div>
+          <div class="chips" aria-label="Suggested courses">
+            <button class="chip suggested">COMP 2101</button>
+            <button class="chip suggested">MATH 2011</button>
+          </div>
+
+          <div class="group-label">Tags (optional)</div>
+          <div class="chips">
+            <span class="chip">revision<span class="x" aria-hidden="true">×</span></span>
+            <span class="chip">group<span class="x" aria-hidden="true">×</span></span>
+          </div>
+          <div class="tag-row">
+            <div class="field">
+              <label for="t-tag" style="display:none">Add tag</label>
+              <input id="t-tag" placeholder="Add a tag, then press Enter" />
+            </div>
+            <button class="add-btn" aria-label="Add tag"><svg class="ico"><use href="#i-add"/></svg></button>
+          </div>
+          <div class="chips" style="margin-top:8px" aria-label="Suggested tags">
+            <button class="chip suggested">#revision</button>
+            <button class="chip suggested">#exam</button>
+          </div>
+
+          <div class="field" style="margin-top:16px">
+            <label for="t-notes">Notes (optional)</label>
+            <textarea id="t-notes" placeholder="Add context, links or a quick plan">Cover row reduction and pivot columns. Meet Marcus after lecture.</textarea>
+          </div>
+
+          <div class="group-label">Priority</div>
+          <div class="segmented" role="group" aria-label="Priority">
+            <button class="segment">Low</button>
+            <button class="segment">Medium</button>
+            <button class="segment selected" aria-pressed="true">High</button>
+          </div>
+
+          <div class="group-label">Schedule</div>
+          <div class="schedule">
+            <button class="schedule-btn"><svg class="ico"><use href="#i-event"/></svg><span>Due Fri, 27 Nov</span></button>
+            <button class="schedule-btn"><svg class="ico"><use href="#i-bell"/></svg><span>Remind Thu, 26 Nov</span></button>
+          </div>
+          <div class="clear-row">
+            <button class="text-btn">Clear due date</button>
+            <button class="text-btn">Clear reminder</button>
+          </div>
+
+          <!-- Error state uses scheme.error; kept hidden in the default state. -->
+          <div class="error" hidden>
+            <svg class="ico"><use href="#i-error"/></svg>
+            <span>Reminder must be before the due date.</span>
+          </div>
+        </div>
+
+        <div class="sheet-foot">
+          <button class="btn cancel">Cancel</button>
+          <button class="btn save"><svg class="ico"><use href="#i-check"/></svg>Save changes</button>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    const app = document.getElementById('app');
+    const toggle = document.getElementById('themeToggle');
+    toggle.addEventListener('click', () => {
+      const dark = app.dataset.theme === 'dark';
+      app.dataset.theme = dark ? 'light' : 'dark';
+      toggle.querySelector('use').setAttribute('href', dark ? '#i-moon' : '#i-sun');
+    });
+
+    document.querySelectorAll('.segment').forEach((segment) => {
+      segment.addEventListener('click', () => {
+        document.querySelectorAll('.segment').forEach((item) => {
+          item.classList.remove('selected');
+          item.removeAttribute('aria-pressed');
+        });
+        segment.classList.add('selected');
+        segment.setAttribute('aria-pressed', 'true');
+      });
+    });
+  </script>
+</body>
+</html>
