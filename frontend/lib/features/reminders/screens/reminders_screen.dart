@@ -1,22 +1,41 @@
 /// File Name: reminders_screen.dart
 /// Description: Shows task-based reminders (due/overdue/upcoming) for the user.
-/// This screen is a standalone route; when no TaskStore is provided it falls back
-/// to a safe empty state that directs users to manage reminders from Tasks.
+/// The standalone route supplies an authenticated [TaskStore]; a null store is
+/// kept only for direct instantiation and shows an informational state.
 library;
 
 import 'package:flutter/material.dart';
 
 import '../../../core/routing/app_router.dart';
+import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/app_empty_state.dart';
+import '../../../core/widgets/app_error_state.dart';
+import '../../../core/widgets/app_loading.dart';
 import '../../home/data/task_store.dart';
 import '../../home/models/task.dart';
 
 class RemindersScreen extends StatelessWidget {
   const RemindersScreen({super.key, this.store});
 
-  /// Optional task store. When null (standalone route), we show a safe
-  /// informational state instead of calling a broken legacy API.
+  /// Optional task store. The router supplies one; direct callers without a
+  /// store see guidance instead of a false empty state.
   final TaskStore? store;
+
+  void _goToTasks(BuildContext context) {
+    Navigator.pushNamedAndRemoveUntil(
+      context,
+      AppRoutes.home,
+      (route) => false,
+    );
+  }
+
+  Widget _goToTasksButton(BuildContext context) {
+    return AppButton(
+      label: 'Go to tasks',
+      icon: Icons.task_alt_outlined,
+      onPressed: () => _goToTasks(context),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -24,40 +43,43 @@ class RemindersScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('Reminders')),
       body: taskStore == null
-          ? AppEmptyState(
-              icon: Icons.notifications_outlined,
-              title: 'Reminders live with your tasks',
-              message: 'Open a task to add, edit, or snooze its reminder. Due reminders also appear in-app while you use Auxilia.',
-              action: FilledButton.icon(
-                onPressed: () => Navigator.pushNamedAndRemoveUntil(
-                  context,
-                  AppRoutes.home,
-                  (route) => false,
-                ),
-                icon: const Icon(Icons.task_alt_outlined),
-                label: const Text('Go to tasks'),
+          ? Center(
+              child: AppEmptyState(
+                icon: Icons.notifications_outlined,
+                title: 'Reminders live with your tasks',
+                message: 'Open a task to add, edit, or snooze its reminder. Due reminders also appear in-app while you use Auxilia.',
+                action: _goToTasksButton(context),
               ),
             )
           : AnimatedBuilder(
               animation: taskStore,
               builder: (context, _) {
+                if (taskStore.isLoading && !taskStore.hasLoaded) {
+                  return const Center(
+                    child: AppLoading(label: 'Loading reminders...'),
+                  );
+                }
+                if (taskStore.error != null && !taskStore.hasLoaded) {
+                  return Center(
+                    child: AppErrorState(
+                      title: 'Could not load reminders',
+                      message: taskStore.error!,
+                      onRetry: taskStore.load,
+                    ),
+                  );
+                }
+
                 final reminders =
-                    taskStore.tasks.where((t) => t.reminderAt != null).toList()
+                    taskStore.tasks.where((t) => t.hasReminder).toList()
                       ..sort((a, b) => a.reminderAt!.compareTo(b.reminderAt!));
                 if (reminders.isEmpty) {
-                  return AppEmptyState(
-                    icon: Icons.notifications_outlined,
-                    title: 'No reminders yet',
-                    message:
-                        'Add a reminder to a task and it will show up here.',
-                    action: FilledButton.icon(
-                      onPressed: () => Navigator.pushNamedAndRemoveUntil(
-                        context,
-                        AppRoutes.home,
-                        (route) => false,
-                      ),
-                      icon: const Icon(Icons.task_alt_outlined),
-                      label: const Text('Go to tasks'),
+                  return Center(
+                    child: AppEmptyState(
+                      icon: Icons.notifications_outlined,
+                      title: 'No reminders yet',
+                      message:
+                          'Add a reminder to a task and it will show up here.',
+                      action: _goToTasksButton(context),
                     ),
                   );
                 }
@@ -65,34 +87,45 @@ class RemindersScreen extends StatelessWidget {
                 final now = DateTime.now();
                 final overdue = <Task>[];
                 final upcoming = <Task>[];
-                for (final t in reminders) {
-                  if (t.reminderAt!.isBefore(now) && !t.isCompleted) {
-                    overdue.add(t);
+                for (final task in reminders) {
+                  if (task.isReminderDue(now)) {
+                    overdue.add(task);
                   } else {
-                    upcoming.add(t);
+                    upcoming.add(task);
                   }
                 }
 
-                return ListView(
-                  padding: const EdgeInsets.all(16),
+                return Column(
                   children: [
-                    if (overdue.isNotEmpty) ...[
-                      _SectionHeader(
-                        title: 'Overdue',
-                        count: overdue.length,
-                        color: Theme.of(context).colorScheme.error,
+                    if (taskStore.error != null)
+                      AppErrorBanner(
+                        message: taskStore.error!,
+                        onRetry: taskStore.load,
                       ),
-                      const SizedBox(height: 8),
-                      ...overdue.map((t) => _ReminderTile(task: t)),
-                      const SizedBox(height: 16),
-                    ],
-                    _SectionHeader(
-                      title: 'Upcoming',
-                      count: upcoming.length,
-                      color: Theme.of(context).colorScheme.primary,
+                    Expanded(
+                      child: ListView(
+                        padding: const EdgeInsets.all(16),
+                        children: [
+                          if (overdue.isNotEmpty) ...[
+                            _SectionHeader(
+                              title: 'Overdue',
+                              count: overdue.length,
+                              color: Theme.of(context).colorScheme.error,
+                            ),
+                            const SizedBox(height: 8),
+                            ...overdue.map((task) => _ReminderTile(task: task)),
+                            const SizedBox(height: 16),
+                          ],
+                          _SectionHeader(
+                            title: 'Upcoming',
+                            count: upcoming.length,
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
+                          const SizedBox(height: 8),
+                          ...upcoming.map((task) => _ReminderTile(task: task)),
+                        ],
+                      ),
                     ),
-                    const SizedBox(height: 8),
-                    ...upcoming.map((t) => _ReminderTile(task: t)),
                   ],
                 );
               },

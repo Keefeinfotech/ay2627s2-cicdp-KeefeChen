@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/design_system/ds_tokens.dart';
+import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_dialog.dart';
 import '../../../../core/widgets/app_empty_state.dart';
 import '../../../../core/widgets/app_error_state.dart';
 import '../../../../core/widgets/app_loading.dart';
 import '../../../../core/widgets/app_snackbar.dart';
+import '../../../../core/widgets/app_status_badge.dart';
 
 import 'package:frontend/features/home/data/api_task_repository.dart';
 import 'package:frontend/features/home/data/task_store.dart';
@@ -210,7 +214,9 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
         bottom: false,
         child: Center(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 1200),
+            constraints: const BoxConstraints(
+              maxWidth: AppSizes.maxContentWidth,
+            ),
             child: RefreshIndicator(
               onRefresh: _store.load,
               child: ListView(
@@ -268,15 +274,13 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
         side: BorderSide(
           color: sel
               ? scheme.primary.withValues(alpha: 0.4)
-              : (isDark
-                    ? Colors.white.withValues(alpha: 0.08)
-                    : scheme.outlineVariant),
+              : (isDark ? Ds.borderDark : scheme.outlineVariant),
         ),
         labelStyle: TextStyle(
           fontWeight: sel ? FontWeight.w600 : FontWeight.w500,
           color: sel ? scheme.primary : scheme.onSurfaceVariant,
         ),
-        backgroundColor: isDark ? const Color(0xFF1E293B) : scheme.surface,
+        backgroundColor: isDark ? Ds.surfaceDark : scheme.surface,
       );
     }
 
@@ -294,28 +298,20 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
   Widget _buildActionToolbar(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final isDark = scheme.brightness == Brightness.dark;
-    final border = isDark
-        ? Colors.white.withValues(alpha: 0.08)
-        : scheme.outlineVariant;
+    final border = isDark ? Ds.borderDark : scheme.outlineVariant;
     return Wrap(
       spacing: 8,
       runSpacing: 8,
       crossAxisAlignment: WrapCrossAlignment.center,
       children: [
-        FilledButton.icon(
+        AppButton(
+          label: 'New task',
+          icon: Icons.add_rounded,
           onPressed: _quickAdd,
-          icon: const Icon(Icons.add_rounded, size: 18),
-          label: const Text('New Task'),
-          style: FilledButton.styleFrom(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
-          ),
         ),
         SizedBox(
           width: 220,
-          height: 40,
+          height: AppSizes.buttonHeight,
           child: TextField(
             controller: _search,
             onChanged: (v) {
@@ -327,7 +323,7 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
               prefixIcon: const Icon(Icons.search_rounded, size: 18),
               isDense: true,
               filled: true,
-              fillColor: isDark ? const Color(0xFF1E293B) : scheme.surface,
+              fillColor: isDark ? Ds.surfaceDark : scheme.surface,
               contentPadding: const EdgeInsets.symmetric(
                 horizontal: 12,
                 vertical: 10,
@@ -374,18 +370,19 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
   ) {
     final scheme = Theme.of(context).colorScheme;
     final isDark = scheme.brightness == Brightness.dark;
-    final border = isDark
-        ? Colors.white.withValues(alpha: 0.08)
-        : scheme.outlineVariant;
+    final border = isDark ? Ds.borderDark : scheme.outlineVariant;
     return OutlinedButton.icon(
       onPressed: onTap,
-      icon: Icon(icon, size: 16),
+      icon: Icon(icon, size: AppSizes.iconMd),
       label: Text(label),
       style: OutlinedButton.styleFrom(
         foregroundColor: scheme.onSurfaceVariant,
         side: BorderSide(color: border),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        minimumSize: const Size.fromHeight(AppSizes.buttonHeight),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(Ds.rMd),
+        ),
         textStyle: const TextStyle(fontWeight: FontWeight.w500),
       ),
     );
@@ -481,11 +478,11 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
           child: AppEmptyState(
             icon: Icons.task_alt_rounded,
             title: 'A clear task list',
-            message: 'Use New Task to capture something in plain language.',
+            message: 'Use the New task button to capture something in plain language.',
             action: FilledButton.icon(
               onPressed: _quickAdd,
               icon: const Icon(Icons.add_rounded),
-              label: const Text('New task'),
+              label: const Text('Add your first task'),
             ),
           ),
         ),
@@ -544,9 +541,9 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
       groups['Upcoming']!.add(t);
     }
     final colors = <String, Color>{
-      'Today / Due Soon': const Color(0xFFF59E0B),
-      'Upcoming': const Color(0xFF3B82F6),
-      'Completed': const Color(0xFF10B981),
+      'Today / Due Soon': Ds.warningAmber,
+      'Upcoming': Ds.trustBlue,
+      'Completed': Ds.accentGreen,
     };
 
     final out = <Widget>[];
@@ -564,193 +561,281 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
     Color accent,
     List<Task> items,
   ) {
-    final scheme = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
     final isDark = scheme.brightness == Brightness.dark;
-    final border = isDark
-        ? Colors.white.withValues(alpha: 0.08)
-        : scheme.outlineVariant;
-    final bg = isDark ? const Color(0xFF1E293B) : scheme.surface;
+    final border = isDark ? Ds.borderDark : scheme.outlineVariant;
+    final bg = isDark ? Ds.surfaceDark : scheme.surface;
     final collapsed = _collapsed.contains(name);
 
-    return Container(
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: border),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: IntrinsicHeight(
+    final header = InkWell(
+      onTap: () => setState(() {
+        collapsed ? _collapsed.remove(name) : _collapsed.add(name);
+      }),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         child: Row(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Container(width: 4, color: accent),
-            Expanded(
-              child: Column(
-                children: [
-                  InkWell(
-                    onTap: () => setState(() {
-                      collapsed
-                          ? _collapsed.remove(name)
-                          : _collapsed.add(name);
-                    }),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 12,
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            collapsed
-                                ? Icons.chevron_right_rounded
-                                : Icons.expand_more_rounded,
-                            size: 20,
-                            color: scheme.onSurfaceVariant,
-                          ),
-                          const SizedBox(width: 6),
-                          Text(
-                            name,
-                            style: Theme.of(context).textTheme.titleSmall
-                                ?.copyWith(fontWeight: FontWeight.w700),
-                          ),
-                          const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: accent.withValues(alpha: 0.12),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Text(
-                              '${items.length}',
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700,
-                                color: accent,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  if (!collapsed) ...[
-                    Divider(height: 1, color: border),
-                    _tableHeader(context),
-                    Divider(height: 1, color: border),
-                    for (var i = 0; i < items.length; i++) ...[
-                      _taskRow(context, items[i]),
-                      if (i < items.length - 1)
-                        Divider(
-                          height: 1,
-                          indent: 14,
-                          endIndent: 14,
-                          color: border.withValues(alpha: 0.6),
-                        ),
-                    ],
-                    Divider(height: 1, color: border),
-                    InkWell(
-                      onTap: _quickAdd,
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 10,
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.add_rounded,
-                              size: 18,
-                              color: scheme.onSurfaceVariant,
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              'Add task',
-                              style: TextStyle(
-                                color: scheme.onSurfaceVariant,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ],
+            Icon(
+              collapsed
+                  ? Icons.chevron_right_rounded
+                  : Icons.expand_more_rounded,
+              size: 20,
+              color: scheme.onSurfaceVariant,
+            ),
+            const SizedBox(width: 6),
+            Text(
+              name,
+              style: theme.textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                color: accent.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(Ds.rLg),
+              ),
+              child: Text(
+                '${items.length}',
+                style: Ds.captionStrong.copyWith(color: accent),
               ),
             ),
           ],
         ),
       ),
     );
+
+    final addTask = InkWell(
+      onTap: _quickAdd,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        child: Row(
+          children: [
+            Icon(Icons.add_rounded, size: 20, color: scheme.onSurfaceVariant),
+            const SizedBox(width: 8),
+            Text(
+              'Add task',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: scheme.onSurfaceVariant,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    return Container(
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(Ds.rXl),
+        border: Border.all(color: border),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          // The fixed-column table cannot fit a phone. Switch to stacked task
+          // cards before the columns crowd or clip.
+          final compact = constraints.maxWidth < 760;
+          return IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Container(width: 4, color: accent),
+                Expanded(
+                  child: Column(
+                    children: [
+                      header,
+                      if (!collapsed) ...[
+                        Divider(height: 1, color: border),
+                        if (!compact) _tableHeader(),
+                        if (!compact) Divider(height: 1, color: border),
+                        for (var i = 0; i < items.length; i++) ...[
+                          compact
+                              ? _compactTaskTile(context, items[i])
+                              : _taskRow(context, items[i]),
+                          if (i < items.length - 1)
+                            Divider(
+                              height: 1,
+                              indent: 14,
+                              endIndent: 14,
+                              color: border.withValues(alpha: 0.6),
+                            ),
+                        ],
+                        Divider(height: 1, color: border),
+                        addTask,
+                      ],
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
   }
 
-  Widget _tableHeader(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+  Widget _tableHeader() {
+    return const Padding(
+      padding: EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       child: Row(
         children: [
-          const SizedBox(width: 28),
-          const Expanded(
-            flex: 4,
-            child: Text(
-              'Task Name',
-              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
-            ),
-          ),
-          const Expanded(
-            flex: 2,
-            child: Text(
-              'Project',
-              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
-            ),
-          ),
-          const SizedBox(
-            width: 110,
-            child: Text(
-              'Status',
-              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
-            ),
-          ),
-          const SizedBox(
-            width: 80,
-            child: Text(
-              'Priority',
-              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
-            ),
-          ),
-          const SizedBox(
-            width: 92,
-            child: Text(
-              'Due Date',
-              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
-            ),
-          ),
-          const SizedBox(width: 32),
+          SizedBox(width: AppSizes.touchTarget),
+          Expanded(flex: 4, child: Text('Task Name', style: Ds.labelStrong)),
+          Expanded(flex: 2, child: Text('Project', style: Ds.labelStrong)),
+          SizedBox(width: 110, child: Text('Status', style: Ds.labelStrong)),
+          SizedBox(width: 80, child: Text('Priority', style: Ds.labelStrong)),
+          SizedBox(width: 92, child: Text('Due Date', style: Ds.labelStrong)),
+          SizedBox(width: 48),
         ],
       ),
     );
   }
 
-  Widget _taskRow(BuildContext context, Task task) {
+  String _taskStatusLabel(Task task) {
+    if (task.isCompleted) return 'Done';
+    if (task.isOverdue) return 'Overdue';
+    return 'Working on it';
+  }
+
+  IconData _taskStatusIcon(Task task) {
+    if (task.isCompleted) return Icons.check_circle_outline_rounded;
+    if (task.isOverdue) return Icons.warning_amber_rounded;
+    return Icons.schedule_rounded;
+  }
+
+  Color _taskStatusColor(Task task, bool isDark) {
+    if (task.isCompleted) {
+      return isDark ? Ds.successOnDark : Ds.accentGreen;
+    }
+    if (task.isOverdue) {
+      return isDark ? Ds.dangerOnDark : Ds.dangerRed;
+    }
+    return isDark ? Ds.primaryOnDark : Ds.trustBlue;
+  }
+
+  Color _taskPriorityColor(TaskPriority priority, bool isDark) {
+    return switch (priority) {
+      TaskPriority.low => isDark ? Ds.primaryOnDark : Ds.trustBlue,
+      TaskPriority.medium => isDark ? Ds.warningOnDark : Ds.warningAmber,
+      TaskPriority.high => isDark ? Ds.dangerOnDark : Ds.dangerRed,
+    };
+  }
+
+  Widget _taskMenu(BuildContext context, Task task) {
     final scheme = Theme.of(context).colorScheme;
+    return PopupMenuButton<String>(
+      iconSize: AppSizes.iconMd,
+      padding: const EdgeInsets.all(AppSpacing.md),
+      icon: Icon(Icons.more_horiz_rounded, color: scheme.onSurfaceVariant),
+      onSelected: (v) {
+        if (v == 'edit') _edit(task);
+        if (v == 'delete') _confirmDelete(task);
+        if (v == 'breakdown') _breakDown(task);
+      },
+      itemBuilder: (_) => const [
+        PopupMenuItem(value: 'edit', child: Text('Edit')),
+        PopupMenuItem(value: 'breakdown', child: Text('Break down')),
+        PopupMenuItem(value: 'delete', child: Text('Delete')),
+      ],
+    );
+  }
+
+  Widget _compactTaskTile(BuildContext context, Task task) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
     final isDark = scheme.brightness == Brightness.dark;
-    final overdue =
-        !task.isCompleted &&
-        task.dueDate != null &&
-        task.dueDate!.isBefore(DateTime.now());
-    final statusLabel = task.isCompleted
-        ? 'Done'
-        : overdue
-        ? 'Overdue'
-        : 'Working on it';
-    final statusColor = task.isCompleted
-        ? const Color(0xFF10B981)
-        : overdue
-        ? const Color(0xFFEF4444)
-        : const Color(0xFF3B82F6);
+    final overdue = task.isOverdue;
+    final statusColor = _taskStatusColor(task, isDark);
+
+    return InkWell(
+      onTap: () => _edit(task),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(
+              width: AppSizes.touchTarget,
+              height: AppSizes.touchTarget,
+              child: Checkbox(
+                value: task.isCompleted,
+                onChanged: (_) => _toggle(task),
+                side: BorderSide(color: scheme.outlineVariant),
+              ),
+            ),
+            const SizedBox(width: AppSpacing.xs),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    task.title,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      color: task.isCompleted
+                          ? scheme.onSurfaceVariant
+                          : scheme.onSurface,
+                      decoration: task.isCompleted
+                          ? TextDecoration.lineThrough
+                          : null,
+                    ),
+                  ),
+                  if (task.course.isNotEmpty) ...[
+                    const SizedBox(height: AppSpacing.xxs),
+                    Text(
+                      task.course,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Ds.small.copyWith(color: scheme.onSurfaceVariant),
+                    ),
+                  ],
+                  const SizedBox(height: AppSpacing.sm),
+                  Wrap(
+                    spacing: AppSpacing.sm,
+                    runSpacing: AppSpacing.xs,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      StatusBadge(
+                        label: _taskStatusLabel(task),
+                        color: statusColor,
+                        icon: _taskStatusIcon(task),
+                      ),
+                      PriorityBadge.task(
+                        label: task.priority.label,
+                        color: _taskPriorityColor(task.priority, isDark),
+                      ),
+                      if (task.dueDate != null)
+                        Text(
+                          _fmtDate(task.dueDate!),
+                          style: Ds.captionStrong.copyWith(
+                            color: overdue
+                                ? statusColor
+                                : scheme.onSurfaceVariant,
+                            fontFeatures: const [FontFeature.tabularFigures()],
+                          ),
+                        ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            _taskMenu(context, task),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _taskRow(BuildContext context, Task task) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final isDark = scheme.brightness == Brightness.dark;
+    final overdue = task.isOverdue;
+    final statusColor = _taskStatusColor(task, isDark);
 
     return InkWell(
       onTap: () => _edit(task),
@@ -759,12 +844,11 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
         child: Row(
           children: [
             SizedBox(
-              width: 28,
+              width: AppSizes.touchTarget,
+              height: AppSizes.touchTarget,
               child: Checkbox(
                 value: task.isCompleted,
                 onChanged: (_) => _toggle(task),
-                visualDensity: VisualDensity.compact,
-                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 side: BorderSide(color: scheme.outlineVariant),
               ),
             ),
@@ -774,7 +858,7 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
                 task.title,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: TextStyle(
+                style: theme.textTheme.bodyMedium?.copyWith(
                   fontWeight: FontWeight.w500,
                   decoration: task.isCompleted
                       ? TextDecoration.lineThrough
@@ -791,77 +875,35 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
                 task.course.isEmpty ? '—' : task.course,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: TextStyle(fontSize: 12, color: scheme.onSurfaceVariant),
+                style: Ds.small.copyWith(color: scheme.onSurfaceVariant),
               ),
             ),
             SizedBox(
               width: 110,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                decoration: BoxDecoration(
-                  color: statusColor.withValues(alpha: isDark ? 0.22 : 0.14),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                alignment: Alignment.center,
-                child: Text(
-                  statusLabel,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    color: statusColor,
-                  ),
-                ),
+              child: StatusBadge(
+                label: _taskStatusLabel(task),
+                color: statusColor,
+                icon: _taskStatusIcon(task),
               ),
             ),
             SizedBox(
               width: 80,
-              child: Text(
-                task.priority.name[0].toUpperCase() +
-                    task.priority.name.substring(1),
-                style: TextStyle(
-                  fontSize: 12,
-                  color: scheme.onSurfaceVariant,
-                  fontWeight: FontWeight.w500,
-                ),
+              child: PriorityBadge.task(
+                label: task.priority.label,
+                color: _taskPriorityColor(task.priority, isDark),
               ),
             ),
             SizedBox(
               width: 92,
               child: Text(
                 task.dueDate == null ? '—' : _fmtDate(task.dueDate!),
-                style: TextStyle(
-                  fontSize: 12,
+                style: Ds.captionStrong.copyWith(
+                  color: overdue ? statusColor : scheme.onSurfaceVariant,
                   fontFeatures: const [FontFeature.tabularFigures()],
-                  color: overdue
-                      ? const Color(0xFFEF4444)
-                      : scheme.onSurfaceVariant,
-                  fontWeight: overdue ? FontWeight.w600 : FontWeight.w400,
                 ),
               ),
             ),
-            SizedBox(
-              width: 32,
-              child: PopupMenuButton<String>(
-                padding: EdgeInsets.zero,
-                icon: Icon(
-                  Icons.more_horiz_rounded,
-                  size: 18,
-                  color: scheme.onSurfaceVariant,
-                ),
-                onSelected: (v) {
-                  if (v == 'edit') _edit(task);
-                  if (v == 'delete') _confirmDelete(task);
-                  if (v == 'breakdown') _breakDown(task);
-                },
-                itemBuilder: (_) => const [
-                  PopupMenuItem(value: 'edit', child: Text('Edit')),
-                  PopupMenuItem(value: 'breakdown', child: Text('Break down')),
-                  PopupMenuItem(value: 'delete', child: Text('Delete')),
-                ],
-              ),
-            ),
+            _taskMenu(context, task),
           ],
         ),
       ),

@@ -51,12 +51,14 @@ class PriorityBadge extends StatelessWidget {
               Icon(icon, size: 12, color: foreground),
               const SizedBox(width: 4),
             ],
-            Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.labelSmall
-                  ?.copyWith(color: foreground, fontWeight: FontWeight.w600),
+            Flexible(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.labelSmall
+                    ?.copyWith(color: foreground, fontWeight: FontWeight.w600),
+              ),
             ),
           ],
         ),
@@ -104,12 +106,14 @@ class StatusBadge extends StatelessWidget {
             Icon(icon, size: 12, color: foreground),
             const SizedBox(width: 4),
           ],
-          Text(
-            label,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: Theme.of(context).textTheme.labelSmall
-                ?.copyWith(color: foreground, fontWeight: FontWeight.w600),
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.labelSmall
+                  ?.copyWith(color: foreground, fontWeight: FontWeight.w600),
+            ),
           ),
         ],
       ),

@@ -52,7 +52,7 @@ void main() {
     expect(find.text('LOOK'), findsOneWidget);
     expect(find.text('Save avatar'), findsOneWidget);
 
-    await tester.tap(find.byTooltip('Violet'));
+    await tester.tap(find.byTooltip('Deep blue'));
     await tester.pump();
     await tester.tap(find.text('Save avatar'));
     await tester.pumpAndSettle();
