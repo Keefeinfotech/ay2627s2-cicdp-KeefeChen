@@ -180,6 +180,7 @@ abstract final class AppColors {
   /// Light semantic accents for icon tiles/text on dark surfaces.
   static const Color darkOverdue = Color(0xFFFCA5A5);
   static const Color darkCompleted = Color(0xFF6EE7B7);
+  static const Color darkWarning = Color(0xFFFBBF24);
 }
 
 /// Semantic accents shared by the dashboard stat cards, filter tabs and
