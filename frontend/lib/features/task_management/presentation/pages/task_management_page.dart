@@ -40,12 +40,6 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
   String _view = 'table';
   final Set<String> _collapsed = <String>{};
 
-  // Shared column widths keep the header and rows on the same grid. The gaps
-  // give the status, priority and metadata groups consistent breathing room.
-  static const double _statusColumnWidth = 136;
-  static const double _priorityColumnWidth = 84;
-  static const double _dueColumnWidth = 88;
-
   @override
   void initState() {
     super.initState();
@@ -641,36 +635,53 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
       clipBehavior: Clip.antiAlias,
       child: LayoutBuilder(
         builder: (context, constraints) {
-          // The fixed-column table cannot fit a phone. Switch to stacked task
-          // cards before the columns crowd or clip.
-          final compact = constraints.maxWidth < 760;
+          // Keep the table on one grid down to tablet widths; only phones drop
+          // to stacked cards. Below the table's minimum width the whole table
+          // scrolls horizontally instead of squeezing its columns.
+          final compact =
+              constraints.maxWidth < _TaskTableLayout.compactBreakpoint;
+          final viewportWidth = constraints.maxWidth;
+
+          final table = Column(
+            children: [
+              if (!compact) _tableHeader(),
+              if (!compact) Divider(height: 1, color: border),
+              for (var i = 0; i < items.length; i++) ...[
+                compact
+                    ? _compactTaskTile(context, items[i])
+                    : _taskRow(context, items[i]),
+                if (i < items.length - 1)
+                  Divider(
+                    height: 1,
+                    indent: _TaskTableLayout.horizontalPadding,
+                    endIndent: _TaskTableLayout.horizontalPadding,
+                    color: border.withValues(alpha: 0.6),
+                  ),
+              ],
+              Divider(height: 1, color: border),
+              addTask,
+            ],
+          );
+
           return IntrinsicHeight(
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Container(width: 4, color: accent),
+                Container(width: _TaskTableLayout.rail, color: accent),
                 Expanded(
                   child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       header,
                       if (!collapsed) ...[
                         Divider(height: 1, color: border),
-                        if (!compact) _tableHeader(),
-                        if (!compact) Divider(height: 1, color: border),
-                        for (var i = 0; i < items.length; i++) ...[
-                          compact
-                              ? _compactTaskTile(context, items[i])
-                              : _taskRow(context, items[i]),
-                          if (i < items.length - 1)
-                            Divider(
-                              height: 1,
-                              indent: 14,
-                              endIndent: 14,
-                              color: border.withValues(alpha: 0.6),
-                            ),
-                        ],
-                        Divider(height: 1, color: border),
-                        addTask,
+                        if (compact)
+                          table
+                        else
+                          _TaskTableScroller(
+                            viewportWidth: viewportWidth,
+                            child: table,
+                          ),
                       ],
                     ],
                   ),
@@ -684,35 +695,14 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
   }
 
   Widget _tableHeader() {
-    return const Padding(
-      padding: EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          SizedBox(width: AppSizes.touchTarget),
-          SizedBox(width: AppSpacing.sm),
-          Expanded(flex: 4, child: Text('Task Name', style: Ds.labelStrong)),
-          SizedBox(width: AppSpacing.md),
-          Expanded(flex: 2, child: Text('Project', style: Ds.labelStrong)),
-          SizedBox(width: AppSpacing.md),
-          SizedBox(
-            width: _statusColumnWidth,
-            child: Text('Status', style: Ds.labelStrong),
-          ),
-          SizedBox(width: AppSpacing.md),
-          SizedBox(
-            width: _priorityColumnWidth,
-            child: Text('Priority', style: Ds.labelStrong),
-          ),
-          SizedBox(width: AppSpacing.md),
-          SizedBox(
-            width: _dueColumnWidth,
-            child: Text('Due Date', style: Ds.labelStrong),
-          ),
-          SizedBox(width: AppSpacing.sm),
-          SizedBox(width: AppSizes.touchTarget),
-        ],
-      ),
+    return const _TaskTableGridRow(
+      verticalPadding: 8,
+      name: Text('Task Name', style: Ds.labelStrong),
+      project: Text('Project', style: Ds.labelStrong),
+      status: Text('Status', style: Ds.labelStrong),
+      priority: Text('Priority', style: Ds.labelStrong),
+      due: Text('Due Date', style: Ds.labelStrong),
+      actions: SizedBox.shrink(),
     );
   }
 
@@ -899,86 +889,60 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
 
     return InkWell(
       onTap: () => _edit(task),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            SizedBox(
-              width: AppSizes.touchTarget,
-              height: AppSizes.touchTarget,
-              child: Checkbox(
-                value: task.isCompleted,
-                onChanged: (_) => _toggle(task),
-                side: BorderSide(color: scheme.outlineVariant),
-              ),
-            ),
-            const SizedBox(width: AppSpacing.sm),
-            Expanded(
-              flex: 4,
-              child: Text(
-                task.title,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.w500,
-                  decoration: task.isCompleted
-                      ? TextDecoration.lineThrough
-                      : null,
-                  color: task.isCompleted
-                      ? scheme.onSurfaceVariant
-                      : scheme.onSurface,
-                ),
-              ),
-            ),
-            const SizedBox(width: AppSpacing.md),
-            Expanded(
-              flex: 2,
-              child: _metaText(
-                context,
-                icon: Icons.school_outlined,
-                text: task.course.isEmpty ? 'No course' : task.course,
-                color: scheme.onSurfaceVariant,
-              ),
-            ),
-            const SizedBox(width: AppSpacing.md),
-            SizedBox(
-              width: _statusColumnWidth,
-              child: StatusBadge(
-                label: _taskStatusLabel(task),
-                color: _taskStatusFillColor(task),
-                icon: _taskStatusIcon(task),
-                filled: true,
-              ),
-            ),
-            const SizedBox(width: AppSpacing.md),
-            SizedBox(
-              width: _priorityColumnWidth,
-              child: PriorityBadge.task(
-                label: task.priority.label,
-                color: _taskPriorityColor(task.priority, isDark),
-              ),
-            ),
-            const SizedBox(width: AppSpacing.md),
-            SizedBox(
-              width: _dueColumnWidth,
-              child: _metaText(
-                context,
-                icon: Icons.event_outlined,
-                text: task.dueDate == null
-                    ? 'No date'
-                    : _fmtDate(task.dueDate!),
-                color: overdue ? statusColor : scheme.onSurfaceVariant,
-                emphasize: overdue,
-              ),
-            ),
-            const SizedBox(width: AppSpacing.sm),
-            SizedBox(
-              width: AppSizes.touchTarget,
-              child: _taskMenu(context, task),
-            ),
-          ],
+      child: _TaskTableGridRow(
+        leading: SizedBox(
+          width: AppSizes.touchTarget,
+          height: AppSizes.touchTarget,
+          child: Checkbox(
+            value: task.isCompleted,
+            onChanged: (_) => _toggle(task),
+            side: BorderSide(color: scheme.outlineVariant),
+          ),
         ),
+        name: Text(
+          task.title,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: theme.textTheme.bodyMedium?.copyWith(
+            fontWeight: FontWeight.w500,
+            decoration: task.isCompleted ? TextDecoration.lineThrough : null,
+            color: task.isCompleted
+                ? scheme.onSurfaceVariant
+                : scheme.onSurface,
+          ),
+        ),
+        project: Text(
+          task.course.isEmpty ? '—' : task.course,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: Ds.small.copyWith(color: scheme.onSurfaceVariant),
+        ),
+        status: Align(
+          alignment: Alignment.centerLeft,
+          child: StatusBadge(
+            label: _taskStatusLabel(task),
+            color: _taskStatusFillColor(task),
+            icon: _taskStatusIcon(task),
+            filled: true,
+          ),
+        ),
+        priority: Align(
+          alignment: Alignment.centerLeft,
+          child: PriorityBadge.task(
+            label: task.priority.label,
+            color: _taskPriorityColor(task.priority, isDark),
+          ),
+        ),
+        due: Text(
+          task.dueDate == null ? '—' : _fmtDate(task.dueDate!),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: Ds.captionStrong.copyWith(
+            color: overdue ? statusColor : scheme.onSurfaceVariant,
+            fontFeatures: const [FontFeature.tabularFigures()],
+          ),
+        ),
+        actions: _taskMenu(context, task),
       ),
     );
   }
@@ -999,5 +963,124 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
       'Dec',
     ];
     return '${m[d.month - 1]} ${d.day}';
+  }
+}
+
+/// Single source of truth for the task table's column geometry. The header and
+/// every data row are rendered by [_TaskTableGridRow], so widths and gaps can
+/// never drift apart.
+abstract final class _TaskTableLayout {
+  static const double rail = 4;
+  static const double horizontalPadding = 14;
+  static const double checkboxWidth = AppSizes.touchTarget;
+  static const double statusWidth = 128;
+  static const double priorityWidth = 80;
+  static const double dueWidth = 88;
+  static const double actionsWidth = AppSizes.touchTarget;
+  static const double tightGap = AppSpacing.sm;
+  static const double columnGap = AppSpacing.lg;
+  static const int nameFlex = 4;
+  static const int projectFlex = 2;
+
+  /// Below this width the table scrolls horizontally instead of squeezing the
+  /// fixed status, priority and due-date columns.
+  static const double minWidth = 860;
+
+  /// Phones use stacked task cards; tablets keep the table. The value is the
+  /// content width after the group's 1px borders, not the screen width.
+  static const double compactBreakpoint = 700;
+}
+
+/// One row of the task table. Passing the same structure for the header and the
+/// data rows guarantees identical column starts and widths.
+class _TaskTableGridRow extends StatelessWidget {
+  const _TaskTableGridRow({
+    required this.name,
+    required this.project,
+    required this.status,
+    required this.priority,
+    required this.due,
+    required this.actions,
+    this.leading = const SizedBox.shrink(),
+    this.verticalPadding = 10,
+  });
+
+  final Widget leading;
+  final Widget name;
+  final Widget project;
+  final Widget status;
+  final Widget priority;
+  final Widget due;
+  final Widget actions;
+  final double verticalPadding;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.symmetric(
+        horizontal: _TaskTableLayout.horizontalPadding,
+        vertical: verticalPadding,
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: <Widget>[
+          SizedBox(width: _TaskTableLayout.checkboxWidth, child: leading),
+          const SizedBox(width: _TaskTableLayout.tightGap),
+          Expanded(flex: _TaskTableLayout.nameFlex, child: name),
+          const SizedBox(width: _TaskTableLayout.columnGap),
+          Expanded(flex: _TaskTableLayout.projectFlex, child: project),
+          const SizedBox(width: _TaskTableLayout.columnGap),
+          SizedBox(width: _TaskTableLayout.statusWidth, child: status),
+          const SizedBox(width: _TaskTableLayout.columnGap),
+          SizedBox(width: _TaskTableLayout.priorityWidth, child: priority),
+          const SizedBox(width: _TaskTableLayout.columnGap),
+          SizedBox(width: _TaskTableLayout.dueWidth, child: due),
+          const SizedBox(width: _TaskTableLayout.tightGap),
+          SizedBox(width: _TaskTableLayout.actionsWidth, child: actions),
+        ],
+      ),
+    );
+  }
+}
+
+/// Horizontal fallback for tablets: keeps every column at its designed width
+/// and exposes a scrollbar instead of allowing cells to overlap.
+class _TaskTableScroller extends StatefulWidget {
+  const _TaskTableScroller({required this.viewportWidth, required this.child});
+
+  final double viewportWidth;
+  final Widget child;
+
+  @override
+  State<_TaskTableScroller> createState() => _TaskTableScrollerState();
+}
+
+class _TaskTableScrollerState extends State<_TaskTableScroller> {
+  final ScrollController _controller = ScrollController();
+
+  bool get _overflows => widget.viewportWidth < _TaskTableLayout.minWidth;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final width = _overflows ? _TaskTableLayout.minWidth : widget.viewportWidth;
+    return Scrollbar(
+      controller: _controller,
+      thumbVisibility: _overflows,
+      thickness: 6,
+      radius: const Radius.circular(3),
+      scrollbarOrientation: ScrollbarOrientation.bottom,
+      child: SingleChildScrollView(
+        controller: _controller,
+        scrollDirection: Axis.horizontal,
+        padding: EdgeInsets.only(bottom: _overflows ? 8 : 0),
+        child: SizedBox(width: width, child: widget.child),
+      ),
+    );
   }
 }
