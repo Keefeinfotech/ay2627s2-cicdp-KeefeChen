@@ -27,7 +27,10 @@ services:
     runtime: docker
     dockerfilePath: backend/Dockerfile
     dockerContext: backend
-    plan: free
+    # Starter is always-on. The free plan suspends after inactivity and the
+    # first request can wait ~50 s for a wake; with the frontend's 12 s API
+    # timeout that makes the first sign-in after a quiet period fail.
+    plan: starter
     region: singapore
     healthCheckPath: /api/health
     autoDeploy: true
@@ -82,7 +85,9 @@ services:
     runtime: docker
     dockerfilePath: frontend/Dockerfile
     dockerContext: frontend
-    plan: free
+    # Starter is always-on so the login screen is served immediately instead
+    # of after a ~50 s free-tier wake. Staging below stays on the free plan.
+    plan: starter
     region: singapore
     healthCheckPath: /
     autoDeploy: true
