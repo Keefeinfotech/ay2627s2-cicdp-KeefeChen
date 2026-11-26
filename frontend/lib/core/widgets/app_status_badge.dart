@@ -87,11 +87,17 @@ class StatusBadge extends StatelessWidget {
     final Color background = filled ? color : color.withValues(alpha: 0.1);
     final Color foreground = filled ? Colors.white : color;
 
+    // Filled status pills get px-3 py-1 breathing room; compact metadata chips
+    // keep the original tighter padding so existing layouts don't shift.
+    final EdgeInsets padding = filled
+        ? const EdgeInsets.symmetric(
+            horizontal: AppSpacing.md,
+            vertical: AppSpacing.xs,
+          )
+        : const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: 3);
+
     return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.sm,
-        vertical: 3,
-      ),
+      padding: padding,
       decoration: BoxDecoration(
         color: background,
         borderRadius: BorderRadius.circular(AppRadius.pill),

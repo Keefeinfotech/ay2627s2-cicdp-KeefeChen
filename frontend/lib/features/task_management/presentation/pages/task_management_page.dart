@@ -40,6 +40,12 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
   String _view = 'table';
   final Set<String> _collapsed = <String>{};
 
+  // Shared column widths keep the header and rows on the same grid. The gaps
+  // give the status, priority and metadata groups consistent breathing room.
+  static const double _statusColumnWidth = 136;
+  static const double _priorityColumnWidth = 84;
+  static const double _dueColumnWidth = 88;
+
   @override
   void initState() {
     super.initState();
@@ -681,14 +687,30 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
     return const Padding(
       padding: EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           SizedBox(width: AppSizes.touchTarget),
+          SizedBox(width: AppSpacing.sm),
           Expanded(flex: 4, child: Text('Task Name', style: Ds.labelStrong)),
+          SizedBox(width: AppSpacing.md),
           Expanded(flex: 2, child: Text('Project', style: Ds.labelStrong)),
-          SizedBox(width: 110, child: Text('Status', style: Ds.labelStrong)),
-          SizedBox(width: 80, child: Text('Priority', style: Ds.labelStrong)),
-          SizedBox(width: 92, child: Text('Due Date', style: Ds.labelStrong)),
-          SizedBox(width: 48),
+          SizedBox(width: AppSpacing.md),
+          SizedBox(
+            width: _statusColumnWidth,
+            child: Text('Status', style: Ds.labelStrong),
+          ),
+          SizedBox(width: AppSpacing.md),
+          SizedBox(
+            width: _priorityColumnWidth,
+            child: Text('Priority', style: Ds.labelStrong),
+          ),
+          SizedBox(width: AppSpacing.md),
+          SizedBox(
+            width: _dueColumnWidth,
+            child: Text('Due Date', style: Ds.labelStrong),
+          ),
+          SizedBox(width: AppSpacing.sm),
+          SizedBox(width: AppSizes.touchTarget),
         ],
       ),
     );
@@ -716,12 +738,48 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
     return isDark ? Ds.primaryOnDark : Ds.trustBlue;
   }
 
+  /// Solid, high-contrast fill for status pills. On-dark accents are reserved
+  /// for text on dark surfaces; a filled pill always carries crisp white text.
+  Color _taskStatusFillColor(Task task) {
+    if (task.isCompleted) return Ds.accentGreen;
+    if (task.isOverdue) return Ds.dangerRed;
+    return Ds.trustBlue;
+  }
+
   Color _taskPriorityColor(TaskPriority priority, bool isDark) {
     return switch (priority) {
       TaskPriority.low => isDark ? Ds.primaryOnDark : Ds.trustBlue,
       TaskPriority.medium => isDark ? Ds.warningOnDark : Ds.warningAmber,
       TaskPriority.high => isDark ? Ds.dangerOnDark : Ds.dangerRed,
     };
+  }
+
+  /// Compact metadata cell with a leading icon so values read as structured
+  /// data rather than unstyled text floating beside the badges.
+  Widget _metaText(
+    BuildContext context, {
+    required IconData icon,
+    required String text,
+    required Color color,
+    bool emphasize = false,
+  }) {
+    return Row(
+      children: <Widget>[
+        Icon(icon, size: AppSizes.iconSm, color: color),
+        const SizedBox(width: AppSpacing.xxs),
+        Flexible(
+          child: Text(
+            text,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: Ds.small.copyWith(
+              color: color,
+              fontWeight: emphasize ? FontWeight.w600 : FontWeight.w400,
+            ),
+          ),
+        ),
+      ],
+    );
   }
 
   Widget _taskMenu(BuildContext context, Task task) {
@@ -786,37 +844,39 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
                   ),
                   if (task.course.isNotEmpty) ...[
                     const SizedBox(height: AppSpacing.xxs),
-                    Text(
-                      task.course,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: Ds.small.copyWith(color: scheme.onSurfaceVariant),
+                    _metaText(
+                      context,
+                      icon: Icons.school_outlined,
+                      text: task.course,
+                      color: scheme.onSurfaceVariant,
                     ),
                   ],
                   const SizedBox(height: AppSpacing.sm),
                   Wrap(
-                    spacing: AppSpacing.sm,
+                    alignment: WrapAlignment.spaceBetween,
+                    spacing: AppSpacing.md,
                     runSpacing: AppSpacing.xs,
                     crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
                       StatusBadge(
                         label: _taskStatusLabel(task),
-                        color: statusColor,
+                        color: _taskStatusFillColor(task),
                         icon: _taskStatusIcon(task),
+                        filled: true,
                       ),
                       PriorityBadge.task(
                         label: task.priority.label,
                         color: _taskPriorityColor(task.priority, isDark),
                       ),
                       if (task.dueDate != null)
-                        Text(
-                          _fmtDate(task.dueDate!),
-                          style: Ds.captionStrong.copyWith(
-                            color: overdue
-                                ? statusColor
-                                : scheme.onSurfaceVariant,
-                            fontFeatures: const [FontFeature.tabularFigures()],
-                          ),
+                        _metaText(
+                          context,
+                          icon: Icons.event_outlined,
+                          text: _fmtDate(task.dueDate!),
+                          color: overdue
+                              ? statusColor
+                              : scheme.onSurfaceVariant,
+                          emphasize: overdue,
                         ),
                     ],
                   ),
@@ -842,6 +902,7 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             SizedBox(
               width: AppSizes.touchTarget,
@@ -852,6 +913,7 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
                 side: BorderSide(color: scheme.outlineVariant),
               ),
             ),
+            const SizedBox(width: AppSpacing.sm),
             Expanded(
               flex: 4,
               child: Text(
@@ -869,41 +931,52 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
                 ),
               ),
             ),
+            const SizedBox(width: AppSpacing.md),
             Expanded(
               flex: 2,
-              child: Text(
-                task.course.isEmpty ? '—' : task.course,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: Ds.small.copyWith(color: scheme.onSurfaceVariant),
+              child: _metaText(
+                context,
+                icon: Icons.school_outlined,
+                text: task.course.isEmpty ? 'No course' : task.course,
+                color: scheme.onSurfaceVariant,
               ),
             ),
+            const SizedBox(width: AppSpacing.md),
             SizedBox(
-              width: 110,
+              width: _statusColumnWidth,
               child: StatusBadge(
                 label: _taskStatusLabel(task),
-                color: statusColor,
+                color: _taskStatusFillColor(task),
                 icon: _taskStatusIcon(task),
+                filled: true,
               ),
             ),
+            const SizedBox(width: AppSpacing.md),
             SizedBox(
-              width: 80,
+              width: _priorityColumnWidth,
               child: PriorityBadge.task(
                 label: task.priority.label,
                 color: _taskPriorityColor(task.priority, isDark),
               ),
             ),
+            const SizedBox(width: AppSpacing.md),
             SizedBox(
-              width: 92,
-              child: Text(
-                task.dueDate == null ? '—' : _fmtDate(task.dueDate!),
-                style: Ds.captionStrong.copyWith(
-                  color: overdue ? statusColor : scheme.onSurfaceVariant,
-                  fontFeatures: const [FontFeature.tabularFigures()],
-                ),
+              width: _dueColumnWidth,
+              child: _metaText(
+                context,
+                icon: Icons.event_outlined,
+                text: task.dueDate == null
+                    ? 'No date'
+                    : _fmtDate(task.dueDate!),
+                color: overdue ? statusColor : scheme.onSurfaceVariant,
+                emphasize: overdue,
               ),
             ),
-            _taskMenu(context, task),
+            const SizedBox(width: AppSpacing.sm),
+            SizedBox(
+              width: AppSizes.touchTarget,
+              child: _taskMenu(context, task),
+            ),
           ],
         ),
       ),
