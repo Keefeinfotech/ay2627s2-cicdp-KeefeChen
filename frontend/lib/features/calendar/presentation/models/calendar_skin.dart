@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/design_system/ds_tokens.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_theme.dart';
 
@@ -117,36 +118,38 @@ const ColorScheme _sandstoneScheme = ColorScheme(
   surfaceTint: Color(0xFFB45309),
 );
 
-const ColorScheme _orchidScheme = ColorScheme(
+/// Brand-compliant light skin. The persisted enum name remains `orchid` for
+/// backwards compatibility, but the user-facing option is now "Focus".
+const ColorScheme _focusScheme = ColorScheme(
   brightness: Brightness.light,
-  primary: Color(0xFF6D28D9),
-  onPrimary: Colors.white,
-  primaryContainer: Color(0xFFEDE9FE),
-  onPrimaryContainer: Color(0xFF4C1D95),
-  secondary: Color(0xFFBE185D),
-  onSecondary: Colors.white,
-  secondaryContainer: Color(0xFFFCE7F3),
-  onSecondaryContainer: Color(0xFF831843),
-  tertiary: Color(0xFF047857),
-  onTertiary: Colors.white,
-  tertiaryContainer: Color(0xFFD1FAE5),
-  onTertiaryContainer: Color(0xFF064E3B),
-  error: Color(0xFFBE123C),
-  onError: Colors.white,
-  errorContainer: Color(0xFFFFE4E6),
-  onErrorContainer: Color(0xFF881337),
-  surface: Color(0xFFFFFFFF),
-  onSurface: Color(0xFF2E1065),
-  onSurfaceVariant: Color(0xFF6B6580),
-  surfaceContainerHighest: Color(0xFFF1EDFA),
-  outline: Color(0xFF9CA3AF),
-  outlineVariant: Color(0xFFE5E0F5),
-  shadow: Color(0x1A2E1065),
-  scrim: Color(0x662E1065),
-  inverseSurface: Color(0xFF2E1065),
-  onInverseSurface: Colors.white,
-  inversePrimary: Color(0xFFC4B5FD),
-  surfaceTint: Color(0xFF6D28D9),
+  primary: Ds.trustBlue,
+  onPrimary: Ds.onPrimary,
+  primaryContainer: Ds.trustBlueLight,
+  onPrimaryContainer: Ds.trustBlueDark,
+  secondary: Ds.accentGreen,
+  onSecondary: Ds.onPrimary,
+  secondaryContainer: Ds.accentGreenSoft,
+  onSecondaryContainer: Ds.accentGreen,
+  tertiary: Ds.warningAmber,
+  onTertiary: Ds.onPrimary,
+  tertiaryContainer: Ds.warningAmberSoft,
+  onTertiaryContainer: Ds.textPrimary,
+  error: Ds.dangerRed,
+  onError: Ds.onPrimary,
+  errorContainer: Ds.dangerRedSoft,
+  onErrorContainer: Ds.dangerRed,
+  surface: Ds.bgSurface,
+  onSurface: Ds.textPrimary,
+  onSurfaceVariant: Ds.textSecondary,
+  surfaceContainerHighest: Ds.bgPage,
+  outline: Ds.borderStrong,
+  outlineVariant: Ds.border,
+  shadow: Color(0x1A101828),
+  scrim: Color(0x66101828),
+  inverseSurface: Ds.textPrimary,
+  onInverseSurface: Ds.bgSurface,
+  inversePrimary: Ds.primaryOnDark,
+  surfaceTint: Ds.trustBlue,
 );
 
 extension CalendarSkinUi on CalendarSkin {
@@ -156,7 +159,7 @@ extension CalendarSkinUi on CalendarSkin {
     CalendarSkin.midnight => 'Midnight',
     CalendarSkin.aurora => 'Aurora',
     CalendarSkin.sandstone => 'Sandstone',
-    CalendarSkin.orchid => 'Orchid',
+    CalendarSkin.orchid => 'Focus',
   };
 
   /// Short explanation shown under the skin swatch.
@@ -165,7 +168,7 @@ extension CalendarSkinUi on CalendarSkin {
     CalendarSkin.midnight => 'Deep navy with clear blue days',
     CalendarSkin.aurora => 'Dark teal with mint highlights',
     CalendarSkin.sandstone => 'Warm paper with amber days',
-    CalendarSkin.orchid => 'Light violet with vivid accents',
+    CalendarSkin.orchid => 'Trust Blue with neutral days and green accents',
   };
 
   /// Representative colour for the picker swatch.
@@ -174,7 +177,7 @@ extension CalendarSkinUi on CalendarSkin {
     CalendarSkin.midnight => const Color(0xFF1E293B),
     CalendarSkin.aurora => const Color(0xFF112C30),
     CalendarSkin.sandstone => const Color(0xFFF5EFE4),
-    CalendarSkin.orchid => const Color(0xFF6D28D9),
+    CalendarSkin.orchid => Ds.trustBlue,
   };
 
   bool get isDark => switch (this) {
@@ -191,7 +194,7 @@ extension CalendarSkinUi on CalendarSkin {
     CalendarSkin.midnight => _midnightScheme,
     CalendarSkin.aurora => _auroraScheme,
     CalendarSkin.sandstone => _sandstoneScheme,
-    CalendarSkin.orchid => _orchidScheme,
+    CalendarSkin.orchid => _focusScheme,
   };
 
   Color get canvas => switch (this) {
@@ -199,7 +202,7 @@ extension CalendarSkinUi on CalendarSkin {
     CalendarSkin.midnight => const Color(0xFF0F172A),
     CalendarSkin.aurora => const Color(0xFF071D20),
     CalendarSkin.sandstone => const Color(0xFFFBF7F0),
-    CalendarSkin.orchid => const Color(0xFFF7F5FF),
+    CalendarSkin.orchid => Ds.bgPage,
   };
 
   /// Secondary semantic colours that are not part of Material's ColorScheme.
@@ -208,7 +211,7 @@ extension CalendarSkinUi on CalendarSkin {
     CalendarSkin.midnight => const Color(0xFFFBBF24),
     CalendarSkin.aurora => const Color(0xFFFCD34D),
     CalendarSkin.sandstone => const Color(0xFFB45309),
-    CalendarSkin.orchid => const Color(0xFFB45309),
+    CalendarSkin.orchid => Ds.warningAmber,
   };
 
   Color get doneColor => switch (this) {
@@ -216,15 +219,15 @@ extension CalendarSkinUi on CalendarSkin {
     CalendarSkin.midnight => const Color(0xFF34D399),
     CalendarSkin.aurora => const Color(0xFF6EE7B7),
     CalendarSkin.sandstone => const Color(0xFF15803D),
-    CalendarSkin.orchid => const Color(0xFF047857),
+    CalendarSkin.orchid => Ds.accentGreen,
   };
 
   Color get personalColor => switch (this) {
-    CalendarSkin.system => const Color(0xFF7C3AED),
-    CalendarSkin.midnight => const Color(0xFFC4B5FD),
-    CalendarSkin.aurora => const Color(0xFFA5B4FC),
-    CalendarSkin.sandstone => const Color(0xFF9D174D),
-    CalendarSkin.orchid => const Color(0xFFBE185D),
+    CalendarSkin.system => Ds.trustBlue,
+    CalendarSkin.midnight => Ds.primaryOnDark,
+    CalendarSkin.aurora => Ds.successOnDark,
+    CalendarSkin.sandstone => Ds.trustBlueDark,
+    CalendarSkin.orchid => Ds.accentGreen,
   };
 
   /// Builds the theme applied to the calendar subtree.

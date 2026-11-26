@@ -3,6 +3,7 @@ import 'package:frontend/features/reminders/screens/reminders_screen.dart';
 
 import '../../features/assistant/presentation/pages/assistant_page.dart';
 import '../../features/admin/presentation/pages/admin_dashboard_page.dart';
+import '../../features/authentication/data/auth_service.dart';
 import '../../features/authentication/models/session.dart';
 import '../../features/authentication/screens/forgot_password_screen.dart';
 import '../../features/authentication/screens/login_screen.dart';
@@ -59,6 +60,82 @@ class AdminArgs {
   const AdminArgs({required this.session});
 
   final Session session;
+}
+
+/// Restores the persisted session once and supplies a correctly authenticated
+/// [TaskStore] to standalone feature routes.
+///
+/// Deep links must not construct a guest store: doing so made `/reminders`
+/// show its informational empty state and `/groups` show guest data even for a
+/// signed-in user. The store is disposed with the route.
+class PersistedSessionStoreBuilder extends StatefulWidget {
+  const PersistedSessionStoreBuilder({super.key, required this.builder});
+
+  final Widget Function(BuildContext context, TaskStore store, Session? session)
+  builder;
+
+  @override
+  State<PersistedSessionStoreBuilder> createState() =>
+      _PersistedSessionStoreBuilderState();
+}
+
+class _PersistedSessionStoreBuilderState
+    extends State<PersistedSessionStoreBuilder> {
+  final AuthService _auth = AuthService();
+  Session? _session;
+  TaskStore? _store;
+  bool _restored = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _restore();
+  }
+
+  Future<void> _restore() async {
+    Session? session;
+    try {
+      session = await _auth.restore().timeout(
+        const Duration(seconds: 3),
+        onTimeout: () => null,
+      );
+      if (session != null) {
+        session = await _auth
+            .validateSession(session)
+            .timeout(const Duration(seconds: 5), onTimeout: () => session);
+      }
+    } on SessionException {
+      session = null;
+    } catch (_) {
+      session = null;
+    }
+
+    if (!mounted) return;
+    final store = TaskStore(
+      repository: ApiTaskRepository(token: session?.token ?? ''),
+      ownerId: session?.email ?? AppConstants.guestOwnerId,
+    );
+    if (!store.hasLoaded && !store.isLoading) store.load();
+    setState(() {
+      _session = session;
+      _store = store;
+      _restored = true;
+    });
+  }
+
+  @override
+  void dispose() {
+    _store?.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!_restored || _store == null) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+    return widget.builder(context, _store!, _session);
+  }
 }
 
 /// Subtle cross-fade between screens. Keeps the Trust Blue identity calm and
@@ -174,17 +251,16 @@ class AppRouter {
       case AppRoutes.reminders:
         return _fadeRoute(
           settings: settings,
-          builder: (_) => const RemindersScreen(),
+          builder: (_) => PersistedSessionStoreBuilder(
+            builder: (context, store, _) => RemindersScreen(store: store),
+          ),
         );
       case AppRoutes.groups:
         return _fadeRoute(
           settings: settings,
-          builder: (_) => GroupsPage(
-            store: TaskStore(
-              repository: ApiTaskRepository(token: ''),
-              ownerId: AppConstants.guestOwnerId,
-            ),
-            session: null,
+          builder: (_) => PersistedSessionStoreBuilder(
+            builder: (context, store, session) =>
+                GroupsPage(store: store, session: session),
           ),
         );
       case AppRoutes.admin:

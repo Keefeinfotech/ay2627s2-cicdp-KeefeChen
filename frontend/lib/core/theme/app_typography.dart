@@ -142,7 +142,7 @@ abstract final class AppTypography {
   static const TextStyle labelSmall = TextStyle(
     fontFamily: fontFamily,
     fontFamilyFallback: fontFamilyFallback,
-    fontSize: 11.5,
+    fontSize: 12,
     fontWeight: FontWeight.w600,
     height: 1.3,
     letterSpacing: 0.2,

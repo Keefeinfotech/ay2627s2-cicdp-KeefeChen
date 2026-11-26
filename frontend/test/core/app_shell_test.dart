@@ -79,7 +79,7 @@ void main() {
 
     await tester.tap(find.descendant(of: nav, matching: find.text('Tasks')));
     await tester.pumpAndSettle();
-    expect(find.text('New Task'), findsOneWidget);
+    expect(find.text('New task'), findsOneWidget);
 
     // Pages are created lazily and remain offstage when not selected.
     expect(find.text('How can I help?'), findsNothing);
@@ -94,7 +94,7 @@ void main() {
     expect(find.text('Guest workspace'), findsOneWidget);
 
     // Offstage pages do not leak their content into the active finder set.
-    expect(find.text('New Task'), findsNothing);
+    expect(find.text('New task'), findsNothing);
   });
 
   testWidgets('shell surfaces due reminders in the compact header', (
@@ -178,7 +178,7 @@ void main() {
 
     await tester.tap(find.text('Tasks'));
     await tester.pumpAndSettle();
-    expect(find.text('New Task'), findsOneWidget);
+    expect(find.text('New task'), findsOneWidget);
 
     await tester.tap(find.text('Profile'));
     await tester.pumpAndSettle();

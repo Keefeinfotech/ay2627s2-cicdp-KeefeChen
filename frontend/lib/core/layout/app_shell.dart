@@ -18,6 +18,8 @@ import '../../features/reports/presentation/pages/reports_page.dart';
 import '../../features/sync/data/background_sync_handler.dart';
 import '../../features/sync/widgets/sync_center_dialog.dart';
 import '../../features/task_management/presentation/pages/task_management_page.dart';
+import '../design_system/ds_tokens.dart';
+import '../theme/app_spacing.dart';
 import '../widgets/app_navigation.dart';
 
 /// The primary destinations of the application shell.
@@ -496,7 +498,7 @@ class _CompactShellHeader extends StatelessWidget {
                   tooltip:
                       '$reminderCount reminder${reminderCount == 1 ? '' : 's'}',
                   badge: '$reminderCount',
-                  color: const Color(0xFFF59E0B),
+                  color: Ds.warningAmber,
                   onPressed: () => _showReminders(context),
                 )
               else
@@ -548,7 +550,8 @@ class _CompactShellHeader extends StatelessWidget {
                     child: ListView.separated(
                       shrinkWrap: true,
                       itemCount: reminders.length > 8 ? 8 : reminders.length,
-                      separatorBuilder: (_, __) => const Divider(height: 1),
+                      separatorBuilder: (_, separatorIndex) =>
+                          const Divider(height: 1),
                       itemBuilder: (_, i) {
                         final task = reminders[i];
                         final due = task.isReminderDue();
@@ -607,10 +610,12 @@ class _HeaderIconButton extends StatelessWidget {
     return IconButton(
       tooltip: tooltip,
       onPressed: onPressed,
-      icon: Icon(icon, size: 20),
-      visualDensity: VisualDensity.compact,
-      constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
-      padding: EdgeInsets.zero,
+      icon: Icon(icon, size: AppSizes.iconMd),
+      constraints: const BoxConstraints(
+        minWidth: AppSizes.touchTarget,
+        minHeight: AppSizes.touchTarget,
+      ),
+      padding: const EdgeInsets.all(12),
     );
   }
 }
@@ -639,16 +644,16 @@ class _HeaderIconBadge extends StatelessWidget {
           right: 2,
           top: 2,
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
             decoration: BoxDecoration(
               color: color,
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(Ds.rSm),
             ),
             child: Text(
               badge,
               style: const TextStyle(
                 color: Colors.white,
-                fontSize: 9,
+                fontSize: 12,
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -675,7 +680,7 @@ class _SyncIndicator extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final Color color = hasConflict
-        ? const Color(0xFFF59E0B)
+        ? Ds.warningAmber
         : hasIssue
         ? scheme.primary
         : scheme.onSurfaceVariant;
@@ -687,29 +692,34 @@ class _SyncIndicator extends StatelessWidget {
       message: label,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(8),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                hasConflict ? Icons.cloud_sync_rounded : Icons.cloud_outlined,
-                size: 18,
-                color: color,
-              ),
-              if (pending > 0) ...[
-                const SizedBox(width: 6),
-                Container(
-                  width: 6,
-                  height: 6,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF59E0B),
-                    shape: BoxShape.circle,
-                  ),
+        borderRadius: BorderRadius.circular(Ds.rSm),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(
+            minWidth: AppSizes.touchTarget,
+            minHeight: AppSizes.touchTarget,
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  hasConflict ? Icons.cloud_sync_rounded : Icons.cloud_outlined,
+                  size: AppSizes.iconMd,
+                  color: color,
                 ),
+                if (pending > 0) ...[
+                  const SizedBox(width: 6),
+                  const DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: Ds.warningAmber,
+                      shape: BoxShape.circle,
+                    ),
+                    child: SizedBox(width: 6, height: 6),
+                  ),
+                ],
               ],
-            ],
+            ),
           ),
         ),
       ),

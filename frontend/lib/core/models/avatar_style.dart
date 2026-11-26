@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 
+import '../design_system/ds_tokens.dart';
+
 /// Curated accent colours for the profile avatar.
 ///
 /// The palette is deliberately small and drawn from the design system so a
 /// customised avatar still looks at home next to primary buttons and status
-/// badges.
+/// badges. The `violet` identifier is retained only for persisted preferences;
+/// it now renders as a deep Trust Blue accent, not purple.
 enum AvatarAccent { trustBlue, emerald, amber, rose, violet, slate }
 
 extension AvatarAccentStyle on AvatarAccent {
@@ -13,7 +16,7 @@ extension AvatarAccentStyle on AvatarAccent {
     AvatarAccent.emerald => 'Emerald',
     AvatarAccent.amber => 'Amber',
     AvatarAccent.rose => 'Rose',
-    AvatarAccent.violet => 'Violet',
+    AvatarAccent.violet => 'Deep blue',
     AvatarAccent.slate => 'Slate',
   };
 
@@ -22,7 +25,7 @@ extension AvatarAccentStyle on AvatarAccent {
     AvatarAccent.emerald => const Color(0xFF047857),
     AvatarAccent.amber => const Color(0xFFB45309),
     AvatarAccent.rose => const Color(0xFFBE123C),
-    AvatarAccent.violet => const Color(0xFF6D28D9),
+    AvatarAccent.violet => Ds.trustBlueDark,
     AvatarAccent.slate => const Color(0xFF334155),
   };
 

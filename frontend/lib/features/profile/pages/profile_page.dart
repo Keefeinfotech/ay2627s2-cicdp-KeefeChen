@@ -3,6 +3,7 @@ import 'package:frontend/features/authentication/models/session.dart';
 import 'package:frontend/features/home/data/task_store.dart';
 
 import '../../../core/constants/app_constants.dart';
+import '../../../core/design_system/ds_tokens.dart';
 import '../../../core/routing/app_router.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
@@ -437,7 +438,7 @@ class ProfilePage extends StatelessWidget {
             label: 'Total XP',
             value: '${store.levelProgress.totalXp}',
             icon: Icons.bolt_rounded,
-            color: const Color(0xFFF59E0B),
+            color: Ds.warningAmber,
           ),
         ),
         const SizedBox(width: 12),
@@ -446,7 +447,7 @@ class ProfilePage extends StatelessWidget {
             label: 'Completed',
             value: '${store.completedCount}',
             icon: Icons.check_circle_outline_rounded,
-            color: const Color(0xFF10B981),
+            color: Ds.accentGreen,
           ),
         ),
         const SizedBox(width: 12),
@@ -455,7 +456,7 @@ class ProfilePage extends StatelessWidget {
             label: 'Achievements',
             value: '$unlocked/$total',
             icon: Icons.emoji_events_outlined,
-            color: const Color(0xFF6366F1),
+            color: Ds.trustBlue,
           ),
         ),
       ],
