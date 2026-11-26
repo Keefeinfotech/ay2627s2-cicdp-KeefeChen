@@ -1612,89 +1612,89 @@ class _EditTaskDialogState extends State<_EditTaskDialog> {
         child: SizedBox(
           width: double.infinity,
           child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: <Widget>[
-              AppTextField(
-                controller: _title,
-                autofocus: true,
-                labelText: 'Title',
-                hintText: 'What needs to be done?',
-                textInputAction: TextInputAction.next,
-                textCapitalization: TextCapitalization.sentences,
-              ),
-              const SizedBox(height: AppSpacing.md),
-              AppTextField(
-                controller: _notes,
-                maxLines: 3,
-                minLines: 2,
-                labelText: 'Description (optional)',
-                hintText: 'Add context or a quick note',
-                textCapitalization: TextCapitalization.sentences,
-              ),
-              const SizedBox(height: AppSpacing.md),
-              AppTextField(
-                controller: _course,
-                labelText: 'Course or project (optional)',
-                hintText: 'e.g. COMP 2101',
-                prefixIcon: Icons.school_outlined,
-                textCapitalization: TextCapitalization.characters,
-              ),
-              const SizedBox(height: AppSpacing.lg),
-              Text(
-                'Priority',
-                style: theme.textTheme.labelLarge?.copyWith(
-                  fontWeight: FontWeight.w700,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: <Widget>[
+                AppTextField(
+                  controller: _title,
+                  autofocus: true,
+                  labelText: 'Title',
+                  hintText: 'What needs to be done?',
+                  textInputAction: TextInputAction.next,
+                  textCapitalization: TextCapitalization.sentences,
                 ),
-              ),
-              const SizedBox(height: AppSpacing.xs),
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: SegmentedButton<TaskPriority>(
-                  segments: TaskPriority.values
-                    .map(
-                      (value) => ButtonSegment<TaskPriority>(
-                        value: value,
-                        label: Text(value.label),
+                const SizedBox(height: AppSpacing.md),
+                AppTextField(
+                  controller: _notes,
+                  maxLines: 3,
+                  minLines: 2,
+                  labelText: 'Description (optional)',
+                  hintText: 'Add context or a quick note',
+                  textCapitalization: TextCapitalization.sentences,
+                ),
+                const SizedBox(height: AppSpacing.md),
+                AppTextField(
+                  controller: _course,
+                  labelText: 'Course or project (optional)',
+                  hintText: 'e.g. COMP 2101',
+                  prefixIcon: Icons.school_outlined,
+                  textCapitalization: TextCapitalization.characters,
+                ),
+                const SizedBox(height: AppSpacing.lg),
+                Text(
+                  'Priority',
+                  style: theme.textTheme.labelLarge?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.xs),
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: SegmentedButton<TaskPriority>(
+                    segments: TaskPriority.values
+                        .map(
+                          (value) => ButtonSegment<TaskPriority>(
+                            value: value,
+                            label: Text(value.label),
+                          ),
+                        )
+                        .toList(growable: false),
+                    selected: <TaskPriority>{_priority},
+                    showSelectedIcon: false,
+                    onSelectionChanged: (selection) {
+                      setState(() => _priority = selection.first);
+                    },
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.lg),
+                _dueDateTile(theme, scheme),
+                if (_error != null) ...<Widget>[
+                  const SizedBox(height: AppSpacing.sm),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Icon(
+                        Icons.error_outline_rounded,
+                        size: AppSizes.iconSm,
+                        color: scheme.error,
                       ),
-                    )
-                    .toList(growable: false),
-                selected: <TaskPriority>{_priority},
-                showSelectedIcon: false,
-                onSelectionChanged: (selection) {
-                  setState(() => _priority = selection.first);
-                },
-              ),
-              ),
-              const SizedBox(height: AppSpacing.lg),
-              _dueDateTile(theme, scheme),
-              if (_error != null) ...<Widget>[
-                const SizedBox(height: AppSpacing.sm),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Icon(
-                      Icons.error_outline_rounded,
-                      size: AppSizes.iconSm,
-                      color: scheme.error,
-                    ),
-                    const SizedBox(width: AppSpacing.xs),
-                    Expanded(
-                      child: Text(
-                        _error!,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: scheme.error,
+                      const SizedBox(width: AppSpacing.xs),
+                      Expanded(
+                        child: Text(
+                          _error!,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: scheme.error,
+                          ),
                         ),
                       ),
-                    ),
-                  ],
-                ),
+                    ],
+                  ),
+                ],
               ],
-            ],
+            ),
           ),
         ),
-      ),
       ),
       actions: <Widget>[
         TextButton(
@@ -1759,7 +1759,11 @@ class _EditTaskDialogState extends State<_EditTaskDialog> {
       child: narrow
           ? Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[label, const SizedBox(height: AppSpacing.xs), actions],
+              children: <Widget>[
+                label,
+                const SizedBox(height: AppSpacing.xs),
+                actions,
+              ],
             )
           : Row(
               children: <Widget>[
