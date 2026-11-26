@@ -88,10 +88,10 @@ Run after both services are live. Replace `<WEB>` and `<API>` with the actual UR
 - [ ] Reload on a deep link (e.g. `/home`) — the SPA still boots.
 - [ ] Render dashboard → `auxilia-web` → **Logs**: nginx starts without `host not found in upstream` errors.
 
-## 6. Known caveats (free tier)
+## 6. Known caveats (service plans)
 
-- Both services are on the free plan and **spin down after inactivity**. The first request can take ~50 s while the backend wakes, but `ApiClient` has a 12 s timeout — the first load may show a connection error. Retry once; for a demo, keep the backend warm with a periodic health check.
-- Flutter web downloads assets (~several MB); first load on a cold connection can be slow.
+- Production `auxilia-web` and `auxilia-backend` are declared on the **Starter (always-on)** plan in `render.yaml`, so they do not suspend between requests. The staging services remain on the free plan and **spin down after inactivity** — their first request can take ~50 s to wake, and `ApiClient` has a 12 s timeout. Do not use staging for demos without warming it first.
+- Flutter web downloads assets (~several MB); first load on a cold connection can still be slow even with an always-on service.
 - The build stage downloads the Flutter SDK each time the SDK layer cache is invalidated. Pin `FLUTTER_VERSION` (already 3.47.8) to keep CI/runtime builds consistent.
 
 ## 7. Troubleshooting
