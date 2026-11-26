@@ -98,6 +98,7 @@ class AuthService {
   Future<Session?> validateSession(Session session) async {
     try {
       await _api.getJson(ApiEndpoints.authMe, token: session.token);
+      ApiClient.setLatestToken(session.token);
       return session;
     } on ApiException catch (e) {
       if (e.isUnauthorized) {
@@ -114,6 +115,7 @@ class AuthService {
   /// Clears local session state. Swallows storage errors to avoid blocking
   /// auth-recovery flows.
   Future<void> clearSession() async {
+    ApiClient.resetTokenCache();
     try {
       await _sessions.clear();
     } catch (_) {}
@@ -199,6 +201,7 @@ class AuthService {
   Future<Session> _persist(Map<String, dynamic> data) async {
     final session = Session.fromApi(data);
     await _sessions.write(session);
+    ApiClient.setLatestToken(session.token);
     return session;
   }
 

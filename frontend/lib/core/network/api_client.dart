@@ -63,6 +63,12 @@ class ApiClient {
   /// firing duplicate refresh requests (which would invalidate each other).
   static Future<String?>? _pendingRefresh;
 
+  /// Remembers the newest access token issued for this device so stale copies
+  /// held by long-lived screens/widgets can be upgraded transparently.
+  static void setLatestToken(String? token) {
+    if (token != null && token.isNotEmpty) _latestToken = token;
+  }
+
   /// Forgets the remembered access token — called on logout and after a
   /// failed renewal so a signed-out device never reuses old credentials.
   static void resetTokenCache() {
