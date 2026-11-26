@@ -236,8 +236,6 @@ describe("reminder service", () => {
   it("advances recurring occurrences in UTC regardless of server timezone", async () => {
     const originalTZ = process.env.TZ;
     try {
-      // US DST ends on 2027-11-07: a local-time implementation would shift
-      // the next occurrence by one hour when moving to standard time.
       process.env.TZ = "America/New_York";
       const dueAt = new Date("2027-11-07T12:00:00Z");
       const value = reminder({ recurrence: "daily", dueAt });
@@ -260,5 +258,145 @@ describe("reminder service", () => {
       if (originalTZ === undefined) delete process.env.TZ;
       else process.env.TZ = originalTZ;
     }
+  });
+
+  it("finds reminders by task and updates fields", async () => {
+    const rows = [reminder()];
+    const sort = vi.fn().mockResolvedValue(rows);
+    mocks.find.mockReturnValue({ sort });
+    await expect(reminderService.findByTask("user-1", "task-1")).resolves.toBe(
+      rows,
+    );
+    expect(mocks.find).toHaveBeenCalledWith({
+      userId: "user-1",
+      taskId: "task-1",
+    });
+  });
+
+  it("updates reminder fields and returns null when missing", async () => {
+    mocks.findOne.mockResolvedValueOnce(null);
+    await expect(
+      reminderService.update("missing", "user-1", { message: "x" }),
+    ).resolves.toBeNull();
+
+    const value = reminder({
+      taskId: "t1",
+      recurrence: "none",
+      enabled: true,
+      completed: false,
+    });
+    mocks.findOne.mockResolvedValueOnce(value);
+    mocks.save.mockResolvedValue(value);
+    await reminderService.update("reminder-1", "user-1", {
+      message: "New",
+      dueAt: "2026-11-11T09:00:00Z",
+      taskId: "t2",
+      recurrence: "weekly",
+      enabled: false,
+      completed: true,
+    });
+    expect(value.message).toBe("New");
+    expect(value.taskId).toBe("t2");
+    expect(value.recurrence).toBe("weekly");
+    expect(value.enabled).toBe(false);
+    expect(value.completed).toBe(true);
+    expect(value.completedAt).toBeInstanceOf(Date);
+
+    mocks.findOne.mockResolvedValueOnce(value);
+    mocks.save.mockResolvedValue(value);
+    await reminderService.update("reminder-1", "user-1", { completed: false });
+    expect(value.completed).toBe(false);
+    expect(value.completedAt).toBeUndefined();
+  });
+
+  it("sets enabled flag", async () => {
+    mocks.findOneAndUpdate.mockResolvedValue({
+      _id: "reminder-1",
+      enabled: false,
+    });
+    const result = await reminderService.setEnabled(
+      "reminder-1",
+      "user-1",
+      false,
+    );
+    expect(mocks.findOneAndUpdate).toHaveBeenCalledWith(
+      { _id: "reminder-1", userId: "user-1" },
+      { $set: { enabled: false } },
+      { new: true },
+    );
+    expect(result).toEqual({ _id: "reminder-1", enabled: false });
+  });
+
+  it("upcoming clamps days and create handles missing email/enqueue failure", async () => {
+    const rows = [reminder()];
+    const limit = vi.fn().mockResolvedValue(rows);
+    const sort = vi.fn().mockReturnValue({ limit });
+    mocks.find.mockReturnValue({ sort });
+    await reminderService.upcoming("user-1", 0);
+    await reminderService.upcoming("user-1", 999);
+
+    const { User } =
+      await import("../../../../src/modules/users/user.model.js");
+    (User.findById as any).mockReturnValueOnce({
+      select: vi
+        .fn()
+        .mockReturnValue({ lean: vi.fn().mockResolvedValue(null) }),
+    });
+    mocks.save.mockResolvedValue(reminder({ _id: "r2" }));
+    await reminderService.create("user-1", {
+      message: "M",
+      dueAt: "2026-11-10T09:00:00Z",
+    });
+
+    (User.findById as any).mockReturnValueOnce({
+      select: vi
+        .fn()
+        .mockReturnValue({ lean: vi.fn().mockRejectedValue(new Error("db")) }),
+    });
+    mocks.save.mockResolvedValue(reminder({ _id: "r3" }));
+    await expect(
+      reminderService.create("user-1", {
+        message: "M2",
+        dueAt: "2026-11-10T09:00:00Z",
+      }),
+    ).resolves.toBeTruthy();
+  });
+
+  it("complete spawns weekly/monthly and rolls stale dates forward", async () => {
+    const weekly = reminder({
+      recurrence: "weekly",
+      dueAt: new Date("2020-01-01T00:00:00Z"),
+    });
+    mocks.findOne.mockReset();
+    mocks.create.mockReset();
+    mocks.findOne.mockResolvedValueOnce(weekly);
+    mocks.save.mockResolvedValue({ ...weekly, completedAt: new Date() });
+    mocks.findOne.mockReturnValueOnce({
+      select: vi
+        .fn()
+        .mockReturnValue({ lean: vi.fn().mockResolvedValue(null) }),
+    });
+    await reminderService.complete("reminder-1", "user-1");
+    expect(mocks.create).toHaveBeenCalledWith(
+      expect.objectContaining({ recurrence: "weekly" }),
+    );
+
+    const monthly = reminder({
+      recurrence: "monthly",
+      dueAt: new Date("2020-01-01T00:00:00Z"),
+    });
+    mocks.findOne.mockReset();
+    mocks.create.mockReset();
+    mocks.findOne.mockResolvedValueOnce(monthly);
+    mocks.save.mockResolvedValue({ ...monthly, completedAt: new Date() });
+    mocks.findOne.mockReturnValueOnce({
+      select: vi
+        .fn()
+        .mockReturnValue({ lean: vi.fn().mockResolvedValue(null) }),
+    });
+    await reminderService.complete("reminder-1", "user-1");
+    expect(mocks.create).toHaveBeenCalledWith(
+      expect.objectContaining({ recurrence: "monthly" }),
+    );
   });
 });

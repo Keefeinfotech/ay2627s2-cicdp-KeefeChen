@@ -119,6 +119,7 @@ abstract final class AppColors {
   static const Color darkBlue = Ds.primaryOnDark;
   static const Color darkTeal = Ds.accentGreen;
 
+  /// Light semantic accents for icon tiles/text on dark surfaces.
   static const Color darkOverdue = Ds.dangerOnDark;
   static const Color darkCompleted = Ds.successOnDark;
   static const Color darkWarning = Ds.warningOnDark;
