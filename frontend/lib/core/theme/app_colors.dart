@@ -1,211 +1,148 @@
 import 'package:flutter/material.dart';
 
-/// Auxilia's central colour system - Trust Blue.
+import '../design_system/ds_tokens.dart';
+
+/// Compatibility facade over the canonical [Ds] palette.
 ///
-/// A blue-led palette built around #2563EB (trust blue): dependable, calm,
-/// productive. Emerald is kept for completion/positive cues and surfaces are
-/// a cool near-white so content stays legible and professional.
-///
-/// The legacy token names (pacific, moss, saffron, ...) are kept so feature
-/// widgets continue to compile; their values now point at the Trust Blue
-/// palette.
+/// `Ds` is the single source of truth for colour. These names are retained so
+/// existing feature widgets keep compiling while they migrate to `Ds` tokens;
+/// every value below resolves to a `Ds` constant. There are no gradients and no
+/// parallel Trust Blue value — the primary is always [Ds.trustBlue].
 abstract final class AppColors {
   // ---------------------------------------------------------------------------
-  // Trust Blue palette
+  // Legacy palette names, now mapped to canonical tokens
   // ---------------------------------------------------------------------------
 
   /// Trust blue - primary actions, links, focus rings and selections.
-  static const Color pacific = Color(0xFF2563EB);
+  static const Color pacific = Ds.trustBlue;
 
-  /// Slate - secondary text, captions and muted accents.
-  static const Color moss = Color(0xFF475569);
+  /// Neutral secondary text and captions.
+  static const Color moss = Ds.textSecondary;
 
   /// Success green - completion states and positive indicators.
-  static const Color malachite = Color(0xFF059669);
+  static const Color malachite = Ds.accentGreen;
 
-  /// Light blue tint - selected rows, icon tiles and light containers.
-  static const Color lichen = Color(0xFFDBEAFE);
+  /// Light trust-blue tint for selected rows and icon tiles.
+  static const Color lichen = Ds.trustBlueLight;
 
-  /// Deep trust blue - primary buttons and high-contrast surfaces.
-  static const Color saffron = Color(0xFF1D4ED8);
+  /// Legacy alias now mapped to the primary Trust Blue.
+  static const Color saffron = Ds.trustBlue;
 
-  /// Error red - inline errors, overdue and destructive states.
-  static const Color persimmon = Color(0xFFDC2626);
+  /// Error red - overdue and destructive states.
+  static const Color persimmon = Ds.dangerRed;
 
-  /// Slate - quiet accent for highlights.
-  static const Color blush = Color(0xFF64748B);
+  /// Neutral slate accent for quiet highlights.
+  static const Color blush = Ds.textSecondary;
 
-  /// Deep navy - headings, body text and dark brand surfaces.
-  static const Color darkestNavy = Color(0xFF0F172A);
+  /// Deep neutral used for headings and dark brand surfaces.
+  static const Color darkestNavy = Ds.textPrimary;
 
-  /// Cool near-white - the main application background.
-  static const Color cocoCream = Color(0xFFF1F5F9);
+  /// Calm near-white application canvas.
+  static const Color cocoCream = Ds.bgPage;
 
   // ---------------------------------------------------------------------------
-  // Core palette
+  // Semantic names used by feature widgets
   // ---------------------------------------------------------------------------
 
-  /// Primary action accent (steel blue).
-  static const Color trustBlue = pacific;
-
-  /// Pressed states, primary buttons and high-contrast surfaces (dark taupe).
-  static const Color primaryDark = saffron;
-
-  /// Light tint for selected rows and informational surfaces.
-  static const Color primaryLight = lichen;
-
-  /// Main application background (warm greige).
-  static const Color background = cocoCream;
-
-  /// Cards and content surfaces.
-  static const Color surface = Color(0xFFFFFFFF);
-
-  /// Main text and headings.
-  static const Color textPrimary = darkestNavy;
-
-  /// Secondary text and captions.
-  static const Color textSecondary = moss;
-
-  /// Success and task completion.
-  static const Color successGreen = malachite;
-
-  /// Warnings and attention states.
-  static const Color warningAmber = Color(0xFFD97706);
-
-  /// Errors and destructive actions.
-  static const Color errorRed = persimmon;
-
-  /// Dividers and card borders (warm hairline).
-  static const Color divider = Color(0xFFCBD5E1);
+  static const Color trustBlue = Ds.trustBlue;
+  static const Color primaryDark = Ds.trustBlueDark;
+  static const Color primaryLight = Ds.trustBlueLight;
+  static const Color background = Ds.bgPage;
+  static const Color surface = Ds.bgSurface;
+  static const Color textPrimary = Ds.textPrimary;
+  static const Color textSecondary = Ds.textSecondary;
+  static const Color successGreen = Ds.accentGreen;
+  static const Color warningAmber = Ds.warningAmber;
+  static const Color errorRed = Ds.dangerRed;
+  static const Color divider = Ds.border;
 
   // ---------------------------------------------------------------------------
   // Backwards-compatible aliases
   //
   // Existing widgets were built around these palette names. Keeping the aliases
   // lets the whole application share one set of values without duplicating
-  // components.
+  // components. New code should use Ds tokens directly.
   // ---------------------------------------------------------------------------
 
-  static const Color deepNavy = primaryDark;
-  static const Color clearBlue = trustBlue;
-  static const Color softGrey = background;
-  static const Color white = surface;
-  static const Color teal = successGreen;
-  static const Color darkText = textPrimary;
-  static const Color mutedText = textSecondary;
-  static const Color borderGrey = divider;
+  static const Color deepNavy = Ds.trustBlueDark;
+  static const Color clearBlue = Ds.trustBlue;
+  static const Color softGrey = Ds.bgPage;
+  static const Color white = Ds.bgSurface;
+  static const Color teal = Ds.accentGreen;
+  static const Color darkText = Ds.textPrimary;
+  static const Color mutedText = Ds.textSecondary;
+  static const Color borderGrey = Ds.border;
 
-  /// A deeper warm charcoal for high-contrast brand surfaces.
-  static const Color navyDeep = darkestNavy;
-
-  /// A lighter steel blue for hover states and quiet accents.
-  static const Color navyLight = Color(0xFF8794AC);
-
-  /// Very light steel tint for selected rows and icon tiles.
-  static const Color navyTint = lichen;
-
-  /// Light tint for informational surfaces.
-  static const Color blueTint = primaryLight;
-
-  /// Warm clay accent from the Urban Slate palette.
-  static const Color warmAccent = blush;
-
-  /// Light warm clay tint for warm highlights and soft surfaces.
-  static const Color warmTint = Color(0xFFF3E9E4);
-
-  /// Light green tint for success surfaces.
-  static const Color tealTint = Color(0xFFDCFCE7);
-
-  /// Light amber tint for warning surfaces.
-  static const Color warningTint = Color(0xFFFEF3C7);
-
-  /// Light red tint for error surfaces.
-  static const Color errorTint = Color(0xFFFEE2E2);
+  static const Color navyDeep = Ds.textPrimary;
+  static const Color navyLight = Ds.textMuted;
+  static const Color navyTint = Ds.trustBlueLight;
+  static const Color blueTint = Ds.trustBlueMuted;
+  static const Color warmAccent = Ds.textSecondary;
+  static const Color warmTint = Ds.trustBlueMuted;
+  static const Color tealTint = Ds.accentGreenSoft;
+  static const Color warningTint = Ds.warningAmberSoft;
+  static const Color errorTint = Ds.dangerRedSoft;
 
   /// Accessible trust blue for text links on light surfaces.
-  static const Color clearBlueText = Color(0xFF1D4ED8);
+  static const Color clearBlueText = Ds.trustBlueDark;
 
-  // Semantic aliases used by feature widgets.
-  static const Color success = successGreen;
-  static const Color warning = warningAmber;
-  static const Color danger = errorRed;
+  static const Color success = Ds.accentGreen;
+  static const Color warning = Ds.warningAmber;
+  static const Color danger = Ds.dangerRed;
 
-  // ---------------------------------------------------------------------------
-  // Gradients and depth
-  // ---------------------------------------------------------------------------
-
-  /// Signature brand gradient - deep trust blue into vivid azure.
-  static const LinearGradient primaryGradient = LinearGradient(
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
-    colors: [Color(0xFF1E40AF), Color(0xFF2563EB), Color(0xFF38BDF8)],
-    stops: [0.0, 0.55, 1.0],
-  );
-
-  /// Success gradient for completion moments.
-  static const LinearGradient successGradient = LinearGradient(
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
-    colors: [Color(0xFF047857), Color(0xFF10B981)],
-  );
-
-  /// Soft ambient shadow for elevated surfaces.
-  static List<BoxShadow> softShadow({Color tint = const Color(0xFF2563EB)}) => [
+  /// Flat, restrained depth. Retained for callers that used the old ambient
+  /// shadow; no gradient is involved.
+  static List<BoxShadow> softShadow({Color tint = Ds.trustBlue}) => [
     BoxShadow(
-      color: tint.withValues(alpha: 0.10),
-      blurRadius: 24,
-      offset: const Offset(0, 10),
+      color: tint.withValues(alpha: 0.08),
+      blurRadius: 12,
+      offset: const Offset(0, 4),
     ),
     BoxShadow(
-      color: const Color(0xFF0F172A).withValues(alpha: 0.06),
-      blurRadius: 6,
-      offset: const Offset(0, 2),
+      color: Ds.textPrimary.withValues(alpha: 0.04),
+      blurRadius: 4,
+      offset: const Offset(0, 1),
     ),
   ];
 
   // ---------------------------------------------------------------------------
-  // Dark theme surfaces (deep navy variant)
+  // Dark theme surfaces and on-dark accents
   // ---------------------------------------------------------------------------
 
-  static const Color darkCanvas = darkestNavy;
-  static const Color darkSurface = Color(0xFF1E293B);
-  static const Color darkSurfaceAlt = Color(0xFF263449);
-  static const Color darkBorder = Color(0xFF334155);
-  static const Color darkOnSurface = Color(0xFFE2E8F0);
-  static const Color darkMuted = Color(0xFF94A3B8);
-  static const Color darkPrimary = Color(0xFF60A5FA);
-  static const Color darkBlue = Color(0xFF60A5FA);
-  static const Color darkTeal = malachite;
+  static const Color darkCanvas = Ds.textPrimary;
+  static const Color darkSurface = Ds.surfaceDark;
+  static const Color darkSurfaceAlt = Ds.surfaceDarkAlt;
+  static const Color darkBorder = Ds.borderDark;
+  static const Color darkOnSurface = Ds.onSurfaceDark;
+  static const Color darkMuted = Ds.mutedDark;
+  static const Color darkPrimary = Ds.primaryOnDark;
+  static const Color darkBlue = Ds.primaryOnDark;
+  static const Color darkTeal = Ds.accentGreen;
 
   /// Light semantic accents for icon tiles/text on dark surfaces.
-  static const Color darkOverdue = Color(0xFFFCA5A5);
-  static const Color darkCompleted = Color(0xFF6EE7B7);
+  static const Color darkOverdue = Ds.dangerOnDark;
+  static const Color darkCompleted = Ds.successOnDark;
+  static const Color darkWarning = Ds.warningOnDark;
 }
 
 /// Semantic accents shared by the dashboard stat cards, filter tabs and
 /// anywhere else status is communicated. Trust Blue is the default; green is
 /// reserved for completion, red for overdue, both used sparingly.
-///
-/// Single source of truth — do not redeclare this class in feature widgets.
 abstract final class TabWeather {
-  /// Neutral/primary — all tasks, XP, progress.
-  static const Color all = AppColors.trustBlue;
+  static const Color all = Ds.trustBlue;
 
-  /// Open tasks — deep trust blue (a shade of the primary, not a new hue).
-  static const Color pending = AppColors.saffron;
+  /// Open tasks — a deeper shade of the primary, not a new hue.
+  static const Color pending = Ds.trustBlueDark;
 
-  /// Overdue — error red, used only for genuine urgency.
-  static const Color overdue = AppColors.errorRed;
-
-  /// Completed — subtle success green accent.
-  static const Color completed = AppColors.successGreen;
+  static const Color overdue = Ds.dangerRed;
+  static const Color completed = Ds.accentGreen;
 
   /// The accent to use for text/icons on a surface of the given colour
   /// scheme. Dark surfaces need lighter variants to stay WCAG-legible.
   static Color display(Color accent, ColorScheme scheme) {
     if (scheme.brightness == Brightness.light) return accent;
-    if (accent == overdue) return AppColors.darkOverdue;
-    if (accent == completed) return AppColors.darkCompleted;
-    return AppColors.darkPrimary;
+    if (accent == overdue) return Ds.dangerOnDark;
+    if (accent == completed) return Ds.successOnDark;
+    return Ds.primaryOnDark;
   }
 }

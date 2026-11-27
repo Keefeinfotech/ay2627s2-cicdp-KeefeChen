@@ -3,10 +3,10 @@ import 'package:frontend/features/authentication/models/session.dart';
 import 'package:frontend/features/home/data/task_store.dart';
 
 import '../../../core/constants/app_constants.dart';
+import '../../../core/design_system/ds_tokens.dart';
 import '../../../core/routing/app_router.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
-import '../../../core/widgets/app_app_bar.dart';
 import '../../../core/widgets/app_avatar.dart';
 import '../../../core/widgets/app_dialog.dart';
 import '../../../core/widgets/app_snackbar.dart';
@@ -114,10 +114,6 @@ class ProfilePage extends StatelessWidget {
     final scheme = theme.colorScheme;
 
     return Scaffold(
-      appBar: const AuxiliaAppBar(
-        title: 'Profile',
-        subtitle: 'Account, progress and local data',
-      ),
       body: SafeArea(
         bottom: false,
         child: AnimatedBuilder(
@@ -140,9 +136,9 @@ class ProfilePage extends StatelessWidget {
                   ),
                   children: <Widget>[
                     _header(context),
-                    const SizedBox(height: AppSpacing.lg),
+                    const SizedBox(height: 16),
                     _stats(context, unlocked, totalAchievements),
-                    const SizedBox(height: AppSpacing.xl),
+                    const SizedBox(height: 20),
                     _sectionLabel(context, 'WORKSPACE'),
                     const SizedBox(height: AppSpacing.sm),
                     _actionGroup(
@@ -295,9 +291,19 @@ class ProfilePage extends StatelessWidget {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final level = store.levelProgress.level;
+    final isDark = scheme.brightness == Brightness.dark;
+    final border = isDark
+        ? Colors.white.withValues(alpha: 0.08)
+        : scheme.outlineVariant;
 
-    return Padding(
-      padding: const EdgeInsets.all(AppSpacing.lg),
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E293B) : scheme.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: border),
+      ),
       child: LayoutBuilder(
         builder: (context, constraints) {
           final identity = Row(
@@ -321,7 +327,7 @@ class ProfilePage extends StatelessWidget {
                     onTap: () => _editAvatar(context),
                   ),
                 ),
-              const SizedBox(width: AppSpacing.md),
+              const SizedBox(width: 16),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -334,19 +340,19 @@ class ProfilePage extends StatelessWidget {
                         fontWeight: FontWeight.w700,
                       ),
                     ),
-                    const SizedBox(height: AppSpacing.xxs),
+                    const SizedBox(height: 4),
                     Text(
                       session?.email ?? 'Tasks stored on this device',
-                      maxLines: 2,
+                      maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: scheme.onSurfaceVariant,
                       ),
                     ),
-                    const SizedBox(height: AppSpacing.sm),
+                    const SizedBox(height: 10),
                     Wrap(
-                      spacing: AppSpacing.xs,
-                      runSpacing: AppSpacing.xs,
+                      spacing: 8,
+                      runSpacing: 8,
                       children: <Widget>[
                         StatusBadge(
                           label: 'Level $level',
@@ -372,43 +378,51 @@ class ProfilePage extends StatelessWidget {
             ],
           );
 
-          if (constraints.maxWidth < 560) return identity;
+          final progress = Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            decoration: BoxDecoration(
+              color: scheme.primary.withValues(alpha: isDark ? 0.12 : 0.08),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                ProgressRing(
+                  value: store.levelProgress.fraction,
+                  diameter: 44,
+                  strokeWidth: 6,
+                  color: scheme.primary,
+                  center: Text(
+                    '${(store.levelProgress.fraction * 100).round()}%',
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: scheme.primary,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Text(
+                  'to level ${level + 1}',
+                  style: theme.textTheme.labelMedium?.copyWith(
+                    color: scheme.onSurfaceVariant,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          );
+
+          if (constraints.maxWidth < 560) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [identity, const SizedBox(height: 16), progress],
+            );
+          }
           return Row(
             children: <Widget>[
               Expanded(child: identity),
-              const SizedBox(width: AppSpacing.lg),
-              Container(
-                padding: const EdgeInsets.all(AppSpacing.md),
-                decoration: BoxDecoration(
-                  color: scheme.primaryContainer.withValues(alpha: 0.5),
-                  borderRadius: BorderRadius.circular(AppRadius.md),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: <Widget>[
-                    ProgressRing(
-                      value: store.levelProgress.fraction,
-                      diameter: 44,
-                      strokeWidth: 8,
-                      color: scheme.onPrimaryContainer,
-                      center: Text(
-                        '${(store.levelProgress.fraction * 100).round()}%',
-                        style: theme.textTheme.labelMedium?.copyWith(
-                          color: scheme.onPrimaryContainer,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: AppSpacing.sm),
-                    Text(
-                      'to level ${level + 1}',
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        color: scheme.onPrimaryContainer,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+              const SizedBox(width: 16),
+              progress,
             ],
           );
         },
@@ -417,39 +431,35 @@ class ProfilePage extends StatelessWidget {
   }
 
   Widget _stats(BuildContext context, int unlocked, int total) {
-    return Padding(
-      padding: const EdgeInsets.all(AppSpacing.lg),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: <Widget>[
-          Expanded(
-            child: _ProfileStat(
-              label: 'Total XP',
-              value: '${store.levelProgress.totalXp}',
-            ),
+    return Row(
+      children: <Widget>[
+        Expanded(
+          child: _ProfileStatCard(
+            label: 'Total XP',
+            value: '${store.levelProgress.totalXp}',
+            icon: Icons.bolt_rounded,
+            color: Ds.warningAmber,
           ),
-          VerticalDivider(
-            width: 1,
-            color: Theme.of(context).colorScheme.outlineVariant,
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: _ProfileStatCard(
+            label: 'Completed',
+            value: '${store.completedCount}',
+            icon: Icons.check_circle_outline_rounded,
+            color: Ds.accentGreen,
           ),
-          Expanded(
-            child: _ProfileStat(
-              label: 'Completed',
-              value: '${store.completedCount}',
-            ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: _ProfileStatCard(
+            label: 'Achievements',
+            value: '$unlocked/$total',
+            icon: Icons.emoji_events_outlined,
+            color: Ds.trustBlue,
           ),
-          VerticalDivider(
-            width: 1,
-            color: Theme.of(context).colorScheme.outlineVariant,
-          ),
-          Expanded(
-            child: _ProfileStat(
-              label: 'Achievements',
-              value: '$unlocked/$total',
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -554,41 +564,61 @@ class _ProfileIconTile extends StatelessWidget {
   }
 }
 
-class _ProfileStat extends StatelessWidget {
-  const _ProfileStat({required this.label, required this.value});
+class _ProfileStatCard extends StatelessWidget {
+  const _ProfileStatCard({
+    required this.label,
+    required this.value,
+    required this.icon,
+    required this.color,
+  });
 
   final String label;
   final String value;
+  final IconData icon;
+  final Color color;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final isDark = scheme.brightness == Brightness.dark;
+    final border = isDark
+        ? Colors.white.withValues(alpha: 0.08)
+        : scheme.outlineVariant;
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.sm,
-        vertical: AppSpacing.md,
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E293B) : scheme.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: border),
       ),
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
+          Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, size: 18, color: color),
+          ),
+          const SizedBox(height: 12),
           Text(
             value,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: theme.textTheme.titleMedium?.copyWith(
+            style: theme.textTheme.titleLarge?.copyWith(
               fontWeight: FontWeight.w700,
+              fontFeatures: const [FontFeature.tabularFigures()],
             ),
           ),
-          const SizedBox(height: AppSpacing.xxs),
+          const SizedBox(height: 2),
           Text(
             label,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            textAlign: TextAlign.center,
             style: theme.textTheme.labelSmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
+              color: scheme.onSurfaceVariant,
+              fontWeight: FontWeight.w500,
             ),
           ),
         ],

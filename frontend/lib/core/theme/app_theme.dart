@@ -21,8 +21,7 @@ abstract final class AppTheme {
   static const ColorScheme _lightScheme = ColorScheme(
     brightness: Brightness.light,
     primary: AppColors.saffron,
-    // Dark taupe is not dark enough to carry near-black text (2.07:1);
-    // white on taupe is ~7:1, well above WCAG AA.
+    // Trust Blue carries white primary text comfortably above WCAG AA.
     onPrimary: Colors.white,
     primaryContainer: AppColors.lichen,
     onPrimaryContainer: AppColors.moss,
@@ -500,16 +499,20 @@ abstract final class AuxiliaTheme {
   static ThemeData dark() => AppTheme.dark();
 }
 
-/// Backwards-compatible colour names mapped onto the new palette.
+/// Backwards-compatible colour names.
 ///
-/// New code should use [AppColors] directly. This class only exists so older
-/// imports keep working while the codebase migrates.
+/// These aliases now resolve to the canonical [Ds] palette through AppColors.
+/// New code should import `ds_tokens.dart` and use [Ds] directly; this class
+/// exists only so older imports keep working during the migration.
 abstract final class AuxiliaColors {
   static const Color indigo = AppColors.deepNavy;
   static const Color indigoDeep = AppColors.navyDeep;
   static const Color cyan = AppColors.clearBlue;
   static const Color cyanDeep = AppColors.clearBlue;
-  static const Color violet = AppColors.teal;
+
+  /// Legacy alias retained for older imports; renders as deep Trust Blue, not
+  /// violet.
+  static const Color violet = Ds.trustBlueDark;
   static const Color slate900 = AppColors.darkText;
   static const Color slate700 = AppColors.deepNavy;
   static const Color slate500 = AppColors.mutedText;

@@ -32,6 +32,8 @@ class _PrimaryButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bool enabled = onPressed != null;
+    final scheme = Theme.of(context).colorScheme;
+    final Color foreground = scheme.onPrimary;
 
     return Semantics(
       button: true,
@@ -40,7 +42,9 @@ class _PrimaryButton extends StatelessWidget {
         opacity: enabled ? 1 : 0.45,
         child: DecoratedBox(
           decoration: BoxDecoration(
-            color: Ds.trustBlue,
+            // Use the active theme colour so primary actions stay in sync with
+            // the professional Trust Blue scheme instead of a legacy literal.
+            color: scheme.primary,
             borderRadius: BorderRadius.circular(borderRadius),
             boxShadow: enabled ? Ds.elevation1 : null,
           ),
@@ -49,8 +53,8 @@ class _PrimaryButton extends StatelessWidget {
             child: InkWell(
               onTap: onPressed,
               borderRadius: BorderRadius.circular(borderRadius),
-              splashColor: Colors.white.withValues(alpha: 0.25),
-              highlightColor: Colors.white.withValues(alpha: 0.12),
+              splashColor: foreground.withValues(alpha: 0.25),
+              highlightColor: foreground.withValues(alpha: 0.12),
               child: ConstrainedBox(
                 constraints: BoxConstraints(
                   minHeight: height,
@@ -60,10 +64,10 @@ class _PrimaryButton extends StatelessWidget {
                   padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
                   child: DefaultTextStyle.merge(
                     style: Theme.of(context).textTheme.labelLarge!
-                        .copyWith(color: Colors.white),
+                        .copyWith(color: foreground),
                     child: IconTheme.merge(
-                      data: const IconThemeData(
-                        color: Colors.white,
+                      data: IconThemeData(
+                        color: foreground,
                         size: AppSizes.iconMd,
                       ),
                       child: Center(

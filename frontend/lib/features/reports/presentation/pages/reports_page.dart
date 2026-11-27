@@ -8,12 +8,10 @@ import 'package:frontend/features/reports/presentation/controllers/reports_contr
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
-import '../../../../core/widgets/app_app_bar.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_empty_state.dart';
 import '../../../../core/widgets/app_status_badge.dart';
 import '../../../../core/widgets/progress_ring.dart';
-import '../../../../core/widgets/responsive_page_layout.dart';
 import '../widgets/report_charts.dart';
 
 /// Progress reporting surface built from live task data.
@@ -56,17 +54,6 @@ class _ReportsPageState extends State<ReportsPage> {
       animation: _controller,
       builder: (context, _) {
         return Scaffold(
-          appBar: AuxiliaAppBar(
-            title: 'Reports',
-            subtitle: 'Progress at a glance',
-            actions: <Widget>[
-              IconButton(
-                tooltip: 'Refresh reports',
-                onPressed: _controller.isLoading ? null : _controller.refresh,
-                icon: const Icon(Icons.refresh_rounded),
-              ),
-            ],
-          ),
           body: SafeArea(
             bottom: false,
             child: Center(
@@ -202,9 +189,9 @@ class _ReportsPageState extends State<ReportsPage> {
           return Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              Expanded(flex: 3, child: activity),
+              Expanded(flex: 7, child: activity),
               const SizedBox(width: AppSpacing.lg),
-              Expanded(flex: 2, child: priority),
+              Expanded(flex: 5, child: priority),
             ],
           );
         },
@@ -218,70 +205,103 @@ class _ReportsPageState extends State<ReportsPage> {
 
   Widget _kpiGrid(BuildContext context, ReportSnapshot snapshot) {
     final rate = snapshot.completionRate;
+    // The cards sit on a dark surface in both themes, so accents use the
+    // lighter variants that stay legible there.
     final Color rateColor = rate >= 0.7
-        ? AppColors.successGreen
-        : AppColors.trustBlue;
+        ? AppColors.darkCompleted
+        : AppColors.darkPrimary;
 
-    return ResponsiveGrid(
-      minItemWidth: 168,
-      spacing: AppSpacing.md,
-      runSpacing: AppSpacing.md,
-      children: <Widget>[
-        _ReportKpiCard(
-          icon: Icons.donut_large_outlined,
-          label: 'Completion rate',
-          value: '${(rate * 100).round()}%',
-          caption: 'of ${snapshot.totalTasks} in view',
-          color: rateColor,
-          ringValue: rate,
-        ),
-        _ReportKpiCard(
-          icon: Icons.task_alt_outlined,
-          label: 'Completed',
-          value: '${snapshot.completedTasks}',
-          caption: '${snapshot.completedInPeriod} finished in period',
-          color: AppColors.successGreen,
-        ),
-        _ReportKpiCard(
-          icon: Icons.pending_actions_outlined,
-          label: 'Still open',
-          value: '${snapshot.pendingTasks}',
-          caption: '${snapshot.createdInPeriod} created in period',
-        ),
-        _ReportKpiCard(
-          icon: Icons.warning_amber_outlined,
-          label: 'Overdue',
-          value: '${snapshot.overdueTasks}',
-          caption: snapshot.overdueTasks == 0
-              ? 'nothing past due'
-              : 'need attention',
-          color: snapshot.overdueTasks > 0 ? AppColors.errorRed : null,
-        ),
-        _ReportKpiCard(
-          icon: Icons.calendar_today_outlined,
-          label: 'Focus days',
-          value: '${snapshot.focusDays}',
-          caption: 'active days in period',
-        ),
-        _ReportKpiCard(
-          icon: Icons.local_fire_department_outlined,
-          label: 'Current streak',
-          value: '${snapshot.currentStreak}',
-          caption: snapshot.currentStreak == 1
-              ? 'day in a row'
-              : 'days in a row',
-          color: snapshot.currentStreak > 0 ? AppColors.warningAmber : null,
-        ),
-      ],
+    final cards = <Widget>[
+      _ReportKpiCard(
+        icon: Icons.donut_large_outlined,
+        label: 'Completion rate',
+        caption: 'of ${snapshot.totalTasks} in view',
+        color: rateColor,
+        ringValue: rate,
+      ),
+      _ReportKpiCard(
+        icon: Icons.task_alt_outlined,
+        label: 'Completed',
+        value: '${snapshot.completedTasks}',
+        caption: '${snapshot.completedInPeriod} finished in period',
+        color: AppColors.darkCompleted,
+      ),
+      _ReportKpiCard(
+        icon: Icons.pending_actions_outlined,
+        label: 'Still open',
+        value: '${snapshot.pendingTasks}',
+        caption: '${snapshot.createdInPeriod} created in period',
+      ),
+      _ReportKpiCard(
+        icon: Icons.warning_amber_outlined,
+        label: 'Overdue',
+        value: '${snapshot.overdueTasks}',
+        caption: snapshot.overdueTasks == 0
+            ? 'nothing past due'
+            : 'need attention',
+        color: snapshot.overdueTasks > 0 ? AppColors.darkOverdue : null,
+      ),
+      _ReportKpiCard(
+        icon: Icons.calendar_today_outlined,
+        label: 'Focus days',
+        value: '${snapshot.focusDays}',
+        caption: 'active days in period',
+      ),
+      _ReportKpiCard(
+        icon: Icons.local_fire_department_outlined,
+        label: 'Current streak',
+        value: '${snapshot.currentStreak}',
+        caption: snapshot.currentStreak == 1 ? 'day in a row' : 'days in a row',
+        color: snapshot.currentStreak > 0 ? AppColors.darkWarning : null,
+      ),
+    ];
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final cols = constraints.maxWidth < 640 ? 2 : 3;
+        // Rows of equal-width cards: every card keeps its intrinsic height
+        // (no aspect-ratio driven dead space) and gaps stay at a consistent 16.
+        final rows = <Widget>[];
+        for (var start = 0; start < cards.length; start += cols) {
+          if (rows.isNotEmpty) {
+            rows.add(const SizedBox(height: AppSpacing.lg));
+          }
+          final end = start + cols > cards.length ? cards.length : start + cols;
+          rows.add(
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                for (var i = start; i < end; i++) ...[
+                  if (i > start) const SizedBox(width: AppSpacing.lg),
+                  Expanded(child: cards[i]),
+                ],
+              ],
+            ),
+          );
+        }
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: rows,
+        );
+      },
     );
   }
 
   Widget _activityCard(BuildContext context, ReportSnapshot snapshot) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
+    final isDark = scheme.brightness == Brightness.dark;
+    final border = isDark
+        ? Colors.white.withValues(alpha: 0.08)
+        : scheme.outlineVariant;
 
-    return Padding(
+    return Container(
       padding: const EdgeInsets.all(AppSpacing.lg),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E293B) : scheme.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: border),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
@@ -352,9 +372,18 @@ class _ReportsPageState extends State<ReportsPage> {
   Widget _priorityCard(BuildContext context, ReportSnapshot snapshot) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
+    final isDark = scheme.brightness == Brightness.dark;
+    final border = isDark
+        ? Colors.white.withValues(alpha: 0.08)
+        : scheme.outlineVariant;
 
-    return Padding(
+    return Container(
       padding: const EdgeInsets.all(AppSpacing.lg),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E293B) : scheme.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: border),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
@@ -512,7 +541,7 @@ class _ReportKpiCard extends StatelessWidget {
   const _ReportKpiCard({
     required this.icon,
     required this.label,
-    required this.value,
+    this.value,
     required this.caption,
     this.color,
     this.ringValue,
@@ -520,92 +549,120 @@ class _ReportKpiCard extends StatelessWidget {
 
   final IconData icon;
   final String label;
-  final String value;
+
+  /// The large metric. Left null for the ring card: its percentage already
+  /// lives inside the ring, so showing it again here would be redundant.
+  final String? value;
   final String caption;
   final Color? color;
 
-  /// When set, the card's icon tile becomes a progress ring showing this
+  /// When set, the card's leading badge becomes a progress ring showing this
   /// value (Mobbin-style summary cards).
   final double? ringValue;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
-    final Color accent = color ?? scheme.primary;
+    final Color accent = color ?? AppColors.darkPrimary;
     final bool hasRing = ringValue != null;
 
-    final Widget leading = hasRing
-        ? ProgressRing(
-            value: ringValue!,
-            diameter: 72,
-            strokeWidth: 9,
-            color: accent,
-            center: Text(
-              '${(ringValue! * 100).round()}%',
-              style: theme.textTheme.labelMedium?.copyWith(
-                color: accent,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          )
-        : Container(
-            width: 32,
-            height: 32,
-            decoration: BoxDecoration(
-              color: accent.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(AppRadius.sm),
-            ),
-            child: Icon(icon, size: AppSizes.iconSm, color: accent),
-          );
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // On very narrow phones the ring scales down instead of overflowing;
+        // at normal card widths it keeps its full size and 28px label.
+        final contentWidth = constraints.maxWidth.isFinite
+            ? constraints.maxWidth - 2 * AppSpacing.xl
+            : 92.0;
+        final ringDiameter = contentWidth < 92
+            ? contentWidth.clamp(64.0, 92.0).toDouble()
+            : 92.0;
+        final ringCompact = ringDiameter < 86;
 
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.md),
-      decoration: BoxDecoration(
-        color: scheme.surface,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: scheme.outlineVariant),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          Row(
-            children: <Widget>[
-              Expanded(child: leading),
-              const SizedBox(width: AppSpacing.sm),
-              Expanded(
-                child: Text(
-                  label,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: scheme.onSurfaceVariant,
-                    fontWeight: FontWeight.w600,
+        final Widget leading = hasRing
+            ? ProgressRing(
+                value: ringValue!,
+                diameter: ringDiameter,
+                strokeWidth: ringCompact ? 6 : 8,
+                color: accent,
+                trackColor: Colors.white.withValues(alpha: 0.14),
+                center: Text(
+                  '${(ringValue! * 100).round()}%',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontSize: ringCompact ? 20 : 28,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                    height: 1,
                   ),
+                ),
+              )
+            : Container(
+                width: 28,
+                height: 28,
+                decoration: BoxDecoration(
+                  color: accent.withValues(alpha: 0.16),
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                ),
+                child: Icon(icon, size: AppSizes.iconSm, color: accent),
+              );
+
+        return Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.xl,
+            vertical: 20,
+          ),
+          decoration: BoxDecoration(
+            color: AppColors.darkSurface,
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              Row(
+                children: <Widget>[
+                  leading,
+                  const SizedBox(width: AppSpacing.sm),
+                  Flexible(
+                    child: Text(
+                      label,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.labelLarge?.copyWith(
+                        fontSize: 13,
+                        color: AppColors.darkMuted,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: hasRing ? AppSpacing.xs : AppSpacing.md),
+              if (value != null) ...<Widget>[
+                Text(
+                  value!,
+                  style: theme.textTheme.headlineSmall?.copyWith(
+                    fontSize: 30,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                    height: 1.1,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.xs),
+              ],
+              Text(
+                caption,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  fontSize: 14,
+                  color: AppColors.darkMuted,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: AppSpacing.md),
-          Text(
-            value,
-            style: theme.textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.w700,
-              color: color,
-            ),
-          ),
-          const SizedBox(height: AppSpacing.xxs),
-          Text(
-            caption,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: theme.textTheme.labelSmall?.copyWith(
-              color: scheme.onSurfaceVariant,
-            ),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 }

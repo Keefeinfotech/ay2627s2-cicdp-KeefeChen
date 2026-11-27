@@ -17,6 +17,12 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 5
+    groups:
+      # codeql-action's init/analyze/upload-sarif steps must all run the
+      # same version; bump them together in one PR.
+      codeql-action:
+        patterns:
+          - "github/codeql-action*"
 
   # Base images are a supply-chain surface too: Trivy reports vulnerable OS
   # packages in them, so keep Docker tags current as well.
@@ -25,9 +31,3 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 3
-    groups:
-      # codeql-action's init/analyze/upload-sarif steps must all run the
-      # same version; bump them together in one PR.
-      codeql-action:
-        patterns:
-          - "github/codeql-action*"

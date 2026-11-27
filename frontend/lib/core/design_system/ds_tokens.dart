@@ -30,6 +30,18 @@ class Ds {
   static const Color textMuted = Color(0xFF9CA3AF);
   static const Color onPrimary = Color(0xFFFFFFFF);
 
+  // Dark surfaces and accessible on-dark accents. Dark mode keeps the same
+  // Trust Blue identity via a lighter tint rather than introducing a new hue.
+  static const Color surfaceDark = Color(0xFF1E293B);
+  static const Color surfaceDarkAlt = Color(0xFF263449);
+  static const Color borderDark = Color(0xFF334155);
+  static const Color onSurfaceDark = Color(0xFFE2E8F0);
+  static const Color mutedDark = Color(0xFF94A3B8);
+  static const Color primaryOnDark = Color(0xFF8FB6FF);
+  static const Color successOnDark = Color(0xFF6EE7B7);
+  static const Color warningOnDark = Color(0xFFFBBF24);
+  static const Color dangerOnDark = Color(0xFFFCA5A5);
+
   // ------------------------------------------------------------- Spacing
   // 4px base scale: s2, s4, s8, s12, s16, s20, s24, s32, s40, s48, s64
   static const double s2 = 2.0;

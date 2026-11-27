@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/app_dialog.dart';
+import '../../../core/widgets/app_status_badge.dart';
 import '../../../core/widgets/app_text_field.dart';
 import '../data/task_validation.dart';
 import '../models/task.dart';
@@ -12,7 +14,8 @@ import '../models/task.dart';
 ///
 /// The primary action lives in a sticky footer so it stays reachable on short
 /// screens and when the software keyboard is open, while the fields scroll
-/// independently.
+/// independently. The layout is grouped into Basics, Organise, Priority and
+/// Schedule sections with a single filled primary action in the footer.
 class TaskEditor extends StatefulWidget {
   const TaskEditor({
     super.key,
@@ -28,11 +31,10 @@ class TaskEditor extends StatefulWidget {
   /// workspace. Ignored when [initial] is supplied.
   final String? initialCourse;
 
-  /// Tags already used elsewhere in the workspace, offered as quick picks.
+  /// Tags already used elsewhere in the workspace, offered as quick chips.
   final List<String> existingTags;
 
-  /// Courses/subjects already used elsewhere, offered as quick picks so the
-  /// user can prioritise a prelist of their own subjects.
+  /// Courses already used elsewhere in the workspace, offered as quick chips.
   final List<String> existingCourses;
 
   @override
@@ -82,6 +84,87 @@ class _TaskEditorState extends State<TaskEditor> {
     if (_dueDate != initial?.dueDate) return true;
     if (_reminderAt != initial?.reminderAt) return true;
     return false;
+  }
+
+  /// Professional priority colour from the active scheme. Light mode uses the
+  /// semantic Trust Blue / amber / red tokens; dark mode uses their legible
+  /// light counterparts.
+  Color _priorityColor(ColorScheme scheme) {
+    final bool dark = scheme.brightness == Brightness.dark;
+    return switch (_priority) {
+      TaskPriority.low => scheme.primary,
+      TaskPriority.medium =>
+        dark ? AppColors.darkWarning : AppColors.warningAmber,
+      TaskPriority.high => dark ? AppColors.darkOverdue : AppColors.errorRed,
+    };
+  }
+
+  /// Small uppercase-style section label with a hairline rule. Keeps the
+  /// sheet scannable without adding nested card borders around every field.
+  Widget _sectionHeader(BuildContext context, String label) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+
+    return Padding(
+      padding: const EdgeInsets.only(top: AppSpacing.lg, bottom: AppSpacing.sm),
+      child: Row(
+        children: <Widget>[
+          Text(
+            label,
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: scheme.primary,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.4,
+            ),
+          ),
+          const SizedBox(width: AppSpacing.md),
+          Expanded(child: Divider(height: 1, color: scheme.outlineVariant)),
+        ],
+      ),
+    );
+  }
+
+  /// Equal-width schedule controls. They stack on phone widths so long labels
+  /// are ellipsised instead of wrapping or overflowing.
+  Widget _scheduleControls(BuildContext context) {
+    final bool narrow = MediaQuery.sizeOf(context).width < 440;
+
+    final Widget due = AppButton(
+      label: _dueDate == null
+          ? 'Set due date'
+          : 'Due ${formatTaskDate(_dueDate!)}',
+      icon: Icons.event_outlined,
+      onPressed: _setDueDate,
+      variant: AppButtonVariant.outline,
+      expand: true,
+    );
+    final Widget reminder = AppButton(
+      label: _reminderAt == null
+          ? 'Set reminder'
+          : 'Remind ${formatTaskDate(_reminderAt!)}',
+      icon: Icons.notifications_outlined,
+      onPressed: _setReminder,
+      variant: AppButtonVariant.outline,
+      expand: true,
+    );
+
+    if (narrow) {
+      return Column(
+        children: <Widget>[
+          due,
+          const SizedBox(height: AppSpacing.sm),
+          reminder,
+        ],
+      );
+    }
+
+    return Row(
+      children: <Widget>[
+        Expanded(child: due),
+        const SizedBox(width: AppSpacing.sm),
+        Expanded(child: reminder),
+      ],
+    );
   }
 
   /// Closes the editor, asking for confirmation first when there are
@@ -224,6 +307,7 @@ class _TaskEditorState extends State<TaskEditor> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
     final double maxHeight = MediaQuery.sizeOf(context).height * 0.92;
 
     return PopScope(
@@ -253,13 +337,14 @@ class _TaskEditorState extends State<TaskEditor> {
                     ),
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: <Widget>[
                         Center(
                           child: Container(
                             width: 40,
                             height: 4,
                             decoration: BoxDecoration(
-                              color: theme.colorScheme.outlineVariant,
+                              color: scheme.outlineVariant,
                               borderRadius: BorderRadius.circular(
                                 AppRadius.pill,
                               ),
@@ -274,6 +359,7 @@ class _TaskEditorState extends State<TaskEditor> {
                                 _isEditing ? 'Edit task' : 'New task',
                                 style: theme.textTheme.titleLarge?.copyWith(
                                   fontWeight: FontWeight.w600,
+                                  letterSpacing: -0.2,
                                 ),
                               ),
                             ),
@@ -284,6 +370,27 @@ class _TaskEditorState extends State<TaskEditor> {
                             ),
                           ],
                         ),
+                        if (_isEditing)
+                          Padding(
+                            padding: const EdgeInsets.only(top: AppSpacing.xs),
+                            child: Wrap(
+                              spacing: AppSpacing.sm,
+                              runSpacing: AppSpacing.xs,
+                              crossAxisAlignment: WrapCrossAlignment.center,
+                              children: <Widget>[
+                                PriorityBadge.task(
+                                  label: '${_priority.label} priority',
+                                  color: _priorityColor(scheme),
+                                ),
+                                if (_dueDate != null)
+                                  StatusBadge(
+                                    label: 'Due ${formatTaskDate(_dueDate!)}',
+                                    color: scheme.onSurfaceVariant,
+                                    icon: Icons.event_outlined,
+                                  ),
+                              ],
+                            ),
+                          ),
                       ],
                     ),
                   ),
@@ -301,6 +408,7 @@ class _TaskEditorState extends State<TaskEditor> {
                           mainAxisSize: MainAxisSize.min,
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: <Widget>[
+                            _sectionHeader(context, 'Basics'),
                             AppTextField(
                               controller: _title,
                               autofocus: !_isEditing,
@@ -349,7 +457,7 @@ class _TaskEditorState extends State<TaskEditor> {
                                   ],
                                 ),
                               ),
-                            const SizedBox(height: AppSpacing.md),
+                            _sectionHeader(context, 'Organise'),
                             Text(
                               'Tags (optional)',
                               style: theme.textTheme.labelLarge?.copyWith(
@@ -445,14 +553,7 @@ class _TaskEditorState extends State<TaskEditor> {
                               textCapitalization: TextCapitalization.sentences,
                               validator: validateNotes,
                             ),
-                            const SizedBox(height: AppSpacing.md),
-                            Text(
-                              'Priority',
-                              style: theme.textTheme.labelLarge?.copyWith(
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                            const SizedBox(height: AppSpacing.xs),
+                            _sectionHeader(context, 'Priority'),
                             SegmentedButton<TaskPriority>(
                               segments: TaskPriority.values
                                   .map(
@@ -467,41 +568,8 @@ class _TaskEditorState extends State<TaskEditor> {
                                 setState(() => _priority = selection.first);
                               },
                             ),
-                            const SizedBox(height: AppSpacing.md),
-                            Text(
-                              'Schedule',
-                              style: theme.textTheme.labelLarge?.copyWith(
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                            const SizedBox(height: AppSpacing.xs),
-                            Row(
-                              children: <Widget>[
-                                Expanded(
-                                  child: AppButton(
-                                    label: _dueDate == null
-                                        ? 'Set due date'
-                                        : 'Due ${formatTaskDate(_dueDate!)}',
-                                    icon: Icons.event_outlined,
-                                    onPressed: _setDueDate,
-                                    variant: AppButtonVariant.outline,
-                                    expand: true,
-                                  ),
-                                ),
-                                const SizedBox(width: AppSpacing.sm),
-                                Expanded(
-                                  child: AppButton(
-                                    label: _reminderAt == null
-                                        ? 'Set reminder'
-                                        : 'Remind ${formatTaskDate(_reminderAt!)}',
-                                    icon: Icons.notifications_outlined,
-                                    onPressed: _setReminder,
-                                    variant: AppButtonVariant.outline,
-                                    expand: true,
-                                  ),
-                                ),
-                              ],
-                            ),
+                            _sectionHeader(context, 'Schedule'),
+                            _scheduleControls(context),
                             if (_dueDate != null)
                               Align(
                                 alignment: Alignment.centerRight,
@@ -540,16 +608,14 @@ class _TaskEditorState extends State<TaskEditor> {
                                   Icon(
                                     Icons.error_outline_rounded,
                                     size: 18,
-                                    color: theme.colorScheme.error,
+                                    color: scheme.error,
                                   ),
                                   const SizedBox(width: AppSpacing.xs),
                                   Expanded(
                                     child: Text(
                                       _scheduleError!,
                                       style: theme.textTheme.bodySmall
-                                          ?.copyWith(
-                                            color: theme.colorScheme.error,
-                                          ),
+                                          ?.copyWith(color: scheme.error),
                                     ),
                                   ),
                                 ],
@@ -562,11 +628,9 @@ class _TaskEditorState extends State<TaskEditor> {
                   ),
                   Container(
                     decoration: BoxDecoration(
-                      color: theme.colorScheme.surface,
+                      color: scheme.surface,
                       border: Border(
-                        top: BorderSide(
-                          color: theme.colorScheme.outlineVariant,
-                        ),
+                        top: BorderSide(color: scheme.outlineVariant),
                       ),
                     ),
                     padding: const EdgeInsets.fromLTRB(

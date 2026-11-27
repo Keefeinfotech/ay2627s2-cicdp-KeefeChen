@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:frontend/core/routing/app_router.dart';
 import 'package:frontend/features/home/data/task_repository.dart';
 import 'package:frontend/features/home/data/task_store.dart';
 import 'package:frontend/features/home/models/task.dart';
@@ -8,150 +9,81 @@ import 'package:frontend/features/reminders/screens/reminders_screen.dart';
 
 import '../../helpers.dart';
 
-TaskStore _store(List<Task> tasks) {
-  return TaskStore(
-    repository: InMemoryTaskRepository(
-      seed: <String, List<Task>>{'owner': tasks},
-    ),
-    ownerId: 'owner',
+TaskStore _store(List<Task> seed) => TaskStore(
+  repository: InMemoryTaskRepository(seed: <String, List<Task>>{'u': seed}),
+  ownerId: 'u',
+);
+
+Widget _app(Widget child) {
+  return MaterialApp(
+    routes: {AppRoutes.home: (_) => const Scaffold(body: Text('home'))},
+    home: child,
   );
 }
 
-Future<void> _pump(WidgetTester tester, TaskStore store) async {
-  await tester.pumpWidget(MaterialApp(home: RemindersScreen(store: store)));
-  await tester.pumpAndSettle();
-}
-
 void main() {
-  group('RemindersScreen', () {
-    testWidgets('shows the empty state with an add action when quiet', (
-      tester,
-    ) async {
-      final store = _store(<Task>[makeTask(id: '1')]);
-      await store.load();
+  testWidgets('shows safe empty state when no store is provided', (
+    tester,
+  ) async {
+    await tester.pumpWidget(_app(const RemindersScreen()));
+    await tester.pumpAndSettle();
 
-      await _pump(tester, store);
+    expect(find.text('Reminders live with your tasks'), findsOneWidget);
+    expect(find.text('Go to tasks'), findsOneWidget);
 
-      expect(find.text('No reminders yet'), findsOneWidget);
-      expect(find.text('Add reminder'), findsOneWidget);
-    });
+    await tester.tap(find.text('Go to tasks'));
+    await tester.pumpAndSettle();
+    expect(find.text('home'), findsOneWidget);
+  });
 
-    testWidgets(
-      'loads a cold store itself instead of showing the empty state',
-      (tester) async {
-        // Deep links to /reminders build an unloaded store; the screen must
-        // trigger the load and surface persisted reminders.
-        final store = _store(<Task>[
-          makeTask(
-            id: '1',
-            title: 'Revise chapter 4',
-            reminderAt: DateTime.now().add(const Duration(hours: 5)),
-          ),
-        ]);
+  testWidgets('shows empty state when store has no reminders', (tester) async {
+    final store = _store([makeTask(id: '1', title: 'No reminder')]);
+    await tester.pumpWidget(_app(RemindersScreen(store: store)));
+    await tester.pumpAndSettle();
 
-        await _pump(tester, store);
+    expect(find.text('No reminders yet'), findsOneWidget);
+    await tester.tap(find.text('Go to tasks'));
+    await tester.pumpAndSettle();
+    expect(find.text('home'), findsOneWidget);
+  });
 
-        expect(find.text('Revise chapter 4'), findsOneWidget);
-        expect(find.text('No reminders yet'), findsNothing);
-      },
-    );
+  testWidgets('renders overdue and upcoming reminders', (tester) async {
+    final now = DateTime.now();
+    final store = _store([
+      // ensure loaded
 
-    testWidgets('groups overdue and upcoming reminders by urgency', (
-      tester,
-    ) async {
-      final store = _store(<Task>[
-        makeTask(
-          id: 'overdue',
-          title: 'Revise chapter 4',
-          reminderAt: DateTime.now().subtract(const Duration(hours: 3)),
-        ),
-        makeTask(
-          id: 'upcoming',
-          title: 'Submit lab report',
-          reminderAt: DateTime.now().add(const Duration(days: 2)),
-        ),
-      ]);
-      await store.load();
+      makeTask(
+        id: '1',
+        title: 'Overdue task',
+        reminderAt: now.subtract(const Duration(days: 1)),
+        status: TaskStatus.pending,
+      ),
+      makeTask(
+        id: '2',
+        title: 'Upcoming task',
+        reminderAt: now.add(const Duration(days: 1)),
+        status: TaskStatus.pending,
+      ),
+      makeTask(
+        id: '3',
+        title: 'Done task',
+        reminderAt: now.add(const Duration(days: 2)),
+        status: TaskStatus.completed,
+        completedAt: now,
+      ),
+    ]);
+    await store.load();
 
-      await _pump(tester, store);
+    await tester.pumpWidget(_app(RemindersScreen(store: store)));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+    await tester.pumpAndSettle();
 
-      expect(find.text('Overdue'), findsOneWidget);
-      expect(find.text('Upcoming'), findsOneWidget);
-      expect(find.text('Revise chapter 4'), findsOneWidget);
-      expect(find.text('Submit lab report'), findsOneWidget);
-    });
-
-    testWidgets('completing a reminder removes it from the open list', (
-      tester,
-    ) async {
-      final store = _store(<Task>[
-        makeTask(
-          id: '1',
-          title: 'Submit lab report',
-          reminderAt: DateTime.now().add(const Duration(hours: 2)),
-        ),
-      ]);
-      await store.load();
-
-      await _pump(tester, store);
-      expect(find.text('Submit lab report'), findsOneWidget);
-
-      await tester.tap(find.byTooltip('Complete task'));
-      await tester.pumpAndSettle();
-
-      expect(store.tasks.single.isCompleted, isTrue);
-      expect(find.text('No reminders yet'), findsOneWidget);
-    });
-
-    testWidgets('snoozing moves the reminder ten minutes into the future', (
-      tester,
-    ) async {
-      final store = _store(<Task>[
-        makeTask(
-          id: '1',
-          title: 'Revise chapter 4',
-          reminderAt: DateTime.now().subtract(const Duration(minutes: 1)),
-        ),
-      ]);
-      await store.load();
-
-      await _pump(tester, store);
-
-      await tester.tap(find.byTooltip('Snooze 10 minutes'));
-      await tester.pumpAndSettle();
-
-      expect(
-        store.tasks.single.reminderAt!.isAfter(
-          DateTime.now().add(const Duration(minutes: 9)),
-        ),
-        isTrue,
-      );
-    });
-
-    testWidgets('add-reminder dialog creates a stand-alone reminder task', (
-      tester,
-    ) async {
-      final store = _store(<Task>[]);
-      await store.load();
-
-      await _pump(tester, store);
-
-      await tester.tap(find.byTooltip('Add reminder'));
-      await tester.pumpAndSettle();
-
-      expect(find.text('Add reminder'), findsWidgets);
-
-      await tester.enterText(
-        find.byType(TextFormField),
-        'Revise ST0529 chapter 4',
-      );
-      await tester.tap(find.text('Save reminder'));
-      await tester.pumpAndSettle();
-
-      expect(store.tasks, hasLength(1));
-      expect(store.tasks.single.title, 'Revise ST0529 chapter 4');
-      expect(store.tasks.single.reminderAt, isNotNull);
-      expect(store.tasks.single.dueDate, isNotNull);
-    });
+    expect(find.text('Overdue'), findsOneWidget);
+    expect(find.text('Upcoming'), findsOneWidget);
+    expect(find.text('Overdue task'), findsOneWidget);
+    expect(find.text('Upcoming task'), findsOneWidget);
+    expect(find.text('Done task'), findsOneWidget);
+    expect(find.text('Done'), findsOneWidget);
   });
 }

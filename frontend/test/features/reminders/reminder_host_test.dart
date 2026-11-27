@@ -66,7 +66,7 @@ void main() {
     expect(find.text('Reminders'), findsNothing);
   });
 
-  testWidgets('ReminderHost presents a due reminder as a banner', (
+  testWidgets('ReminderHost leaves due reminders to the header indicator', (
     tester,
   ) async {
     final store = _store(<Task>[
@@ -82,24 +82,25 @@ void main() {
       MaterialApp(
         home: ReminderHost(
           store: store,
-          child: const Scaffold(body: SizedBox.expand()),
+          child: Scaffold(body: ReminderSection(store: store)),
         ),
       ),
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Reminder: Hand in assignment'), findsOneWidget);
-    expect(find.text('Snooze 10 min'), findsOneWidget);
-    expect(find.text('Mark done'), findsOneWidget);
+    // The redesign replaces stacked banners with one shell-header bell, so
+    // the host must not add its own banner on top of the page content.
+    expect(find.text('Reminder: Hand in assignment'), findsNothing);
+    expect(store.dueReminders(), hasLength(1));
 
-    await tester.tap(find.text('Mark done'));
+    await tester.tap(find.byTooltip('Mark done'));
     await tester.pumpAndSettle();
 
     expect(store.tasks.single.isCompleted, isTrue);
-    expect(find.text('Reminder: Hand in assignment'), findsNothing);
+    expect(store.dueReminders(), isEmpty);
   });
 
-  testWidgets('ReminderHost does not repeat a dismissed reminder', (
+  testWidgets('ReminderHost does not repeat a handled reminder', (
     tester,
   ) async {
     final store = _store(<Task>[
@@ -115,16 +116,20 @@ void main() {
       MaterialApp(
         home: ReminderHost(
           store: store,
-          child: const Scaffold(body: SizedBox.expand()),
+          child: Scaffold(body: ReminderSection(store: store)),
         ),
       ),
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Dismiss'));
+    await tester.tap(find.byTooltip('Mark done'));
     await tester.pumpAndSettle();
+    expect(store.dueReminders(), isEmpty);
 
-    await tester.pump(const Duration(seconds: 31));
+    // Several reminder polls later the handled reminder is still gone.
+    await tester.pump(ReminderHost.pollInterval * 2);
+    await tester.pumpAndSettle();
     expect(find.text('Reminder: One-off reminder'), findsNothing);
+    expect(store.dueReminders(), isEmpty);
   });
 }

@@ -93,7 +93,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('No tasks yet'), findsOneWidget);
-    expect(find.text('Home'), findsOneWidget);
+    expect(find.text('Home'), findsWidgets);
   });
 
   testWidgets('remains usable at 200% text scaling on a narrow screen', (

@@ -174,19 +174,16 @@ class AuthShell extends StatelessWidget {
                 icon: const Icon(Icons.arrow_back_rounded),
               )
             : null,
-        // Large system text can push the title past the bar; clamp it so the
-        // bar keeps a single, legible centred line.
-        title: MediaQuery.withClampedTextScaling(
-          maxScaleFactor: 1.3,
-          child: Text(
-            title,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: theme.textTheme.titleLarge?.copyWith(
-              color: AppColors.white,
-              fontWeight: FontWeight.w600,
-              fontSize: 20,
-            ),
+        // Respect the user's system text scale. Ellipsis keeps the title from
+        // pushing the back button out of the bar at very large scales.
+        title: Text(
+          title,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: theme.textTheme.titleLarge?.copyWith(
+            color: AppColors.white,
+            fontWeight: FontWeight.w600,
+            fontSize: 20,
           ),
         ),
       ),

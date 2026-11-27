@@ -71,44 +71,8 @@ class _ReminderHostState extends State<ReminderHost> {
       '${task.id}:${task.reminderAt?.toUtc().toIso8601String()}';
 
   void _show(ScaffoldMessengerState messenger, Task task) {
-    final theme = Theme.of(context);
-    messenger.hideCurrentMaterialBanner();
-    messenger.showMaterialBanner(
-      MaterialBanner(
-        leading: Icon(
-          Icons.notifications_active_outlined,
-          color: theme.colorScheme.primary,
-        ),
-        content: Text(
-          'Reminder: ${task.title}',
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-          style: theme.textTheme.bodyMedium?.copyWith(
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () {
-              messenger.hideCurrentMaterialBanner();
-              widget.store.snoozeReminder(task.id);
-            },
-            child: const Text('Snooze 10 min'),
-          ),
-          TextButton(
-            onPressed: () {
-              messenger.hideCurrentMaterialBanner();
-              widget.store.toggleCompletion(task.id);
-            },
-            child: const Text('Mark done'),
-          ),
-          TextButton(
-            onPressed: messenger.hideCurrentMaterialBanner,
-            child: const Text('Dismiss'),
-          ),
-        ],
-      ),
-    );
+    // Reminders are surfaced via the compact shell header bell to avoid
+    // stacked top banners. Keep the presented key so we don't re-fire.
   }
 
   @override
@@ -130,10 +94,6 @@ class ReminderSection extends StatelessWidget {
 
   final TaskStore store;
   final ValueChanged<Task>? onOpenTask;
-
-  /// Optional callback for the header's "View all" action. When null the
-  /// action is hidden, keeping the section usable in contexts without a
-  /// navigator (for example widget tests).
   final VoidCallback? onViewAll;
   final int maxItems;
 
@@ -180,14 +140,7 @@ class ReminderSection extends StatelessWidget {
               ),
               if (onViewAll != null) ...[
                 const SizedBox(width: AppSpacing.sm),
-                TextButton(
-                  onPressed: onViewAll,
-                  style: TextButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                    minimumSize: const Size(0, AppSizes.touchTarget),
-                  ),
-                  child: const Text('View all'),
-                ),
+                TextButton(onPressed: onViewAll, child: const Text('View all')),
               ],
             ],
           ),

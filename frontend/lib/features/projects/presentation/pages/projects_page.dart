@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
-import '../../../../core/widgets/app_app_bar.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_dialog.dart';
 import '../../../../core/widgets/app_empty_state.dart';
@@ -10,7 +9,6 @@ import '../../../../core/widgets/app_error_state.dart';
 import '../../../../core/widgets/app_loading.dart';
 import '../../../../core/widgets/app_snackbar.dart';
 import '../../../../core/widgets/app_status_badge.dart';
-import '../../../../core/widgets/app_text_field.dart';
 import '../../../../core/widgets/responsive_page_layout.dart';
 
 import 'package:frontend/features/home/data/api_task_repository.dart';
@@ -38,6 +36,7 @@ class _ProjectsPageState extends State<ProjectsPage> {
   late final TaskStore _store;
   late final bool _ownsStore;
   late final ProjectController _controller;
+  String _view = 'table';
 
   @override
   void initState() {
@@ -192,28 +191,6 @@ class _ProjectsPageState extends State<ProjectsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AuxiliaAppBar(
-        title: 'Projects',
-        subtitle: 'Group work into clear, finishable outcomes',
-        actions: <Widget>[
-          IconButton(
-            tooltip: 'New project',
-            onPressed: _createProject,
-            icon: const Icon(Icons.add_box_outlined),
-          ),
-          IconButton(
-            tooltip: 'Refresh projects',
-            onPressed: _controller.isLoading ? null : _controller.retry,
-            icon: const Icon(Icons.refresh_rounded),
-          ),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        heroTag: 'projects-new-project-fab',
-        onPressed: _createProject,
-        icon: const Icon(Icons.add_rounded),
-        label: const Text('New project'),
-      ),
       body: SafeArea(
         bottom: false,
         child: Center(
@@ -230,10 +207,13 @@ class _ProjectsPageState extends State<ProjectsPage> {
                   AppSpacing.xxl,
                 ),
                 children: <Widget>[
+                  _buildProjectViewSwitcher(context),
+                  const SizedBox(height: 12),
+                  _buildProjectToolbar(context),
+                  const SizedBox(height: 16),
                   if (_controller.hasLoaded) _summary(context),
                   if (_controller.hasLoaded)
                     const SizedBox(height: AppSpacing.lg),
-                  _toolbar(context),
                   if (_controller.error != null) ...[
                     const SizedBox(height: AppSpacing.md),
                     AppErrorBanner(
@@ -268,6 +248,121 @@ class _ProjectsPageState extends State<ProjectsPage> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildProjectViewSwitcher(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final isDark = scheme.brightness == Brightness.dark;
+    Widget chip(String id, String label, IconData icon) {
+      final sel = _view == id;
+      return ChoiceChip(
+        showCheckmark: false,
+        avatar: Icon(
+          icon,
+          size: 16,
+          color: sel ? scheme.primary : scheme.onSurfaceVariant,
+        ),
+        label: Text(label),
+        selected: sel,
+        onSelected: (_) => setState(() => _view = id),
+        selectedColor: scheme.primary.withValues(alpha: 0.12),
+        side: BorderSide(
+          color: sel
+              ? scheme.primary.withValues(alpha: 0.4)
+              : (isDark
+                    ? Colors.white.withValues(alpha: 0.08)
+                    : scheme.outlineVariant),
+        ),
+        labelStyle: TextStyle(
+          fontWeight: sel ? FontWeight.w600 : FontWeight.w500,
+          color: sel ? scheme.primary : scheme.onSurfaceVariant,
+        ),
+        backgroundColor: isDark ? const Color(0xFF1E293B) : scheme.surface,
+      );
+    }
+
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        chip('table', 'Main Table', Icons.table_rows_rounded),
+        chip('board', 'Board', Icons.view_kanban_outlined),
+        chip('calendar', 'Calendar', Icons.calendar_month_outlined),
+      ],
+    );
+  }
+
+  Widget _buildProjectToolbar(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final isDark = scheme.brightness == Brightness.dark;
+    final border = isDark
+        ? Colors.white.withValues(alpha: 0.08)
+        : scheme.outlineVariant;
+    OutlinedButton ghost(IconData icon, String label, VoidCallback onTap) =>
+        OutlinedButton.icon(
+          onPressed: onTap,
+          icon: Icon(icon, size: 16),
+          label: Text(label),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: scheme.onSurfaceVariant,
+            side: BorderSide(color: border),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+        );
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        FilledButton.icon(
+          onPressed: _createProject,
+          icon: const Icon(Icons.add_rounded, size: 18),
+          label: const Text('New project'),
+          style: FilledButton.styleFrom(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+        ),
+        SizedBox(
+          width: 220,
+          height: 40,
+          child: TextField(
+            controller: _search,
+            onChanged: (v) {
+              _controller.setQuery(v);
+              setState(() {});
+            },
+            decoration: InputDecoration(
+              hintText: 'Search',
+              prefixIcon: const Icon(Icons.search_rounded, size: 18),
+              isDense: true,
+              filled: true,
+              fillColor: isDark ? const Color(0xFF1E293B) : scheme.surface,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 10,
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide(color: border),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide(color: border),
+              ),
+            ),
+          ),
+        ),
+        ghost(Icons.filter_list_rounded, 'Filter', () {}),
+        ghost(Icons.swap_vert_rounded, 'Sort', () {}),
+        ghost(Icons.layers_outlined, 'Group by', () {}),
+      ],
     );
   }
 
@@ -364,54 +459,6 @@ class _ProjectsPageState extends State<ProjectsPage> {
     );
   }
 
-  Widget _toolbar(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: <Widget>[
-        AppTextField(
-          controller: _search,
-          useFormField: false,
-          hintText: 'Search projects',
-          prefixIcon: Icons.search_rounded,
-          textInputAction: TextInputAction.search,
-          onChanged: _controller.setQuery,
-          suffixIcon: _controller.query.isEmpty
-              ? null
-              : IconButton(
-                  tooltip: 'Clear project search',
-                  onPressed: () {
-                    _search.clear();
-                    _controller.setQuery('');
-                  },
-                  icon: const Icon(Icons.clear_rounded),
-                ),
-        ),
-        const SizedBox(height: AppSpacing.md),
-        Wrap(
-          spacing: AppSpacing.sm,
-          runSpacing: AppSpacing.sm,
-          children: <Widget>[
-            _ProjectFilterChip(
-              label: 'Active (${_controller.activeCount})',
-              selected: _controller.filter == ProjectFilter.active,
-              onTap: () => _controller.setFilter(ProjectFilter.active),
-            ),
-            _ProjectFilterChip(
-              label: 'Completed (${_controller.completedCount})',
-              selected: _controller.filter == ProjectFilter.completed,
-              onTap: () => _controller.setFilter(ProjectFilter.completed),
-            ),
-            _ProjectFilterChip(
-              label: 'Archived (${_controller.archivedCount})',
-              selected: _controller.filter == ProjectFilter.archived,
-              onTap: () => _controller.setFilter(ProjectFilter.archived),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
   Widget _emptyState(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.all(AppSpacing.lg),
@@ -451,37 +498,6 @@ class _ProjectsPageState extends State<ProjectsPage> {
           },
         ),
       ),
-    );
-  }
-}
-
-class _ProjectFilterChip extends StatelessWidget {
-  const _ProjectFilterChip({
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
-
-    return ChoiceChip(
-      label: Text(label),
-      selected: selected,
-      showCheckmark: false,
-      onSelected: (_) => onTap(),
-      selectedColor: scheme.primary,
-      labelStyle: theme.textTheme.labelMedium?.copyWith(
-        color: selected ? scheme.onPrimary : scheme.onSurfaceVariant,
-        fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
-      ),
-      side: BorderSide(color: selected ? scheme.primary : scheme.outline),
     );
   }
 }
