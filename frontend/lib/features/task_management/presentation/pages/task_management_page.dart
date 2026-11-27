@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/design_system/ds_tokens.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/utils/formatters.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_dialog.dart';
 import '../../../../core/widgets/app_empty_state.dart';
@@ -39,6 +40,8 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
   late final TaskManagementRepository _repository;
   String _view = 'table';
   final Set<String> _collapsed = <String>{};
+  String _sortBy = 'dueDate';
+  bool _grouped = true;
 
   @override
   void initState() {
@@ -345,8 +348,18 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
           'Filter',
           () => _showFilterSheet(context),
         ),
-        _ghostBtn(context, Icons.swap_vert_rounded, 'Sort', () {}),
-        _ghostBtn(context, Icons.layers_outlined, 'Group by', () {}),
+        _ghostBtn(
+          context,
+          Icons.swap_vert_rounded,
+          'Sort',
+          () => _showSortMenu(context),
+        ),
+        _ghostBtn(
+          context,
+          Icons.layers_outlined,
+          'Group by',
+          () => setState(() => _grouped = !_grouped),
+        ),
         if (_store.query.isNotEmpty ||
             _store.filter != TaskFilter.all ||
             _store.tagFilter != null)
@@ -442,28 +455,345 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
   }
 
   Widget _buildAltViewPlaceholder(BuildContext context) {
+    return _view == 'board'
+        ? _buildBoardView(context)
+        : _buildCalendarView(context);
+  }
+
+  List<Task> _sortedVisibleTasks() {
+    return _store.visibleTasks.toList()..sort((a, b) {
+      switch (_sortBy) {
+        case 'title':
+          return a.title.compareTo(b.title);
+        case 'priority':
+          return a.priority.index.compareTo(b.priority.index);
+        default:
+          final ad = a.dueDate;
+          final bd = b.dueDate;
+          if (ad == null && bd == null) return 0;
+          if (ad == null) return 1;
+          if (bd == null) return -1;
+          return ad.compareTo(bd);
+      }
+    });
+  }
+
+  Widget _buildBoardView(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final tasks = _sortedVisibleTasks();
+    final todo = tasks.where((t) => !t.isCompleted && !t.isOverdue).toList();
+    final overdue = tasks.where((t) => !t.isCompleted && t.isOverdue).toList();
+    final done = tasks.where((t) => t.isCompleted).toList();
+
+    Widget column(String title, Color accent, List<Task> items) {
+      return Expanded(
+        child: Container(
+          margin: const EdgeInsets.symmetric(horizontal: 4),
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: scheme.surface,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: scheme.outlineVariant),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              Row(
+                children: <Widget>[
+                  Expanded(
+                    child: Text(
+                      title,
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: accent,
+                      ),
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: accent.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Text(
+                      '${items.length}',
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: accent,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              if (items.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Text(
+                    'Nothing here',
+                    style: Theme.of(context).textTheme.bodySmall
+                        ?.copyWith(color: scheme.onSurfaceVariant),
+                  ),
+                )
+              else
+                for (final task in items) _boardCard(context, task),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        column('To do', scheme.primary, todo),
+        column('Overdue', scheme.error, overdue),
+        column('Done', scheme.tertiary, done),
+      ],
+    );
+  }
+
+  Widget _boardCard(BuildContext context, Task task) {
+    final scheme = Theme.of(context).colorScheme;
+    return Card(
+      margin: const EdgeInsets.only(bottom: 8),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: () => _edit(task),
+        child: Padding(
+          padding: const EdgeInsets.all(10),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Row(
+                children: <Widget>[
+                  Checkbox(
+                    value: task.isCompleted,
+                    onChanged: (_) => _toggle(task),
+                    visualDensity: VisualDensity.compact,
+                  ),
+                  Expanded(
+                    child: Text(
+                      task.title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        decoration: task.isCompleted
+                            ? TextDecoration.lineThrough
+                            : null,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Wrap(
+                spacing: 6,
+                runSpacing: 4,
+                children: <Widget>[
+                  _miniBadge(
+                    context,
+                    task.priority.label,
+                    scheme.onSurfaceVariant,
+                  ),
+                  if (task.dueDate != null)
+                    _miniBadge(
+                      context,
+                      formatTaskDate(task.dueDate!),
+                      task.isOverdue ? scheme.error : scheme.onSurfaceVariant,
+                    ),
+                ],
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: <Widget>[
+                  IconButton(
+                    tooltip: 'Break into steps',
+                    icon: const Icon(Icons.account_tree_outlined, size: 18),
+                    onPressed: () => _breakDown(task),
+                  ),
+                  IconButton(
+                    tooltip: 'Edit',
+                    icon: const Icon(Icons.edit_outlined, size: 18),
+                    onPressed: () => _edit(task),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _miniBadge(BuildContext context, String label, Color color) {
     return Container(
-      padding: const EdgeInsets.all(32),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        label,
+        style: Theme.of(context).textTheme.labelSmall
+            ?.copyWith(color: color, fontWeight: FontWeight.w600),
+      ),
+    );
+  }
+
+  Widget _buildCalendarView(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final tasks = _sortedVisibleTasks();
+    final undated = tasks.where((t) => t.dueDate == null).toList();
+    final dated = tasks.where((t) => t.dueDate != null).toList();
+
+    final groups = <String, List<Task>>{};
+    for (final task in dated) {
+      final d = task.dueDate!.toLocal();
+      final key =
+          '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+      (groups[key] ??= <Task>[]).add(task);
+    }
+    final keys = groups.keys.toList()..sort();
+
+    return Container(
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: scheme.surface,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: scheme.outlineVariant),
       ),
-      child: Center(
-        child: Text(
-          _view == 'board'
-              ? 'Board view coming soon'
-              : 'Calendar view coming soon',
-          style: Theme.of(context).textTheme.bodyMedium
-              ?.copyWith(color: scheme.onSurfaceVariant),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          if (tasks.isEmpty)
+            Padding(
+              padding: const EdgeInsets.all(24),
+              child: Text(
+                'No tasks to show on the calendar.',
+                style: Theme.of(context).textTheme.bodySmall
+                    ?.copyWith(color: scheme.onSurfaceVariant),
+              ),
+            ),
+          for (final key in keys) ...[
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Text(
+                key,
+                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: scheme.primary,
+                ),
+              ),
+            ),
+            for (final task in groups[key]!) _calendarTile(context, task),
+          ],
+          if (undated.isNotEmpty) ...[
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Text(
+                'No due date',
+                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: scheme.onSurfaceVariant,
+                ),
+              ),
+            ),
+            for (final task in undated) _calendarTile(context, task),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _calendarTile(BuildContext context, Task task) {
+    final scheme = Theme.of(context).colorScheme;
+    return Card(
+      margin: const EdgeInsets.only(bottom: 6),
+      child: ListTile(
+        leading: Checkbox(
+          value: task.isCompleted,
+          onChanged: (_) => _toggle(task),
+        ),
+        title: Text(
+          task.title,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            decoration: task.isCompleted ? TextDecoration.lineThrough : null,
+          ),
+        ),
+        subtitle: task.dueDate == null
+            ? null
+            : Text(
+                formatTaskDate(task.dueDate!),
+                style: TextStyle(color: task.isOverdue ? scheme.error : null),
+              ),
+        trailing: IconButton(
+          tooltip: 'Edit',
+          icon: const Icon(Icons.edit_outlined),
+          onPressed: () => _edit(task),
+        ),
+        onTap: () => _edit(task),
+      ),
+    );
+  }
+
+  void _showSortMenu(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            ListTile(
+              title: const Text('Due date'),
+              onTap: () {
+                setState(() => _sortBy = 'dueDate');
+                Navigator.pop(ctx);
+              },
+            ),
+            ListTile(
+              title: const Text('Title'),
+              onTap: () {
+                setState(() => _sortBy = 'title');
+                Navigator.pop(ctx);
+              },
+            ),
+            ListTile(
+              title: const Text('Priority'),
+              onTap: () {
+                setState(() => _sortBy = 'priority');
+                Navigator.pop(ctx);
+              },
+            ),
+          ],
         ),
       ),
     );
   }
 
   List<Widget> _buildGroupedTasks(BuildContext context) {
-    final tasks = _store.visibleTasks.toList();
+    final tasks = _store.visibleTasks.toList()
+      ..sort((a, b) {
+        switch (_sortBy) {
+          case 'title':
+            return a.title.compareTo(b.title);
+          case 'priority':
+            return a.priority.index.compareTo(b.priority.index);
+          default:
+            final ad = a.dueDate;
+            final bd = b.dueDate;
+            if (ad == null && bd == null) return 0;
+            if (ad == null) return 1;
+            if (bd == null) return -1;
+            return ad.compareTo(bd);
+        }
+      });
     if (_store.tasks.isEmpty) {
       return [
         Container(
@@ -546,6 +876,9 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
       'Completed': Ds.accentGreen,
     };
 
+    if (!_grouped) {
+      return [_buildTaskGroup(context, 'All tasks', Colors.blue, tasks)];
+    }
     final out = <Widget>[];
     groups.forEach((name, items) {
       if (items.isEmpty) return;

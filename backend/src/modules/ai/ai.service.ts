@@ -359,6 +359,7 @@ const providerError = (
 export const createChatReply = async (
   message: string,
   context: ConversationTurn[] = [],
+  extraSystemNote?: string,
 ): Promise<ChatReply> => {
   const provider = getAiProvider();
   const model = getAiModel();
