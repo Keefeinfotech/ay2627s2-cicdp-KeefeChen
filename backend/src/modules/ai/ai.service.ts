@@ -412,6 +412,9 @@ export const createChatReply = async (
         max_tokens: getAiMaxTokens(),
         messages: [
           { role: "system", content: SYSTEM_PROMPT },
+          ...(extraSystemNote
+            ? [{ role: "system", content: extraSystemNote }]
+            : []),
           ...context.map((turn) => ({
             role: turn.role,
             content: turn.content,

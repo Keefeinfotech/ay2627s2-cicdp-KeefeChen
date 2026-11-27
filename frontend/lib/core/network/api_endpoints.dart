@@ -10,6 +10,9 @@ abstract final class ApiEndpoints {
   static const String authMe = '/api/auth/me';
   static const String aiChat = '/api/ai/chat';
   static const String aiDraft = '/api/ai/draft';
+  static const String assistantAct = '/api/assistant/act';
+  static const String assistantConfirmAction = '/api/assistant/confirm-action';
+  static const String assistantCancelAction = '/api/assistant/cancel-action';
   static const String tasks = '/api/tasks';
   static String task(String id) => '/api/tasks/$id';
   static const String groups = '/api/groups';

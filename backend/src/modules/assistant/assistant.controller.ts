@@ -6,6 +6,7 @@
 import type { NextFunction, Request, Response } from "express";
 
 import { assistantService } from "./assistant.service.js";
+import { assistantActionsService } from "./assistant-actions.service.js";
 
 function requireUserId(req: Request, res: Response): string | null {
   if (!req.userId) {
@@ -110,6 +111,61 @@ export const assistantController = {
         message: "Draft cancelled.",
         data,
       });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  /** POST /api/assistant/act - full natural-language action-execution pipeline. */
+  async act(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const userId = requireUserId(req, res);
+      if (!userId) return;
+
+      const data = await assistantActionsService.act(userId, req.body);
+      // 200 even for `failed`/`clarification` outcomes: the structured
+      // `status` + `executed` flags carry truth; only auth/validation throw.
+      res.status(200).json(data);
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  /** POST /api/assistant/confirm-action - confirm a pending action. */
+  async confirmAction(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
+    try {
+      const userId = requireUserId(req, res);
+      if (!userId) return;
+
+      const data = await assistantActionsService.confirmAction(
+        userId,
+        (req.body as { pendingActionId: string }).pendingActionId,
+      );
+      res.status(200).json(data);
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  /** POST /api/assistant/cancel-action - cancel a pending action. */
+  async cancelAction(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
+    try {
+      const userId = requireUserId(req, res);
+      if (!userId) return;
+
+      const data = await assistantActionsService.cancelAction(
+        userId,
+        (req.body as { pendingActionId: string }).pendingActionId,
+      );
+      res.status(200).json(data);
     } catch (error) {
       next(error);
     }

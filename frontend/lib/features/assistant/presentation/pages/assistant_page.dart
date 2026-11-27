@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:speech_to_text/speech_to_text.dart';
@@ -79,7 +80,7 @@ class _AssistantPageState extends State<AssistantPage> {
   final ParseQuickAdd _parser = const ParseQuickAdd();
   bool _typing = false;
   bool _awaitingTaskDescription = false;
-  bool _awaitingDraftClarification = false;
+  // (draft clarification is now handled server-side by /api/assistant/act)
   bool _listening = false;
   String _voicePrefix = '';
 
@@ -141,7 +142,7 @@ class _AssistantPageState extends State<AssistantPage> {
     try {
       await Future<void>.delayed(const Duration(milliseconds: 350));
       if (!mounted) return;
-      await _respondTo(text);
+      await _respondTo(text, _newRequestId());
     } finally {
       if (mounted) {
         setState(() => _typing = false);
@@ -213,14 +214,13 @@ class _AssistantPageState extends State<AssistantPage> {
     }
   }
 
-  Future<void> _respondTo(String text) async {
+  Future<void> _respondTo(String text, [String? requestId]) async {
     final normalized = text.trim().toLowerCase().replaceAll(
       RegExp(r'[.!?]+$'),
       '',
     );
 
     if (normalized == 'create a task' || normalized == 'create task') {
-      _awaitingDraftClarification = false;
       _awaitingTaskDescription = true;
       _addAssistantMessage(
         'Tell me what the task is. Include a due date, priority or project '
@@ -245,12 +245,32 @@ class _AssistantPageState extends State<AssistantPage> {
       return;
     }
 
-    if (_awaitingTaskDescription) {
+    if (normalized == 'break down a project') {
       _awaitingTaskDescription = false;
-      if (widget.session != null) {
-        await _prepareTaskDraft(text);
-        return;
-      }
+      await _breakDownProject();
+      return;
+    }
+    if (normalized == 'summarise my progress' ||
+        normalized == 'summarize my progress') {
+      _addAssistantMessage(_progressSummary());
+      return;
+    }
+
+    final session = widget.session;
+    final awaiting = _awaitingTaskDescription;
+    if (awaiting) _awaitingTaskDescription = false;
+
+    // ---- Signed-in mode: genuine backend execution pipeline. ----
+    // Natural language -> intent -> validation -> ownership check ->
+    // task/reminder service -> MongoDB -> structured result -> UI refresh.
+    if (session != null) {
+      final message = awaiting ? 'create a task ${text.trim()}' : text;
+      await _handleWithBackend(message, session);
+      return;
+    }
+
+    // ---- Local (signed-out) mode: on-device actions + conversation hints. ----
+    if (awaiting) {
       _showAction(
         _AssistantAction(kind: _ActionKind.create, preview: _parse(text)),
       );
@@ -259,17 +279,7 @@ class _AssistantPageState extends State<AssistantPage> {
 
     final action = _detectAction(text);
     if (action != null) {
-      if (action.kind == _ActionKind.create && widget.session != null) {
-        await _prepareTaskDraft(text);
-        return;
-      }
       _showAction(action);
-      return;
-    }
-
-    if (_awaitingDraftClarification && widget.session != null) {
-      _awaitingDraftClarification = false;
-      await _prepareTaskDraft(text);
       return;
     }
 
@@ -277,43 +287,40 @@ class _AssistantPageState extends State<AssistantPage> {
       _addAssistantMessage(_focusAdvice());
       return;
     }
-    if (normalized == 'summarise my progress' ||
-        normalized == 'summarize my progress') {
-      _addAssistantMessage(_progressSummary());
-      return;
-    }
-    if (normalized == 'break down a project') {
-      await _breakDownProject();
-      return;
-    }
-    if (normalized == 'plan my week' && widget.session == null) {
+    if (normalized == 'plan my week') {
       _addAssistantMessage(_weekPlan());
       return;
     }
 
-    final session = widget.session;
-    if (session == null) {
-      _addAssistantMessage(
-        'Sign in to chat with the AI assistant. Local task actions still work: '
-        'try "Create a task to revise calculus tomorrow".',
-      );
-      return;
-    }
+    _addAssistantMessage(
+      'Sign in to chat with the AI assistant. Local task actions still work: '
+      'try "Create a task to revise calculus tomorrow".',
+    );
+  }
 
+  /// Sends the message to the backend action pipeline and renders a truthful,
+  /// structured outcome. Duplicate submissions are prevented in the UI and
+  /// with a per-message idempotency key.
+  Future<void> _handleWithBackend(String text, Session session, [String? requestId]) async {
+    final message = text.trim();
+    if (message.isEmpty) return;
     try {
-      final reply = await _service.sendMessage(
+      final result = await _service.act(
         token: session.token,
-        message: text,
+        message: message,
         context: _conversationContext(),
+        currentDate: DateTime.now().toIso8601String().substring(0, 10),
+        utcOffsetMinutes: DateTime.now().timeZoneOffset.inMinutes,
+        clientRequestId: requestId ?? _newRequestId(),
       );
       if (!mounted) return;
-      _addAssistantMessage(reply);
+      await _applyActResult(result, session);
     } on ApiException catch (err) {
       if (!mounted) return;
       _addAssistantMessage(
         err.isUnauthorized
             ? 'Your session has expired. Please sign in again.'
-            : err.message,
+            : '${err.message} Nothing was changed.',
         isError: true,
       );
     } catch (_) {
@@ -326,59 +333,121 @@ class _AssistantPageState extends State<AssistantPage> {
     }
   }
 
-  Future<void> _prepareTaskDraft(String message) async {
+  /// Renders a backend result. Conversational replies stay plain; executed
+  /// actions are shown distinctly with task details; confirmations are gated.
+  Future<void> _applyActResult(
+    AssistantActResult result,
+    Session session,
+  ) async {
+    _addAssistantMessage(result.reply, isError: result.isFailure);
+
+    // Pending destructive action -> explicit review + confirmation card.
+    if (result.needsConfirmation && result.confirmation != null) {
+      _addPendingConfirmation(result.confirmation!, session);
+    }
+
+    // Executed application action -> distinct card with real persisted data.
+    if (result.isAction && result.executed) {
+      setState(() {
+        _entries.add(_ExecutedEntry(result));
+      });
+      _scrollToBottom();
+      // Reflect immediately in task screens / dashboard; no manual refresh.
+      await _refreshTasks();
+    } else if (result.refresh.tasks || result.refresh.reminders) {
+      await _refreshTasks();
+    }
+  }
+
+  void _addPendingConfirmation(
+    AssistantPendingConfirmation confirmation,
+    Session session,
+  ) {
+    setState(() {
+      _entries.add(_PendingConfirmationEntry(confirmation, session));
+    });
+    _scrollToBottom();
+  }
+
+  /// Confirms a backend pending action; the backend re-validates + executes
+  /// exactly once. Guards against double-tap duplicate submission.
+  Future<void> _confirmBackendPending(_PendingConfirmationEntry entry) async {
+    if (entry.status != _PendingStatus.pending) return;
+    setState(() => entry.status = _PendingStatus.working);
     final session = widget.session;
-    if (session == null) return;
-    final context = _conversationContext();
+    if (session == null) {
+      setState(() => entry.status = _PendingStatus.pending);
+      return;
+    }
     try {
-      final result = await _service.prepareTaskDraft(
+      final result = await _service.confirmPendingAction(
         token: session.token,
-        message: message,
-        context: context,
+        pendingActionId: entry.confirmation.pendingActionId,
       );
       if (!mounted) return;
-      if (result.draft == null) {
-        _awaitingDraftClarification = result.clarification != null;
-        _addAssistantMessage(result.clarification ?? result.reply);
-        return;
-      }
-      final suggested = result.draft!;
-      final priority = switch (suggested.priority) {
-        'low' => TaskPriority.low,
-        'high' => TaskPriority.high,
-        _ => TaskPriority.medium,
-      };
-      _showAction(
-        _AssistantAction(
-          kind: _ActionKind.create,
-          preview: TaskQuickAddData(
-            title: suggested.title,
-            notes: suggested.description ?? '',
-            priority: priority,
-            priorityExplicit: suggested.priority != null,
-            dueDate: suggested.dueDate,
-            project: suggested.course,
-            dueLabel: suggested.dueDate == null
-                ? 'No due date'
-                : _dueLabel(suggested.dueDate!),
-          ),
-        ),
-      );
-    } on ApiException catch (error) {
+      setState(() {
+        entry.status = result.executed
+            ? _PendingStatus.done
+            : _PendingStatus.failed;
+      });
+      await _applyActResult(result, session);
+    } on ApiException catch (err) {
       if (!mounted) return;
+      setState(() => entry.status = _PendingStatus.failed);
       _addAssistantMessage(
-        error.isUnauthorized
+        err.isUnauthorized
             ? 'Your session has expired. Please sign in again.'
-            : error.message,
+            : '${err.message} Nothing was changed.',
         isError: true,
       );
     } catch (_) {
       if (!mounted) return;
+      setState(() => entry.status = _PendingStatus.failed);
       _addAssistantMessage(
-        'I could not prepare a task draft. Your tasks were not changed. Please try again.',
+        'The confirmed action could not be completed. Your tasks were not changed.',
         isError: true,
       );
     }
+  }
+
+  Future<void> _cancelBackendPending(_PendingConfirmationEntry entry) async {
+    if (entry.status != _PendingStatus.pending) return;
+    final session = widget.session;
+    if (session != null) {
+      try {
+        await _service.cancelPendingAction(
+          token: session.token,
+          pendingActionId: entry.confirmation.pendingActionId,
+        );
+      } catch (_) {
+        /* best-effort; nothing was changed anyway */
+      }
+    }
+    if (!mounted) return;
+    setState(() => entry.status = _PendingStatus.cancelled);
+    _addAssistantMessage('Cancelled. Nothing was changed.');
+  }
+
+  /// Reloads tasks from the backend so screens update without manual refresh.
+  Future<void> _refreshTasks() async {
+    try {
+      await _store.load();
+    } catch (_) {
+      /* store surfaces its own error state */
+    }
+  }
+
+  /// RFC4122 v4 UUID for per-submission idempotency keys.
+  String _newRequestId() {
+    final rnd = math.Random.secure();
+    final bytes = List<int>.generate(16, (_) => rnd.nextInt(256));
+    bytes[6] = (bytes[6] & 0x0f) | 0x40;
+    bytes[8] = (bytes[8] & 0x3f) | 0x80;
+    String hex(int value) => value.toRadixString(16).padLeft(2, '0');
+    final hexed = bytes.map(hex).join();
+    return '${hexed.substring(0, 8)}-${hexed.substring(8, 12)}-'
+        '${hexed.substring(12, 16)}-${hexed.substring(16, 20)}-'
+        '${hexed.substring(20)}';
   }
 
   List<Map<String, String>> _conversationContext() {
@@ -586,9 +655,6 @@ class _AssistantPageState extends State<AssistantPage> {
     if (value.isEmpty) return value;
     return '${value[0].toUpperCase()}${value.substring(1)}';
   }
-
-  /// Formats a due date into a short display label for task previews.
-  String _dueLabel(DateTime dueDate) => formatDateOnly(dueDate);
 
   void _showAction(_AssistantAction action) {
     final String message = switch (action.kind) {
@@ -941,6 +1007,16 @@ class _AssistantPageState extends State<AssistantPage> {
                                 onEdit: () => _editAction(entry.action),
                                 onConfirm: () => _confirmAction(entry.action),
                                 onCancel: () => _cancelAction(entry.action),
+                              );
+                            }
+                            if (entry is _ExecutedEntry) {
+                              return _ExecutedActionCard(result: entry.result);
+                            }
+                            if (entry is _PendingConfirmationEntry) {
+                              return _PendingConfirmationCard(
+                                entry: entry,
+                                onConfirm: () => _confirmBackendPending(entry),
+                                onCancel: () => _cancelBackendPending(entry),
                               );
                             }
                             return const SizedBox.shrink();
@@ -1450,6 +1526,318 @@ class _ActionCard extends StatelessWidget {
   }
 }
 
+/// Compact card shown for actions the backend actually executed and
+/// persisted, clearly distinguished from ordinary conversation. Displays the
+/// real task details returned by the server.
+class _ExecutedActionCard extends StatelessWidget {
+  const _ExecutedActionCard({required this.result});
+
+  final AssistantActResult result;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final task = result.task;
+    final (IconData icon, String label, Color accent) = switch (result.intent) {
+      'create_task' => (
+        Icons.add_task_rounded,
+        'Task created',
+        AppColors.successGreen,
+      ),
+      'update_task' => (Icons.edit_outlined, 'Task updated', scheme.primary),
+      'complete_task' => (
+        Icons.check_circle_outline_rounded,
+        'Task completed',
+        AppColors.successGreen,
+      ),
+      'reopen_task' => (Icons.replay_rounded, 'Task reopened', scheme.primary),
+      'delete_task' => (
+        Icons.delete_outline_rounded,
+        'Task deleted',
+        scheme.error,
+      ),
+      'set_reminder' => (
+        Icons.notifications_outlined,
+        'Reminder set',
+        scheme.primary,
+      ),
+      'cancel_reminder' => (
+        Icons.notifications_off_outlined,
+        'Reminder cancelled',
+        scheme.primary,
+      ),
+      'list_tasks' => (
+        Icons.list_alt_rounded,
+        'Tasks retrieved',
+        scheme.primary,
+      ),
+      _ => (
+        Icons.check_circle_outline_rounded,
+        'Action applied',
+        AppColors.successGreen,
+      ),
+    };
+    final maxWidth = MediaQuery.sizeOf(context).width >= 840
+        ? 620.0
+        : MediaQuery.sizeOf(context).width * 0.85;
+
+    return Padding(
+      padding: const EdgeInsets.only(left: 40, bottom: AppSpacing.lg),
+      child: Container(
+        constraints: BoxConstraints(maxWidth: maxWidth),
+        padding: const EdgeInsets.all(AppSpacing.md),
+        decoration: BoxDecoration(
+          color: scheme.surface,
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          border: Border.all(color: accent.withValues(alpha: 0.4)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                Icon(icon, size: AppSizes.iconSm, color: accent),
+                const SizedBox(width: AppSpacing.xs),
+                Flexible(
+                  child: Text(
+                    label,
+                    style: theme.textTheme.labelMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: accent,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.sm),
+                const StatusBadge(
+                  label: 'Applied',
+                  color: AppColors.successGreen,
+                  icon: Icons.check_rounded,
+                ),
+              ],
+            ),
+            if (task != null) ...[
+              const SizedBox(height: AppSpacing.sm),
+              Text(
+                task.title,
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.xs),
+              Wrap(
+                spacing: AppSpacing.xs,
+                runSpacing: AppSpacing.xs,
+                children: <Widget>[
+                  PriorityBadge(
+                    label: '${_cap(task.priority)} priority',
+                    color: _priorityColor(scheme, task.priority),
+                  ),
+                  StatusBadge(
+                    label: task.dueDate == null
+                        ? 'No due date'
+                        : 'Due ${formatDateOnly(task.dueDate!.toLocal())}',
+                    color: task.dueDate == null
+                        ? scheme.onSurfaceVariant
+                        : scheme.primary,
+                    icon: Icons.event_outlined,
+                  ),
+                  StatusBadge(
+                    label: _cap(task.status.replaceAll('_', ' ')),
+                    color: scheme.onSurfaceVariant,
+                  ),
+                  if (task.reminderAt != null)
+                    StatusBadge(
+                      label:
+                          'Reminder ${formatDateOnly(task.reminderAt!.toLocal())}',
+                      color: scheme.primary,
+                      icon: Icons.notifications_outlined,
+                    ),
+                  if ((task.course ?? '').trim().isNotEmpty)
+                    StatusBadge(
+                      label: task.course!,
+                      color: scheme.onSurfaceVariant,
+                      icon: Icons.workspaces_outline,
+                    ),
+                ],
+              ),
+            ] else if (result.tasks.isNotEmpty) ...[
+              const SizedBox(height: AppSpacing.sm),
+              for (final t in result.tasks.take(5))
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 2),
+                  child: Text('- ${t.title}', style: theme.textTheme.bodySmall),
+                ),
+              if (result.tasks.length > 5)
+                Text(
+                  '...and ${result.tasks.length - 5} more',
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: scheme.onSurfaceVariant,
+                  ),
+                ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  static String _cap(String value) =>
+      value.isEmpty ? value : '${value[0].toUpperCase()}${value.substring(1)}';
+
+  static Color _priorityColor(ColorScheme scheme, String priority) =>
+      switch (priority) {
+        'high' || 'urgent' => scheme.error,
+        'medium' => AppColors.warningAmber,
+        _ => scheme.primary,
+      };
+}
+
+/// Confirmation gate for a pending backend action (e.g. deletion). Nothing is
+/// executed until the user confirms; cancelling changes nothing.
+class _PendingConfirmationCard extends StatelessWidget {
+  const _PendingConfirmationCard({
+    required this.entry,
+    required this.onConfirm,
+    required this.onCancel,
+  });
+
+  final _PendingConfirmationEntry entry;
+  final Future<void> Function() onConfirm;
+  final VoidCallback onCancel;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final pending = entry.status == _PendingStatus.pending;
+    final working = entry.status == _PendingStatus.working;
+    final done = entry.status == _PendingStatus.done;
+    final cancelled = entry.status == _PendingStatus.cancelled;
+    final failed = entry.status == _PendingStatus.failed;
+    final task = entry.confirmation.task;
+    final maxWidth = MediaQuery.sizeOf(context).width >= 840
+        ? 620.0
+        : MediaQuery.sizeOf(context).width * 0.85;
+
+    return Padding(
+      padding: const EdgeInsets.only(left: 40, bottom: AppSpacing.lg),
+      child: Container(
+        constraints: BoxConstraints(maxWidth: maxWidth),
+        padding: const EdgeInsets.all(AppSpacing.md),
+        decoration: BoxDecoration(
+          color: scheme.surface,
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          border: Border.all(color: scheme.error.withValues(alpha: 0.45)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                Icon(
+                  Icons.warning_amber_rounded,
+                  size: AppSizes.iconSm,
+                  color: scheme.error,
+                ),
+                const SizedBox(width: AppSpacing.xs),
+                Flexible(
+                  child: Text(
+                    'Confirmation required',
+                    style: theme.textTheme.labelMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: scheme.error,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.sm),
+                StatusBadge(
+                  label: cancelled
+                      ? 'Cancelled'
+                      : done
+                      ? 'Applied'
+                      : failed
+                      ? 'Failed'
+                      : working
+                      ? 'Working'
+                      : 'Review',
+                  color: cancelled || failed
+                      ? scheme.onSurfaceVariant
+                      : done
+                      ? AppColors.successGreen
+                      : scheme.error,
+                ),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            Text(
+              entry.confirmation.summary,
+              style: theme.textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            if (task != null) ...[
+              const SizedBox(height: 2),
+              Text(
+                'Task: ${task.title}',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: scheme.onSurfaceVariant,
+                ),
+              ),
+            ],
+            const SizedBox(height: AppSpacing.xs),
+            Text(
+              'Nothing has been changed yet. This cannot be undone from this conversation.',
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: scheme.onSurfaceVariant,
+              ),
+            ),
+            if (pending || working) ...[
+              const SizedBox(height: AppSpacing.md),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: <Widget>[
+                  AppButton(
+                    label: 'Cancel',
+                    variant: AppButtonVariant.ghost,
+                    onPressed: working ? null : onCancel,
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  AppButton(
+                    label: 'Confirm',
+                    icon: Icons.check_rounded,
+                    variant: AppButtonVariant.danger,
+                    isLoading: working,
+                    onPressed: working ? null : onConfirm,
+                  ),
+                ],
+              ),
+            ] else ...[
+              const SizedBox(height: AppSpacing.sm),
+              Text(
+                cancelled
+                    ? 'Cancelled. Nothing was changed.'
+                    : done
+                    ? 'This change has been applied.'
+                    : 'The action could not be completed.',
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: cancelled || failed
+                      ? scheme.onSurfaceVariant
+                      : AppColors.successGreen,
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _MessageEntry {
   const _MessageEntry(this.message);
 
@@ -1461,6 +1849,24 @@ class _ActionEntry {
 
   final _AssistantAction action;
 }
+
+/// An application action the backend actually executed + persisted.
+class _ExecutedEntry {
+  const _ExecutedEntry(this.result);
+
+  final AssistantActResult result;
+}
+
+/// A backend pending action awaiting explicit confirmation (e.g. deletion).
+class _PendingConfirmationEntry {
+  _PendingConfirmationEntry(this.confirmation, this.session);
+
+  final AssistantPendingConfirmation confirmation;
+  final Session session;
+  _PendingStatus status = _PendingStatus.pending;
+}
+
+enum _PendingStatus { pending, working, done, failed, cancelled }
 
 class _AssistantAction {
   _AssistantAction({required this.kind, required this.preview, this.task});

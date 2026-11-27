@@ -10,6 +10,7 @@ import { aiRateLimiter } from "../../middleware/rateLimiter.js";
 import { validateRequest } from "../../middleware/validateRequest.js";
 
 import { assistantController } from "./assistant.controller.js";
+import { actSchema, pendingActionSchema } from "./assistant-action.validation.js";
 import {
   cancelSchema,
   clarifySchema,
@@ -58,6 +59,26 @@ router.post(
   "/suggestions",
   validateRequest(suggestionsSchema),
   assistantController.suggestions,
+);
+
+// ---- AI action execution (genuine in-app task/reminder operations) ----
+router.post(
+  "/act",
+  aiRateLimiter,
+  validateRequest(actSchema),
+  assistantController.act,
+);
+router.post(
+  "/confirm-action",
+  aiRateLimiter,
+  validateRequest(pendingActionSchema),
+  assistantController.confirmAction,
+);
+router.post(
+  "/cancel-action",
+  aiRateLimiter,
+  validateRequest(pendingActionSchema),
+  assistantController.cancelAction,
 );
 
 export default router;

@@ -119,8 +119,10 @@ export const normalizeTitle = (value: string): string =>
 // PRIORITY + STATUS VOCABULARY (fixed, not model-generated)
 // ============================================================================
 
+// The app surfaces low/medium/high; "urgent"/"critical"/"asap" map to "high"
+// (matching the app's own quick-add parser) so no unsupported value is stored.
 const PRIORITY_PATTERNS: Array<{ re: RegExp; priority: TaskPriority }> = [
-  { re: /\b(urgent|critical|asap|highest\s+priority)\b/i, priority: "urgent" },
+  { re: /\b(urgent|critical|asap|highest\s+priority)\b/i, priority: "high" },
   { re: /\bhigh\s+priority\b|\bpriority\s+high\b|\bhigh-priority\b/i, priority: "high" },
   { re: /\bmedium\s+priority\b|\bpriority\s+medium\b|\bnormal\s+priority\b/i, priority: "medium" },
   { re: /\blow\s+priority\b|\bpriority\s+low\b|\blow-priority\b/i, priority: "low" },
@@ -137,11 +139,19 @@ export const extractPriority = (text: string): TaskPriority | undefined => {
   );
   if (m) {
     const value = m[1]!.toLowerCase();
+    if (value === "urgent") return "high";
     if ((TASK_PRIORITIES as readonly string[]).includes(value)) {
       return value as TaskPriority;
     }
   }
   return undefined;
+};
+
+const normalizePriority = (value: string): TaskPriority => {
+  const v = value.toLowerCase();
+  if (v === "urgent") return "high"; // app supports low/medium/high
+  if ((TASK_PRIORITIES as readonly string[]).includes(v)) return v as TaskPriority;
+  return "medium";
 };
 
 /** Extracts a task status mention. */
@@ -511,7 +521,9 @@ const UPDATE_RE = new RegExp(
     String.raw`\b(?:change|move|reschedule|set)\s+.+?\s+(?:deadline|due\s+date|priority|title|description|course|project|category)\b`,
     String.raw`\breschedule\b`,
     String.raw`\bmove\s+.+?\s+to\b`,
-    String.raw`\b(?:categori[sz]e|prioriti[sz]e|reorgani[sz]e|reorganise)\b`,
+    String.raw`\b(?:categori[sz]e|prioriti[sz]e|reorgani[sz]e|reorganise|reorganize)\b`,
+    String.raw`\bset\s+(?:my\s+|the\s+)?(?:task\s+)?.+?\s+status\b`,
+    String.raw`\b(?:clear|remove)\s+(?:the\s+)?(?:due\s+date|deadline|due)\b`,
     String.raw`\b(?:tag|label)\s+.+?\s+(?:with|as)\b`,
     String.raw`\badd\s+tag\b`,
   ].join("|"),
@@ -620,17 +632,31 @@ export const parseAssistantIntent = (
   const text = stripTrailingPunctuation(raw);
   if (!text) return { intent: "conversation", raw };
 
+  const hasCreateTrigger = CREATE_TRIGGER_RE.test(text);
+
   // ---- Reminder cancellation first (it can contain "cancel"). ----
   if (REMINDER_CANCEL_RE.test(text)) {
-    const { query } = splitQueryAndModifiers(
-      stripLeadingNoise(text.replace(REMINDER_CANCEL_RE, " ")),
-      /\b(?:at|on|for|about|before|in)\b/i,
-    );
-    return {
-      intent: "cancel_reminder",
-      taskQuery: cleanQuery(query),
-      raw,
-    };
+    return { intent: "cancel_reminder", taskQuery: extractReminderCancelQuery(text), raw };
+  }
+
+  // ---- Retrieval ----
+  if (!hasCreateTrigger && RETRIEVAL_RE.test(text)) {
+    return { intent: "list_tasks", filters: extractListFilters(text, ctx), raw };
+  }
+
+  // ---- Reminder creation ----
+  if (!hasCreateTrigger && REMINDER_SET_RE.test(text)) {
+    return { intent: "set_reminder", reminder: extractReminder(text, ctx), raw };
+  }
+
+  // ---- Creation ----
+  if (hasCreateTrigger) {
+    const create = extractCreateParams(text, ctx);
+    if (create.title) {
+      return { intent: "create_task", create, raw };
+    }
+    // Trigger present but no usable title: caller asks for clarification instead of guessing.
+    return { intent: "create_task", create: { title: "" }, raw };
   }
 
   // ---- Deletion (destructive) ----
@@ -638,7 +664,6 @@ export const parseAssistantIntent = (
     const query = extractDeleteQuery(text);
     return { intent: "delete_task", taskQuery: query, raw };
   }
-
   // ---- Completion / reopen ----
   if (REOPEN_RE.test(text)) {
     return { intent: "reopen_task", taskQuery: extractCompleteQuery(text), raw };
@@ -647,37 +672,28 @@ export const parseAssistantIntent = (
     return { intent: "complete_task", taskQuery: extractCompleteQuery(text), raw };
   }
 
-  // ---- Retrieval ----
-  if (RETRIEVAL_RE.test(text)) {
-    return { intent: "list_tasks", filters: extractListFilters(text, ctx), raw };
-  }
-
-  // ---- Reminder creation ----
-  if (REMINDER_SET_RE.test(text)) {
-    return { intent: "set_reminder", reminder: extractReminder(text, ctx), raw };
-  }
-
   // ---- Update ----
   const update = tryParseUpdate(text, ctx);
   if (update) return update;
 
-  // ---- Creation ----
-  if (CREATE_TRIGGER_RE.test(text)) {
-    const create = extractCreateParams(text, ctx);
-    if (create.title) {
-      return { intent: "create_task", create, raw };
-    }
-    // Trigger present but no usable title → still creation intent; the caller
-    // asks for clarification instead of guessing.
-    return { intent: "create_task", create: { title: "" }, raw };
-  }
-
   return { intent: "conversation", raw };
+};
+
+/** Extracts the task/reminder reference from a cancel-reminder command. */
+const extractReminderCancelQuery = (text: string): string => {
+  let out = text.replace(REMINDER_CANCEL_RE, " ");
+  out = stripLeadingNoise(out);
+  // Strip leading prepositions and the reminder word itself.
+  out = out.replace(/^(?:on|for|about|at|in|before)\s+(?:my\s+|the\s+)?/i, "");
+  out = out.replace(/^(?:my\s+|the\s+)?(?:reminder)\s*/i, "");
+  // Strip trailing time expressions.
+  const { query } = splitQueryAndModifiers(out, /\b(?:at|in|on|before|every)\b/i);
+  return cleanQuery(stripLeadingNoise(query));
 };
 
 const cleanQuery = (value: string): string => {
   let out = stripTrailingPunctuation(value);
-  out = out.replace(/\b(?:task|todo|to-do|assignment)\b\s*$/i, "").trim();
+  out = out.replace(/\b(?:task|todo|to-do)\b\s*$/i, "").trim();
   out = out.replace(/^["'“”]|["'“”]$/g, "").trim();
   return out;
 };
@@ -760,7 +776,7 @@ const tryParseUpdate = (text: string, ctx: DateContext): ParsedIntent | null => 
     /\b(?:prioriti[sz]e)\s+(?:my\s+|the\s+)?(?:task\s+)?(.+?)(?:\s+(?:as|to)\s+(low|medium|high|urgent))?\s*$/i,
   );
   if (prioMatch) {
-    updates.priority = (prioMatch[2] ?? "high").toLowerCase() as TaskPriority;
+    updates.priority = normalizePriority(prioMatch[2] ?? "high");
     return finalizeUpdate(stripTrailingPunctuation(prioMatch[1]!), updates, ctx);
   }
   // "change task X to high priority"
@@ -768,13 +784,13 @@ const tryParseUpdate = (text: string, ctx: DateContext): ParsedIntent | null => 
     /\b(?:change|set|update)\s+(?:my\s+|the\s+)?(?:task\s+)?(.+?)\s+to\s+(low|medium|high|urgent)(?:\s+priority)?\s*$/i,
   );
   if (toPrio) {
-    updates.priority = toPrio[2]!.toLowerCase() as TaskPriority;
+    updates.priority = normalizePriority(toPrio[2]!);
     return finalizeUpdate(stripTrailingPunctuation(toPrio[1]!), updates, ctx);
   }
 
   // --- course / project / category ---
   const courseMatch = body.match(
-    /\b(?:categori[sz]e|set\s+course\s+(?:of\s+)?|set\s+project\s+(?:of\s+)?|move)\s+(?:my\s+|the\s+)?(?:task\s+)?(.+?)\s+(?:as|to|under|in)\s+(.+)$/i,
+    /\b(?:categori[sz]e|reorgani[sz]e|reorganise|reorganize|set\s+course\s+(?:of\s+)?|set\s+project\s+(?:of\s+)?|move)\s+(?:my\s+|the\s+)?(?:task\s+)?(.+?)\s+(?:as|to|under|in|into)\s+(.+)$/i,
   );
   if (courseMatch) {
     updates.course = cleanQuery(courseMatch[2]!).slice(0, 120);
@@ -802,6 +818,16 @@ const tryParseUpdate = (text: string, ctx: DateContext): ParsedIntent | null => 
   if (descMatch) {
     updates.description = stripTrailingPunctuation(descMatch[2]!).slice(0, 5000);
     return finalizeUpdate(stripTrailingPunctuation(descMatch[1]!), updates, ctx);
+  }
+
+  // --- clear due date ---
+  if (/\b(?:clear|remove)\s+(?:the\s+)?(?:due\s+date|deadline|due)\b/i.test(body)) {
+    updates.dueDate = null;
+    const query = stripLeadingNoise(
+      body.replace(/\b(?:clear|remove)\s+(?:the\s+)?(?:due\s+date|deadline|due)\b/i, " ")
+        .replace(/\b(?:on|from|for)\s+/i, " "),
+    );
+    return finalizeUpdate(query, updates, ctx);
   }
 
   // --- status ---
@@ -907,7 +933,12 @@ const extractCreateParams = (text: string, ctx: DateContext): CreateTaskParams =
   title = normalizeSpace(stripTrailingPunctuation(title.replace(/[,:;-]\s*$/g, "")));
   title = title.replace(/\b(?:to|for|by|on|due|and|with|at)\s*$/i, "").trim();
 
-  const params: CreateTaskParams = { title: title.slice(0, 150) };
+  const trimmedTitle = title.slice(0, 150);
+  const params: CreateTaskParams = {
+    title: trimmedTitle
+      ? trimmedTitle.charAt(0).toUpperCase() + trimmedTitle.slice(1)
+      : trimmedTitle,
+  };
   if (dueDate) params.dueDate = dueDate;
   if (priority) params.priority = priority;
   if (course) params.course = course;
