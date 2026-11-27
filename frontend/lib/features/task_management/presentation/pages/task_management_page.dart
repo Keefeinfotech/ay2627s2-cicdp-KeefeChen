@@ -754,6 +754,7 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
     bool emphasize = false,
   }) {
     return Row(
+      mainAxisSize: MainAxisSize.min,
       children: <Widget>[
         Icon(icon, size: AppSizes.iconSm, color: color),
         const SizedBox(width: AppSpacing.xxs),
