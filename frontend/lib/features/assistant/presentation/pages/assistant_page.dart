@@ -12,6 +12,7 @@ import '../../../../core/widgets/app_app_bar.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_snackbar.dart';
 import '../../../../core/widgets/app_status_badge.dart';
+import '../../../../core/widgets/app_text_field.dart';
 import '../../../authentication/models/session.dart';
 
 import 'package:frontend/features/home/data/api_task_repository.dart';
@@ -1513,7 +1514,7 @@ class _EditTaskDialogState extends State<_EditTaskDialog> {
   late final TextEditingController _title;
   late final TextEditingController _notes;
   late final TextEditingController _course;
-  late final TextEditingController _due;
+  late DateTime? _dueDate;
   late TaskPriority _priority;
   String? _error;
 
@@ -1524,9 +1525,7 @@ class _EditTaskDialogState extends State<_EditTaskDialog> {
     _title = TextEditingController(text: old.title);
     _notes = TextEditingController(text: old.notes);
     _course = TextEditingController(text: old.project ?? '');
-    _due = TextEditingController(
-      text: old.dueDate == null ? '' : formatDateOnly(old.dueDate!),
-    );
+    _dueDate = old.dueDate;
     _priority = old.priority;
   }
 
@@ -1535,61 +1534,166 @@ class _EditTaskDialogState extends State<_EditTaskDialog> {
     _title.dispose();
     _notes.dispose();
     _course.dispose();
-    _due.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickDueDate() async {
+    final now = DateTime.now();
+    final date = await showDatePicker(
+      context: context,
+      initialDate: _dueDate ?? now.add(const Duration(days: 7)),
+      firstDate: DateTime(now.year - 1),
+      lastDate: DateTime(now.year + 10),
+      helpText: 'Select due date',
+    );
+    if (date != null && mounted) setState(() => _dueDate = date);
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+
+    final viewInsets = MediaQuery.viewInsetsOf(context);
     return AlertDialog(
-      title: const Text('Edit task draft'),
-      content: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            TextField(
-              controller: _title,
-              decoration: const InputDecoration(labelText: 'Title'),
+      insetPadding: EdgeInsets.fromLTRB(
+        AppSpacing.xl,
+        AppSpacing.xl,
+        AppSpacing.xl,
+        AppSpacing.xl + viewInsets.bottom,
+      ),
+      titlePadding: const EdgeInsets.fromLTRB(
+        AppSpacing.xl,
+        AppSpacing.xl,
+        AppSpacing.xl,
+        AppSpacing.sm,
+      ),
+      contentPadding: const EdgeInsets.fromLTRB(
+        AppSpacing.xl,
+        AppSpacing.sm,
+        AppSpacing.xl,
+        AppSpacing.md,
+      ),
+      actionsPadding: const EdgeInsets.fromLTRB(
+        AppSpacing.xl,
+        0,
+        AppSpacing.xl,
+        AppSpacing.lg,
+      ),
+      title: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Icon(Icons.edit_note_rounded, color: scheme.primary),
+          const SizedBox(width: AppSpacing.sm),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(
+                  'Edit task draft',
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.xxs),
+                Text(
+                  'Review the AI suggestion before saving.',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: scheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
             ),
-            TextField(
-              controller: _notes,
-              maxLines: 3,
-              decoration: const InputDecoration(labelText: 'Description'),
+          ),
+        ],
+      ),
+      content: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 440),
+        child: SizedBox(
+          width: double.infinity,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: <Widget>[
+                AppTextField(
+                  controller: _title,
+                  autofocus: true,
+                  labelText: 'Title',
+                  hintText: 'What needs to be done?',
+                  textInputAction: TextInputAction.next,
+                  textCapitalization: TextCapitalization.sentences,
+                ),
+                const SizedBox(height: AppSpacing.md),
+                AppTextField(
+                  controller: _notes,
+                  maxLines: 3,
+                  minLines: 2,
+                  labelText: 'Description (optional)',
+                  hintText: 'Add context or a quick note',
+                  textCapitalization: TextCapitalization.sentences,
+                ),
+                const SizedBox(height: AppSpacing.md),
+                AppTextField(
+                  controller: _course,
+                  labelText: 'Course or project (optional)',
+                  hintText: 'e.g. COMP 2101',
+                  prefixIcon: Icons.school_outlined,
+                  textCapitalization: TextCapitalization.characters,
+                ),
+                const SizedBox(height: AppSpacing.lg),
+                Text(
+                  'Priority',
+                  style: theme.textTheme.labelLarge?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.xs),
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: SegmentedButton<TaskPriority>(
+                    segments: TaskPriority.values
+                        .map(
+                          (value) => ButtonSegment<TaskPriority>(
+                            value: value,
+                            label: Text(value.label),
+                          ),
+                        )
+                        .toList(growable: false),
+                    selected: <TaskPriority>{_priority},
+                    showSelectedIcon: false,
+                    onSelectionChanged: (selection) {
+                      setState(() => _priority = selection.first);
+                    },
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.lg),
+                _dueDateTile(theme, scheme),
+                if (_error != null) ...<Widget>[
+                  const SizedBox(height: AppSpacing.sm),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Icon(
+                        Icons.error_outline_rounded,
+                        size: AppSizes.iconSm,
+                        color: scheme.error,
+                      ),
+                      const SizedBox(width: AppSpacing.xs),
+                      Expanded(
+                        child: Text(
+                          _error!,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: scheme.error,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ],
             ),
-            TextField(
-              controller: _course,
-              decoration: const InputDecoration(labelText: 'Course or project'),
-            ),
-            TextField(
-              controller: _due,
-              decoration: const InputDecoration(
-                labelText: 'Due date (YYYY-MM-DD)',
-              ),
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            DropdownButtonFormField<TaskPriority>(
-              initialValue: _priority,
-              decoration: const InputDecoration(labelText: 'Priority'),
-              items: TaskPriority.values
-                  .map(
-                    (value) => DropdownMenuItem(
-                      value: value,
-                      child: Text(value.label),
-                    ),
-                  )
-                  .toList(growable: false),
-              onChanged: (value) {
-                if (value != null) setState(() => _priority = value);
-              },
-            ),
-            if (_error != null) ...[
-              const SizedBox(height: AppSpacing.xs),
-              Text(
-                _error!,
-                style: TextStyle(color: Theme.of(context).colorScheme.error),
-              ),
-            ],
-          ],
+          ),
         ),
       ),
       actions: <Widget>[
@@ -1597,30 +1701,92 @@ class _EditTaskDialogState extends State<_EditTaskDialog> {
           onPressed: () => Navigator.pop(context),
           child: const Text('Cancel'),
         ),
-        FilledButton(onPressed: _save, child: const Text('Save draft')),
+        FilledButton.icon(
+          onPressed: _save,
+          icon: const Icon(Icons.check_rounded, size: AppSizes.iconSm),
+          label: const Text('Save draft'),
+        ),
       ],
     );
   }
 
+  /// Compact date row that opens a date picker instead of asking the user to
+  /// type a raw `YYYY-MM-DD` string.
+  Widget _dueDateTile(ThemeData theme, ColorScheme scheme) {
+    final narrow = MediaQuery.sizeOf(context).width < 420;
+    final label = Row(
+      children: <Widget>[
+        Icon(
+          Icons.event_outlined,
+          size: AppSizes.iconMd,
+          color: scheme.primary,
+        ),
+        const SizedBox(width: AppSpacing.sm),
+        Expanded(
+          child: Text(
+            _dueDate == null ? 'No due date' : 'Due ${_dueLabel(_dueDate!)}',
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: scheme.onSurfaceVariant,
+            ),
+          ),
+        ),
+      ],
+    );
+    final actions = Wrap(
+      spacing: AppSpacing.xs,
+      runSpacing: AppSpacing.xs,
+      children: <Widget>[
+        TextButton(
+          onPressed: _pickDueDate,
+          child: Text(_dueDate == null ? 'Set date' : 'Change'),
+        ),
+        if (_dueDate != null)
+          IconButton(
+            tooltip: 'Clear due date',
+            visualDensity: VisualDensity.compact,
+            onPressed: () => setState(() => _dueDate = null),
+            icon: const Icon(Icons.close_rounded, size: AppSizes.iconSm),
+          ),
+      ],
+    );
+
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainerHighest.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(AppRadius.md),
+      ),
+      child: narrow
+          ? Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                label,
+                const SizedBox(height: AppSpacing.xs),
+                actions,
+              ],
+            )
+          : Row(
+              children: <Widget>[
+                Expanded(child: label),
+                actions,
+              ],
+            ),
+    );
+  }
+
   void _save() {
-    final rawDue = _due.text.trim();
-    final parsedDue = rawDue.isEmpty ? null : DateTime.tryParse(rawDue);
-    if (_title.text.trim().isEmpty ||
-        (rawDue.isNotEmpty && parsedDue == null)) {
-      setState(() {
-        _error = _title.text.trim().isEmpty
-            ? 'Enter a task title.'
-            : 'Use a date in YYYY-MM-DD format.';
-      });
+    final title = _title.text.trim();
+    if (title.isEmpty) {
+      setState(() => _error = 'Enter a task title.');
       return;
     }
-    final dueDate = parsedDue == null
+    final dueDate = _dueDate == null
         ? null
-        : DateTime(parsedDue.year, parsedDue.month, parsedDue.day, 23, 59);
+        : DateTime(_dueDate!.year, _dueDate!.month, _dueDate!.day, 23, 59);
     Navigator.pop(
       context,
       TaskQuickAddData(
-        title: _title.text.trim(),
+        title: title,
         notes: _notes.text.trim(),
         priority: _priority,
         priorityExplicit: true,
