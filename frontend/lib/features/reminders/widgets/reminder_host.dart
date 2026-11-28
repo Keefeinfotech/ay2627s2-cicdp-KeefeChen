@@ -138,10 +138,6 @@ class ReminderSection extends StatelessWidget {
                   color: scheme.onSurfaceVariant,
                 ),
               ),
-              if (onViewAll != null) ...[
-                const SizedBox(width: AppSpacing.sm),
-                TextButton(onPressed: onViewAll, child: const Text('View all')),
-              ],
             ],
           ),
           const SizedBox(height: AppSpacing.xs),

@@ -40,8 +40,6 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
   late final TaskManagementRepository _repository;
   String _view = 'table';
   final Set<String> _collapsed = <String>{};
-  String _sortBy = 'dueDate';
-  bool _grouped = true;
 
   @override
   void initState() {
@@ -348,18 +346,8 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
           'Filter',
           () => _showFilterSheet(context),
         ),
-        _ghostBtn(
-          context,
-          Icons.swap_vert_rounded,
-          'Sort',
-          () => _showSortMenu(context),
-        ),
-        _ghostBtn(
-          context,
-          Icons.layers_outlined,
-          'Group by',
-          () => setState(() => _grouped = !_grouped),
-        ),
+        _ghostBtn(context, Icons.swap_vert_rounded, 'Sort', () {}),
+        _ghostBtn(context, Icons.layers_outlined, 'Group by', () {}),
         if (_store.query.isNotEmpty ||
             _store.filter != TaskFilter.all ||
             _store.tagFilter != null)
@@ -460,23 +448,8 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
         : _buildCalendarView(context);
   }
 
-  List<Task> _sortedVisibleTasks() {
-    return _store.visibleTasks.toList()..sort((a, b) {
-      switch (_sortBy) {
-        case 'title':
-          return a.title.compareTo(b.title);
-        case 'priority':
-          return a.priority.index.compareTo(b.priority.index);
-        default:
-          final ad = a.dueDate;
-          final bd = b.dueDate;
-          if (ad == null && bd == null) return 0;
-          if (ad == null) return 1;
-          if (bd == null) return -1;
-          return ad.compareTo(bd);
-      }
-    });
-  }
+
+  List<Task> _sortedVisibleTasks() => _store.visibleTasks.toList();
 
   Widget _buildBoardView(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
@@ -486,8 +459,7 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
     final done = tasks.where((t) => t.isCompleted).toList();
 
     Widget column(String title, Color accent, List<Task> items) {
-      return Expanded(
-        child: Container(
+      return Container(
           margin: const EdgeInsets.symmetric(horizontal: 4),
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
@@ -504,16 +476,13 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
                     child: Text(
                       title,
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w700,
-                        color: accent,
-                      ),
+                            fontWeight: FontWeight.w700,
+                            color: accent,
+                          ),
                     ),
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 2,
-                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                     decoration: BoxDecoration(
                       color: accent.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(999),
@@ -521,9 +490,9 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
                     child: Text(
                       '${items.length}',
                       style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: accent,
-                        fontWeight: FontWeight.w700,
-                      ),
+                            color: accent,
+                            fontWeight: FontWeight.w700,
+                          ),
                     ),
                   ),
                 ],
@@ -534,25 +503,28 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
                   padding: const EdgeInsets.all(12),
                   child: Text(
                     'Nothing here',
-                    style: Theme.of(context).textTheme.bodySmall
-                        ?.copyWith(color: scheme.onSurfaceVariant),
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: scheme.onSurfaceVariant,
+                        ),
                   ),
                 )
               else
                 for (final task in items) _boardCard(context, task),
             ],
           ),
-        ),
       );
     }
 
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        column('To do', scheme.primary, todo),
-        column('Overdue', scheme.error, overdue),
-        column('Done', scheme.tertiary, done),
-      ],
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          SizedBox(width: 280, child: column('To do', scheme.primary, todo)),
+          SizedBox(width: 280, child: column('Overdue', scheme.error, overdue)),
+          SizedBox(width: 280, child: column('Done', scheme.tertiary, done)),
+        ],
+      ),
     );
   }
 
@@ -581,11 +553,11 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                        decoration: task.isCompleted
-                            ? TextDecoration.lineThrough
-                            : null,
-                      ),
+                            fontWeight: FontWeight.w600,
+                            decoration: task.isCompleted
+                                ? TextDecoration.lineThrough
+                                : null,
+                          ),
                     ),
                   ),
                 ],
@@ -595,11 +567,7 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
                 spacing: 6,
                 runSpacing: 4,
                 children: <Widget>[
-                  _miniBadge(
-                    context,
-                    task.priority.label,
-                    scheme.onSurfaceVariant,
-                  ),
+                  _miniBadge(context, task.priority.label, scheme.onSurfaceVariant),
                   if (task.dueDate != null)
                     _miniBadge(
                       context,
@@ -639,8 +607,10 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
       ),
       child: Text(
         label,
-        style: Theme.of(context).textTheme.labelSmall
-            ?.copyWith(color: color, fontWeight: FontWeight.w600),
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              color: color,
+              fontWeight: FontWeight.w600,
+            ),
       ),
     );
   }
@@ -675,8 +645,9 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
               padding: const EdgeInsets.all(24),
               child: Text(
                 'No tasks to show on the calendar.',
-                style: Theme.of(context).textTheme.bodySmall
-                    ?.copyWith(color: scheme.onSurfaceVariant),
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: scheme.onSurfaceVariant,
+                    ),
               ),
             ),
           for (final key in keys) ...[
@@ -685,9 +656,9 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
               child: Text(
                 key,
                 style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: scheme.primary,
-                ),
+                      fontWeight: FontWeight.w700,
+                      color: scheme.primary,
+                    ),
               ),
             ),
             for (final task in groups[key]!) _calendarTile(context, task),
@@ -698,9 +669,9 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
               child: Text(
                 'No due date',
                 style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: scheme.onSurfaceVariant,
-                ),
+                      fontWeight: FontWeight.w700,
+                      color: scheme.onSurfaceVariant,
+                    ),
               ),
             ),
             for (final task in undated) _calendarTile(context, task),
@@ -724,14 +695,17 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: TextStyle(
-            decoration: task.isCompleted ? TextDecoration.lineThrough : null,
+            decoration:
+                task.isCompleted ? TextDecoration.lineThrough : null,
           ),
         ),
         subtitle: task.dueDate == null
             ? null
             : Text(
                 formatTaskDate(task.dueDate!),
-                style: TextStyle(color: task.isOverdue ? scheme.error : null),
+                style: TextStyle(
+                  color: task.isOverdue ? scheme.error : null,
+                ),
               ),
         trailing: IconButton(
           tooltip: 'Edit',
@@ -743,57 +717,8 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
     );
   }
 
-  void _showSortMenu(BuildContext context) {
-    showModalBottomSheet<void>(
-      context: context,
-      builder: (ctx) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            ListTile(
-              title: const Text('Due date'),
-              onTap: () {
-                setState(() => _sortBy = 'dueDate');
-                Navigator.pop(ctx);
-              },
-            ),
-            ListTile(
-              title: const Text('Title'),
-              onTap: () {
-                setState(() => _sortBy = 'title');
-                Navigator.pop(ctx);
-              },
-            ),
-            ListTile(
-              title: const Text('Priority'),
-              onTap: () {
-                setState(() => _sortBy = 'priority');
-                Navigator.pop(ctx);
-              },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   List<Widget> _buildGroupedTasks(BuildContext context) {
-    final tasks = _store.visibleTasks.toList()
-      ..sort((a, b) {
-        switch (_sortBy) {
-          case 'title':
-            return a.title.compareTo(b.title);
-          case 'priority':
-            return a.priority.index.compareTo(b.priority.index);
-          default:
-            final ad = a.dueDate;
-            final bd = b.dueDate;
-            if (ad == null && bd == null) return 0;
-            if (ad == null) return 1;
-            if (bd == null) return -1;
-            return ad.compareTo(bd);
-        }
-      });
+    final tasks = _store.visibleTasks.toList();
     if (_store.tasks.isEmpty) {
       return [
         Container(
@@ -876,9 +801,6 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
       'Completed': Ds.accentGreen,
     };
 
-    if (!_grouped) {
-      return [_buildTaskGroup(context, 'All tasks', Colors.blue, tasks)];
-    }
     final out = <Widget>[];
     groups.forEach((name, items) {
       if (items.isEmpty) return;

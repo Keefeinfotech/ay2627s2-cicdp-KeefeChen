@@ -30,7 +30,8 @@
     "test:mutate": "stryker run",
     "migrate:status": "node scripts/migrate.mjs status",
     "migrate:up": "node scripts/migrate.mjs up",
-    "migrate:down": "node scripts/migrate.mjs down"
+    "migrate:down": "node scripts/migrate.mjs down",
+    "smtp:test": "tsx scripts/smtp-test.ts"
   },
   "keywords": [],
   "author": "",

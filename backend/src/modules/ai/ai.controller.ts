@@ -5,6 +5,7 @@ import {
   type ConversationTurn,
 } from "./ai.service.js";
 import { taskService } from "../tasks/task.service.js";
+import { createTaskSchema } from "../tasks/task.validation.js";
 import { taskDraftResponseSchema } from "./ai.validation.js";
 
 export const chat = async (
@@ -52,27 +53,15 @@ export const createTaskAi = async (
   next: NextFunction,
 ): Promise<void> => {
   try {
-    const userId = (req as Request & { user?: { id: string } }).user?.id;
+    const userId = req.userId;
     if (!userId) {
       res.status(401).json({ message: "Unauthenticated" });
       return;
     }
-    const { title, description, dueDate, priority } = req.body as {
-      title?: string;
-      description?: string;
-      dueDate?: string;
-      priority?: "low" | "medium" | "high";
-    };
-    if (!title) {
-      res.status(400).json({ message: "title is required" });
-      return;
-    }
-    const task = await taskService.createTask(userId, {
-      title,
-      description: description ?? null,
-      dueDate: dueDate ? new Date(dueDate) : null,
-      priority: priority ?? null,
-    } as never);
+    // Validate through the same schema used by POST /api/tasks; never persist
+    // unchecked AI/client-supplied fields, and reject invalid dates.
+    const body = createTaskSchema.shape.body.parse(req.body);
+    const task = await taskService.createTask(userId, body);
     res.status(201).json({ message: "Task created", task });
   } catch (err) {
     next(err);
@@ -85,7 +74,7 @@ export const completeTaskAi = async (
   next: NextFunction,
 ): Promise<void> => {
   try {
-    const userId = (req as Request & { user?: { id: string } }).user?.id;
+    const userId = req.userId;
     if (!userId) {
       res.status(401).json({ message: "Unauthenticated" });
       return;
@@ -110,7 +99,7 @@ export const deleteTaskAi = async (
   next: NextFunction,
 ): Promise<void> => {
   try {
-    const userId = (req as Request & { user?: { id: string } }).user?.id;
+    const userId = req.userId;
     if (!userId) {
       res.status(401).json({ message: "Unauthenticated" });
       return;
@@ -133,7 +122,7 @@ export const tasks = async (
   next: NextFunction,
 ): Promise<void> => {
   try {
-    const userId = (req as Request & { user?: { id: string } }).user?.id;
+    const userId = req.userId;
     if (!userId) {
       res.status(401).json({ message: "Unauthenticated" });
       return;
@@ -172,7 +161,7 @@ export const today = async (
   next: NextFunction,
 ): Promise<void> => {
   try {
-    const userId = (req as Request & { user?: { id: string } }).user?.id;
+    const userId = req.userId;
     if (!userId) {
       res.status(401).json({ message: "Unauthenticated" });
       return;

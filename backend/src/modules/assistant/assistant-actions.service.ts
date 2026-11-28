@@ -23,7 +23,10 @@ import logger from "../../config/logger.js";
 
 import { createChatReply, type ConversationTurn } from "../ai/ai.service.js";
 import { taskService } from "../tasks/task.service.js";
-import { createTaskSchema, updateTaskSchema } from "../tasks/task.validation.js";
+import {
+  createTaskSchema,
+  updateTaskSchema,
+} from "../tasks/task.validation.js";
 import type {
   CreateTaskInput,
   TaskPriority,
@@ -251,10 +254,20 @@ const ambiguousResult = (
   const message =
     `I found several matching tasks: ${list}. ` +
     `Please tell me exactly which one to ${verb}; nothing has been changed.`;
-  return { ...base, intent, status: "clarification_required", reply: message, clarification: message };
+  return {
+    ...base,
+    intent,
+    status: "clarification_required",
+    reply: message,
+    clarification: message,
+  };
 };
 
-const noMatch = (intent: string, query: string, verb: string): AssistantActionResult =>
+const noMatch = (
+  intent: string,
+  query: string,
+  verb: string,
+): AssistantActionResult =>
   notFound(
     intent,
     `I couldn't find a task matching "${query}". ` +
@@ -270,8 +283,12 @@ export const assistantActionsService = {
    * Runs the full pipeline for one natural-language message.
    * `userId` MUST come from authenticated request context.
    */
-  async act(userId: string, input: AssistantActInput): Promise<AssistantActionResult> {
-    if (!userId) throw new AppError(401, "UNAUTHENTICATED", "Authentication is required.");
+  async act(
+    userId: string,
+    input: AssistantActInput,
+  ): Promise<AssistantActionResult> {
+    if (!userId)
+      throw new AppError(401, "UNAUTHENTICATED", "Authentication is required.");
 
     // Structured pre-parsed action from the UI (still validated + ownership-checked).
     if (input.action?.type) {
@@ -280,7 +297,10 @@ export const assistantActionsService = {
 
     const message = (input.message ?? "").trim();
     if (!message) {
-      return clarification("conversation", "Please tell me what you'd like me to do.");
+      return clarification(
+        "conversation",
+        "Please tell me what you'd like me to do.",
+      );
     }
 
     const ctx = {
@@ -292,24 +312,61 @@ export const assistantActionsService = {
     try {
       switch (parsed.intent) {
         case "create_task":
-          return await this.executeCreate(userId, parsed.create ?? { title: "" }, input, message);
+          return await this.executeCreate(
+            userId,
+            parsed.create ?? { title: "" },
+            input,
+            message,
+          );
         case "update_task":
-          return await this.executeUpdate(userId, parsed.taskQuery ?? "", parsed.updates ?? {}, message);
+          return await this.executeUpdate(
+            userId,
+            parsed.taskQuery ?? "",
+            parsed.updates ?? {},
+            message,
+          );
         case "complete_task":
-          return await this.executeComplete(userId, parsed.taskQuery ?? "", true, message);
+          return await this.executeComplete(
+            userId,
+            parsed.taskQuery ?? "",
+            true,
+            message,
+          );
         case "reopen_task":
-          return await this.executeComplete(userId, parsed.taskQuery ?? "", false, message);
+          return await this.executeComplete(
+            userId,
+            parsed.taskQuery ?? "",
+            false,
+            message,
+          );
         case "delete_task":
-          return await this.proposeDelete(userId, parsed.taskQuery ?? "", message);
+          return await this.proposeDelete(
+            userId,
+            parsed.taskQuery ?? "",
+            message,
+          );
         case "list_tasks":
           return await this.executeList(userId, parsed.filters ?? {}, message);
         case "set_reminder":
-          return await this.executeSetReminder(userId, parsed.reminder ?? {}, ctx, message);
+          return await this.executeSetReminder(
+            userId,
+            parsed.reminder ?? {},
+            ctx,
+            message,
+          );
         case "cancel_reminder":
-          return await this.executeCancelReminder(userId, parsed.taskQuery ?? "", message);
+          return await this.executeCancelReminder(
+            userId,
+            parsed.taskQuery ?? "",
+            message,
+          );
         case "conversation":
         default:
-          return await this.executeConversation(userId, message, input.context ?? []);
+          return await this.executeConversation(
+            userId,
+            message,
+            input.context ?? [],
+          );
       }
     } catch (error) {
       logger.error("assistant.act.failed", {
@@ -326,16 +383,27 @@ export const assistantActionsService = {
   },
 
   /** Execute a structured action proposal after re-validation. */
-  async executeStructured(userId: string, input: AssistantActInput): Promise<AssistantActionResult> {
+  async executeStructured(
+    userId: string,
+    input: AssistantActInput,
+  ): Promise<AssistantActionResult> {
     const type = input.action!.type;
     const params = input.action!.params ?? {};
     const message = input.message ?? "";
     try {
       switch (type) {
         case "create_task":
-          return await this.executeCreate(userId, params as unknown as CreateTaskParams, input, message);
+          return await this.executeCreate(
+            userId,
+            params as unknown as CreateTaskParams,
+            input,
+            message,
+          );
         case "update_task": {
-          const taskId = requireString((params as { taskId?: unknown }).taskId, "task ID");
+          const taskId = requireString(
+            (params as { taskId?: unknown }).taskId,
+            "task ID",
+          );
           return await this.executeUpdateOnId(
             userId,
             taskId,
@@ -344,17 +412,28 @@ export const assistantActionsService = {
           );
         }
         case "complete_task": {
-          const taskId = requireString((params as { taskId?: unknown }).taskId, "task ID");
+          const taskId = requireString(
+            (params as { taskId?: unknown }).taskId,
+            "task ID",
+          );
           return await this.executeCompleteOnId(userId, taskId, true, message);
         }
         case "set_reminder": {
-          return await this.executeSetReminder(userId, params as never, {
-            currentDate: input.currentDate,
-            utcOffsetMinutes: input.utcOffsetMinutes,
-          }, message);
+          return await this.executeSetReminder(
+            userId,
+            params as never,
+            {
+              currentDate: input.currentDate,
+              utcOffsetMinutes: input.utcOffsetMinutes,
+            },
+            message,
+          );
         }
         default:
-          return failed(type, `Unsupported action type "${type}". Nothing has been changed.`);
+          return failed(
+            type,
+            `Unsupported action type "${type}". Nothing has been changed.`,
+          );
       }
     } catch (error) {
       logger.error("assistant.structured.failed", {
@@ -362,7 +441,10 @@ export const assistantActionsService = {
         type,
         message: error instanceof Error ? error.message : String(error),
       });
-      return failed(type, `I couldn't complete that action${friendlyReason(error)}. Nothing has been confirmed as changed.`);
+      return failed(
+        type,
+        `I couldn't complete that action${friendlyReason(error)}. Nothing has been confirmed as changed.`,
+      );
     }
   },
 
@@ -374,7 +456,7 @@ export const assistantActionsService = {
     userId: string,
     params: CreateTaskParams,
     input: AssistantActInput,
-    message: string,
+    _message: string,
   ): Promise<AssistantActionResult> {
     const title = (params.title ?? "").trim();
     if (!title) {
@@ -425,7 +507,10 @@ export const assistantActionsService = {
 
     // Confirm ONLY after the write returned a persisted record.
     if (!created || !created._id) {
-      return failed("create_task", "The task could not be saved. Nothing was created.");
+      return failed(
+        "create_task",
+        "The task could not be saved. Nothing was created.",
+      );
     }
 
     const snap = snapshot(created);
@@ -454,11 +539,16 @@ export const assistantActionsService = {
     message: string,
   ): Promise<AssistantActionResult> {
     if (!taskQuery.trim()) {
-      return clarification("update_task", "Which task should I update? Nothing has been changed.");
+      return clarification(
+        "update_task",
+        "Which task should I update? Nothing has been changed.",
+      );
     }
     const match = await matchTask(userId, taskQuery);
-    if (match.kind === "none") return noMatch("update_task", taskQuery, "update");
-    if (match.kind === "ambiguous") return ambiguousResult("update_task", match.candidates, "update");
+    if (match.kind === "none")
+      return noMatch("update_task", taskQuery, "update");
+    if (match.kind === "ambiguous")
+      return ambiguousResult("update_task", match.candidates, "update");
     return this.applyUpdate(userId, match.task, updatesRaw, message);
   },
 
@@ -483,13 +573,17 @@ export const assistantActionsService = {
     // Build a candidate containing ONLY allow-listed, known fields.
     const candidate: Record<string, unknown> = {};
     if (updatesRaw.title !== undefined) candidate.title = updatesRaw.title;
-    if (updatesRaw.description !== undefined) candidate.description = updatesRaw.description;
-    if (updatesRaw.dueDate !== undefined) candidate.dueDate = updatesRaw.dueDate;
-    if (updatesRaw.priority !== undefined) candidate.priority = updatesRaw.priority;
+    if (updatesRaw.description !== undefined)
+      candidate.description = updatesRaw.description;
+    if (updatesRaw.dueDate !== undefined)
+      candidate.dueDate = updatesRaw.dueDate;
+    if (updatesRaw.priority !== undefined)
+      candidate.priority = updatesRaw.priority;
     if (updatesRaw.status !== undefined) candidate.status = updatesRaw.status;
     if (updatesRaw.course !== undefined) candidate.course = updatesRaw.course;
     if (updatesRaw.tags !== undefined) candidate.tags = updatesRaw.tags;
-    if (updatesRaw.reminderAt !== undefined) candidate.reminderAt = updatesRaw.reminderAt;
+    if (updatesRaw.reminderAt !== undefined)
+      candidate.reminderAt = updatesRaw.reminderAt;
 
     if (Object.keys(candidate).length === 0) {
       return clarification(
@@ -511,7 +605,11 @@ export const assistantActionsService = {
 
     const update: UpdateTaskInput = { ...parsed };
     const before = snapshot(task);
-    const updated = await taskService.updateTask(userId, String(task._id), update);
+    const updated = await taskService.updateTask(
+      userId,
+      String(task._id),
+      update,
+    );
     const after = snapshot(updated);
 
     const changes = diffSnapshots(before, after);
@@ -562,9 +660,20 @@ export const assistantActionsService = {
     }
     const match = await matchTask(userId, taskQuery);
     const intent = completed ? "complete_task" : "reopen_task";
-    if (match.kind === "none") return noMatch(intent, taskQuery, completed ? "complete" : "reopen");
-    if (match.kind === "ambiguous") return ambiguousResult(intent, match.candidates, completed ? "complete" : "reopen");
-    return this.executeCompleteOnId(userId, String(match.task._id), completed, message);
+    if (match.kind === "none")
+      return noMatch(intent, taskQuery, completed ? "complete" : "reopen");
+    if (match.kind === "ambiguous")
+      return ambiguousResult(
+        intent,
+        match.candidates,
+        completed ? "complete" : "reopen",
+      );
+    return this.executeCompleteOnId(
+      userId,
+      String(match.task._id),
+      completed,
+      message,
+    );
   },
 
   async executeCompleteOnId(
@@ -574,8 +683,11 @@ export const assistantActionsService = {
     _message: string,
   ): Promise<AssistantActionResult> {
     const intent = completed ? "complete_task" : "reopen_task";
-    const existing = await taskService.getTask(userId, taskId).catch(() => null);
-    if (!existing) return noMatch(intent, taskId, completed ? "complete" : "reopen");
+    const existing = await taskService
+      .getTask(userId, taskId)
+      .catch(() => null);
+    if (!existing)
+      return noMatch(intent, taskId, completed ? "complete" : "reopen");
 
     const targetStatus: TaskStatus = completed ? "completed" : "todo";
     if (existing.status === targetStatus) {
@@ -591,7 +703,9 @@ export const assistantActionsService = {
       };
     }
 
-    const updated = await taskService.updateTask(userId, taskId, { status: targetStatus });
+    const updated = await taskService.updateTask(userId, taskId, {
+      status: targetStatus,
+    });
     const snap = snapshot(updated);
     return {
       ...base,
@@ -604,7 +718,9 @@ export const assistantActionsService = {
       reply: completed
         ? `Marked "${snap.title}" as completed.`
         : `Reopened "${snap.title}"; it is no longer completed.`,
-      appliedChanges: { status: { before: existing.status, after: snap.status } },
+      appliedChanges: {
+        status: { before: existing.status, after: snap.status },
+      },
       refresh: { tasks: true, reminders: false },
     };
   },
@@ -613,13 +729,22 @@ export const assistantActionsService = {
   // DELETE (confirmation-gated, single-use)
   // --------------------------------------------------------------------------
 
-  async proposeDelete(userId: string, taskQuery: string, _message: string): Promise<AssistantActionResult> {
+  async proposeDelete(
+    userId: string,
+    taskQuery: string,
+    _message: string,
+  ): Promise<AssistantActionResult> {
     if (!taskQuery.trim()) {
-      return clarification("delete_task", "Which task should I delete? Nothing has been changed.");
+      return clarification(
+        "delete_task",
+        "Which task should I delete? Nothing has been changed.",
+      );
     }
     const match = await matchTask(userId, taskQuery);
-    if (match.kind === "none") return noMatch("delete_task", taskQuery, "delete");
-    if (match.kind === "ambiguous") return ambiguousResult("delete_task", match.candidates, "delete");
+    if (match.kind === "none")
+      return noMatch("delete_task", taskQuery, "delete");
+    if (match.kind === "ambiguous")
+      return ambiguousResult("delete_task", match.candidates, "delete");
 
     const task = match.task;
     const summary = `Delete task "${task.title}"`;
@@ -658,8 +783,12 @@ export const assistantActionsService = {
   },
 
   /** Confirm a pending action: atomically claim it, then execute. */
-  async confirmAction(userId: string, pendingActionId: string): Promise<AssistantActionResult> {
-    if (!userId) throw new AppError(401, "UNAUTHENTICATED", "Authentication is required.");
+  async confirmAction(
+    userId: string,
+    pendingActionId: string,
+  ): Promise<AssistantActionResult> {
+    if (!userId)
+      throw new AppError(401, "UNAUTHENTICATED", "Authentication is required.");
     const id = requireString(pendingActionId, "pending action ID");
 
     // Single-use + owner-scoped + not expired: atomic compare-and-set.
@@ -681,9 +810,15 @@ export const assistantActionsService = {
         userId: literal(userId),
       }).lean<AssistantPendingActionRecord>();
       if (existing && existing.status !== "pending") {
-        return failed(existing.type, `This action was already ${existing.status}. Nothing new was changed.`);
+        return failed(
+          existing.type,
+          `This action was already ${existing.status}. Nothing new was changed.`,
+        );
       }
-      return notFound("delete_task", "That confirmation is no longer valid or has expired. Nothing has been changed.");
+      return notFound(
+        "delete_task",
+        "That confirmation is no longer valid or has expired. Nothing has been changed.",
+      );
     }
 
     try {
@@ -695,18 +830,32 @@ export const assistantActionsService = {
         message: error instanceof Error ? error.message : String(error),
       });
       // The pending action is consumed; report honestly that nothing changed.
-      return failed(claimed.type, `I couldn't complete the confirmed action${friendlyReason(error)}. Please check your task list.`);
+      return failed(
+        claimed.type,
+        `I couldn't complete the confirmed action${friendlyReason(error)}. Please check your task list.`,
+      );
     }
   },
 
-  async executePending(userId: string, pending: AssistantPendingActionRecord): Promise<AssistantActionResult> {
+  async executePending(
+    userId: string,
+    pending: AssistantPendingActionRecord,
+  ): Promise<AssistantActionResult> {
     switch (pending.type) {
       case "delete_task": {
-        const taskId = requireString((pending.payload as { taskId?: unknown }).taskId, "task ID");
+        const taskId = requireString(
+          (pending.payload as { taskId?: unknown }).taskId,
+          "task ID",
+        );
         // Ownership re-checked by taskService; a task removed meanwhile reads as not found.
-        const existing = await taskService.getTask(userId, taskId).catch(() => null);
+        const existing = await taskService
+          .getTask(userId, taskId)
+          .catch(() => null);
         if (!existing) {
-          return notFound("delete_task", "That task no longer exists; nothing was deleted.");
+          return notFound(
+            "delete_task",
+            "That task no longer exists; nothing was deleted.",
+          );
         }
         await taskService.deleteTask(userId, taskId);
         return {
@@ -723,13 +872,20 @@ export const assistantActionsService = {
         };
       }
       default:
-        return failed(pending.type, "Unsupported pending action. Nothing has been changed.");
+        return failed(
+          pending.type,
+          "Unsupported pending action. Nothing has been changed.",
+        );
     }
   },
 
   /** Cancel a pending action; nothing executes. */
-  async cancelAction(userId: string, pendingActionId: string): Promise<AssistantActionResult> {
-    if (!userId) throw new AppError(401, "UNAUTHENTICATED", "Authentication is required.");
+  async cancelAction(
+    userId: string,
+    pendingActionId: string,
+  ): Promise<AssistantActionResult> {
+    if (!userId)
+      throw new AppError(401, "UNAUTHENTICATED", "Authentication is required.");
     const id = requireString(pendingActionId, "pending action ID");
     const cancelled = await AssistantPendingAction.findOneAndUpdate(
       { _id: literal(id), userId: literal(userId), status: "pending" },
@@ -737,7 +893,10 @@ export const assistantActionsService = {
       { new: true },
     );
     if (!cancelled) {
-      return notFound("delete_task", "No pending action to cancel. Nothing has been changed.");
+      return notFound(
+        "delete_task",
+        "No pending action to cancel. Nothing has been changed.",
+      );
     }
     return {
       ...base,
@@ -754,7 +913,11 @@ export const assistantActionsService = {
   // LIST / RETRIEVE
   // --------------------------------------------------------------------------
 
-  async executeList(userId: string, filters: ListTaskFilters, _message: string): Promise<AssistantActionResult> {
+  async executeList(
+    userId: string,
+    filters: ListTaskFilters,
+    _message: string,
+  ): Promise<AssistantActionResult> {
     const { items } = await taskService.listTasks(userId, {
       status: filters.status,
       priority: filters.priority,
@@ -770,14 +933,16 @@ export const assistantActionsService = {
     const label = filters.timeframe ? ` (${filters.timeframe})` : "";
     const filterBits: string[] = [];
     if (filters.status?.length) filterBits.push(filters.status.join(", "));
-    if (filters.priority?.length) filterBits.push(`${filters.priority.join(", ")} priority`);
+    if (filters.priority?.length)
+      filterBits.push(`${filters.priority.join(", ")} priority`);
 
     let reply: string;
     if (tasks.length === 0) {
-      reply =
-        `You have no tasks${label}${filterBits.length ? ` matching ${filterBits.join(", ")}` : ""}.`;
+      reply = `You have no tasks${label}${filterBits.length ? ` matching ${filterBits.join(", ")}` : ""}.`;
     } else {
-      const lines = tasks.slice(0, 10).map((t) => `- ${t.title}${describeDue(t)} [${t.status}]`);
+      const lines = tasks
+        .slice(0, 10)
+        .map((t) => `- ${t.title}${describeDue(t)} [${t.status}]`);
       reply =
         `You have ${tasks.length} task${tasks.length === 1 ? "" : "s"}${label}` +
         `${filterBits.length ? ` matching ${filterBits.join(", ")}` : ""}:\n${lines.join("\n")}` +
@@ -809,14 +974,14 @@ export const assistantActionsService = {
       dueAt?: string;
       recurrence?: ReminderRecurrence;
     },
-    ctx: { currentDate?: string; utcOffsetMinutes?: number },
+    _ctx: { currentDate?: string; utcOffsetMinutes?: number },
     _message: string,
   ): Promise<AssistantActionResult> {
     const dueAt = reminder.dueAt ? new Date(reminder.dueAt) : null;
     if (!dueAt || Number.isNaN(dueAt.getTime())) {
       return clarification(
         "set_reminder",
-        "When should I remind you? Give a date/time, e.g. \"tomorrow at 9am\". Nothing has been changed.",
+        'When should I remind you? Give a date/time, e.g. "tomorrow at 9am". Nothing has been changed.',
       );
     }
 
@@ -824,7 +989,12 @@ export const assistantActionsService = {
     let task: TaskRecord | null = null;
     if (reminder.taskQuery?.trim()) {
       const match = await matchTask(userId, reminder.taskQuery);
-      if (match.kind === "ambiguous") return ambiguousResult("set_reminder", match.candidates, "set a reminder on");
+      if (match.kind === "ambiguous")
+        return ambiguousResult(
+          "set_reminder",
+          match.candidates,
+          "set a reminder on",
+        );
       if (match.kind === "one") task = match.task;
     }
 
@@ -832,7 +1002,9 @@ export const assistantActionsService = {
     if (!task || reminder.recurrence) {
       const message =
         reminder.message?.trim() ||
-        (task ? `Reminder: ${task.title}` : reminder.taskQuery?.trim() || "Reminder");
+        (task
+          ? `Reminder: ${task.title}`
+          : reminder.taskQuery?.trim() || "Reminder");
       // Validate with the same schema as POST /api/reminders.
       const parsed = createReminderSchema.shape.body.parse({
         message: message.slice(0, 500),
@@ -854,7 +1026,10 @@ export const assistantActionsService = {
         reminder: created,
         reply:
           `Reminder set for ${formatWhen(dueAt)}: "${created.message}"` +
-          (created.recurrence !== "none" ? ` (repeats ${created.recurrence})` : "") + ".",
+          (created.recurrence !== "none"
+            ? ` (repeats ${created.recurrence})`
+            : "") +
+          ".",
         appliedChanges: { reminderAt: dueAt.toISOString() },
         refresh: { tasks: Boolean(task), reminders: true },
       };
@@ -879,14 +1054,25 @@ export const assistantActionsService = {
     };
   },
 
-  async executeCancelReminder(userId: string, taskQuery: string, _message: string): Promise<AssistantActionResult> {
+  async executeCancelReminder(
+    userId: string,
+    taskQuery: string,
+    _message: string,
+  ): Promise<AssistantActionResult> {
     if (!taskQuery.trim()) {
-      return clarification("cancel_reminder", "Which task's reminder should I cancel? Nothing has been changed.");
+      return clarification(
+        "cancel_reminder",
+        "Which task's reminder should I cancel? Nothing has been changed.",
+      );
     }
     const match = await matchTask(userId, taskQuery);
 
     if (match.kind === "one") {
-      const updated = await taskService.updateTask(userId, String(match.task._id), { reminderAt: null });
+      const updated = await taskService.updateTask(
+        userId,
+        String(match.task._id),
+        { reminderAt: null },
+      );
       const snap = snapshot(updated);
       return {
         ...base,
@@ -901,16 +1087,27 @@ export const assistantActionsService = {
         refresh: { tasks: true, reminders: true },
       };
     }
-    if (match.kind === "ambiguous") return ambiguousResult("cancel_reminder", match.candidates, "clear a reminder on");
+    if (match.kind === "ambiguous")
+      return ambiguousResult(
+        "cancel_reminder",
+        match.candidates,
+        "clear a reminder on",
+      );
 
     // Fall back to standalone reminders matching the reference.
     const needle = normalizeTitle(taskQuery);
     const reminders = await reminderService.findAll(userId);
     const reminderMatch = reminders.filter(
-      (r) => normalizeTitle(r.message).includes(needle) || needle.includes(normalizeTitle(r.message)),
+      (r) =>
+        normalizeTitle(r.message).includes(needle) ||
+        needle.includes(normalizeTitle(r.message)),
     );
     if (reminderMatch.length === 1) {
-      const updatedReminder = await reminderService.update(String(reminderMatch[0]!._id), userId, { enabled: false });
+      const updatedReminder = await reminderService.update(
+        String(reminderMatch[0]!._id),
+        userId,
+        { enabled: false },
+      );
       return {
         ...base,
         kind: "action",
@@ -955,18 +1152,25 @@ export const assistantActionsService = {
 // FORMATTING + ERROR HELPERS
 // ============================================================================
 
-const formatWhen = (d: Date): string => d.toISOString().replace("T", " ").slice(0, 16) + " UTC";
+const formatWhen = (d: Date): string =>
+  d.toISOString().replace("T", " ").slice(0, 16) + " UTC";
 
 const describeDue = (t: TaskSnapshot): string => {
   const bits: string[] = [];
-  if (t.dueDate) bits.push(`due ${formatWhen(new Date(t.dueDate)).slice(0, 10)}`);
+  if (t.dueDate)
+    bits.push(`due ${formatWhen(new Date(t.dueDate)).slice(0, 10)}`);
   if (t.priority) bits.push(`${t.priority} priority`);
   return bits.length ? ` (${bits.join(", ")})` : "";
 };
 
-const describeChanges = (changes: Record<string, { before: unknown; after: unknown }>): string =>
+const describeChanges = (
+  changes: Record<string, { before: unknown; after: unknown }>,
+): string =>
   Object.entries(changes)
-    .map(([field, { before, after }]) => `${field} ${formatValue(before)} -> ${formatValue(after)}`)
+    .map(
+      ([field, { before, after }]) =>
+        `${field} ${formatValue(before)} -> ${formatValue(after)}`,
+    )
     .join(", ");
 
 const formatValue = (v: unknown): string => {
@@ -982,12 +1186,20 @@ const diffSnapshots = (
 ): Record<string, { before: unknown; after: unknown }> => {
   const changes: Record<string, { before: unknown; after: unknown }> = {};
   const fields: Array<keyof TaskSnapshot> = [
-    "title", "status", "priority", "dueDate", "reminderAt", "course", "description", "tags",
+    "title",
+    "status",
+    "priority",
+    "dueDate",
+    "reminderAt",
+    "course",
+    "description",
+    "tags",
   ];
   for (const field of fields) {
     const a = normalizeForCompare(before[field]);
     const b = normalizeForCompare(after[field]);
-    if (a !== b) changes[field] = { before: before[field], after: after[field] };
+    if (a !== b)
+      changes[field] = { before: before[field], after: after[field] };
   }
   return changes;
 };
@@ -1006,7 +1218,9 @@ const friendlyReason = (error: unknown): string => {
 
 const zodMessage = (error: unknown): string => {
   if (error && typeof error === "object" && "issues" in error) {
-    const issues = (error as { issues: Array<{ message: string; path: unknown[] }> }).issues;
+    const issues = (
+      error as { issues: Array<{ message: string; path: unknown[] }> }
+    ).issues;
     if (issues.length > 0) {
       const first = issues[0]!;
       const path = Array.isArray(first.path) ? first.path.join(".") : "";

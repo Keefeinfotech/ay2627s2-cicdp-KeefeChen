@@ -301,7 +301,11 @@ class _AssistantPageState extends State<AssistantPage> {
   /// Sends the message to the backend action pipeline and renders a truthful,
   /// structured outcome. Duplicate submissions are prevented in the UI and
   /// with a per-message idempotency key.
-  Future<void> _handleWithBackend(String text, Session session, [String? requestId]) async {
+  Future<void> _handleWithBackend(
+    String text,
+    Session session, [
+    String? requestId,
+  ]) async {
     final message = text.trim();
     if (message.isEmpty) return;
     try {

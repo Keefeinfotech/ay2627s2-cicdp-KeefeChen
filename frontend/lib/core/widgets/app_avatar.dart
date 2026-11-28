@@ -140,7 +140,6 @@ class BrandMark extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final Color background = onDark ? Colors.white : AppColors.deepNavy;
     final Color foreground = onDark ? AppColors.deepNavy : Colors.white;
 
     return Semantics(
@@ -150,14 +149,28 @@ class BrandMark extends StatelessWidget {
         height: size,
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: background,
-          borderRadius: BorderRadius.circular(size * 0.24),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: onDark
+                ? const [Color(0xFFFFFFFF), Color(0xFFE2E8F0)]
+                : const [Color(0xFF1D4ED8), Color(0xFF2563EB)],
+          ),
+          borderRadius: BorderRadius.circular(size * 0.28),
+          boxShadow: [
+            BoxShadow(
+              color: (onDark ? Colors.white : AppColors.trustBlue)
+                  .withValues(alpha: 0.30),
+              blurRadius: size * 0.4,
+              offset: Offset(0, size * 0.12),
+            ),
+          ],
         ),
         child: Text(
           'A',
           style: theme.textTheme.titleLarge?.copyWith(
             color: foreground,
-            fontSize: size * 0.46,
+            fontSize: size * 0.48,
             fontWeight: FontWeight.w700,
             height: 1,
             letterSpacing: -0.5,
